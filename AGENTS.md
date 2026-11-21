@@ -7,6 +7,7 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 - `docs/plans/`: plans. Start with `2026-11-21-engine-plan.md`: the goal, the milestone, the phases and what is not yet specified.
 - `docs/specs/`: specifications. `judge-1.0/` is the judge specification, version 1.0.
 - The engine's command is `pql`, under `cmd/pql`; the plan's §4 gives the intended package layout.
+- `docs/solutions/`: documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`).
 
 ## Specifications are the authority
 
@@ -37,6 +38,8 @@ Test subjects in this repository are synthetic.
 - Commit subjects follow Conventional Commits (`feat:`, `fix:`, `docs:` …).
 - Hooks and checks are never skipped (`--no-verify` and its equivalents are not used).
 - CI must be green before a merge. A local run is not a substitute for checking the pull request's own checks.
+- After a solved, verified problem, automatically invoke the `ce-compound` skill with `mode:non-interactive` at the completion checkpoint when the work corrected a wrong belief about how something behaves: an approach that failed, a review finding that exposed a real defect, or an assumption, document, or first diagnosis that turned out wrong. A naming, style, or preference change does not count. Work that went as first planned does not need it. Do not judge whether the lesson deserves a document: `ce-compound` decides whether it qualifies and what holds it (a test, a lint rule, a coding standard, or a learning), and writes nothing when nothing qualifies. Capture at the checkpoint so what it writes can ship in the PR that produced it, and only where the repository treats captured learnings as tracked, committed knowledge.
+- Write every report, summary, or handoff to the user through the `ce-noslop` skill. This applies when you are the top-level agent writing to the user, not when you are a subagent reporting to its caller. Do not apply it to code, config, verbatim quotes, or text the user asked to post as written.
 
 ## Checks
 
