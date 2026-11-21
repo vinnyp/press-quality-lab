@@ -361,7 +361,15 @@ func TestCheckDocsOnFixtures(t *testing.T) {
 		{name: "changed wording", requirementsText: strings.Replace(clean, "- R5. ", "- R5. changed ", 1), want: []string{digestProblem}},
 		{name: "nested JSON", requirementsText: clean, extra: fstest.MapFS{"docs/specs/x/cases/c/case.json": {Data: []byte("{\n\"citation\": \"R99\"\n}")}}, want: []string{"docs/specs/x/cases/c/case.json:2: R99 is not defined in docs/requirements.md"}},
 		{name: "duplicate", requirementsText: clean + "\n- R5. duplicate", want: []string{fmt.Sprintf("%s:%d: R5 is defined twice (lines %d and %d)", requirements, lineAt(clean, len(clean))+1, lineAt(clean, strings.Index(clean, "- R5. ")), lineAt(clean, len(clean))+1), digestProblem}},
-		{name: "gap", requirementsText: strings.Replace(clean, "- R5. ", "- removed5. ", 1), want: []string{requirements + ":1: R5 is missing from definitions", digestProblem, requirements + ":1: R5 is required in definitions", requirements + ":42: R5 is not defined in docs/requirements.md", requirements + ":108: R5 is not defined in docs/requirements.md", requirements + ":184: R5 is not defined in docs/requirements.md", requirements + ":185: R5 is not defined in docs/requirements.md"}},
+		{name: "gap", requirementsText: strings.Replace(clean, "- R5. ", "- removed5. ", 1), want: func() []string {
+			want := []string{requirements + ":1: R5 is missing from definitions", digestProblem, requirements + ":1: R5 is required in definitions"}
+			for _, c := range findCitations(strings.Replace(clean, "- R5. ", "- removed5. ", 1)) {
+				if c.id == "R5" {
+					want = append(want, fmt.Sprintf("%s:%d: R5 is not defined in docs/requirements.md", requirements, c.line))
+				}
+			}
+			return want
+		}()},
 		{name: "symlink", requirementsText: clean, extra: fstest.MapFS{"docs/link": {Mode: fs.ModeSymlink}}, want: []string{"docs/link:1: symlink under docs"}},
 		{name: "missing requirements", missing: true, want: []string{requirements + ":1: read requirements: open docs/requirements.md: file does not exist"}},
 	}
