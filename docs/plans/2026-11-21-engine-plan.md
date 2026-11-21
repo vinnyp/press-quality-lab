@@ -97,7 +97,7 @@ Items in each phase are numbered and cited as "phase.item": 0.2 is the second it
 5. Reviewed twice by reviewers who did not build it, one reading the code against the rulebook and one judging whether the tests prove the rules, and once by a different model.
 6. Any input found on which the judge is wrong and the specification is clear becomes a new private case. Any input on which the specification is unclear goes to the owner, because settling it may mean a version 1.1.
 
-**Done when:** part 1 of the milestone holds, and the reviews have no open blocker.
+**Done when:** part 1 of the milestone holds, no catalogued mistake survives CI, and the reviews have no open blocker.
 
 ### Phase 2: the conformance collection specification
 
@@ -107,7 +107,7 @@ Items in each phase are numbered and cited as "phase.item": 0.2 is the second it
 4. A collection corpus built on it, two-sided as the requirements demand: every not-measured case has a repaired twin that grades green, the known-good subject grades green, and each seeded defect grades red on the named check.
 5. Reviewed by a standards reviewer and by a different model, then ratified by the owner and sealed as `docs/specs/conformance-collection-1.0/`.
 
-**Done when:** the specification is sealed and the synthetic subject and its corpus exist and are reviewed.
+**Done when:** the network spike is answered, the specification is sealed, and the synthetic subject and its corpus exist and are reviewed.
 
 ### Phase 3: the grade command
 
@@ -131,7 +131,7 @@ Built in slices. Each slice lands with its corpus cases passing through the real
 3. Every red is checked by hand: is it a real defect in the CLI? Every not-measured reason's next action is followed: does it turn into a measurement?
 4. What the real subject shows the specification got wrong is recorded as findings. A fix that changes a verdict is a new specification version, not an edit.
 
-**Done when:** the real CLI has a conformance scorecard, at least one dimension is judged green or red from generated checks alone, and no red has been shown to be the engine's mistake.
+**Done when:** the real CLI has a conformance scorecard; at least one dimension is judged green or red from generated checks alone; no red has been shown to be the engine's mistake; every not-measured reason's next action has been followed; and the findings are recorded.
 
 ### Phase 5: the steering collection specification
 
@@ -140,7 +140,7 @@ Built in slices. Each slice lands with its corpus cases passing through the real
 3. A steering collection corpus run through that entry: the prompt sent is the authored prompt plus the framing and nothing else; scripted trial sequences reach each of the rulebook's results; errored trials are replaced; pools change when a condition changes.
 4. Ratified by the owner and sealed as `docs/specs/steering-collection-1.0/`.
 
-**Done when:** the specification is sealed and its corpus exists and is reviewed.
+**Done when:** the specification is sealed, the scripted agent exists behind the agent interface, and the steering corpus exists and is reviewed.
 
 ### Phase 6: steering in the grade command
 
@@ -150,17 +150,17 @@ Built in slices. Each slice lands with its corpus cases passing through the real
 | h | Trials, declared counts, replacement, storage and pooling by condition | AE12 to AE14, AE29, AE36 |
 | i | Two-arm comparison of two versions of the subject | AE15 |
 | j | Cost statement, approval and the budget cap | AE10, AE25 |
-| k | The live harness behind the agent interface | a counted, capped smoke run |
+| k | The live harness behind the agent interface | a counted, capped smoke run, its count and cost approved by the owner first |
 
-**Done when:** every steering-corpus case passes through the test entry, and a released build rejects that entry.
+**Done when:** every steering-corpus case passes through the test entry, a released build rejects that entry, and the live harness has completed its counted, capped smoke run.
 
 ### Phase 7: the first real steering grade
 
 1. The same real CLI, with prompts the owner has read.
-2. The planned trial count and expected cost are stated and the owner approves them before the first live trial. Nothing in this plan spends on a model before that.
+2. The planned trial count and expected cost are stated and the owner approves them before the first live trial. No run in this plan spends on a model without the owner's approval of that run's count and cost.
 3. A sample of trials is read by hand: did the agent make the call the record says, and is each errored trial the harness's failure?
 
-**Done when:** part 2 of the milestone holds in both scopes.
+**Done when:** part 2 of the milestone holds in both scopes; the owner approved the planned count and cost before the first live trial; and a sample of trials has been read by hand.
 
 ### After the milestone, outside this plan
 

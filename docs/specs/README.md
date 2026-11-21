@@ -7,6 +7,9 @@ the contract, schemas, the evidence-record description, examples, 383 cases, and
 must not be edited: a changed rule means a new version in a new folder. `judge-1.0/KIT.sha256` lists
 a SHA-256 digest for every other file in the folder.
 
+`judge-1.0-errata.md` is the dated errata note for version 1.0. The sealed folder is never edited;
+corrections and notes go in the errata note.
+
 ## Running the cases against a judge
 
 From inside `judge-1.0/`:

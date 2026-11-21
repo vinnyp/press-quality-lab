@@ -14,6 +14,7 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 
 - Build from the specification's text, for every input its schemas allow. The cases are examples of the rules, not the rules.
 - A sealed specification folder is never edited. Its digest file lists every file in it. A rule that needs changing gets a new version in a new folder, ratified by the owner.
+- Editorial corrections and notes on a sealed specification go in its dated errata note beside the folder (`docs/specs/judge-1.0-errata.md` for version 1.0), never in the folder.
 - If the rulebook, the contract and the schemas disagree on some input, or the text can honestly be read two ways, stop and report the input and both readings. Do not pick one quietly and do not work around it in the engine.
 - The judge decides every verdict. Code that collects evidence reports what it saw for one check or one trial and nothing above that: no requiredness, no rollups, no comparison, no verdict.
 
