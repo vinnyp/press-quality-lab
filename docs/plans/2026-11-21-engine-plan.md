@@ -75,33 +75,37 @@ Cobra (`github.com/spf13/cobra`) is the approved command framework, under `cmd/`
 
 ## 5. Phases
 
+Items in each phase are numbered and cited as "phase.item": 0.2 is the second item of phase 0. The slices in the tables of phases 3 and 6 are cited by their letters.
+
 ### Phase 0: foundation
 
-- This repository, local first: licence, the published specification, this plan.
-- The requirements this engine answers are brought across from the predecessor project, edited for this repository, so that the requirement and acceptance-example numbers the rulebook cites can be read here.
-- The Go gate, a script that runs the published cases against the built judge, and a scan for secrets and personal paths. One CI workflow runs all three on every pull request.
-- Changes land by pull request only.
+**Status:** done. Its last item, 0.2, landed with the pull request that added `docs/requirements.md`.
 
-**Done when:** the owner has seen the first commit's contents, the repository is published, and CI is green.
+1. This repository, local first: licence, the published specification, this plan.
+2. The requirements this engine answers are brought across from the predecessor project, edited for this repository, so that the requirement and acceptance-example numbers the rulebook cites can be read here. They are in [`docs/requirements.md`](../requirements.md).
+3. The Go gate, a script that runs the published cases against the built judge, and a scan for secrets and personal paths. One CI workflow runs all three on every pull request.
+4. Changes land by pull request only. A ruleset on `main` requires a pull request, the `gate` and `scan` checks, and an up-to-date branch; the `cases` check becomes required when the judge turns it green.
+
+**Done when:** the repository is published; the `gate` and `scan` checks are green and required on `main`; the `cases` check is red only because the judge is not built; and the requirements can be read in this repository.
 
 ### Phase 1: the judge
 
-- Built by a coding agent from a written brief, given only the published specification. The brief says to implement the rules for every input the schemas allow, not only for the cases given, and to write tests of the rules themselves.
-- CI runs the build's own tests and all 383 published cases.
-- Scored privately against every case, published and private. The bar: zero wrong outputs.
-- Measured privately against the catalogue of seeded mistakes. The bar: no catalogued mistake survives CI. A survivor is fed back to the builder as the rule id whose tests are missing, never as the private input that would catch it.
-- Reviewed twice by reviewers who did not build it, one reading the code against the rulebook and one judging whether the tests prove the rules, and once by a different model.
-- Any input found on which the judge is wrong and the specification is clear becomes a new private case. Any input on which the specification is unclear goes to the owner, because settling it may mean a version 1.1.
+1. Built by a coding agent from a written brief, given only the published specification. The brief says to implement the rules for every input the schemas allow, not only for the cases given, and to write tests of the rules themselves.
+2. CI runs the build's own tests and all 383 published cases.
+3. Scored privately against every case, published and private. The bar: zero wrong outputs.
+4. Measured privately against the catalogue of seeded mistakes. The bar: no catalogued mistake survives CI. A survivor is fed back to the builder as the rule id whose tests are missing, never as the private input that would catch it.
+5. Reviewed twice by reviewers who did not build it, one reading the code against the rulebook and one judging whether the tests prove the rules, and once by a different model.
+6. Any input found on which the judge is wrong and the specification is clear becomes a new private case. Any input on which the specification is unclear goes to the owner, because settling it may mean a version 1.1.
 
 **Done when:** part 1 of the milestone holds, and the reviews have no open blocker.
 
 ### Phase 2: the conformance collection specification
 
-- A short spike first, in week 1: can the engine verify, on macOS and on Linux, that a child process made no network request? The requirements say a check is not measured when this cannot be verified, so without a mechanism every offline grade would be not-measured.
-- The specification of the conformance items in §3, written by the plan's author with the owner's decisions, in the same form as the judge specification: stable rule ids, closed lists, worked cases.
-- A synthetic subject: a small CLI kept in this repository's test data, in a known-good form and in forms each carrying one seeded defect.
-- A collection corpus built on it, two-sided as the requirements demand: every not-measured case has a repaired twin that grades green, the known-good subject grades green, and each seeded defect grades red on the named check.
-- Reviewed by a standards reviewer and by a different model, then ratified by the owner and sealed as `docs/specs/conformance-collection-1.0/`.
+1. A short spike first, in week 1: can the engine verify, on macOS and on Linux, that a child process made no network request? The requirements say a check is not measured when this cannot be verified, so without a mechanism every offline grade would be not-measured.
+2. The specification of the conformance items in §3, written by the plan's author with the owner's decisions, in the same form as the judge specification: stable rule ids, closed lists, worked cases.
+3. A synthetic subject: a small CLI kept in this repository's test data, in a known-good form and in forms each carrying one seeded defect.
+4. A collection corpus built on it, two-sided as the requirements demand: every not-measured case has a repaired twin that grades green, the known-good subject grades green, and each seeded defect grades red on the named check.
+5. Reviewed by a standards reviewer and by a different model, then ratified by the owner and sealed as `docs/specs/conformance-collection-1.0/`.
 
 **Done when:** the specification is sealed and the synthetic subject and its corpus exist and are reviewed.
 
@@ -122,19 +126,19 @@ Built in slices. Each slice lands with its corpus cases passing through the real
 
 ### Phase 4: the first real conformance grade
 
-- One real printed CLI, chosen by the owner. Its subject file stays outside this repository.
-- Graded in the default scope.
-- Every red is checked by hand: is it a real defect in the CLI? Every not-measured reason's next action is followed: does it turn into a measurement?
-- What the real subject shows the specification got wrong is recorded as findings. A fix that changes a verdict is a new specification version, not an edit.
+1. One real printed CLI, chosen by the owner. Its subject file stays outside this repository.
+2. Graded in the default scope.
+3. Every red is checked by hand: is it a real defect in the CLI? Every not-measured reason's next action is followed: does it turn into a measurement?
+4. What the real subject shows the specification got wrong is recorded as findings. A fix that changes a verdict is a new specification version, not an edit.
 
 **Done when:** the real CLI has a conformance scorecard, at least one dimension is judged green or red from generated checks alone, and no red has been shown to be the engine's mistake.
 
 ### Phase 5: the steering collection specification
 
-- The steering items in §3, specified in the same form and reviewed the same way, with the owner's decisions on the harness, the model, the credentials and the unit of cost.
-- A scripted agent behind the same interface as the live one, reachable only through a test entry to the grade command that released builds reject.
-- A steering collection corpus run through that entry: the prompt sent is the authored prompt plus the framing and nothing else; scripted trial sequences reach each of the rulebook's results; errored trials are replaced; pools change when a condition changes.
-- Ratified by the owner and sealed as `docs/specs/steering-collection-1.0/`.
+1. The steering items in §3, specified in the same form and reviewed the same way, with the owner's decisions on the harness, the model, the credentials and the unit of cost.
+2. A scripted agent behind the same interface as the live one, reachable only through a test entry to the grade command that released builds reject.
+3. A steering collection corpus run through that entry: the prompt sent is the authored prompt plus the framing and nothing else; scripted trial sequences reach each of the rulebook's results; errored trials are replaced; pools change when a condition changes.
+4. Ratified by the owner and sealed as `docs/specs/steering-collection-1.0/`.
 
 **Done when:** the specification is sealed and its corpus exists and is reviewed.
 
@@ -152,9 +156,9 @@ Built in slices. Each slice lands with its corpus cases passing through the real
 
 ### Phase 7: the first real steering grade
 
-- The same real CLI, with prompts the owner has read.
-- The planned trial count and expected cost are stated and the owner approves them before the first live trial. Nothing in this plan spends on a model before that.
-- A sample of trials is read by hand: did the agent make the call the record says, and is each errored trial the harness's failure?
+1. The same real CLI, with prompts the owner has read.
+2. The planned trial count and expected cost are stated and the owner approves them before the first live trial. Nothing in this plan spends on a model before that.
+3. A sample of trials is read by hand: did the agent make the call the record says, and is each errored trial the harness's failure?
 
 **Done when:** part 2 of the milestone holds in both scopes.
 
