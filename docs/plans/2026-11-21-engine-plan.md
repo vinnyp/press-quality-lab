@@ -79,7 +79,7 @@ Items in each phase are numbered and cited as "phase.item": 0.2 is the second it
 
 ### Phase 0: foundation
 
-**Status:** done. Its last item, 0.2, landed with the pull request that added `docs/requirements.md`.
+**Status:** done. The last of its items to land, 0.2, came with the pull request that added `docs/requirements.md`.
 
 1. This repository, local first: licence, the published specification, this plan.
 2. The requirements this engine answers are brought across from the predecessor project, edited for this repository, so that the requirement and acceptance-example numbers the rulebook cites can be read here. They are in [`docs/requirements.md`](../requirements.md).

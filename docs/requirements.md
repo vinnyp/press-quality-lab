@@ -1,8 +1,10 @@
 # Requirements
 
-These are the requirements the engine answers. They were written for the predecessor engine's plan of 2026-11-18 and brought across on 2026-11-21 so that the requirement (R) and acceptance-example (AE) numbers the judge specification cites can be read here.
+These are the requirements the engine answers. They were written for the predecessor engine's plan of 2026-11-18 and brought across on 2026-11-21 so that the requirement (R) and acceptance-example (AE) numbers the judge specification cites can be read here. The judge specification calls this document "the requirements plan". Below, "this plan" means that plan of 2026-11-18, not the [engine plan](plans/2026-11-21-engine-plan.md).
 
-Every requirement, acceptance example, actor (A) and flow (F) keeps its number and its wording, including the order the numbers appear in. The other sections record the plan as it stood on 2026-11-18, edited only to remove references into the predecessor engine; the [engine plan](plans/2026-11-21-engine-plan.md) now sets the order of the work. What has been settled since is in [Settled since](#settled-since), and where the judge's rulebook departs from these requirements is in [Where the rulebook departs from these requirements](#where-the-rulebook-departs-from-these-requirements).
+Every requirement, acceptance example, actor (A) and flow (F) is as it was in that plan, word for word and in the same order, including the order the numbers appear in (AE33 to AE36 appear in reverse order, as in that plan). Their numbers and wording do not change. The gate's tests check that every R and AE number cited under `docs/` resolves to one entry here, and that the entries are unchanged. R30 already reads as the plan amended it on 2026-11-18, which the rulebook's §15 records.
+
+The other sections record the plan as it stood on 2026-11-18, with these edits: references into the predecessor engine are removed, or say "the predecessor engine"; the provenance notes on the key decisions are reworded in plain English; the language trial, now finished, is one sentence among the key decisions, and its item under How This Work Fits Together is removed; the assumption that the new repository starts private now says it is public; and the open blockers and outstanding questions are replaced by [Settled since](#settled-since). The engine plan now sets the order of the work. Where the judge's rulebook departs from these requirements is in [Where the rulebook departs from these requirements](#where-the-rulebook-departs-from-these-requirements).
 
 ## Goal Capsule
 
@@ -260,7 +262,7 @@ flowchart TB
 
 ### Settled since
 
-The plan of 2026-11-18 had four open blockers and a list of outstanding questions. This section replaces both. Each item settled since names where it was settled. An item settled only in part has its settled part listed under **Settled** and the whole item, in the plan's own words, under **Still open**.
+The plan of 2026-11-18 had four open blockers and a list of outstanding questions. This section replaces both. Each item settled since names where it was settled. An item settled only in part has its settled part listed under **Settled** and the whole item, in the plan's own words, under **Still open**, followed by a line naming the part still open. This section records the state on 2026-11-21 and is not kept up to date; the engine plan's §3 and §8 list the decisions still to come.
 
 **Settled**
 
@@ -277,14 +279,21 @@ The plan of 2026-11-18 had four open blockers and a list of outstanding question
 **Still open**
 
 - The time box, budget and abandonment rule for the effort.
+  - Open part: the budget.
 - The new repository's name, licence and home relative to the generator project.
+  - Open part: where the repository sits relative to the generator project.
 - Whether the standalone spec repository is frozen at 0.9.1 or follows the engine's amended spec, which decides where amended fixtures live, and whether its reference grader is run over the fixtures as an independent cross-check.
+  - Open part: all of it. Only where this repository keeps its own specifications is settled.
 - The spec amendment text: §9.5 rule 6; the unrun-check treatment in §9.7 and §9.8; §15.1's "another probe covered" clause; steering as required-in-scope where the spec says not-applicable; the rule that an omitted capability counts as false; the order of known defect and unrun in R23, which reverses the spec's; trials and arms as spec concepts; the steering dimensions and how the two-arm rule feeds the tool-description dimension; what becomes of existing prose pass criteria; the affected fixtures; and the deferred 0.9.1 defects.
+  - Open part: the affected fixtures, and the deferred 0.9.1 defects.
 - The steering decision rule: the statistic, the error targets, the derived minimum and the floor, the margin for two arms, the cap on errored trials, the aggregation across prompts, what "first relevant call" counts, and the expected cost per dimension at typical prompt counts.
+  - Open part: the error targets, which the rulebook does not state, and the expected cost per dimension at typical prompt counts.
 - How a user supplies a computed expected value, and with it whether the engine must be a single self-contained binary with no other runtime.
 - Whether "the subject made no network request" can be verified on each supported system.
 - The exit-code values, the closed list of scopes, and the declared framing text.
+  - Open part: the declared framing text.
 - Whether the engine ships as a Claude Code plugin, whether it keeps the `aql` name, and which agents and skills come with it.
+  - Open part: whether the engine ships as a Claude Code plugin, and which agents and skills come with it.
 - Which generated probes from the current pack are kept, and how a command is classified as safe to run.
 - The mechanism by which the engine verifies that the subject made no network request.
 - The unit in which expected cost is stated.
@@ -292,7 +301,9 @@ The plan of 2026-11-18 had four open blockers and a list of outstanding question
 
 ### Where the rulebook departs from these requirements
 
-The judge's [rulebook](specs/judge-1.0/rulebook.md), version 1.0, lists in its §15 where it departs from these requirements. Where a requirement and the rulebook differ, the rulebook is right. No requirement here has been edited to match it.
+The judge's [rulebook](specs/judge-1.0/rulebook.md), version 1.0, lists in its §15 where it departs from these requirements. Where a requirement and a binding rule of the rulebook differ, the rule is right; the rulebook's "What binds" paragraph says which parts bind. No requirement here has been edited to match it. A difference that §15 does not list is reported to the owner, not worked around in the engine.
+
+The judge specification also uses R1, R2 and R3 as the names of the rulebook's three comparison results (its §11, and §15, §16, the judge contract and the case files where they refer to those results). There they are not these requirements.
 
 ### Sources / Research
 
