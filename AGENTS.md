@@ -31,6 +31,8 @@ This repository is public. Every tracked file and every commit message must be s
 - no names, hosts or data of private subjects. A real subject's file lives outside this repository;
 - no secrets, tokens or credentials, and no file that holds them.
 
+Commit author names and email addresses are the owner's choice and are not covered by the rule against real names and emails.
+
 Test subjects in this repository are synthetic.
 
 ## How changes land
@@ -47,7 +49,7 @@ Test subjects in this repository are synthetic.
 
 `gate.sh` runs the Go build, lints and tests with pinned tools and the network off.
 The tests include a check that every R and AE number cited under `docs/` resolves to exactly one entry in `docs/requirements.md`.
-`gate.sh` uses the `go` first on PATH and requires go1.27.3 (`GOTOOLCHAIN=local`), so machines with a newer Go must put go1.27.3 first on PATH.
+`gate.sh` uses the `go` first on PATH and requires go1.27.4 (`GOTOOLCHAIN=local`); a machine with another Go puts go1.27.4 first on PATH.
 `check.sh` runs the gate, builds the binary, verifies the kit digest and file set, and runs the published cases.
 `scan.sh` checks tracked files and an optional commit range for home paths, emails and secrets with gitleaks.
 Only noreply@anthropic.com and addresses at `users.noreply.github.com` are allowed emails.

@@ -24,7 +24,7 @@ var errNotImplemented = errors.New("judge: not implemented")
 
 func main() { os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
-// stdout is reserved for the judge's output document; nothing else writes to it.
+// stdout carries help, except under pql judge, whose stdout is reserved for the judge's document.
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root := &cobra.Command{
 		Use: "pql", Short: "Measure agent-facing command-line tools",
@@ -39,10 +39,10 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		RunE: func(_ *cobra.Command, _ []string) error { return &usageError{errors.New("a subcommand is required")} },
 	}
 	root.SetIn(stdin)
-	root.SetOut(stderr)
+	root.SetOut(stdout)
 	root.SetErr(stderr)
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return &usageError{err} })
-	root.AddCommand(&cobra.Command{
+	judge := &cobra.Command{
 		Use: "judge", Short: "Judge an evidence record",
 		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) > 0 {
@@ -51,7 +51,9 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return nil
 		},
 		RunE: func(_ *cobra.Command, _ []string) error { return errNotImplemented },
-	})
+	}
+	judge.SetOut(stderr)
+	root.AddCommand(judge)
 	root.SetHelpCommand(&cobra.Command{
 		Use: "help [command]", Short: "Help about any command",
 		Args: func(_ *cobra.Command, args []string) error {
@@ -66,6 +68,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			}
 			for _, command := range root.Commands() {
 				if command.Name() == args[0] {
+					command.SetOut(stdout)
 					return command.Help()
 				}
 			}
