@@ -13,7 +13,7 @@
 # loudly instead of reaching for the network.
 set -euo pipefail
 
-PINNED_GO="go1.27.3"
+PINNED_GO="go1.27.4"
 PINNED_STATICCHECK="v0.8.2"
 PINNED_ERRCHECK="v1.30.0"
 PINNED_EXHAUSTIVE="v0.17.1"

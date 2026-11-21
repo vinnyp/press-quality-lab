@@ -15,24 +15,28 @@ var contractCodes = map[int]bool{0: true, 1: true, 2: true, 3: true, 4: true, 5:
 
 func TestRun(t *testing.T) {
 	tests := []struct {
-		name string
-		args []string
-		code int
+		name   string
+		args   []string
+		code   int
+		stdout bool
+		stderr bool
 	}{
-		{"judge", []string{"judge"}, 70},
-		{"unknown command", []string{"bogus"}, 64},
-		{"root flag", []string{"--bogus"}, 64},
-		{"judge flag", []string{"judge", "--bogus"}, 64},
-		{"positional", []string{"judge", "extra-arg"}, 64},
-		{"bare", nil, 64},
-		{"help flag", []string{"--help"}, 0},
-		{"judge help", []string{"judge", "--help"}, 0},
-		{"help", []string{"help"}, 0},
-		{"unknown help", []string{"help", "bogus"}, 64},
-		{"extra help argument", []string{"help", "judge", "extra"}, 64},
-		{"help judge", []string{"help", "judge"}, 0},
-		{"completion", []string{cobra.ShellCompRequestCmd, ""}, 64},
-		{"completion without descriptions", []string{cobra.ShellCompNoDescRequestCmd, ""}, 64},
+		{"judge", []string{"judge"}, 70, false, true},
+		{"unknown command", []string{"bogus"}, 64, false, true},
+		{"root flag", []string{"--bogus"}, 64, false, true},
+		{"judge flag", []string{"judge", "--bogus"}, 64, false, true},
+		{"positional", []string{"judge", "extra-arg"}, 64, false, true},
+		{"bare", nil, 64, false, true},
+		{"help flag", []string{"--help"}, 0, true, false},
+		{"short help flag", []string{"-h"}, 0, true, false},
+		{"judge short help", []string{"judge", "-h"}, 0, false, true},
+		{"judge help", []string{"judge", "--help"}, 0, false, true},
+		{"help", []string{"help"}, 0, true, false},
+		{"unknown help", []string{"help", "bogus"}, 64, false, true},
+		{"extra help argument", []string{"help", "judge", "extra"}, 64, false, true},
+		{"help judge", []string{"help", "judge"}, 0, true, false},
+		{"completion", []string{cobra.ShellCompRequestCmd, ""}, 64, false, true},
+		{"completion without descriptions", []string{cobra.ShellCompNoDescRequestCmd, ""}, 64, false, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -41,11 +45,11 @@ func TestRun(t *testing.T) {
 			if code != tt.code {
 				t.Errorf("exit = %d, want %d", code, tt.code)
 			}
-			if out.Len() != 0 {
+			if (out.Len() > 0) != tt.stdout {
 				t.Errorf("stdout = %q", out.String())
 			}
-			if diagnostic.Len() == 0 {
-				t.Error("stderr is empty")
+			if (diagnostic.Len() > 0) != tt.stderr {
+				t.Errorf("stderr = %q", diagnostic.String())
 			}
 			if tt.code != 0 && code >= 1 && code <= 5 {
 				t.Errorf("error returned verdict code %d", code)
@@ -66,10 +70,13 @@ func TestProcessExit(t *testing.T) {
 		t.Fatalf("build: %v\n%s", err, output)
 	}
 	for _, tt := range []struct {
-		arg  string
-		code int
-	}{{"judge", 70},
-		{"bogus", 64}} {
+		arg    string
+		code   int
+		stdout bool
+		stderr bool
+	}{{"judge", 70, false, true},
+		{"bogus", 64, false, true},
+		{"--help", 0, true, false}} {
 		t.Run(tt.arg, func(t *testing.T) {
 			var out, diagnostic bytes.Buffer
 			cmd := exec.Command(binary, tt.arg)
@@ -77,17 +84,21 @@ func TestProcessExit(t *testing.T) {
 			cmd.Stderr = &diagnostic
 			err := cmd.Run()
 			var exit *exec.ExitError
-			if !errors.As(err, &exit) {
+			if err != nil && !errors.As(err, &exit) {
 				t.Fatalf("expected process failure, got %v", err)
 			}
-			if exit.ExitCode() != tt.code {
-				t.Errorf("exit = %d, want %d", exit.ExitCode(), tt.code)
+			code := 0
+			if exit != nil {
+				code = exit.ExitCode()
 			}
-			if out.Len() != 0 {
+			if code != tt.code {
+				t.Errorf("exit = %d, want %d", code, tt.code)
+			}
+			if (out.Len() > 0) != tt.stdout {
 				t.Errorf("stdout = %q", out.String())
 			}
-			if diagnostic.Len() == 0 {
-				t.Error("stderr is empty")
+			if (diagnostic.Len() > 0) != tt.stderr {
+				t.Errorf("stderr = %q", diagnostic.String())
 			}
 		})
 	}
