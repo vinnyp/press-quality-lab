@@ -1,0 +1,49 @@
+{
+  "id": "case-079",
+  "rules": [
+    "C8",
+    "C7",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "ex9": {
+        "result": "held_non_crediting",
+        "rule": "C8",
+        "reason": null
+      },
+      "tk9": {
+        "result": "held_non_crediting",
+        "rule": "C8",
+        "reason": null
+      },
+      "base:execution": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "execution": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "token-economy": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    }
+  }
+}

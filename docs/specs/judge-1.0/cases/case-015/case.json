@@ -1,0 +1,53 @@
+{
+  "id": "case-015",
+  "rules": [
+    "E11",
+    "K4",
+    "R1",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "comparison": {
+      "result": "regressed",
+      "rule": "R1",
+      "next_action": null,
+      "entries": {
+        "p1": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p2": {
+          "class": "regressed",
+          "rule": "E11"
+        }
+      },
+      "new": []
+    },
+    "checks": {
+      "p1": {
+        "result": "unobserved",
+        "rule": "P5",
+        "reason": "interval_undecided",
+        "k": 28,
+        "n": 40,
+        "lower": "0.545700",
+        "upper": "0.819252",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "HARNESS",
+        "rule": "D4"
+      }
+    }
+  }
+}

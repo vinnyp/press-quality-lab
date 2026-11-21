@@ -1,0 +1,87 @@
+{
+  "id": "case-099",
+  "rules": [
+    "D2",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "id1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "dg1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "se1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "base:bounding": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "base:flag-conformance": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      },
+      "idempotency": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      },
+      "destructive-guard": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      },
+      "side-effect-integrity": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      },
+      "flag-conformance": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      },
+      "cli-mcp-parity": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "GREEN",
+        "rule": "G5"
+      },
+      "Safety": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "id": "case-019",
+  "rules": [
+    "E2",
+    "R2",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "x2": {
+        "result": "out_of_scope",
+        "rule": null
+      }
+    },
+    "comparison": {
+      "result": "not_measured",
+      "rule": "R2",
+      "next_action": "re_anchor",
+      "entries": {
+        "base:availability": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:execution": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:graceful-failure": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:robustness": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:response-correctness": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:determinism": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:provenance-honesty": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:completeness-signaling": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:output-conformance": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:flag-conformance": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:bounding": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:discoverability": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:error-message-quality": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:token-economy": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:pii-secret-hygiene": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "x2": {
+          "class": "not_compared",
+          "rule": "E2"
+        }
+      },
+      "new": []
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "case-102",
+  "rules": [
+    "D7",
+    "C7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "ex2": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "ex3": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "execution": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Operability": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "case-383",
+  "rules": [
+    "X7",
+    "T4"
+  ],
+  "side": "rejected",
+  "expect": {
+    "outcome": "rejected",
+    "exit_code": 2,
+    "rejected_by": "X7",
+    "verdict": null
+  }
+}

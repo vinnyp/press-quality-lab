@@ -1,0 +1,79 @@
+{
+  "id": "case-013",
+  "rules": [
+    "E11",
+    "K4",
+    "R3",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "comparison": {
+      "result": "not_regressed",
+      "rule": "R3",
+      "next_action": null,
+      "entries": {
+        "p01": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p02": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p03": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p04": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p05": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p06": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p07": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p08": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p09": {
+          "class": "improved",
+          "rule": "E11"
+        },
+        "p10": {
+          "class": "improved",
+          "rule": "E11"
+        }
+      },
+      "new": []
+    },
+    "checks": {
+      "p01": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 100,
+        "n": 100,
+        "lower": "0.963007",
+        "upper": "1.000000",
+        "to_run": null
+      }
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "request": "grade",
+  "scope": [
+    "conformance"
+  ],
+  "claimed_tier": "live",
+  "subject_facts": {
+    "read_only": true,
+    "has_destructive_ops": true,
+    "store_backed": false,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "required": [
+    {
+      "id": "exec-1",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "exec-2",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "exec-3",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    }
+  ],
+  "evidence": [
+    {
+      "check_id": "exec-1",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": {
+        "exit": 0
+      },
+      "observed": {
+        "exit": 0
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "widgets list",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "exec-2",
+      "outcome": "not_observed",
+      "reason": "harness_fault",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": {
+        "exit": 0
+      },
+      "observed": null,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "widgets list",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "exec-3",
+      "outcome": "not_observed",
+      "reason": "harness_fault",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": {
+        "exit": 0
+      },
+      "observed": null,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "widgets list",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    }
+  ],
+  "trials": [],
+  "markers": [],
+  "baseline": null,
+  "retired": [],
+  "accepted_regressions": []
+}

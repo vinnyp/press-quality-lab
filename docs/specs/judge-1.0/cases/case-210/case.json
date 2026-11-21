@@ -1,0 +1,51 @@
+{
+  "id": "case-210",
+  "rules": [
+    "P3",
+    "T3",
+    "T2",
+    "T1",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 16,
+        "n": 16,
+        "lower": "0.806392",
+        "upper": "1.000000",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

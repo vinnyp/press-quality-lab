@@ -1,0 +1,31 @@
+{
+  "id": "case-216",
+  "rules": [
+    "P3",
+    "D7",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "set_aside_count": 0,
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 18,
+        "n": 18,
+        "lower": "0.824121",
+        "upper": "1.000000",
+        "to_run": null
+      }
+    }
+  }
+}

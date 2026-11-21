@@ -1,0 +1,17 @@
+{
+  "id": "case-177",
+  "rules": [
+    "X12",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    }
+  }
+}

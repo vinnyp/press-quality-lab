@@ -1,0 +1,53 @@
+{
+  "id": "case-209",
+  "rules": [
+    "P0",
+    "T3",
+    "T2",
+    "T1",
+    "D4",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "unobserved",
+        "rule": "P0",
+        "reason": "error_cap",
+        "k": 16,
+        "n": 16,
+        "lower": "0.806392",
+        "upper": "1.000000",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    },
+    "set_aside_count": 0,
+    "earlier_pools_count": 0
+  }
+}

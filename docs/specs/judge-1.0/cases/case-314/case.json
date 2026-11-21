@@ -1,0 +1,41 @@
+{
+  "id": "case-314",
+  "rules": [
+    "W3",
+    "P3",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 16,
+        "n": 16,
+        "lower": "0.806392",
+        "upper": "1.000000",
+        "to_run": null
+      }
+    },
+    "set_aside_count": 3,
+    "earlier_pools": [
+      {
+        "check_id": "p1",
+        "arm": null,
+        "condition": "c0",
+        "k": null,
+        "n": null,
+        "rule": "P1"
+      }
+    ]
+  }
+}

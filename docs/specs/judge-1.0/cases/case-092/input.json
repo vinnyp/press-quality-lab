@@ -1,0 +1,479 @@
+{
+  "request": "grade",
+  "scope": [
+    "conformance",
+    "destructive"
+  ],
+  "claimed_tier": "live",
+  "subject_facts": {
+    "read_only": false,
+    "has_destructive_ops": true,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "required": [
+    {
+      "id": "k:availability",
+      "kind": "plain",
+      "dimension": "availability",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:execution",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:graceful-failure",
+      "kind": "plain",
+      "dimension": "graceful-failure",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:robustness",
+      "kind": "plain",
+      "dimension": "robustness",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:response-correctness",
+      "kind": "plain",
+      "dimension": "response-correctness",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:determinism",
+      "kind": "plain",
+      "dimension": "determinism",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:provenance-honesty",
+      "kind": "plain",
+      "dimension": "provenance-honesty",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:completeness-signaling",
+      "kind": "plain",
+      "dimension": "completeness-signaling",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:output-conformance",
+      "kind": "plain",
+      "dimension": "output-conformance",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:discoverability",
+      "kind": "plain",
+      "dimension": "discoverability",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:error-message-quality",
+      "kind": "plain",
+      "dimension": "error-message-quality",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:token-economy",
+      "kind": "plain",
+      "dimension": "token-economy",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "k:pii-secret-hygiene",
+      "kind": "plain",
+      "dimension": "pii-secret-hygiene",
+      "record": "r1",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    }
+  ],
+  "evidence": [
+    {
+      "check_id": "k:availability",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:availability",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:execution",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:execution",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:graceful-failure",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:graceful-failure",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:robustness",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:robustness",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:response-correctness",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:response-correctness",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:determinism",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:determinism",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:provenance-honesty",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:provenance-honesty",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:completeness-signaling",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:completeness-signaling",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:output-conformance",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:output-conformance",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:discoverability",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:discoverability",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:error-message-quality",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:error-message-quality",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:token-economy",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:token-economy",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "k:pii-secret-hygiene",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "offline",
+      "expected": true,
+      "observed": true,
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "k:pii-secret-hygiene",
+          "tier": "offline"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    }
+  ],
+  "trials": [],
+  "markers": [],
+  "baseline": null,
+  "retired": [],
+  "accepted_regressions": []
+}

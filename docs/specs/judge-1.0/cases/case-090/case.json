@@ -1,0 +1,56 @@
+{
+  "id": "case-090",
+  "rules": [
+    "D1",
+    "C6",
+    "G2",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      },
+      "idempotency": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      },
+      "destructive-guard": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      },
+      "side-effect-integrity": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      },
+      "flag-conformance": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "RED",
+        "rule": "G2"
+      },
+      "Safety": {
+        "state": "RED",
+        "rule": "G2"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "case-232",
+  "rules": [
+    "X8",
+    "X10"
+  ],
+  "side": "rejected",
+  "expect": {
+    "outcome": "rejected",
+    "exit_code": 2,
+    "rejected_by": "X8"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "case-066",
+  "rules": [
+    "C7",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "x1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "execution": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Operability": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

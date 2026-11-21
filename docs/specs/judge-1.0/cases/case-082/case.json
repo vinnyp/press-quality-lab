@@ -1,0 +1,24 @@
+{
+  "id": "case-082",
+  "rules": [
+    "D2",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      }
+    }
+  }
+}

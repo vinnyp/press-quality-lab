@@ -1,0 +1,59 @@
+{
+  "id": "case-063",
+  "rules": [
+    "C1",
+    "C2",
+    "D4",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "te1": {
+        "result": "unobserved",
+        "rule": "C1",
+        "reason": "no_evidence"
+      },
+      "dq1": {
+        "result": "unobserved",
+        "rule": "C2",
+        "reason": "could_not_start"
+      }
+    },
+    "dimensions": {
+      "token-economy": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      },
+      "discoverability": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      },
+      "error-message-quality": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Usability": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

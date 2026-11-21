@@ -1,0 +1,22 @@
+{
+  "id": "case-045",
+  "rules": [
+    "N1"
+  ],
+  "side": "refused",
+  "expect": {
+    "outcome": "refused",
+    "exit_code": 5,
+    "own_verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "anchor": {
+      "result": "refused",
+      "rule": "N1",
+      "reason": "test_run",
+      "checks": []
+    }
+  }
+}

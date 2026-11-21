@@ -1,0 +1,25 @@
+{
+  "id": "case-181",
+  "rules": [
+    "X12",
+    "C7",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "x\ud83d\ude00": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    }
+  }
+}

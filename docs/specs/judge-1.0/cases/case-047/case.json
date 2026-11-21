@@ -1,0 +1,31 @@
+{
+  "id": "case-047",
+  "rules": [
+    "N3",
+    "D4",
+    "V2"
+  ],
+  "side": "refused",
+  "expect": {
+    "outcome": "refused",
+    "exit_code": 5,
+    "own_verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "dimensions": {
+      "flag-conformance": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    },
+    "anchor": {
+      "result": "refused",
+      "rule": "N3",
+      "reason": "not_measured",
+      "checks": []
+    }
+  }
+}

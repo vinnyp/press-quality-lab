@@ -1,0 +1,32 @@
+{
+  "id": "case-048",
+  "rules": [
+    "N4",
+    "D6"
+  ],
+  "side": "refused",
+  "expect": {
+    "outcome": "refused",
+    "exit_code": 5,
+    "own_verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "anchor": {
+      "result": "refused",
+      "rule": "N4",
+      "reason": "stale_marker"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 1
+    },
+    "stale_markers": [
+      {
+        "record": "base",
+        "dimension": "discoverability"
+      }
+    ]
+  }
+}

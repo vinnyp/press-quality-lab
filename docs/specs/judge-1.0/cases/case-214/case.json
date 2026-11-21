@@ -1,0 +1,30 @@
+{
+  "id": "case-214",
+  "rules": [
+    "K4",
+    "P3",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "cmp": {
+        "result": "held_crediting",
+        "rule": "K4",
+        "reason": null,
+        "detail": "no_material_change",
+        "d_lo": "-0.060172",
+        "d_hi": "0.060172"
+      }
+    }
+  }
+}

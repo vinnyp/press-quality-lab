@@ -1,0 +1,33 @@
+{
+  "id": "case-056",
+  "rules": [
+    "N7",
+    "D5",
+    "V3"
+  ],
+  "side": "anchored",
+  "expect": {
+    "outcome": "anchored",
+    "exit_code": 0,
+    "own_verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "known-defects",
+      "plain": "known_defect"
+    },
+    "anchor": {
+      "result": "anchored",
+      "rule": "N7",
+      "reason": null,
+      "checks": [],
+      "baseline_count": 16,
+      "baseline": {
+        "fc-f": {
+          "kind": "plain",
+          "dimension": "flag-conformance",
+          "result": "failed",
+          "tier": "offline"
+        }
+      }
+    }
+  }
+}

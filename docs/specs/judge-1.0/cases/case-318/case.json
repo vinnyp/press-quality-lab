@@ -1,0 +1,72 @@
+{
+  "id": "case-318",
+  "rules": [
+    "W3",
+    "K4",
+    "P3",
+    "D7",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 16,
+        "n": 16,
+        "lower": "0.806392",
+        "upper": "1.000000",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "cmp": {
+        "result": "held_crediting",
+        "rule": "K4",
+        "reason": null,
+        "detail": "improved",
+        "d_lo": "0.206937",
+        "d_hi": "0.720004",
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    },
+    "set_aside_count": 16,
+    "earlier_pools_count": 1
+  }
+}

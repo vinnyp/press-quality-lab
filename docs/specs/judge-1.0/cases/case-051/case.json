@@ -1,0 +1,115 @@
+{
+  "id": "case-051",
+  "rules": [
+    "N7"
+  ],
+  "side": "anchored",
+  "expect": {
+    "outcome": "anchored",
+    "exit_code": 0,
+    "own_verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "anchor": {
+      "result": "anchored",
+      "rule": "N7",
+      "reason": null,
+      "checks": [],
+      "baseline": {
+        "p01": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p02": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p03": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p04": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p05": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p06": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p07": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p08": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p09": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        },
+        "p10": {
+          "kind": "prompt",
+          "dimension": "steering",
+          "result": "held",
+          "tier": "live",
+          "condition": "c1",
+          "k": 88,
+          "n": 100
+        }
+      },
+      "baseline_count": 10
+    }
+  }
+}

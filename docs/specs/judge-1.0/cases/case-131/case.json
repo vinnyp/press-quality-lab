@@ -1,0 +1,35 @@
+{
+  "id": "case-131",
+  "rules": [
+    "D6",
+    "X4",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "dimensions": {
+      "execution": {
+        "state": "XPASS",
+        "rule": "D6",
+        "reason": null
+      }
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 1
+    },
+    "stale_markers": [
+      {
+        "record": "",
+        "dimension": "execution"
+      }
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "id": "case-360",
+  "rules": [
+    "K4",
+    "P5",
+    "P3",
+    "D4",
+    "D7",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p01": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 37,
+        "n": 40,
+        "lower": "0.801358",
+        "upper": "0.974164",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "p10": {
+        "result": "unobserved",
+        "rule": "P5",
+        "reason": "interval_undecided",
+        "k": 36,
+        "n": 40,
+        "lower": "0.769482",
+        "upper": "0.960420",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "cmp": {
+        "result": "held_crediting",
+        "rule": "K4",
+        "reason": null,
+        "detail": "no_material_change",
+        "d_lo": "0.010297",
+        "d_hi": "0.099998",
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

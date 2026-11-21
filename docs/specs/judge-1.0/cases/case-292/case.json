@@ -1,0 +1,33 @@
+{
+  "id": "case-292",
+  "rules": [
+    "D0",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "p1": {
+        "result": "out_of_scope",
+        "rule": null,
+        "reason": null,
+        "k": null,
+        "n": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      }
+    }
+  }
+}

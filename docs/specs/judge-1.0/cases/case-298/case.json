@@ -1,0 +1,25 @@
+{
+  "id": "case-298",
+  "rules": [
+    "D0",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "set_aside_count": 0,
+    "earlier_pools_count": 0,
+    "checks": {
+      "p1": {
+        "result": "out_of_scope",
+        "rule": null
+      }
+    }
+  }
+}

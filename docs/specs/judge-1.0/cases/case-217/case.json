@@ -1,0 +1,38 @@
+{
+  "id": "case-217",
+  "rules": [
+    "T1",
+    "P1",
+    "D4",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "p1": {
+        "result": "unobserved",
+        "rule": "P1",
+        "reason": "trials_short",
+        "k": 15,
+        "n": 15,
+        "lower": "0.796117",
+        "upper": "1.000000",
+        "to_run": 5
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    }
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "rulebook_version": "1.0",
+  "outcome": "verdict",
+  "rejected_by": null,
+  "exit_code": 4,
+  "scope": [
+    "conformance"
+  ],
+  "verdict": {
+    "token": "PROVISIONAL",
+    "sub_label": "gaps",
+    "plain": "not_measured"
+  },
+  "own_verdict": null,
+  "counts": {
+    "xfail": 0,
+    "xpass": 0
+  },
+  "stale_markers": [],
+  "checks": [
+    {
+      "id": "exec-1",
+      "result": "held_crediting",
+      "rule": "C7",
+      "reason": null,
+      "detail": null,
+      "k": null,
+      "n": null,
+      "to_run": null,
+      "lower": null,
+      "upper": null,
+      "d_lo": null,
+      "d_hi": null
+    },
+    {
+      "id": "exec-2",
+      "result": "unobserved",
+      "rule": "C2",
+      "reason": "harness_fault",
+      "detail": null,
+      "k": null,
+      "n": null,
+      "to_run": null,
+      "lower": null,
+      "upper": null,
+      "d_lo": null,
+      "d_hi": null
+    },
+    {
+      "id": "exec-3",
+      "result": "unobserved",
+      "rule": "C2",
+      "reason": "harness_fault",
+      "detail": null,
+      "k": null,
+      "n": null,
+      "to_run": null,
+      "lower": null,
+      "upper": null,
+      "d_lo": null,
+      "d_hi": null
+    }
+  ],
+  "dimensions": [
+    {
+      "dimension": "availability",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "execution",
+      "state": "HARNESS",
+      "rule": "D4",
+      "reason": null
+    },
+    {
+      "dimension": "graceful-failure",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "robustness",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "response-correctness",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "determinism",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "cli-mcp-parity",
+      "state": "OUT-OF-SCOPE",
+      "rule": "D0",
+      "reason": "scope_not_requested"
+    },
+    {
+      "dimension": "provenance-honesty",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "completeness-signaling",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "output-conformance",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "flag-conformance",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "bounding",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "discoverability",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "error-message-quality",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "token-economy",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "side-effect-integrity",
+      "state": "N/A",
+      "rule": "D2",
+      "reason": null
+    },
+    {
+      "dimension": "idempotency",
+      "state": "N/A",
+      "rule": "D2",
+      "reason": null
+    },
+    {
+      "dimension": "destructive-guard",
+      "state": "OUT-OF-SCOPE",
+      "rule": "D0",
+      "reason": "scope_not_requested"
+    },
+    {
+      "dimension": "pii-secret-hygiene",
+      "state": "UNCOVERED",
+      "rule": "D8",
+      "reason": null
+    },
+    {
+      "dimension": "steering",
+      "state": "OUT-OF-SCOPE",
+      "rule": "D0",
+      "reason": "live_not_run"
+    },
+    {
+      "dimension": "tool-description-efficacy",
+      "state": "OUT-OF-SCOPE",
+      "rule": "D0",
+      "reason": "live_not_run"
+    }
+  ],
+  "groups": [
+    {
+      "group": "Operability",
+      "state": "GAPPED",
+      "rule": "G3"
+    },
+    {
+      "group": "Correctness",
+      "state": "GAPPED",
+      "rule": "G3"
+    },
+    {
+      "group": "Conformance",
+      "state": "GAPPED",
+      "rule": "G3"
+    },
+    {
+      "group": "Usability",
+      "state": "GAPPED",
+      "rule": "G3"
+    },
+    {
+      "group": "Safety",
+      "state": "GAPPED",
+      "rule": "G3"
+    },
+    {
+      "group": "Steering",
+      "state": "OUT-OF-SCOPE",
+      "rule": "G1"
+    }
+  ],
+  "comparison": {
+    "result": "none",
+    "rule": "B1",
+    "next_action": null,
+    "entries": [],
+    "new": []
+  },
+  "set_aside": [],
+  "earlier_pools": [],
+  "anchor": null
+}

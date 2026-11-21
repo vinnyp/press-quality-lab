@@ -1,0 +1,128 @@
+{
+  "id": "case-219",
+  "rules": [
+    "N7",
+    "C5",
+    "D5",
+    "V3"
+  ],
+  "side": "anchored",
+  "expect": {
+    "outcome": "anchored",
+    "exit_code": 0,
+    "own_verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "known-defects",
+      "plain": "known_defect"
+    },
+    "counts": {
+      "xfail": 1,
+      "xpass": 0
+    },
+    "anchor": {
+      "result": "anchored",
+      "rule": "N7",
+      "reason": null,
+      "checks": [],
+      "baseline": {
+        "base:availability": {
+          "kind": "plain",
+          "dimension": "availability",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:bounding": {
+          "kind": "plain",
+          "dimension": "bounding",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:completeness-signaling": {
+          "kind": "plain",
+          "dimension": "completeness-signaling",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:determinism": {
+          "kind": "plain",
+          "dimension": "determinism",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:discoverability": {
+          "kind": "plain",
+          "dimension": "discoverability",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:error-message-quality": {
+          "kind": "plain",
+          "dimension": "error-message-quality",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:execution": {
+          "kind": "plain",
+          "dimension": "execution",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:flag-conformance": {
+          "kind": "plain",
+          "dimension": "flag-conformance",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:graceful-failure": {
+          "kind": "plain",
+          "dimension": "graceful-failure",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:output-conformance": {
+          "kind": "plain",
+          "dimension": "output-conformance",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:pii-secret-hygiene": {
+          "kind": "plain",
+          "dimension": "pii-secret-hygiene",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:provenance-honesty": {
+          "kind": "plain",
+          "dimension": "provenance-honesty",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:response-correctness": {
+          "kind": "plain",
+          "dimension": "response-correctness",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:robustness": {
+          "kind": "plain",
+          "dimension": "robustness",
+          "result": "held",
+          "tier": "offline"
+        },
+        "base:token-economy": {
+          "kind": "plain",
+          "dimension": "token-economy",
+          "result": "held",
+          "tier": "offline"
+        },
+        "cs4": {
+          "kind": "plain",
+          "dimension": "completeness-signaling",
+          "result": "failed",
+          "tier": "offline"
+        }
+      },
+      "baseline_count": 16
+    }
+  }
+}

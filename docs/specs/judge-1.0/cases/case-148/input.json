@@ -1,0 +1,836 @@
+{
+  "request": "grade",
+  "scope": [
+    "steering"
+  ],
+  "claimed_tier": "live",
+  "subject_facts": {
+    "read_only": true,
+    "has_destructive_ops": false,
+    "store_backed": false,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "required": [
+    {
+      "id": "p1",
+      "kind": "prompt",
+      "dimension": "steering",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": 40,
+      "condition": "c1",
+      "condition_a": null
+    }
+  ],
+  "evidence": [],
+  "trials": [
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 0,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 1,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 2,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 3,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 4,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 5,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 6,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 7,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 8,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 9,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 10,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 11,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 12,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 13,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 14,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 15,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 16,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 17,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 18,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 19,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 20,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 21,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 22,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 23,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 24,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 25,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 26,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 27,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 28,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 29,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 30,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 31,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 32,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 33,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 34,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 35,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 36,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 37,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 38,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "p1",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 39,
+      "declared_count": 40,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    }
+  ],
+  "markers": [],
+  "baseline": null,
+  "retired": [],
+  "accepted_regressions": []
+}

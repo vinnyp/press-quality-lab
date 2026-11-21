@@ -1,0 +1,47 @@
+{
+  "id": "case-038",
+  "rules": [
+    "E8",
+    "E10",
+    "R1",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "comparison": {
+      "result": "regressed",
+      "rule": "R1",
+      "next_action": null,
+      "entries": {
+        "p1": {
+          "class": "regressed",
+          "rule": "E8"
+        },
+        "p2": {
+          "class": "same",
+          "rule": "E10"
+        }
+      },
+      "new": []
+    },
+    "checks": {
+      "p1": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 27,
+        "n": 40,
+        "lower": "0.520177",
+        "upper": "0.799155",
+        "to_run": null
+      }
+    }
+  }
+}

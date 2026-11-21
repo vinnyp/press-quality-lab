@@ -1,0 +1,37 @@
+{
+  "id": "case-029",
+  "rules": [
+    "E6",
+    "C1",
+    "R2",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "p1": {
+        "result": "unobserved",
+        "rule": "C1",
+        "reason": "no_evidence"
+      }
+    },
+    "comparison": {
+      "result": "not_measured",
+      "rule": "R2",
+      "next_action": "re_anchor",
+      "entries": {
+        "p1": {
+          "class": "missing",
+          "rule": "E6"
+        }
+      }
+    }
+  }
+}

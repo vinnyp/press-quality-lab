@@ -1,0 +1,47 @@
+{
+  "id": "case-234",
+  "rules": [
+    "K4",
+    "P3",
+    "D7",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "k": 40,
+        "n": 40,
+        "lower": "0.912378",
+        "upper": "1.000000"
+      },
+      "t1": {
+        "result": "held_crediting",
+        "rule": "K4",
+        "reason": null,
+        "detail": "no_material_change",
+        "d_lo": "-0.087622",
+        "d_hi": "0.087622"
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "GREEN",
+        "rule": "D7"
+      },
+      "tool-description-efficacy": {
+        "state": "GREEN",
+        "rule": "D7"
+      }
+    }
+  }
+}

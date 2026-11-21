@@ -1,0 +1,23 @@
+{
+  "id": "case-043",
+  "rules": [
+    "N2",
+    "N5"
+  ],
+  "side": "refused",
+  "expect": {
+    "outcome": "refused",
+    "exit_code": 5,
+    "own_verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "anchor": {
+      "result": "refused",
+      "rule": "N2",
+      "reason": "red",
+      "checks": []
+    }
+  }
+}

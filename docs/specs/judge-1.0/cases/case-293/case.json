@@ -1,0 +1,26 @@
+{
+  "id": "case-293",
+  "rules": [
+    "X6",
+    "X8",
+    "D0",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "set_aside_count": 0,
+    "checks": {
+      "p1": {
+        "result": "out_of_scope",
+        "rule": null
+      }
+    }
+  }
+}

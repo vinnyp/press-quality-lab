@@ -1,0 +1,70 @@
+{
+  "id": "case-362",
+  "rules": [
+    "K4",
+    "P5",
+    "D1",
+    "G2",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "unobserved",
+        "rule": "P5",
+        "reason": "interval_undecided",
+        "k": 30,
+        "n": 40,
+        "lower": "0.598060",
+        "upper": "0.858129",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "cmp": {
+        "result": "failed",
+        "rule": "K4",
+        "reason": null,
+        "detail": "regressed",
+        "d_lo": "-0.401940",
+        "d_hi": "-0.110826",
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "RED",
+        "rule": "G2"
+      }
+    }
+  }
+}

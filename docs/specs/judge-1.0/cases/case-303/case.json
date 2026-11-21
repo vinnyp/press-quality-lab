@@ -1,0 +1,62 @@
+{
+  "id": "case-303",
+  "rules": [
+    "P5",
+    "D4",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "unobserved",
+        "rule": "P5",
+        "reason": "interval_undecided",
+        "k": 73,
+        "n": 100,
+        "lower": "0.635679",
+        "upper": "0.807304",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      },
+      "execution": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "GAPPED",
+        "rule": "G3"
+      },
+      "Operability": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "G1"
+      }
+    }
+  }
+}

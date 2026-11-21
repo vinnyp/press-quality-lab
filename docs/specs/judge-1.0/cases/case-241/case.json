@@ -1,0 +1,31 @@
+{
+  "id": "case-241",
+  "rules": [
+    "D2",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "dimensions": {
+      "destructive-guard": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Safety": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

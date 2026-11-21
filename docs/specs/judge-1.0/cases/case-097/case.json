@@ -1,0 +1,53 @@
+{
+  "id": "case-097",
+  "rules": [
+    "D2",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "stale_markers": [],
+    "checks": {
+      "bd3": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "fc3": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      },
+      "flag-conformance": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

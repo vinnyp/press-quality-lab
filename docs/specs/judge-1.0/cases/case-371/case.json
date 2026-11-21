@@ -1,0 +1,74 @@
+{
+  "id": "case-371",
+  "rules": [
+    "P4",
+    "P5",
+    "D1",
+    "G2",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 16,
+        "n": 16,
+        "lower": "0.806392",
+        "upper": "1.000000",
+        "to_run": null
+      },
+      "p2": {
+        "result": "unobserved",
+        "rule": "P5",
+        "reason": "interval_undecided",
+        "k": 36,
+        "n": 40,
+        "lower": "0.769482",
+        "upper": "0.960420",
+        "to_run": null
+      },
+      "p3": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 27,
+        "n": 40,
+        "lower": "0.520177",
+        "upper": "0.799155",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "RED",
+        "rule": "G2"
+      }
+    }
+  }
+}

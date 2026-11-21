@@ -1,0 +1,53 @@
+{
+  "id": "case-076",
+  "rules": [
+    "C7",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "rb1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "pi1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "robustness": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "pii-secret-hygiene": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Operability": {
+        "state": "GREEN",
+        "rule": "G5"
+      },
+      "Safety": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

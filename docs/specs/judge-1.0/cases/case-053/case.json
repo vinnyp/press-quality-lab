@@ -1,0 +1,30 @@
+{
+  "id": "case-053",
+  "rules": [
+    "N6",
+    "E11",
+    "V4"
+  ],
+  "side": "refused",
+  "expect": {
+    "outcome": "refused",
+    "exit_code": 5,
+    "own_verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "anchor": {
+      "result": "refused",
+      "rule": "N6",
+      "reason": "unaccepted_regression",
+      "checks": [
+        "p06",
+        "p07",
+        "p08",
+        "p09",
+        "p10"
+      ]
+    }
+  }
+}

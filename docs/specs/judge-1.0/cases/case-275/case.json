@@ -1,0 +1,33 @@
+{
+  "id": "case-275",
+  "rules": [
+    "D6",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 1
+    },
+    "stale_markers": [
+      {
+        "record": "r7",
+        "dimension": "response-correctness"
+      }
+    ],
+    "dimensions": {
+      "response-correctness": {
+        "state": "XPASS",
+        "rule": "D6"
+      }
+    }
+  }
+}

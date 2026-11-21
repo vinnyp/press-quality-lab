@@ -1,0 +1,43 @@
+{
+  "id": "case-204",
+  "rules": [
+    "C8",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "cs1": {
+        "result": "held_non_crediting",
+        "rule": "C8",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "completeness-signaling": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Correctness": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

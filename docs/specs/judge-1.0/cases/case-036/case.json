@@ -1,0 +1,42 @@
+{
+  "id": "case-036",
+  "rules": [
+    "E7",
+    "P3",
+    "R2",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 37,
+        "n": 40,
+        "lower": "0.801358",
+        "upper": "0.974164",
+        "to_run": null
+      }
+    },
+    "comparison": {
+      "result": "not_measured",
+      "rule": "R2",
+      "next_action": "re_anchor",
+      "entries": {
+        "p1": {
+          "class": "not_compared",
+          "rule": "E7"
+        }
+      }
+    }
+  }
+}

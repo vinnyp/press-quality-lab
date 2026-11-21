@@ -1,0 +1,99 @@
+{
+  "id": "case-002",
+  "rules": [
+    "B1",
+    "B2",
+    "P3",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "comparison": {
+      "result": "none",
+      "rule": "B1",
+      "next_action": null,
+      "entries": {
+        "base:availability": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:bounding": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:completeness-signaling": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:determinism": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:discoverability": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:error-message-quality": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:execution": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:flag-conformance": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:graceful-failure": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:output-conformance": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:pii-secret-hygiene": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:provenance-honesty": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:response-correctness": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:robustness": {
+          "class": "set_aside",
+          "rule": "B2"
+        },
+        "base:token-economy": {
+          "class": "set_aside",
+          "rule": "B2"
+        }
+      },
+      "new": []
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 37,
+        "n": 40,
+        "lower": "0.801358",
+        "upper": "0.974164",
+        "to_run": null
+      }
+    }
+  }
+}

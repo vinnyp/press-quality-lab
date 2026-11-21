@@ -1,0 +1,42 @@
+{
+  "id": "case-040",
+  "rules": [
+    "E9a",
+    "R3",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "comparison": {
+      "result": "not_regressed",
+      "rule": "R3",
+      "next_action": null,
+      "entries": {
+        "p1": {
+          "class": "same",
+          "rule": "E9a"
+        }
+      },
+      "new": []
+    },
+    "checks": {
+      "p1": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 27,
+        "n": 40,
+        "lower": "0.520177",
+        "upper": "0.799155",
+        "to_run": null
+      }
+    }
+  }
+}

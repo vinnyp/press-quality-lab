@@ -1,0 +1,43 @@
+{
+  "id": "case-107",
+  "rules": [
+    "D6",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 3
+    },
+    "stale_markers": [
+      {
+        "record": "rb",
+        "dimension": "availability"
+      },
+      {
+        "record": "r10",
+        "dimension": "execution"
+      },
+      {
+        "record": "r2",
+        "dimension": "execution"
+      },
+      {
+        "record": "r9",
+        "dimension": "execution"
+      },
+      {
+        "record": "ra",
+        "dimension": "discoverability"
+      }
+    ]
+  }
+}

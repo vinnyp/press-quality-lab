@@ -1,0 +1,49 @@
+{
+  "id": "case-101",
+  "rules": [
+    "D4",
+    "C2",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "base:execution": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "ex2": {
+        "result": "unobserved",
+        "rule": "C2",
+        "reason": "harness_fault"
+      },
+      "ex3": {
+        "result": "unobserved",
+        "rule": "C2",
+        "reason": "live_not_run"
+      }
+    },
+    "dimensions": {
+      "execution": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Operability": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

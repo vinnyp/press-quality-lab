@@ -1,0 +1,47 @@
+{
+  "id": "case-042",
+  "rules": [
+    "E9b",
+    "E9",
+    "R2",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "comparison": {
+      "result": "not_measured",
+      "rule": "R2",
+      "next_action": "re_anchor",
+      "entries": {
+        "p1": {
+          "class": "not_compared",
+          "rule": "E9b"
+        },
+        "p2": {
+          "class": "improved",
+          "rule": "E9"
+        }
+      },
+      "new": []
+    },
+    "checks": {
+      "p1": {
+        "result": "unobserved",
+        "rule": "P5",
+        "reason": "interval_undecided",
+        "k": 34,
+        "n": 40,
+        "lower": "0.709277",
+        "upper": "0.929388",
+        "to_run": null
+      }
+    }
+  }
+}

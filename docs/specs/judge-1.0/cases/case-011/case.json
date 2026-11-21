@@ -1,0 +1,51 @@
+{
+  "id": "case-011",
+  "rules": [
+    "E10",
+    "P5",
+    "R3",
+    "D4",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "p1": {
+        "result": "unobserved",
+        "rule": "P5",
+        "reason": "interval_undecided",
+        "k": 30,
+        "n": 40,
+        "lower": "0.598060",
+        "upper": "0.858129",
+        "to_run": null
+      }
+    },
+    "comparison": {
+      "result": "not_regressed",
+      "rule": "R3",
+      "next_action": null,
+      "entries": {
+        "p1": {
+          "class": "same",
+          "rule": "E10"
+        }
+      },
+      "new": []
+    },
+    "dimensions": {
+      "steering": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    }
+  }
+}

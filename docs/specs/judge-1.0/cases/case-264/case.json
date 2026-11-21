@@ -1,0 +1,35 @@
+{
+  "id": "case-264",
+  "rules": [
+    "P3",
+    "C7",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "d1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "d2": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 16,
+        "n": 16,
+        "lower": "0.806392",
+        "upper": "1.000000",
+        "to_run": null
+      }
+    }
+  }
+}

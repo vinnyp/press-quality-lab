@@ -1,0 +1,30 @@
+{
+  "id": "case-054",
+  "rules": [
+    "N6",
+    "E3",
+    "V3"
+  ],
+  "side": "refused",
+  "expect": {
+    "outcome": "refused",
+    "exit_code": 5,
+    "own_verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "known-defects",
+      "plain": "known_defect"
+    },
+    "anchor": {
+      "result": "refused",
+      "rule": "N6",
+      "reason": "unaccepted_regression",
+      "checks": [
+        "oc2"
+      ]
+    },
+    "counts": {
+      "xfail": 1,
+      "xpass": 0
+    }
+  }
+}

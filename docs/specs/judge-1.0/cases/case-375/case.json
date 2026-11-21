@@ -1,0 +1,37 @@
+{
+  "id": "case-375",
+  "rules": [
+    "P3",
+    "D7",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 4300,
+        "n": 5212,
+        "lower": "0.814466",
+        "upper": "0.835094",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    }
+  }
+}

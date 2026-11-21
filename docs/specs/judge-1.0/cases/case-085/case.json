@@ -1,0 +1,50 @@
+{
+  "id": "case-085",
+  "rules": [
+    "D5",
+    "C5",
+    "C7",
+    "G4",
+    "V3"
+  ],
+  "side": "known_defect",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 3,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "known-defects",
+      "plain": "known_defect"
+    },
+    "counts": {
+      "xfail": 1,
+      "xpass": 0
+    },
+    "stale_markers": [],
+    "checks": {
+      "oc2": {
+        "result": "failed_expected",
+        "rule": "C5",
+        "reason": null
+      },
+      "oc3": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "output-conformance": {
+        "state": "XFAIL",
+        "rule": "D5",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "KNOWN-DEFECT",
+        "rule": "G4"
+      }
+    }
+  }
+}

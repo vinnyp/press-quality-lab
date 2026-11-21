@@ -1,0 +1,53 @@
+{
+  "id": "case-381",
+  "rules": [
+    "T2",
+    "P4",
+    "D1",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 9,
+        "n": 16,
+        "lower": "0.331786",
+        "upper": "0.769013",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "RED",
+        "rule": "G2"
+      }
+    }
+  }
+}

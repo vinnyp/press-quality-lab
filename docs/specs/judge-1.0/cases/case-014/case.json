@@ -1,0 +1,85 @@
+{
+  "id": "case-014",
+  "rules": [
+    "E11",
+    "K4",
+    "R1",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "comparison": {
+      "result": "regressed",
+      "rule": "R1",
+      "next_action": null,
+      "entries": {
+        "p01": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p02": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p03": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p04": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p05": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p06": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p07": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p08": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p09": {
+          "class": "regressed",
+          "rule": "E11"
+        },
+        "p10": {
+          "class": "regressed",
+          "rule": "E11"
+        }
+      },
+      "new": []
+    },
+    "checks": {
+      "p01": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 88,
+        "n": 100,
+        "lower": "0.801879",
+        "upper": "0.930006",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "GREEN",
+        "rule": "D7"
+      }
+    }
+  }
+}

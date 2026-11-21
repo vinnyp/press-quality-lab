@@ -1,0 +1,62 @@
+{
+  "id": "case-310",
+  "rules": [
+    "P4",
+    "D1",
+    "G2",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 41,
+        "n": 60,
+        "lower": "0.557662",
+        "upper": "0.786941",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      },
+      "execution": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "RED",
+        "rule": "G2"
+      },
+      "Operability": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "G1"
+      }
+    }
+  }
+}

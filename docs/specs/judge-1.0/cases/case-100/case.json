@@ -1,0 +1,60 @@
+{
+  "id": "case-100",
+  "rules": [
+    "D5",
+    "C5",
+    "D2",
+    "G4",
+    "V3"
+  ],
+  "side": "known_defect",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 3,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "known-defects",
+      "plain": "known_defect"
+    },
+    "counts": {
+      "xfail": 2,
+      "xpass": 0
+    },
+    "stale_markers": [],
+    "checks": {
+      "bd3": {
+        "result": "failed_expected",
+        "rule": "C5",
+        "reason": null
+      },
+      "fc3": {
+        "result": "failed_expected",
+        "rule": "C5",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "XFAIL",
+        "rule": "D5",
+        "reason": null
+      },
+      "flag-conformance": {
+        "state": "XFAIL",
+        "rule": "D5",
+        "reason": null
+      },
+      "output-conformance": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "KNOWN-DEFECT",
+        "rule": "G4"
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "case-239",
+  "rules": [
+    "W3",
+    "W2",
+    "D0",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "set_aside_count": 4,
+    "earlier_pools_count": 1,
+    "checks": {
+      "p1": {
+        "result": "out_of_scope",
+        "rule": null
+      }
+    }
+  }
+}

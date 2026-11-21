@@ -1,0 +1,40 @@
+{
+  "id": "case-262",
+  "rules": [
+    "W2",
+    "K4",
+    "P3",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 40,
+        "n": 40,
+        "lower": "0.912378",
+        "upper": "1.000000",
+        "to_run": null
+      }
+    },
+    "set_aside": [
+      {
+        "check_id": "p1",
+        "arm": null,
+        "condition": "c1",
+        "trial_index": 0,
+        "reason": "other_arm"
+      }
+    ]
+  }
+}

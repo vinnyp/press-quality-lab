@@ -1,0 +1,50 @@
+{
+  "id": "case-071",
+  "rules": [
+    "C7",
+    "C8",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "rc1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "cs1": {
+        "result": "held_non_crediting",
+        "rule": "C8",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "response-correctness": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "completeness-signaling": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Correctness": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

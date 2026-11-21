@@ -1,0 +1,72 @@
+{
+  "id": "case-095",
+  "rules": [
+    "D3",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "id1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      },
+      "base:bounding": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      },
+      "idempotency": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      },
+      "destructive-guard": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      },
+      "side-effect-integrity": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      },
+      "flag-conformance": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      },
+      "output-conformance": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "GAPPED",
+        "rule": "G3"
+      },
+      "Safety": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

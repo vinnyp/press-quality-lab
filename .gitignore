@@ -1,0 +1,21 @@
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/bin/
+go.work
+# Python
+__pycache__/
+*.pyc
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Private overlay: local paths and decisions, never published
+AGENTS.private.md

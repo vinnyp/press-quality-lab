@@ -1,0 +1,37 @@
+{
+  "id": "case-376",
+  "rules": [
+    "P4",
+    "D1",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "checks": {
+      "p1": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 2253,
+        "n": 2870,
+        "lower": "0.769612",
+        "upper": "0.799661",
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      }
+    }
+  }
+}

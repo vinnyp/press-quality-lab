@@ -1,0 +1,44 @@
+{
+  "id": "case-037",
+  "rules": [
+    "E7",
+    "R2",
+    "P4",
+    "D1",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "comparison": {
+      "result": "not_measured",
+      "rule": "R2",
+      "next_action": "re_anchor",
+      "entries": {
+        "p1": {
+          "class": "not_compared",
+          "rule": "E7"
+        }
+      },
+      "new": []
+    },
+    "checks": {
+      "p1": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 25,
+        "n": 40,
+        "lower": "0.470324",
+        "upper": "0.757770",
+        "to_run": null
+      }
+    }
+  }
+}

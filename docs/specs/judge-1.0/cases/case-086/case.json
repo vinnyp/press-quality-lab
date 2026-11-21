@@ -1,0 +1,39 @@
+{
+  "id": "case-086",
+  "rules": [
+    "D6",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 1
+    },
+    "stale_markers": [
+      {
+        "record": "r2",
+        "dimension": "output-conformance"
+      },
+      {
+        "record": "r3",
+        "dimension": "output-conformance"
+      }
+    ],
+    "dimensions": {
+      "output-conformance": {
+        "state": "XPASS",
+        "rule": "D6",
+        "reason": null
+      }
+    }
+  }
+}

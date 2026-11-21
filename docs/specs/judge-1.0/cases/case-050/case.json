@@ -1,0 +1,24 @@
+{
+  "id": "case-050",
+  "rules": [
+    "N5"
+  ],
+  "side": "refused",
+  "expect": {
+    "outcome": "refused",
+    "exit_code": 5,
+    "own_verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "anchor": {
+      "result": "refused",
+      "rule": "N5",
+      "reason": "unretired_check",
+      "checks": [
+        "gone1"
+      ]
+    }
+  }
+}

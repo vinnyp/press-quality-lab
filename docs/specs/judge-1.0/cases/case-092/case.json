@@ -1,0 +1,59 @@
+{
+  "id": "case-092",
+  "rules": [
+    "D8",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "UNCOVERED",
+        "rule": "D8",
+        "reason": null
+      },
+      "idempotency": {
+        "state": "UNCOVERED",
+        "rule": "D8",
+        "reason": null
+      },
+      "destructive-guard": {
+        "state": "UNCOVERED",
+        "rule": "D8",
+        "reason": null
+      },
+      "side-effect-integrity": {
+        "state": "UNCOVERED",
+        "rule": "D8",
+        "reason": null
+      },
+      "flag-conformance": {
+        "state": "UNCOVERED",
+        "rule": "D8",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "GAPPED",
+        "rule": "G3"
+      },
+      "Safety": {
+        "state": "GAPPED",
+        "rule": "G3"
+      },
+      "Operability": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "case-044",
+  "rules": [
+    "N4",
+    "N5"
+  ],
+  "side": "refused",
+  "expect": {
+    "outcome": "refused",
+    "exit_code": 5,
+    "own_verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "anchor": {
+      "result": "refused",
+      "rule": "N4",
+      "reason": "stale_marker"
+    }
+  }
+}

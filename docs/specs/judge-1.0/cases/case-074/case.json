@@ -1,0 +1,39 @@
+{
+  "id": "case-074",
+  "rules": [
+    "C6",
+    "D1",
+    "G2",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "checks": {
+      "oc1": {
+        "result": "failed",
+        "rule": "C6",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "output-conformance": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "RED",
+        "rule": "G2"
+      }
+    }
+  }
+}

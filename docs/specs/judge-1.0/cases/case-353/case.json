@@ -1,0 +1,33 @@
+{
+  "id": "case-353",
+  "rules": [
+    "K4",
+    "P3",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "cmp": {
+        "result": "held_crediting",
+        "rule": "K4",
+        "reason": null,
+        "detail": "no_material_change",
+        "d_lo": "-0.045818",
+        "d_hi": "0.045818",
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null
+      }
+    }
+  }
+}

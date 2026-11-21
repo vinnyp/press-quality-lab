@@ -1,0 +1,54 @@
+{
+  "id": "case-096",
+  "rules": [
+    "D3",
+    "C5",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "stale_markers": [],
+    "checks": {
+      "bd3": {
+        "result": "failed_expected",
+        "rule": "C5",
+        "reason": null
+      },
+      "fc3": {
+        "result": "failed_expected",
+        "rule": "C5",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      },
+      "flag-conformance": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

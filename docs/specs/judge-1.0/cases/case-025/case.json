@@ -1,0 +1,94 @@
+{
+  "id": "case-025",
+  "rules": [
+    "E5",
+    "R3",
+    "V3"
+  ],
+  "side": "known_defect",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 3,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "known-defects",
+      "plain": "known_defect"
+    },
+    "comparison": {
+      "result": "not_regressed",
+      "rule": "R3",
+      "next_action": null,
+      "entries": {
+        "base:availability": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:bounding": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:completeness-signaling": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:determinism": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:discoverability": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:error-message-quality": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:execution": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:flag-conformance": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:graceful-failure": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:output-conformance": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:pii-secret-hygiene": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:provenance-honesty": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:response-correctness": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:robustness": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:token-economy": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "oc2": {
+          "class": "same",
+          "rule": "E5"
+        }
+      },
+      "new": []
+    },
+    "counts": {
+      "xfail": 1,
+      "xpass": 0
+    }
+  }
+}

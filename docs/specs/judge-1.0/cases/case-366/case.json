@@ -1,0 +1,72 @@
+{
+  "id": "case-366",
+  "rules": [
+    "P3",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 37,
+        "n": 40,
+        "lower": "0.801358",
+        "upper": "0.974164",
+        "to_run": null
+      },
+      "base:execution": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      },
+      "execution": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "destructive-guard": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "GREEN",
+        "rule": "G5"
+      },
+      "Operability": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

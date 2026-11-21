@@ -1,0 +1,66 @@
+{
+  "id": "case-104",
+  "rules": [
+    "D7",
+    "D0",
+    "K4",
+    "P3",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 40,
+        "n": 40
+      },
+      "cmp1": {
+        "result": "held_crediting",
+        "rule": "K4",
+        "reason": null,
+        "detail": "no_material_change",
+        "d_lo": "-0.087622",
+        "d_hi": "0.087622"
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "destructive-guard": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      },
+      "cli-mcp-parity": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

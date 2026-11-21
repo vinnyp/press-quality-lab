@@ -1,0 +1,67 @@
+{
+  "id": "case-110",
+  "rules": [
+    "D7",
+    "D2",
+    "D0",
+    "G5",
+    "V4",
+    "B1"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "dimensions": {
+      "execution": {
+        "state": "GREEN",
+        "rule": "D7"
+      },
+      "bounding": {
+        "state": "GREEN",
+        "rule": "D7"
+      },
+      "idempotency": {
+        "state": "N/A",
+        "rule": "D2",
+        "reason": null
+      },
+      "destructive-guard": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      },
+      "steering": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      }
+    },
+    "groups": {
+      "Operability": {
+        "state": "GREEN",
+        "rule": "G5"
+      },
+      "Safety": {
+        "state": "GREEN",
+        "rule": "G5"
+      },
+      "Steering": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "G1"
+      }
+    },
+    "comparison": {
+      "result": "none",
+      "rule": "B1",
+      "next_action": null,
+      "entries": {},
+      "new": []
+    }
+  }
+}

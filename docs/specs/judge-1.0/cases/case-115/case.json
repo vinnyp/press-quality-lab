@@ -1,0 +1,32 @@
+{
+  "id": "case-115",
+  "rules": [
+    "W3",
+    "P3",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 16,
+        "n": 16,
+        "lower": "0.806392",
+        "upper": "1.000000",
+        "to_run": null
+      }
+    },
+    "set_aside_count": 30000,
+    "earlier_pools_count": 30000
+  }
+}

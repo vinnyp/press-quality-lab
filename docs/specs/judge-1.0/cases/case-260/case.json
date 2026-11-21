@@ -1,0 +1,12 @@
+{
+  "id": "case-260",
+  "rules": [
+    "X2"
+  ],
+  "side": "rejected",
+  "expect": {
+    "outcome": "rejected",
+    "exit_code": 2,
+    "rejected_by": "X2"
+  }
+}

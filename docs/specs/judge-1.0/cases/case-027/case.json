@@ -1,0 +1,58 @@
+{
+  "id": "case-027",
+  "rules": [
+    "E6",
+    "K1",
+    "R2",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "q1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 40,
+        "n": 40,
+        "lower": "0.912378",
+        "upper": "1.000000",
+        "to_run": null
+      },
+      "cmp": {
+        "result": "unobserved",
+        "rule": "K1",
+        "reason": "trials_short",
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null,
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null
+      }
+    },
+    "comparison": {
+      "result": "not_measured",
+      "rule": "R2",
+      "next_action": "re_anchor",
+      "entries": {
+        "cmp": {
+          "class": "missing",
+          "rule": "E6"
+        }
+      },
+      "new": [
+        "q1"
+      ]
+    }
+  }
+}

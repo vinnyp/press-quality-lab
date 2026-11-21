@@ -1,0 +1,48 @@
+{
+  "id": "case-065",
+  "rules": [
+    "C1",
+    "D4",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "x1": {
+        "result": "unobserved",
+        "rule": "C1",
+        "reason": "no_evidence"
+      },
+      "base:execution": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "execution": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Operability": {
+        "state": "GAPPED",
+        "rule": "G3"
+      },
+      "Correctness": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "id": "case-369",
+  "rules": [
+    "D0",
+    "G1",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "out_of_scope",
+        "rule": null,
+        "reason": null,
+        "detail": null,
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "p2": {
+        "result": "out_of_scope",
+        "rule": null,
+        "reason": null,
+        "detail": null,
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null,
+        "d_lo": null,
+        "d_hi": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      },
+      "tool-description-efficacy": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "live_not_run"
+      },
+      "execution": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "G1"
+      },
+      "Operability": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    },
+    "set_aside_count": 0,
+    "earlier_pools_count": 0
+  }
+}

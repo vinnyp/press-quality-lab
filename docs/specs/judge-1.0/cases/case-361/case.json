@@ -1,0 +1,96 @@
+{
+  "id": "case-361",
+  "rules": [
+    "K4",
+    "P3",
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 95,
+        "n": 100,
+        "lower": "0.888250",
+        "upper": "0.978456",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "p2": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 95,
+        "n": 100,
+        "lower": "0.888250",
+        "upper": "0.978456",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "p3": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 95,
+        "n": 100,
+        "lower": "0.888250",
+        "upper": "0.978456",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "cmp": {
+        "result": "held_crediting",
+        "rule": "K4",
+        "reason": null,
+        "detail": "no_material_change",
+        "d_lo": "-0.036477",
+        "d_hi": "0.036477",
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

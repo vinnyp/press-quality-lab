@@ -1,0 +1,596 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "judge-input.schema.json",
+  "title": "Judge input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request",
+    "scope",
+    "claimed_tier",
+    "subject_facts",
+    "required",
+    "evidence",
+    "trials",
+    "markers",
+    "baseline",
+    "retired",
+    "accepted_regressions"
+  ],
+  "properties": {
+    "request": {
+      "enum": [
+        "grade",
+        "anchor"
+      ]
+    },
+    "scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The parts requested. Legality is rule X1, not the schema."
+    },
+    "claimed_tier": {
+      "enum": [
+        "live",
+        "scripted"
+      ]
+    },
+    "subject_facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "has_destructive_ops",
+        "store_backed",
+        "has_cli",
+        "bounding"
+      ],
+      "properties": {
+        "read_only": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "has_destructive_ops": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "store_backed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "has_cli": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "bounding": {
+          "enum": [
+            "none",
+            "declared",
+            null
+          ]
+        }
+      }
+    },
+    "required": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "dimension",
+          "record",
+          "crediting",
+          "empty_satisfiable",
+          "asserts_emptiness",
+          "precondition",
+          "declared_count",
+          "condition",
+          "condition_a"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "plain",
+              "prompt",
+              "comparison"
+            ]
+          },
+          "dimension": {
+            "enum": [
+              "availability",
+              "execution",
+              "graceful-failure",
+              "robustness",
+              "response-correctness",
+              "determinism",
+              "cli-mcp-parity",
+              "provenance-honesty",
+              "completeness-signaling",
+              "output-conformance",
+              "flag-conformance",
+              "bounding",
+              "discoverability",
+              "error-message-quality",
+              "token-economy",
+              "side-effect-integrity",
+              "idempotency",
+              "destructive-guard",
+              "pii-secret-hygiene",
+              "steering",
+              "tool-description-efficacy"
+            ]
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "crediting": {
+            "type": "boolean"
+          },
+          "empty_satisfiable": {
+            "type": "boolean"
+          },
+          "asserts_emptiness": {
+            "type": "boolean"
+          },
+          "precondition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "declared_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "condition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "condition_a": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "outcome",
+          "reason",
+          "failure_kind",
+          "target_size",
+          "precondition_observed",
+          "tier",
+          "expected",
+          "observed",
+          "targets",
+          "evaluator"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "held",
+              "not_held",
+              "not_observed"
+            ]
+          },
+          "reason": {
+            "enum": [
+              "harness_fault",
+              "could_not_start",
+              "input_missing",
+              "precondition_unmet",
+              "empty_target",
+              "placeholder_unfilled",
+              "computation_failed",
+              "earlier_step_failed",
+              "network_attempted",
+              "network_unverifiable",
+              "live_not_run",
+              "judgement_unverified",
+              null
+            ]
+          },
+          "failure_kind": {
+            "enum": [
+              "predicate",
+              "wrong_exit",
+              "crashed",
+              "over_budget",
+              null
+            ]
+          },
+          "target_size": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "precondition_observed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "offline",
+              "live",
+              "replay",
+              "scripted",
+              "mixed"
+            ]
+          },
+          "expected": {},
+          "observed": {},
+          "targets": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "id",
+                "tier"
+              ],
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "invocation",
+                    "artifact"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "tier": {
+                  "enum": [
+                    "offline",
+                    "live",
+                    "replay",
+                    "scripted"
+                  ]
+                }
+              }
+            }
+          },
+          "evaluator": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "model"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "deterministic",
+                  "model"
+                ]
+              },
+              "model": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "trials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "arm",
+          "condition",
+          "trial_index",
+          "declared_count",
+          "outcome",
+          "errored",
+          "tier",
+          "model",
+          "sampling",
+          "framing",
+          "evaluator",
+          "grade"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string"
+          },
+          "arm": {
+            "enum": [
+              "A",
+              "B",
+              null
+            ]
+          },
+          "condition": {
+            "type": "string"
+          },
+          "trial_index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "declared_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "outcome": {
+            "enum": [
+              "held",
+              "not_held",
+              "not_observed"
+            ]
+          },
+          "errored": {
+            "type": "boolean"
+          },
+          "tier": {
+            "enum": [
+              "offline",
+              "live",
+              "replay",
+              "scripted"
+            ]
+          },
+          "model": {
+            "type": "string"
+          },
+          "sampling": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "framing": {
+            "type": "string"
+          },
+          "evaluator": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "model"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "deterministic",
+                  "model"
+                ]
+              },
+              "model": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "grade": {
+            "enum": [
+              "full",
+              "partial",
+              "none",
+              null
+            ]
+          }
+        }
+      }
+    },
+    "markers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "record",
+          "dimension"
+        ],
+        "properties": {
+          "record": {
+            "type": "string"
+          },
+          "dimension": {
+            "enum": [
+              "availability",
+              "execution",
+              "graceful-failure",
+              "robustness",
+              "response-correctness",
+              "determinism",
+              "cli-mcp-parity",
+              "provenance-honesty",
+              "completeness-signaling",
+              "output-conformance",
+              "flag-conformance",
+              "bounding",
+              "discoverability",
+              "error-message-quality",
+              "token-economy",
+              "side-effect-integrity",
+              "idempotency",
+              "destructive-guard",
+              "pii-secret-hygiene",
+              "steering",
+              "tool-description-efficacy"
+            ]
+          }
+        }
+      }
+    },
+    "baseline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/baseline"
+        }
+      ]
+    },
+    "retired": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "accepted_regressions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entries"
+      ],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "check_id",
+              "kind",
+              "dimension",
+              "result",
+              "rulebook_version",
+              "tier",
+              "condition",
+              "k",
+              "n"
+            ],
+            "properties": {
+              "check_id": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "plain",
+                  "prompt",
+                  "comparison"
+                ]
+              },
+              "dimension": {
+                "enum": [
+                  "availability",
+                  "execution",
+                  "graceful-failure",
+                  "robustness",
+                  "response-correctness",
+                  "determinism",
+                  "cli-mcp-parity",
+                  "provenance-honesty",
+                  "completeness-signaling",
+                  "output-conformance",
+                  "flag-conformance",
+                  "bounding",
+                  "discoverability",
+                  "error-message-quality",
+                  "token-economy",
+                  "side-effect-integrity",
+                  "idempotency",
+                  "destructive-guard",
+                  "pii-secret-hygiene",
+                  "steering",
+                  "tool-description-efficacy"
+                ]
+              },
+              "result": {
+                "enum": [
+                  "held",
+                  "failed"
+                ]
+              },
+              "rulebook_version": {
+                "type": "string"
+              },
+              "tier": {
+                "enum": [
+                  "offline",
+                  "live",
+                  "replay",
+                  "scripted",
+                  "mixed"
+                ]
+              },
+              "condition": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "k": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "n": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

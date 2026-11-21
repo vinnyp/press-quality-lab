@@ -1,0 +1,54 @@
+{
+  "id": "case-108",
+  "rules": [
+    "V2",
+    "G3",
+    "D5",
+    "D4"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "counts": {
+      "xfail": 1,
+      "xpass": 0
+    },
+    "stale_markers": [],
+    "checks": {
+      "oc3": {
+        "result": "failed_expected",
+        "rule": "C5",
+        "reason": null
+      },
+      "fc5": {
+        "result": "unobserved",
+        "rule": "C2",
+        "reason": "harness_fault"
+      }
+    },
+    "dimensions": {
+      "output-conformance": {
+        "state": "XFAIL",
+        "rule": "D5",
+        "reason": null
+      },
+      "flag-conformance": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "id": "case-069",
+  "rules": [
+    "C2",
+    "D4",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "ex9": {
+        "result": "unobserved",
+        "rule": "C2",
+        "reason": "harness_fault"
+      },
+      "tk9": {
+        "result": "held_non_crediting",
+        "rule": "C8",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "execution": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      },
+      "token-economy": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Operability": {
+        "state": "GAPPED",
+        "rule": "G3"
+      },
+      "Usability": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

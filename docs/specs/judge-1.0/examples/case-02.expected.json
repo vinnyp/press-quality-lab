@@ -1,0 +1,18 @@
+{
+  "rulebook_version": "1.0",
+  "outcome": "rejected",
+  "rejected_by": "X1",
+  "exit_code": 2,
+  "scope": null,
+  "verdict": null,
+  "own_verdict": null,
+  "counts": null,
+  "stale_markers": [],
+  "checks": [],
+  "dimensions": [],
+  "groups": [],
+  "comparison": null,
+  "set_aside": [],
+  "earlier_pools": [],
+  "anchor": null
+}

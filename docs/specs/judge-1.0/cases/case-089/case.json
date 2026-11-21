@@ -1,0 +1,30 @@
+{
+  "id": "case-089",
+  "rules": [
+    "D5",
+    "D2",
+    "C5",
+    "V3"
+  ],
+  "side": "known_defect",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 3,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "known-defects",
+      "plain": "known_defect"
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "XFAIL",
+        "rule": "D5",
+        "reason": null
+      }
+    },
+    "counts": {
+      "xfail": 1,
+      "xpass": 0
+    }
+  }
+}

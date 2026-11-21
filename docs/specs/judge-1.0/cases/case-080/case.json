@@ -1,0 +1,50 @@
+{
+  "id": "case-080",
+  "rules": [
+    "D1",
+    "C5",
+    "C6",
+    "G2",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "stale_markers": [],
+    "checks": {
+      "oc3": {
+        "result": "failed_expected",
+        "rule": "C5",
+        "reason": null
+      },
+      "oc5": {
+        "result": "failed",
+        "rule": "C6",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "output-conformance": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "RED",
+        "rule": "G2"
+      }
+    }
+  }
+}

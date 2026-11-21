@@ -1,0 +1,44 @@
+{
+  "id": "case-105",
+  "rules": [
+    "D7",
+    "C7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "dg1": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "destructive-guard": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "cli-mcp-parity": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      }
+    },
+    "groups": {
+      "Safety": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

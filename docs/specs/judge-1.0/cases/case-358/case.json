@@ -1,0 +1,97 @@
+{
+  "id": "case-358",
+  "rules": [
+    "K4",
+    "P4",
+    "D1",
+    "D7",
+    "G2",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "p1": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 50,
+        "n": 100,
+        "lower": "0.403832",
+        "upper": "0.596168",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "p2": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 50,
+        "n": 100,
+        "lower": "0.403832",
+        "upper": "0.596168",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "p3": {
+        "result": "failed",
+        "rule": "P4",
+        "reason": null,
+        "k": 50,
+        "n": 100,
+        "lower": "0.403832",
+        "upper": "0.596168",
+        "to_run": null,
+        "detail": null,
+        "d_lo": null,
+        "d_hi": null
+      },
+      "cmp": {
+        "result": "held_crediting",
+        "rule": "K4",
+        "reason": null,
+        "detail": "no_material_change",
+        "d_lo": "-0.079508",
+        "d_hi": "0.079508",
+        "k": null,
+        "n": null,
+        "lower": null,
+        "upper": null,
+        "to_run": null
+      }
+    },
+    "dimensions": {
+      "steering": {
+        "state": "RED",
+        "rule": "D1",
+        "reason": null
+      },
+      "tool-description-efficacy": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Steering": {
+        "state": "RED",
+        "rule": "G2"
+      }
+    }
+  }
+}

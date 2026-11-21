@@ -1,0 +1,43 @@
+{
+  "id": "case-012",
+  "rules": [
+    "E10",
+    "P3",
+    "R3",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "checks": {
+      "p1": {
+        "result": "held_crediting",
+        "rule": "P3",
+        "reason": null,
+        "k": 39,
+        "n": 40,
+        "lower": "0.871186",
+        "upper": "0.995573",
+        "to_run": null
+      }
+    },
+    "comparison": {
+      "result": "not_regressed",
+      "rule": "R3",
+      "next_action": null,
+      "entries": {
+        "p1": {
+          "class": "same",
+          "rule": "E10"
+        }
+      },
+      "new": []
+    }
+  }
+}

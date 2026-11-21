@@ -1,0 +1,33 @@
+{
+  "id": "case-169",
+  "rules": [
+    "C3",
+    "X12",
+    "D4",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "x1": {
+        "result": "unobserved",
+        "rule": "C3",
+        "reason": "empty_target"
+      }
+    },
+    "dimensions": {
+      "execution": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    }
+  }
+}

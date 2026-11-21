@@ -1,0 +1,106 @@
+{
+  "id": "case-022",
+  "rules": [
+    "E3",
+    "R1",
+    "V1"
+  ],
+  "side": "red",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 1,
+    "verdict": {
+      "token": "FAILED",
+      "sub_label": null,
+      "plain": "red"
+    },
+    "comparison": {
+      "result": "regressed",
+      "rule": "R1",
+      "next_action": null,
+      "entries": {
+        "base:availability": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:bounding": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:completeness-signaling": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:determinism": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:discoverability": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:error-message-quality": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:execution": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:flag-conformance": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:graceful-failure": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:output-conformance": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:pii-secret-hygiene": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:provenance-honesty": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:response-correctness": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:robustness": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "base:token-economy": {
+          "class": "same",
+          "rule": "E5"
+        },
+        "oc2": {
+          "class": "regressed",
+          "rule": "E3"
+        }
+      },
+      "new": []
+    },
+    "counts": {
+      "xfail": 1,
+      "xpass": 0
+    },
+    "checks": {
+      "oc2": {
+        "result": "failed_expected",
+        "rule": "C5"
+      }
+    },
+    "dimensions": {
+      "output-conformance": {
+        "state": "XFAIL",
+        "rule": "D5"
+      }
+    }
+  }
+}

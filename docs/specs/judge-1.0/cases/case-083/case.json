@@ -1,0 +1,30 @@
+{
+  "id": "case-083",
+  "rules": [
+    "D3",
+    "C5",
+    "D5",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      }
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    }
+  }
+}

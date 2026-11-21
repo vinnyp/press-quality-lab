@@ -1,0 +1,34 @@
+{
+  "id": "case-034",
+  "rules": [
+    "E7",
+    "R2",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "comparison": {
+      "result": "not_measured",
+      "rule": "R2",
+      "next_action": "re_anchor",
+      "entries": {
+        "p1": {
+          "class": "not_compared",
+          "rule": "E7"
+        },
+        "p2": {
+          "class": "same",
+          "rule": "E10"
+        }
+      },
+      "new": []
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "case-033",
+  "rules": [
+    "E10",
+    "R3",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "comparison": {
+      "result": "not_regressed",
+      "rule": "R3",
+      "next_action": null,
+      "entries": {
+        "p1": {
+          "class": "same",
+          "rule": "E10"
+        }
+      },
+      "new": []
+    }
+  }
+}

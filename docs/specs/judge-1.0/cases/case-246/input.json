@@ -1,0 +1,89 @@
+{
+  "request": "grade",
+  "scope": [
+    "steering"
+  ],
+  "claimed_tier": "live",
+  "subject_facts": {
+    "read_only": true,
+    "has_destructive_ops": false,
+    "store_backed": false,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "required": [
+    {
+      "id": "s",
+      "kind": "prompt",
+      "dimension": "steering",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": 16,
+      "condition": "c1",
+      "condition_a": null
+    },
+    {
+      "id": "s",
+      "kind": "prompt",
+      "dimension": "steering",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": 16,
+      "condition": "c2",
+      "condition_a": null
+    }
+  ],
+  "evidence": [],
+  "trials": [
+    {
+      "check_id": "s",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 0,
+      "declared_count": 16,
+      "outcome": "held",
+      "errored": false,
+      "tier": "live",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    },
+    {
+      "check_id": "s",
+      "arm": null,
+      "condition": "c1",
+      "trial_index": 1,
+      "declared_count": 16,
+      "outcome": "held",
+      "errored": false,
+      "tier": "scripted",
+      "model": "m1",
+      "sampling": {
+        "temperature": 0
+      },
+      "framing": "f1",
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      },
+      "grade": null
+    }
+  ],
+  "markers": [],
+  "baseline": null,
+  "retired": [],
+  "accepted_regressions": []
+}

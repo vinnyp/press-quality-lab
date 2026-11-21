@@ -1,0 +1,48 @@
+{
+  "id": "case-201",
+  "rules": [
+    "C3",
+    "D4",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "checks": {
+      "rc1": {
+        "result": "unobserved",
+        "rule": "C3",
+        "reason": "empty_target"
+      },
+      "base:response-correctness": {
+        "result": "held_crediting",
+        "rule": "C7",
+        "reason": null
+      }
+    },
+    "dimensions": {
+      "response-correctness": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Correctness": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

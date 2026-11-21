@@ -1,0 +1,33 @@
+{
+  "id": "case-081",
+  "rules": [
+    "D3",
+    "D4",
+    "C2",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "bd-u": {
+        "result": "unobserved",
+        "rule": "C2",
+        "reason": "harness_fault"
+      }
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "HARNESS",
+        "rule": "D3",
+        "reason": "placeholder_unfilled"
+      }
+    }
+  }
+}

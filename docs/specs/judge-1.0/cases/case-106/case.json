@@ -1,0 +1,36 @@
+{
+  "id": "case-106",
+  "rules": [
+    "D8",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "dimensions": {
+      "destructive-guard": {
+        "state": "UNCOVERED",
+        "rule": "D8",
+        "reason": null
+      },
+      "cli-mcp-parity": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      }
+    },
+    "groups": {
+      "Safety": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

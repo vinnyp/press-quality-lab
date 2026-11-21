@@ -1,0 +1,60 @@
+{
+  "id": "case-091",
+  "rules": [
+    "D7",
+    "G5",
+    "V4"
+  ],
+  "side": "green",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 0,
+    "verdict": {
+      "token": "PASSED",
+      "sub_label": null,
+      "plain": "green"
+    },
+    "dimensions": {
+      "bounding": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "idempotency": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "destructive-guard": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "side-effect-integrity": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "flag-conformance": {
+        "state": "GREEN",
+        "rule": "D7",
+        "reason": null
+      },
+      "cli-mcp-parity": {
+        "state": "OUT-OF-SCOPE",
+        "rule": "D0",
+        "reason": "scope_not_requested"
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "GREEN",
+        "rule": "G5"
+      },
+      "Safety": {
+        "state": "GREEN",
+        "rule": "G5"
+      }
+    }
+  }
+}

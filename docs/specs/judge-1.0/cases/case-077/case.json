@@ -1,0 +1,53 @@
+{
+  "id": "case-077",
+  "rules": [
+    "C4",
+    "D4",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "rb1": {
+        "result": "unobserved",
+        "rule": "C4",
+        "reason": "precondition_unmet"
+      },
+      "pi1": {
+        "result": "unobserved",
+        "rule": "C4",
+        "reason": "precondition_unmet"
+      }
+    },
+    "dimensions": {
+      "robustness": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      },
+      "pii-secret-hygiene": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Operability": {
+        "state": "GAPPED",
+        "rule": "G3"
+      },
+      "Safety": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}

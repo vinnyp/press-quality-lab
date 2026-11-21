@@ -1,0 +1,53 @@
+{
+  "id": "case-067",
+  "rules": [
+    "C2",
+    "D4",
+    "G3",
+    "V2"
+  ],
+  "side": "not_measured",
+  "expect": {
+    "outcome": "verdict",
+    "exit_code": 4,
+    "verdict": {
+      "token": "PROVISIONAL",
+      "sub_label": "gaps",
+      "plain": "not_measured"
+    },
+    "checks": {
+      "oc1": {
+        "result": "unobserved",
+        "rule": "C2",
+        "reason": "empty_target"
+      },
+      "gf1": {
+        "result": "unobserved",
+        "rule": "C2",
+        "reason": "precondition_unmet"
+      }
+    },
+    "dimensions": {
+      "output-conformance": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      },
+      "graceful-failure": {
+        "state": "HARNESS",
+        "rule": "D4",
+        "reason": null
+      }
+    },
+    "groups": {
+      "Conformance": {
+        "state": "GAPPED",
+        "rule": "G3"
+      },
+      "Operability": {
+        "state": "GAPPED",
+        "rule": "G3"
+      }
+    }
+  }
+}
