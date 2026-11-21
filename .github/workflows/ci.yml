@@ -1,0 +1,71 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: 1.27.3
+          cache: false
+      - name: Prepare tools and modules
+        run: |
+          GOBIN="$HOME/.gate-tools/go/bin" go install honnef.co/go/tools/cmd/staticcheck@v0.8.2
+          GOBIN="$HOME/.gate-tools/go/bin" go install github.com/kisielk/errcheck@v1.30.0
+          GOBIN="$HOME/.gate-tools/go/bin" go install github.com/nishanths/exhaustive/cmd/exhaustive@v0.17.1
+          go mod download
+      - run: ./gate.sh
+  cases:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: 1.27.3
+          cache: false
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+      - name: Prepare tools and modules
+        run: |
+          GOBIN="$HOME/.gate-tools/go/bin" go install honnef.co/go/tools/cmd/staticcheck@v0.8.2
+          GOBIN="$HOME/.gate-tools/go/bin" go install github.com/kisielk/errcheck@v1.30.0
+          GOBIN="$HOME/.gate-tools/go/bin" go install github.com/nishanths/exhaustive/cmd/exhaustive@v0.17.1
+          go mod download
+      - run: ./check.sh
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install gitleaks
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl --fail --location --output "$RUNNER_TEMP/gitleaks.tar.gz" https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum -c
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP/bin" gitleaks
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Scan tracked files and commits
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_HEAD: ${{ github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == pull_request ]]; then
+            export SCAN_COMMITS="$PR_BASE..$PR_HEAD"
+          elif [[ -n "$PUSH_BEFORE" && ! "$PUSH_BEFORE" =~ ^0+$ ]]; then
+            export SCAN_COMMITS="$PUSH_BEFORE..$PUSH_HEAD"
+          fi
+          ./scan.sh

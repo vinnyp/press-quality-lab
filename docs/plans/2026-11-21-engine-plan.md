@@ -71,7 +71,7 @@ Three rules hold the shape together:
 2. **The judge owns its own JSON reading and writing.** Go's standard decoder does not report repeated keys, does not keep a number's written form, and has no depth limit of the kind the contract sets. The judge has a small strict reader for the contract's input rules and a writer for its exact output form. Number comparison is exact decimal, as the rulebook requires, with no floating-point step.
 3. **Every closed list in the rulebook is a Go type with named constants,** so the `exhaustive` check in the gate flags a `switch` that misses one.
 
-Dependencies are kept to the standard library unless the collection specification shows a need. The gate runs with the network off, so every dependency is a deliberate, reviewed addition.
+Cobra (`github.com/spf13/cobra`) is the approved command framework, under `cmd/` only. Everything else is kept to the standard library unless the collection specification shows a need. The gate runs with the network off, so every dependency is a deliberate, reviewed addition.
 
 ## 5. Phases
 

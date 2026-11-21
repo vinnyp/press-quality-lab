@@ -6,7 +6,7 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 
 - `docs/plans/`: plans. Start with `2026-11-21-engine-plan.md`: the goal, the milestone, the phases and what is not yet specified.
 - `docs/specs/`: specifications. `judge-1.0/` is the judge specification, version 1.0.
-- The engine's command is `pql`. No engine code exists yet; the plan's §4 gives the intended package layout.
+- The engine's command is `pql`, under `cmd/pql`; the plan's §4 gives the intended package layout.
 
 ## Specifications are the authority
 
@@ -40,7 +40,22 @@ Test subjects in this repository are synthetic.
 
 ## Checks
 
-The plan's phase 0 adds one gate that CI runs on every pull request: the Go build and lints at pinned versions with the network off, the project's tests, the published specification cases run against the built judge, and a scan for secrets and personal paths. Until it lands, a change to anything under `docs/specs/judge-1.0/` must leave its digest file verifying:
+`gate.sh` runs the Go build, lints and tests with pinned tools and the network off.
+`gate.sh` uses the `go` first on PATH and requires go1.27.3 (`GOTOOLCHAIN=local`), so machines with a newer Go must put go1.27.3 first on PATH.
+`check.sh` runs the gate, builds the binary, verifies the kit digest and file set, and runs the published cases.
+`scan.sh` checks tracked files and an optional commit range for home paths, emails and secrets with gitleaks.
+Only noreply@anthropic.com and addresses at `users.noreply.github.com` are allowed emails.
+The `ci` workflow runs three jobs: `gate`, `cases` and `scan`. The `cases` job stays red until the judge lands.
+
+Install the pinned tools once, then run `go mod download`:
+
+```sh
+GOBIN="$HOME/.gate-tools/go/bin" go install honnef.co/go/tools/cmd/staticcheck@v0.8.2
+GOBIN="$HOME/.gate-tools/go/bin" go install github.com/kisielk/errcheck@v1.30.0
+GOBIN="$HOME/.gate-tools/go/bin" go install github.com/nishanths/exhaustive/cmd/exhaustive@v0.17.1
+```
+
+The sealed specification digest must keep verifying:
 
     cd docs/specs/judge-1.0 && shasum -a 256 -c KIT.sha256
 
@@ -50,7 +65,7 @@ Run Python there with `PYTHONDONTWRITEBYTECODE=1`; a stray file makes the case r
 
 - Test the rules, not only the given cases. A test must fail when the rule it guards is broken; check that by breaking the rule.
 - A check that could not evaluate its subject never reports a pass.
-- Dependencies beyond the Go standard library are a deliberate, reviewed addition. The gate runs with the network off.
+- Cobra (`github.com/spf13/cobra`) is the approved command framework, used under `cmd/` only. The import-guard test enforces this. Any other dependency beyond the standard library is a deliberate, reviewed addition. The gate runs with the network off.
 
 ## Review
 
