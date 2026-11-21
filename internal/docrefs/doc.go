@@ -1,3 +1,4 @@
-// Package docrefs holds the test that keeps every requirement and acceptance-example
-// number cited under docs/ resolvable to exactly one entry in docs/requirements.md.
+// Package docrefs checks citations throughout docs, pins requirement and
+// acceptance-example entries, and preserves actor and flow ids. Its filesystem
+// fixtures exercise traversal and reporting; live coverage floors guard the walk.
 package docrefs

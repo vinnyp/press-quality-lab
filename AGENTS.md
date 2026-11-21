@@ -6,7 +6,7 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 
 - `docs/plans/`: plans. Start with `2026-11-21-engine-plan.md`: the goal, the milestone, the phases and what is not yet specified.
 - `docs/specs/`: specifications. `judge-1.0/` is the judge specification, version 1.0.
-- `docs/requirements.md`: the requirements (R1 to R42) and acceptance examples (AE1 to AE36) that the specifications cite. Their numbers and wording do not change.
+- `docs/requirements.md`: the requirements (R1 to R42) and acceptance examples (AE1 to AE36) that the specifications cite. Their numbers and wording do not change, and actors A1 to A4 and flows F1 to F5 keep their ids.
 - The engine's command is `pql`, under `cmd/pql`; the plan's §4 gives the intended package layout.
 - `docs/solutions/`: documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`).
 
