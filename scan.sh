@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+PINNED_GITLEAKS=8.30.1
+fail() { echo "SCAN FAILED: $1" >&2; exit 1; }
+trap 'fail "command failed (exit $?)"' ERR
+for tool in git gitleaks python3 mktemp tar; do
+ command -v "$tool" >/dev/null || fail "$tool not found on PATH"
+done
+git rev-parse --is-inside-work-tree >/dev/null || fail 'not inside a git work tree'
+cd "$(git rev-parse --show-toplevel)"
+[[ "$(gitleaks version)" == "$PINNED_GITLEAKS" ]] || fail "gitleaks must be $PINNED_GITLEAKS"
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/pql-scan.XXXXXX")"
+[[ -n "$tmp" ]] || fail 'empty temporary directory'
+trap 'rm -rf "$tmp"' EXIT
+mkdir "$tmp/files"
+git ls-files -z > "$tmp/tracked"
+[[ -s "$tmp/tracked" ]] || fail 'git ls-files listed no files'
+if [[ -n "${SCAN_COMMITS:-}" ]]; then
+ [[ "$SCAN_COMMITS" == *..* && "$SCAN_COMMITS" != *...* ]] || fail 'SCAN_COMMITS must be base..head'
+ git log --format=%B "$SCAN_COMMITS" -- > "$tmp/messages" || fail 'invalid commit range'
+fi
+python3 - "$tmp" <<'PY' || fail 'home path or email address found (see lines above)'
+import pathlib, re, sys
+scratch = pathlib.Path(sys.argv[1])
+home = re.compile(r'/Use[r]s/[^/\s]+|/ho[m]e/[^/\s]+|/roo[t]/|[A-Za-z]:[\\/]Use[r]s[\\/][^\\/\s]+', re.I)
+email = re.compile(r'[A-Za-z0-9.!#$%&\x27*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,}')
+allowed = re.compile(r'(?:noreply@anthropic[.]com|[^@]+@users[.]noreply[.]github[.]com)\Z')
+hits = False
+paths = [pathlib.Path(p.decode()) for p in (scratch / 'tracked').read_bytes().split(b'\0') if p]
+for path in paths + ([scratch / 'messages'] if (scratch / 'messages').exists() else []):
+    label = 'commit-messages' if path == scratch / 'messages' else str(path)
+    for number, line in enumerate(path.read_bytes().decode('utf-8', errors='replace').splitlines(), 1):
+        if home.search(line):
+            print(f'{label}:{number}: home path')
+            hits = True
+        if any(not allowed.fullmatch(m.group()) for m in email.finditer(line)):
+            print(f'{label}:{number}: email')
+            hits = True
+sys.exit(hits)
+PY
+tar --null -T "$tmp/tracked" -cf "$tmp/tracked.tar"
+tar -xf "$tmp/tracked.tar" -C "$tmp/files"
+leaks() {
+ local rc=0
+ gitleaks "$@" --report-format json --report-path "$tmp/leaks.json" || rc=$?
+ if [[ "$rc" != 0 ]]; then
+  if [[ -f "$tmp/leaks.json" ]]; then
+   python3 - "$tmp/leaks.json" "$tmp/files/" <<'PYREPORT'
+import json, os, sys
+for hit in json.load(open(sys.argv[1])):
+    path = os.path.relpath(os.path.normpath(hit['File']), os.path.normpath(sys.argv[2]))
+    print(f"{path}:{hit['StartLine']}: secret")
+PYREPORT
+  fi
+  fail "gitleaks scan failed (exit $rc)"
+ fi
+}
+leaks dir --no-banner --redact --exit-code 1 "$tmp/files"
+if [[ -n "${SCAN_COMMITS:-}" ]]; then
+ leaks git --no-banner --redact --exit-code 1 --log-opts="$SCAN_COMMITS" .
+fi
+echo 'SCAN PASSED'
