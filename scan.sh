@@ -17,14 +17,32 @@ git ls-files -z > "$tmp/tracked"
 [[ -s "$tmp/tracked" ]] || fail 'git ls-files listed no files'
 if [[ -n "${SCAN_COMMITS:-}" ]]; then
  [[ "$SCAN_COMMITS" == *..* && "$SCAN_COMMITS" != *...* ]] || fail 'SCAN_COMMITS must be base..head'
+ git rev-list "$SCAN_COMMITS" -- > "$tmp/commits" || fail 'invalid commit range'
+ [[ -s "$tmp/commits" ]] || fail 'SCAN_COMMITS matched no commits'
  git log --format=%B "$SCAN_COMMITS" -- > "$tmp/messages" || fail 'invalid commit range'
 fi
 python3 - "$tmp" <<'PY' || fail 'home path or email address found (see lines above)'
 import pathlib, re, sys
 scratch = pathlib.Path(sys.argv[1])
-home = re.compile(r'/Use[r]s/[^/\s]+|/ho[m]e/[^/\s]+|/roo[t]/|[A-Za-z]:[\\/]Use[r]s[\\/][^\\/\s]+', re.I)
+home = re.compile(r'/Use[r]s/[^/\s]+|/ho[m]e/[^/\s]+|/roo[t](?:/|\b)|(?i:[A-Za-z]:(?:\\+|/)Use[r]s(?:\\+|/)[^\\/\s"]+)')
 email = re.compile(r'[A-Za-z0-9.!#$%&\x27*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,}')
 allowed = re.compile(r'(?:noreply@anthropic[.]com|[^@]+@users[.]noreply[.]github[.]com)\Z')
+# Split fixtures so the scanner does not flag its own synthetic examples.
+for case, expected in [
+    ('/Use' + 'rs/alice/x', True), ('/ho' + 'me/alice', True),
+    ('/roo' + 't/.ssh', True), ('C:' + '\\' + 'Users' + '\\' + 'alice', True),
+    ('C:' + '\\\\' + 'Users' + '\\\\' + 'alice', True),
+    ('c:/' + 'users/alice', True),
+    ('https://api.example.com/users/123', False), ('/homepage', False), ('/rooted', False),
+]:
+    if bool(home.search(case)) != expected:
+        sys.exit(f'self-test failed: {case}')
+for case, expected in [
+    ('noreply' + '@' + 'anthropic.com', False), ('x' + '@' + 'users.noreply.github.com', False),
+    ('a' + '@' + 'b.io', True), ('noreply' + '@' + 'anthropic.com.evil.io', True),
+]:
+    if any(not allowed.fullmatch(m.group()) for m in email.finditer(case)) != expected:
+        sys.exit(f'self-test failed: {case}')
 hits = False
 paths = [pathlib.Path(p.decode()) for p in (scratch / 'tracked').read_bytes().split(b'\0') if p]
 for path in paths + ([scratch / 'messages'] if (scratch / 'messages').exists() else []):
@@ -42,13 +60,18 @@ tar --null -T "$tmp/tracked" -cf "$tmp/tracked.tar"
 tar -xf "$tmp/tracked.tar" -C "$tmp/files"
 leaks() {
  local rc=0
+ rm -f "$tmp/leaks.json"
  gitleaks "$@" --report-format json --report-path "$tmp/leaks.json" || rc=$?
  if [[ "$rc" != 0 ]]; then
   if [[ -f "$tmp/leaks.json" ]]; then
    python3 - "$tmp/leaks.json" "$tmp/files/" <<'PYREPORT'
 import json, os, sys
 for hit in json.load(open(sys.argv[1])):
-    path = os.path.relpath(os.path.normpath(hit['File']), os.path.normpath(sys.argv[2]))
+    path = hit['File']
+    normalized = os.path.abspath(path)
+    base = os.path.abspath(sys.argv[2])
+    if os.path.commonpath([normalized, base]) == base:
+        path = os.path.relpath(normalized, base)
     print(f"{path}:{hit['StartLine']}: secret")
 PYREPORT
   fi

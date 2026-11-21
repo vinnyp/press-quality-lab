@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 // Rulebook §8 reserves these codes for judge verdicts.
@@ -17,10 +19,20 @@ func TestRun(t *testing.T) {
 		args []string
 		code int
 	}{
-		{"judge", []string{"judge"}, 70}, {"unknown command", []string{"bogus"}, 64},
-		{"root flag", []string{"--bogus"}, 64}, {"judge flag", []string{"judge", "--bogus"}, 64},
-		{"positional", []string{"judge", "extra-arg"}, 64}, {"bare", nil, 64},
-		{"help flag", []string{"--help"}, 0}, {"judge help", []string{"judge", "--help"}, 0}, {"help", []string{"help"}, 0},
+		{"judge", []string{"judge"}, 70},
+		{"unknown command", []string{"bogus"}, 64},
+		{"root flag", []string{"--bogus"}, 64},
+		{"judge flag", []string{"judge", "--bogus"}, 64},
+		{"positional", []string{"judge", "extra-arg"}, 64},
+		{"bare", nil, 64},
+		{"help flag", []string{"--help"}, 0},
+		{"judge help", []string{"judge", "--help"}, 0},
+		{"help", []string{"help"}, 0},
+		{"unknown help", []string{"help", "bogus"}, 64},
+		{"extra help argument", []string{"help", "judge", "extra"}, 64},
+		{"help judge", []string{"help", "judge"}, 0},
+		{"completion", []string{cobra.ShellCompRequestCmd, ""}, 64},
+		{"completion without descriptions", []string{cobra.ShellCompNoDescRequestCmd, ""}, 64},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -56,7 +68,8 @@ func TestProcessExit(t *testing.T) {
 	for _, tt := range []struct {
 		arg  string
 		code int
-	}{{"judge", 70}, {"bogus", 64}} {
+	}{{"judge", 70},
+		{"bogus", 64}} {
 		t.Run(tt.arg, func(t *testing.T) {
 			var out, diagnostic bytes.Buffer
 			cmd := exec.Command(binary, tt.arg)

@@ -41,6 +41,7 @@ Test subjects in this repository are synthetic.
 ## Checks
 
 `gate.sh` runs the Go build, lints and tests with pinned tools and the network off.
+`gate.sh` uses the `go` first on PATH and requires go1.27.3 (`GOTOOLCHAIN=local`), so machines with a newer Go must put go1.27.3 first on PATH.
 `check.sh` runs the gate, builds the binary, verifies the kit digest and file set, and runs the published cases.
 `scan.sh` checks tracked files and an optional commit range for home paths, emails and secrets with gitleaks.
 Only noreply@anthropic.com and addresses at `users.noreply.github.com` are allowed emails.

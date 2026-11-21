@@ -24,6 +24,7 @@ var errNotImplemented = errors.New("judge: not implemented")
 
 func main() { os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
+// stdout is reserved for the judge's output document; nothing else writes to it.
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root := &cobra.Command{
 		Use: "pql", Short: "Measure agent-facing command-line tools",
@@ -51,6 +52,33 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		},
 		RunE: func(_ *cobra.Command, _ []string) error { return errNotImplemented },
 	})
+	root.SetHelpCommand(&cobra.Command{
+		Use: "help [command]", Short: "Help about any command",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) > 1 {
+				return &usageError{errors.New("help accepts at most one argument")}
+			}
+			return nil
+		},
+		RunE: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return root.Help()
+			}
+			for _, command := range root.Commands() {
+				if command.Name() == args[0] {
+					return command.Help()
+				}
+			}
+			return &usageError{fmt.Errorf("unknown help topic %q", args[0])}
+		},
+	})
+	// Completion machinery is a public surface the owner has not decided to add.
+	if len(args) > 0 && (args[0] == cobra.ShellCompRequestCmd || args[0] == cobra.ShellCompNoDescRequestCmd) {
+		if _, err := fmt.Fprintf(stderr, "pql: unknown command %q\nRun 'pql --help' for usage.\n", args[0]); err != nil {
+			return exitSoftware
+		}
+		return exitUsage
+	}
 	root.SetArgs(args)
 	err := root.Execute()
 	if err == nil {

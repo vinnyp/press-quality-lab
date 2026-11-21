@@ -22,7 +22,7 @@ need python3
 from pathlib import Path
 import sys
 expected = {line.split(None, 1)[1].lstrip('*') for line in Path('KIT.sha256').read_text().splitlines()}
-actual = {str(p) for p in Path('.').rglob('*') if p.is_file() and str(p) != 'KIT.sha256'}
+actual = {str(p) for p in Path('.').rglob('*') if (p.is_file() or p.is_symlink()) and str(p) != 'KIT.sha256'}
 for name in sorted(actual - expected):
     print(f'unlisted file: {name}', file=sys.stderr)
 for name in sorted(expected - actual):
