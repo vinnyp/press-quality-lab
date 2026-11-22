@@ -59,6 +59,7 @@ Blocking the network is therefore not evidence that no request was attempted.
 - **One strict JSON subject file.** It needs no dependency. Governs CR8, CR9. (session-settled: user-directed — chosen over TOML, YAML and Markdown: the judge's input rules apply directly and no second grammar is needed.)
 - **A computation is any executable.** It keeps `pql` a single binary. Governs CR34, CR35, CR39. (session-settled: user-directed — chosen over built-in operations, a values file and a Python contract: users bring any language without adding a runtime to the engine.)
 - **A computation has its own confinement.** R16 governs the subject, and ordinary scripts need child processes. Governs CR35, CR36, CR37. (session-settled: user-approved — chosen over the subject's no-child rule: that rule kills an ordinary shell pipeline.)
+- **A computation's process group is ended, and the escape is a stated limit.** macOS cannot refuse a child that leaves its group through `posix_spawn` without also refusing that call. Governs CR35. (session-settled: user-directed — chosen over tracking processes by their sandbox or forbidding `posix_spawn`: the first relies on a private call that can kill unrelated processes, and the second breaks Python, Node, `xargs` and `system()`.)
 - **The CLI agreeing with itself can fail but cannot earn green.** Green needs a known answer. Governs CR32, CR33, CR37. (session-settled: user-directed — chosen over crediting agreement or banning self-checks: two commands can share a bug, and a disagreement is still worth reporting.)
 - **Every grade runs on a seeded throwaway copy.** Known answers need known data. Governs CR14, CR15, CR16, CR17. (session-settled: user-directed — chosen over a snapshot or the real store: results must repeat and real data must not be touched.)
 - **The subject file can declare how to run offline.** Live-first CLIs would otherwise have no measurable reads. Governs CR13. (session-settled: user-approved — chosen over default invocations only: those reads attempt the network and are all not-measured.)
@@ -215,7 +216,7 @@ flowchart TB
 - CR32. Every observed value comes from the engine running the subject's binary under its confinement.
 - CR33. A check whose expected value uses the subject's captured output is non-crediting, as fixed from its declared inputs before collection.
 - CR34. An expected value is a literal or the one JSON value printed by a user's executable, which is named as an argument list and run without a shell.
-- CR35. A computation runs with no network and a time budget, may start child processes, and has every descendant ended with it.
+- CR35. A computation runs with no network and a time budget, may start child processes, is killed on `setsid` or `setpgid` in the process that calls it, and has its whole process group ended with it. The specification states that a child which leaves the group through `posix_spawn` escapes that ending and stays in the computation's confinement.
 - CR36. A computation cannot execute or read the subject's binary or be given a file with the same content, and the specification states that any other copy escapes this.
 - CR37. A computation receives only the pristine seed and the captured outputs its check declares, never the subject's used home.
 - CR64. A computation can read file contents only from its executable and declared files, system paths and what CR37 gives it, and can write only to its own scratch directory, never to the seed.
@@ -407,7 +408,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 
 ## Planning Contract
 
-**Product Contract preservation:** changed: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
+**Product Contract preservation:** changed: CR35 amended on 2026-11-22, after the spike showed that not every descendant can be ended and the owner chose the stated limit. Earlier: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
 
 ### Key Technical Decisions
 
@@ -633,6 +634,7 @@ Waits on: nothing.
   - Covers CAE19. A nested parent, an unparsable profile and a profile with its kill removed each fail the self-test and are never counted as a subject exit.
   - Covers CAE20. A path holding profile syntax grants nothing.
   - Covers CAE6. A computation's pipeline returns the right value, and its attempt to execute or read the subject fails.
+  - A computation's `setsid` or `setpgid` is killed, a child left in its group is ended with it, and a child that left through `posix_spawn` is recorded as the limit and is still confined.
   - A lookup of each system service outside the allow-list is killed, from a subject and from a computation.
   - Covers CAE31. A loopback bind and a listen are each killed.
   - The self-test's programs fail only for the operation each tests, under the subject's profile and the computation's.
