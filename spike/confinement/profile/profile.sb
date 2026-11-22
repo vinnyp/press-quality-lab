@@ -1,0 +1,44 @@
+(version 1)
+(deny default (with send-signal SIGKILL))
+; clean: dynamic loader and C runtime startup.
+(allow process-exec* (literal (param "LAUNCHER")) (literal (param "BIN")))
+; clean: dynamic loader host setup.
+(allow mach-priv-host-port)
+; clean: dynamic loader resolves this named sysctl.
+(allow sysctl-write (sysctl-name "kern.bootargs"))
+; clean: dynamic loader resolves this named sysctl.
+(allow sysctl-write (sysctl-name "kern.iossupportversion"))
+; clean: dynamic loader resolves this named sysctl.
+(allow sysctl-write (sysctl-name "kern.osproductversion"))
+; clean: dynamic loader resolves this named sysctl.
+(allow sysctl-write (sysctl-name "kern.osvariant_status"))
+; clean: dynamic loader resolves this named sysctl.
+(allow sysctl-write (sysctl-name "security.mac.lockdown_mode_state"))
+; clean: dynamic loader validates its own code.
+(allow process-codesigning* (target self))
+; clean: dynamic loader path resolution; global visibility is an open limit.
+(allow file-read-metadata)
+; clean: dynamic loader trace-device ioctl.
+(allow file-ioctl (literal (param "TRACE_DEVICE")))
+; clean: executable and working-directory reads.
+(allow file-read-data (literal (param "BIN")) (literal (param "LAUNCHER")) (literal (param "WORKDIR")))
+; clean: loader root lookup.
+(allow file-read* (literal (param "ROOT")))
+; clean: system runtime resources.
+(allow file-read-data (subpath (param "SYSTEM")))
+; clean: dynamic loader trace-device read.
+(allow file-read-data (literal (param "TRACE_DEVICE")))
+; clean: dynamic loader trace setup.
+(allow file-write-data (literal (param "TRACE_DEVICE")))
+{{PROCESS_RULES}}
+; user: directory and notification lookups used by getpwuid.
+(allow mach-lookup (global-name "com.apple.system.opendirectoryd.libinfo"))
+; user: runtime notification registration.
+(allow mach-lookup (global-name "com.apple.system.notification_center"))
+; user: runtime logging setup.
+(allow mach-lookup (global-name "com.apple.logd"))
+; user: notification shared-memory registration.
+(allow ipc-posix-shm-read* (ipc-posix-name "apple.shm.notification_center"))
+(deny process-info* (with send-signal SIGKILL))
+; self-information: runtime and own-process queries.
+(allow process-info* (target {{PROCESS_TARGET}}))
