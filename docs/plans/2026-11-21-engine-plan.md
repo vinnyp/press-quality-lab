@@ -79,7 +79,7 @@ Items in each phase are numbered and cited as "phase.item": 0.2 is the second it
 
 ### Phase 0: foundation
 
-**Status:** done. The last of its items to land, 0.2, came with the pull request that added `docs/requirements.md`.
+**Status:** done. The last of its items to land, 0.2, came with the pull request that added `docs/requirements.md`. The `cases` check became required on `main` once the judge's pull request turned it green, as 0.4 says.
 
 1. This repository, local first: licence, the published specification, this plan.
 2. The requirements this engine answers are brought across from the predecessor project, edited for this repository, so that the requirement and acceptance-example numbers the rulebook cites can be read here. They are in [`docs/requirements.md`](../requirements.md).
@@ -89,6 +89,8 @@ Items in each phase are numbered and cited as "phase.item": 0.2 is the second it
 **Done when:** the repository is published; the `gate` and `scan` checks are green and required on `main`; the `cases` check is red only because the judge is not built; and the requirements can be read in this repository.
 
 ### Phase 1: the judge
+
+**Status:** done, with the pull request that added `internal/judge`. The judge gave no wrong output on any case, published or private, so part 1 of the milestone holds. No catalogued mistake survives CI, and the reviews left no open blocker. No input was found on which the judge is wrong while the specification is clear, so no new private case was added, and none on which the specification is unclear.
 
 1. Built by a coding agent from a written brief, given only the published specification. The brief says to implement the rules for every input the schemas allow, not only for the cases given, and to write tests of the rules themselves.
 2. CI runs the build's own tests and all 383 published cases.

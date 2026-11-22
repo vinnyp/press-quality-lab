@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/vinnyp/press-quality-lab/internal/judge"
+
 	"github.com/spf13/cobra"
 )
 
@@ -20,12 +22,13 @@ type usageError struct{ err error }
 func (e *usageError) Error() string { return e.err.Error() }
 func (e *usageError) Unwrap() error { return e.err }
 
-var errNotImplemented = errors.New("judge: not implemented")
+var judging = judge.Judge
 
 func main() { os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
 // stdout carries help, except under pql judge, whose stdout is reserved for the judge's document.
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	resultCode := 0
 	root := &cobra.Command{
 		Use: "pql", Short: "Measure agent-facing command-line tools",
 		SilenceUsage: true, SilenceErrors: true,
@@ -42,7 +45,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root.SetOut(stdout)
 	root.SetErr(stderr)
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return &usageError{err} })
-	judge := &cobra.Command{
+	judgeCmd := &cobra.Command{
 		Use: "judge", Short: "Judge an evidence record",
 		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) > 0 {
@@ -50,10 +53,28 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			}
 			return nil
 		},
-		RunE: func(_ *cobra.Command, _ []string) error { return errNotImplemented },
+		RunE: func(_ *cobra.Command, _ []string) error {
+			input, err := io.ReadAll(io.LimitReader(stdin, judge.MaxInput+1))
+			if err != nil {
+				return err
+			}
+			output, code, defect := judge.Safe(judging, input)
+			if defect != nil {
+				return defect
+			}
+			n, err := stdout.Write(output)
+			if err != nil {
+				return err
+			}
+			if n != len(output) {
+				return io.ErrShortWrite
+			}
+			resultCode = code
+			return nil
+		},
 	}
-	judge.SetOut(stderr)
-	root.AddCommand(judge)
+	judgeCmd.SetOut(stderr)
+	root.AddCommand(judgeCmd)
 	root.SetHelpCommand(&cobra.Command{
 		Use: "help [command]", Short: "Help about any command",
 		Args: func(_ *cobra.Command, args []string) error {
@@ -85,14 +106,12 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root.SetArgs(args)
 	err := root.Execute()
 	if err == nil {
-		return 0
+		return resultCode
 	}
 	code := exitSoftware
 	var usage *usageError
 	if errors.As(err, &usage) {
 		code = exitUsage
-	} else if errors.Is(err, errNotImplemented) {
-		code = exitSoftware
 	}
 	if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", err); writeErr != nil {
 		return exitSoftware
