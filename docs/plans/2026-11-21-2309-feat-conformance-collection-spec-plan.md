@@ -74,6 +74,7 @@ Blocking the network is therefore not evidence that no request was attempted.
 - **A rejected record is the engine's failure.** Governs CR47. (session-settled: user-approved — chosen over reporting a verdict: the judge gave none.)
 - **A confinement refusal is never red.** The objective rules out a red the engine caused. Governs CR20, CR67. (session-settled: user-approved — chosen over letting the subject carry on after a refusal: its failure would look like its own defect.)
 - **A planted secret's read is proved.** An author's declaration is not an observation. Governs CR31, CR68. (session-settled: user-approved — chosen over trusting the declared location: a place never read gives a green that proves nothing.)
+- **A read takes two signals.** macOS kills at open, so the control run alone counts a file that was opened and never read. Governs CR31. (session-settled: user-directed — chosen over calling an open a read or using the access time alone: the first credits an unread secret, and the second has nothing to catch another reader.)
 - **Synthetic programs decide the spike's pass.** The real subject's run gates the seal. Governs CR6, CR66. (session-settled: user-approved — chosen over making that run part of the 2026-11-28 pass: a late approval would stop the work for a reason that is not evidence.)
 - **A test run is scripted at every level.** Nothing verified that it was offline. Governs CR49, CR73. (session-settled: user-approved — chosen over labelling its evidence offline: that would claim what a fake verifier cannot show.)
 - **A malformed command line and a rejected request have different codes.** Both existing contracts are kept. Governs CR71, CR72. (session-settled: user-approved — chosen over one code for both: the rulebook gives a rejected request 2 and the command already gives a malformed line 64.)
@@ -205,7 +206,7 @@ flowchart TB
 - CR30. The store-unchanged probe is not-measured as `empty_target` when nothing non-empty is left to compare.
 - CR100. An exclusion cannot cover the declared store or any path the seed supplied, so a seed is prepared without bookkeeping files.
 - CR101. The store-unchanged probe credits only after its comparison detected a change made in a control copy, compares names and contents only, and follows a stated rule for database side files.
-- CR31. The planted-secret probe is observed only when an invocation finishes with its declared successful exit and an otherwise identical control run, which kills only on reading the planted file's contents, is killed.
+- CR31. The planted-secret probe is observed only when an invocation finishes with its declared successful exit and moved the planted file's access time, which it cannot set, and an otherwise identical control run, which kills on opening that file for reading, is killed. The self-test first shows that the volume records a read's access time, or the probe is not-measured. The specification states the limit that another process reading the file during such an invocation looks like the subject's read.
 - CR107. The planted file is a credential file, or a seeded-state file for which the specification says why reading it proves the secret was read, which a multi-record database never is.
 - CR84. A leak is the planted secret, in any listed encoding, in a captured stream or in any file of the used home other than the planted one, excluded paths included.
 - CR110. The engine inspects a used home without following a link, opening a special file or reading past a bound, and reports a link or special file the subject created as a change.
@@ -283,7 +284,7 @@ flowchart TB
 - CAE5. **Covers CR33.** Given `list` reporting 10 and `count` reporting 9, when a self-check compares them, then the dimension is red.
 - CAE6. **Covers CR35, CR36.** Given a computation that pipes its declared input through another program, then it returns its value. Given one that invokes the subject's binary, then the subject does not run.
 - CAE7. **Covers CR29, CR30.** Given a read command that appends only to an excluded journal, then the probe holds and the exclusion is shown. Given a write to any other file, then it is red. Given a home with nothing non-empty outside the excluded paths, then it is not-measured as `empty_target`.
-- CAE8. **Covers CR31, CR68.** Given a subject with no file it reads a secret from, or a declared file that the control run shows it never reads, when it is graded, then the probe is not-measured and the run does not exit zero.
+- CAE8. **Covers CR31, CR68.** Given a subject with no file it reads a secret from, or a declared file that the proof shows it never reads, a file it only opens included, when it is graded, then the probe is not-measured and the run does not exit zero.
 - CAE9. **Covers CR12, CR25.** Given a nested command with no safety class, when the subject is graded, then its help may be read, its action is not requested, and the run is not-measured naming that command.
 - CAE10. **Covers CR13, CR18.** Given a live-first read, when it runs with no offline declaration and attempts the network, then it is not-measured. When a declared offline invocation avoids the attempt, then it is judged and the declaration is shown.
 - CAE11. **Covers CR16, CR17.** Given a subject that ignores the redirected home, when it runs, then the user's real state is neither read nor changed.
@@ -409,7 +410,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 
 ## Planning Contract
 
-**Product Contract preservation:** changed: CR67 amended on 2026-11-22, after the spike found two operations that cannot carry a kill and the owner chose to refuse both and state the limit. CR35 amended on 2026-11-22, after the spike showed that not every descendant can be ended and the owner chose the stated limit. Earlier: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
+**Product Contract preservation:** changed: CR31 and CAE8 amended on 2026-11-22, after the spike's review found that the control run kills at open and the owner required both signals. CR67 amended on 2026-11-22, after the spike found two operations that cannot carry a kill and the owner chose to refuse both and state the limit. CR35 amended on 2026-11-22, after the spike showed that not every descendant can be ended and the owner chose the stated limit. Earlier: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
 
 ### Key Technical Decisions
 
@@ -640,7 +641,7 @@ Waits on: nothing.
   - Covers CAE31. A loopback bind and a listen are each killed.
   - The self-test's programs fail only for the operation each tests, under the subject's profile and the computation's.
   - An inherited descriptor and an attempt at delegation through an allowed service are refused, or recorded as an open limit.
-  - The read proof kills a reader and spares a program that only stats the file.
+  - The read proof holds for a read, a mapping and a copy, and not for an open without a read, a stat or an attempt to set the access time.
   - File write, user lookup, Go help and SQLite with a write-ahead log each finish with the known output.
   - A plain database read records which side files it creates.
 - **Verification:** Every violator is killed and every twin is correct in 25 of 25 runs, and deleting any one deny or kill makes a named test fail.
