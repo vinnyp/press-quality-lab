@@ -59,6 +59,7 @@ Blocking the network is therefore not evidence that no request was attempted.
 - **One strict JSON subject file.** It needs no dependency. Governs CR8, CR9. (session-settled: user-directed — chosen over TOML, YAML and Markdown: the judge's input rules apply directly and no second grammar is needed.)
 - **A computation is any executable.** It keeps `pql` a single binary. Governs CR34, CR35, CR39. (session-settled: user-directed — chosen over built-in operations, a values file and a Python contract: users bring any language without adding a runtime to the engine.)
 - **A computation has its own confinement.** R16 governs the subject, and ordinary scripts need child processes. Governs CR35, CR36, CR37. (session-settled: user-approved — chosen over the subject's no-child rule: that rule kills an ordinary shell pipeline.)
+- **Programs run from a private copy.** macOS starts a program only if it may read the executable's directory. Governs CR32, CR62, CR76, CR112. (session-settled: user-directed — chosen over running in place: that shows the program the names of everything installed beside it.)
 - **A computation's process group is ended, and the escape is a stated limit.** macOS cannot refuse a child that leaves its group through `posix_spawn` without also refusing that call. Governs CR35. (session-settled: user-directed — chosen over tracking processes by their sandbox or forbidding `posix_spawn`: the first relies on a private call that can kill unrelated processes, and the second breaks Python, Node, `xargs` and `system()`.)
 - **Two operations are refused without a kill.** macOS rejects the kill on them. Governs CR67. (session-settled: user-directed — chosen over leaving both allowed: an untested entitlement could widen the confinement.)
 - **The CLI agreeing with itself can fail but cannot earn green.** Green needs a known answer. Governs CR32, CR33, CR37. (session-settled: user-directed — chosen over crediting agreement or banning self-checks: two commands can share a bug, and a disagreement is still worth reporting.)
@@ -160,8 +161,8 @@ flowchart TB
 - CR13. The file can declare arguments and environment for offline invocation, and every scorecard shows them, with environment values masked.
 - CR87. Offline settings state which invocations they apply to, never apply to discovery, and cannot be a help or version request.
 - CR86. Any unfilled placeholder, including a declared or discovered command with no safety class, makes a required check on an always-applicable dimension `placeholder_unfilled`, so the run cannot exit 0.
-- CR76. The seed and every declared file resolve inside the subject file's directory, which is neither the user's home nor above it, and a declared executable grants a read of that one executable file only.
-- CR112. Each declared file and executable is a regular file, and a grant covers that one file and never a directory.
+- CR76. The seed and every declared file resolve inside the subject file's directory, which is neither the user's home nor above it, and a declared executable grants a read of that one executable file and, as CR112 says, of the private directory its copy runs from.
+- CR112. Each declared file and executable is a regular file, and a grant covers that one file and never a directory, with one exception. The subject and a computation's executable each run as a byte-identical copy in its own throwaway directory that holds nothing else, which is not writable by them and which each may list, because macOS starts no program without that read. The specification states that a program sees the copy's path and finds nothing installed beside the original.
 - CR77. The seed is copied by content, and a seed holding a link or special file is rejected before collection.
 
 **State and confinement**
@@ -170,7 +171,7 @@ flowchart TB
 - CR15. The run records the seed's digest, and with no seed the home is empty.
 - CR16. The subject cannot write outside its throwaway home.
 - CR17. The subject cannot read the user's real state for that CLI.
-- CR62. The subject can read file contents only from its binary, the system paths a process needs to run, and its throwaway home.
+- CR62. The subject can read file contents only from its binary and the listing CR112 allows, the system paths a process needs to run, and its throwaway home.
 - CR63. The engine builds the environment of the subject and of each computation from an allow-list and the subject file's literal declarations, and passes no other variable through.
 - CR67. Any operation the confinement refuses ends the subject's process, so the check is not-measured and never red. The specification names the only two exceptions, `exception-entitlement` and `process-exec-update-label`, which macOS cannot refuse with a kill: both are refused without one, and it states that such a refusal is silent.
 - CR78. The profile is a fixed template that receives every path as a canonical parameter, never as profile text.
@@ -215,7 +216,7 @@ flowchart TB
 
 **Authored checks and expected values**
 
-- CR32. Every observed value comes from the engine running the subject's binary under its confinement.
+- CR32. Every observed value comes from the engine running the subject's binary, as the copy CR112 describes, under its confinement.
 - CR33. A check whose expected value uses the subject's captured output is non-crediting, as fixed from its declared inputs before collection.
 - CR34. An expected value is a literal or the one JSON value printed by a user's executable, which is named as an argument list and run without a shell.
 - CR35. A computation runs with no network and a time budget, may start child processes, is killed on `setsid` or `setpgid` in the process that calls it, and has its whole process group ended with it. The specification states that a child which leaves the group through `posix_spawn` escapes that ending and stays in the computation's confinement.
@@ -410,7 +411,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 
 ## Planning Contract
 
-**Product Contract preservation:** changed: CR31 and CAE8 amended on 2026-11-22, after the spike's review found that the control run kills at open and the owner required both signals. CR67 amended on 2026-11-22, after the spike found two operations that cannot carry a kill and the owner chose to refuse both and state the limit. CR35 amended on 2026-11-22, after the spike showed that not every descendant can be ended and the owner chose the stated limit. Earlier: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
+**Product Contract preservation:** changed: CR32, CR62, CR76 and CR112 amended on 2026-11-22, after the spike showed that a program needs a read of its executable's directory and the owner chose a private copy. CR31 and CAE8 amended on 2026-11-22, after the spike's review found that the control run kills at open and the owner required both signals. CR67 amended on 2026-11-22, after the spike found two operations that cannot carry a kill and the owner chose to refuse both and state the limit. CR35 amended on 2026-11-22, after the spike showed that not every descendant can be ended and the owner chose the stated limit. Earlier: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
 
 ### Key Technical Decisions
 
@@ -639,6 +640,7 @@ Waits on: nothing.
   - A computation's `setsid` or `setpgid` is killed, a child left in its group is ended with it, and a child that left through `posix_spawn` is recorded as the limit and is still confined.
   - A lookup of each system service outside the allow-list is killed, from a subject and from a computation.
   - Covers CAE31. A loopback bind and a listen are each killed.
+  - A program starts from its private copy, lists only itself there, cannot write there, and is killed listing the directory above.
   - The self-test's programs fail only for the operation each tests, under the subject's profile and the computation's.
   - An inherited descriptor and an attempt at delegation through an allowed service are refused, or recorded as an open limit.
   - The read proof holds for a read, a mapping and a copy, and not for an open without a read, a stat or an attempt to set the access time.
