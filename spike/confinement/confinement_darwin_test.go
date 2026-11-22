@@ -42,8 +42,12 @@ func TestMain(m *testing.M) {
 
 type fixture struct {
 	root, launcher, probe string
+	volume                string
 	env                   []string
 	args                  []string
+	params                []string
+	budget                time.Duration
+	profileFile           string
 }
 
 func newFixture(t *testing.T) fixture {
@@ -52,8 +56,27 @@ func newFixture(t *testing.T) fixture {
 	if err != nil {
 		t.Fatal("resolve temporary root")
 	}
-	f := fixture{root: root, launcher: filepath.Join(root, "launcher"), probe: filepath.Join(root, "probe")}
-	f.env = []string{"HOME=" + root, "TMPDIR=" + root, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+	var fs syscall.Statfs_t
+	if err := syscall.Statfs(root, &fs); err != nil {
+		t.Fatal("inspect temporary filesystem")
+	}
+	var mount []byte
+	for _, v := range fs.Mntonname {
+		if v == 0 {
+			break
+		}
+		mount = append(mount, byte(v))
+	}
+	f := fixture{volume: string(mount), root: root, launcher: filepath.Join(root, "launcher"), probe: filepath.Join(root, "probe")}
+	home := filepath.Join(root, "home")
+	if os.Mkdir(home, 0700) != nil {
+		t.Fatal("create redirected home")
+	}
+	for _, name := range []string{"declared", "seed"} {
+		writeDecoy(t, filepath.Join(root, name))
+	}
+	writeDecoy(t, filepath.Join(home, "state"))
+	f.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
 	for _, build := range []struct{ source, binary string }{{"launcher.c", f.launcher}, {"probe.c", f.probe}} {
 		r := run("/usr/bin/clang", []string{"-Wall", "-Wextra", "-Werror", "-o", build.binary, filepath.Join("testdata/programs", build.source)}, f.env, "")
 		if r.err != nil {
@@ -64,7 +87,15 @@ func newFixture(t *testing.T) fixture {
 }
 
 func (f fixture) invoke(text, mode string, twin bool) result {
-	args := []string{"-p", text, "-D", "BIN=" + f.probe, "-D", "LAUNCHER=" + f.launcher, "-D", "WORKDIR=" + f.root, "-D", "ROOT=/", "-D", "SYSTEM=/System", "-D", "TRACE_DEVICE=/dev/dtracehelper", f.launcher, f.probe, mode}
+	args := []string{"-p", text}
+	if f.profileFile != "" {
+		args = []string{"-f", f.profileFile}
+	}
+	parameters := f.parameters()
+	for _, parameter := range parameters {
+		args = append(args, "-D", parameter)
+	}
+	args = append(args, f.launcher, f.probe, mode)
 	if text == "" {
 		args = []string{f.probe, mode}
 	}
@@ -76,7 +107,30 @@ func (f fixture) invoke(text, mode string, twin bool) result {
 	if text == "" {
 		return run(f.launcher, args, f.env, f.root)
 	}
-	return run("/usr/bin/sandbox-exec", args, f.env, f.root)
+	budget := f.budget
+	if budget == 0 {
+		budget = 5 * time.Second
+	}
+	return runBudget("/usr/bin/sandbox-exec", args, f.env, f.root, budget)
+}
+
+func (f fixture) parameters() []string {
+	parameters := []string{"BIN=" + f.probe, "LAUNCHER=" + f.launcher, "WORKDIR=" + f.root, "VOLUME=" + f.volume, "HOME=" + filepath.Join(f.root, "home"), "ROOT=/", "SYSTEM=/System/Library", "SYSTEM_ROOT=/System", "RUNTIME=/System/Volumes/Preboot", "TRACE_DEVICE=/dev/dtracehelper", "NULL_DEVICE=/dev/null", "RANDOM_DEVICE=/dev/urandom", "SHELL=/bin/sh", "SHELL_IMPL=/bin/bash", "BIN_DIR=/bin", "USR_BIN_DIR=/usr/bin", "TTY_DEVICE=/dev/tty", "CAT=/bin/cat", "FILTER=/usr/bin/wc", "DECLARED=" + filepath.Join(f.root, "declared"), "SEED=" + filepath.Join(f.root, "seed"), "WAL=" + filepath.Join(f.root, "wal"), "SHM=" + filepath.Join(f.root, "shm")}
+	for _, parameter := range f.params {
+		key := strings.SplitN(parameter, "=", 2)[0] + "="
+		replaced := false
+		for i, old := range parameters {
+			if strings.HasPrefix(old, key) {
+				parameters[i] = parameter
+				replaced = true
+				break
+			}
+		}
+		if !replaced {
+			parameters = append(parameters, parameter)
+		}
+	}
+	return parameters
 }
 
 func runScenario(t *testing.T, name string, body func(*testing.T)) {
@@ -169,6 +223,13 @@ func TestPositiveControlsAndTwins(t *testing.T) {
 
 func TestAllowanceWitnesses(t *testing.T) {
 	f := newFixture(t)
+	goFixture := buildGoClean(t, f)
+	database := f
+	database.probe = filepath.Join(f.root, "database")
+	if r := run("/usr/bin/clang", []string{"-Wall", "-Wextra", "-Werror", "-o", database.probe, "testdata/programs/database.c", "-lsqlite3"}, f.env, ""); r.err != nil {
+		t.Fatal("build database witness")
+	}
+
 	for _, computation := range []bool{false, true} {
 		for index, line := range strings.Split(profile(computation), "\n") {
 			if !strings.HasPrefix(line, "(allow ") {
@@ -176,6 +237,37 @@ func TestAllowanceWitnesses(t *testing.T) {
 			}
 			runScenario(t, fmt.Sprintf("%s/%02d-%s", profileName(computation), index, strings.Fields(line)[1]), func(t *testing.T) {
 				mode, want := "clean", "clean\n"
+				witness := f
+				if strings.Contains(line, "sysctl-read") {
+					witness = goFixture
+					mode, want = "help", "usage: synthetic [help|user|exit]\n"
+				}
+				if strings.Contains(line, `param "SYSTEM"`) {
+					mode, want = "user", "user ok\n"
+				}
+				if strings.Contains(line, `param "HOME"`) {
+					if strings.Contains(line, "file-read") {
+						mode, want = "file-read", "performed\nfallback\n"
+						path := filepath.Join(f.root, "home", "state")
+						witness.args = []string{path, path, filepath.Join(f.root, "unused")}
+					}
+					if strings.Contains(line, "file-write") {
+						mode, want = "file-home", "home written\n"
+					}
+				}
+				for _, input := range []string{"DECLARED", "SEED"} {
+					if strings.Contains(line, `param "`+input+`"`) {
+						mode, want = "file-read", "performed\nfallback\n"
+						path := filepath.Join(f.root, strings.ToLower(input))
+						witness.args = []string{path, path, filepath.Join(f.root, "unused")}
+					}
+				}
+				for _, input := range []string{"SHELL", "CAT", "FILTER"} {
+					if strings.Contains(line, `param "`+input+`"`) {
+						mode, want = "pipeline", "5\n"
+						witness.args = []string{"/bin/sh", "/bin/cat", "/usr/bin/wc", filepath.Join(f.root, "declared")}
+					}
+				}
 				if strings.Contains(line, "mach-lookup") || strings.Contains(line, "ipc-posix") {
 					mode, want = "user", "user ok\n"
 				}
@@ -191,14 +283,48 @@ func TestAllowanceWitnesses(t *testing.T) {
 				if strings.Contains(line, "allow signal") {
 					mode, want = "sandbox-signal", "performed\nfallback\n"
 				}
+
+				if strings.Contains(line, "fs-info") || strings.Contains(line, "file-lock") || strings.Contains(line, "membership") || strings.Contains(line, "system-info") || strings.Contains(line, `param "WAL"`) || strings.Contains(line, `param "SHM"`) {
+					witness = database
+					mode, want = "write", "written 7\n"
+					if strings.Contains(line, `param "WAL"`) || strings.Contains(line, `param "SHM"`) {
+						mode, want = "read", "side-files=wal,shm\nvalue=7\n"
+					}
+				}
+				if computation && strings.Contains(line, `file-read-data (literal (param "HOME"))`) {
+					mode, want = "file-directory", "directory ok\n"
+					witness = f
+					witness.args = nil
+				}
+				if strings.Contains(line, "TTY_DEVICE") {
+					mode, want = "system-value", "value=7\n"
+					witness = f
+					witness.args = nil
+				}
 				runScenario(t, "baseline", func(t *testing.T) {
-					repeat(t, func() bool { return correct(f.invoke(profile(computation), mode, false), want) })
+					repeat(t, func() bool {
+						probe := witness
+						if witness.probe == database.probe {
+							probe = databaseFixture(t, witness)
+							if mode == "read" && !correct(probe.invoke("", "write", false), "written 7\n") {
+								return false
+							}
+						}
+						return correct(probe.invoke(profile(computation), mode, false), want)
+					})
 				})
 				broken := strings.Replace(profile(computation), line, "", 1)
 				runScenario(t, "removed", func(t *testing.T) {
 					repeat(t, func() bool {
-						r := f.invoke(broken, mode, false)
-						return !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == ""
+						probe := witness
+						if witness.probe == database.probe {
+							probe = databaseFixture(t, witness)
+							if mode == "read" && !correct(probe.invoke("", "write", false), "written 7\n") {
+								return false
+							}
+						}
+						r := probe.invoke(broken, mode, false)
+						return !r.timedOut && !correct(r, want)
 					})
 				})
 			})
@@ -308,6 +434,13 @@ func TestNetwork(t *testing.T) {
 						if form == "without-kill" {
 							p = strings.ReplaceAll(p, "(with send-signal SIGKILL)", "")
 						}
+						if mode == "listen" && p != "" {
+							// Isolate listen from bind, which is independently tested.
+							// The twin needs this loopback-only setup operation too.
+							p += `
+(allow network-bind (local ip "localhost:*"))
+`
+						}
 						r := probe.invoke(p, mode, form == "twin")
 						quiet := untouched()
 						switch form {
@@ -394,7 +527,7 @@ func networkDecoy(t *testing.T, f fixture, mode string) (fixture, func() bool, f
 func TestProcessAccess(t *testing.T) {
 	f := newFixture(t)
 	for _, computation := range []bool{false, true} {
-		for _, mode := range []string{"arguments", "process-environment", "process-pidinfo", "signal"} {
+		for _, mode := range []string{"arguments", "process-environment", "process-pidinfo", "signal", "codesigning"} {
 			for _, form := range []string{"confined", "twin", "positive", "without-kill"} {
 				runScenario(t, fmt.Sprintf("%s/%s/%s", profileName(computation), mode, form), func(t *testing.T) {
 					repeat(t, func() bool {
@@ -508,7 +641,7 @@ func TestServices(t *testing.T) {
 
 func TestComputationOwnProcesses(t *testing.T) {
 	f := newFixture(t)
-	for _, mode := range []string{"arguments", "process-environment", "process-pidinfo", "signal"} {
+	for _, mode := range []string{"arguments", "process-environment", "process-pidinfo", "signal", "codesigning"} {
 		runScenario(t, mode, func(t *testing.T) {
 			repeat(t, func() bool { return correct(f.invoke(profile(true), "sandbox-"+mode, false), "performed\nfallback\n") })
 		})
@@ -602,9 +735,9 @@ func TestRemainingGroupEnded(t *testing.T) {
 	for _, mode := range []string{"left-child", "timeout-child"} {
 		runScenario(t, mode, func(t *testing.T) {
 			repeat(t, func() bool {
-				args := []string{"-p", profile(true), "-D", "BIN=" + f.probe, "-D", "LAUNCHER=" + f.launcher, "-D", "WORKDIR=" + f.root, "-D", "ROOT=/", "-D", "SYSTEM=/System", "-D", "TRACE_DEVICE=/dev/dtracehelper", f.launcher, f.probe, mode}
-				r := runBudget("/usr/bin/sandbox-exec", args, f.env, f.root, 250*time.Millisecond)
-				executed.Add(1)
+				probeWithBudget := f
+				probeWithBudget.budget = 250 * time.Millisecond
+				r := probeWithBudget.invoke(profile(true), mode, false)
 				pid, err := strconv.Atoi(strings.TrimSpace(r.output))
 				if err != nil || pid <= 1 || !r.marked {
 					return false
@@ -649,6 +782,47 @@ func TestProcessInformationMutations(t *testing.T) {
 					r := probe.invoke(p, "process-pidinfo", false)
 					return r.marked && !r.timedOut && !r.killed()
 				})
+			})
+		}
+	}
+}
+
+func TestNoControllingTerminal(t *testing.T) {
+	f := newFixture(t)
+	for _, computation := range []bool{false, true} {
+		runScenario(t, profileName(computation), func(t *testing.T) {
+			repeat(t, func() bool { return correct(f.invoke(profile(computation), "terminal", false), "terminal absent\n") })
+		})
+	}
+}
+
+// These platform classes stay open implicitly. Each must have an executable
+// witness; their unfiltered visibility is reported as a limit.
+func TestImplicitAllowanceWitnesses(t *testing.T) {
+	f := newFixture(t)
+	for _, entry := range []struct{ operation, mode, want string }{
+		{"dynamic-code-generation", "clean", "clean\n"},
+		{"file-test-existence", "clean", "clean\n"},
+		{"sandbox-check", "user", "user ok\n"},
+		{"syscall-mach", "clean", "clean\n"},
+		{"syscall-mig", "user", "user ok\n"},
+		{"syscall-unix", "clean", "clean\n"},
+		{"system-fcntl", "clean", "clean\n"},
+		{"system-mac-syscall", "clean", "clean\n"},
+		{"mach-derive-port", "user", "user ok\n"},
+	} {
+		for _, computation := range []bool{false, true} {
+			runScenario(t, profileName(computation)+"/"+entry.operation, func(t *testing.T) {
+				repeat(t, func() bool {
+					p := profile(computation)
+					if !correct(f.invoke(p, entry.mode, false), entry.want) {
+						return false
+					}
+					broken := p + "\n(deny " + entry.operation + " (with send-signal SIGKILL))\n"
+					r := f.invoke(broken, entry.mode, false)
+					return !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == ""
+				})
+				t.Logf("implicit allowance=%s clean-program=%s", entry.operation, entry.mode)
 			})
 		}
 	}

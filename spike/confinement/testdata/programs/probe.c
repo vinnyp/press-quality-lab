@@ -10,12 +10,15 @@
 #include <sys/stat.h>
 
 extern char **environ;
+#include "files.h"
 #include "operations.h"
 
 /* All process targets are children created here, never caller-supplied pids. */
 int main(int argc, char **argv) {
     alarm(4);
-    int answer = operation(argc, argv);
+    int answer = file_operation(argc, argv);
+    if (answer != -1) return answer;
+    answer = operation(argc, argv);
     if (answer != -1) return answer;
     if (argc < 2 || argc > 3) return 64;
     int twin = argc == 3 && !strcmp(argv[2], "twin");
@@ -23,6 +26,10 @@ int main(int argc, char **argv) {
     if (!strcmp(argv[1], "environment")) {
         for (char **entry = environ; *entry; entry++) puts(*entry);
         return 0;
+    }
+    if (!strcmp(argv[1], "terminal")) {
+        if (getsid(0) != getpid() || getpgrp() != getpid()) return 42;
+        puts("terminal absent"); return 0;
     }
     if (!strcmp(argv[1], "descriptors")) {
         struct stat input, output, diagnostic, null_device;

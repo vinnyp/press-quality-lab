@@ -1,21 +1,61 @@
 (version 1)
 (deny default (with send-signal SIGKILL))
+; The inventory queries machine-administration classes without attempting them.
+; clean: startup needs implicit dynamic-code-generation, syscall-mach,
+; syscall-unix, system-fcntl and system-mac-syscall. Their scope is an open limit.
+; user: lookup needs implicit sandbox-check, syscall-mig and mach-derive-port.
+; clean: file-test-existence remains visible with global file metadata.
+; exception-entitlement and process-exec-update-label reject kill modifiers;
+; they retain platform behavior, an open limit tested with a signed reader.
+(deny fs-quota* (with send-signal SIGKILL))
+(deny nvram* (with send-signal SIGKILL))
+(deny process-iopolicy* (with send-signal SIGKILL))
+(deny mach-task-special-port* (with send-signal SIGKILL))
+; clean: the loader sets its own task's bootstrap port.
+(allow mach-task-special-port-set (target {{PROCESS_TARGET}}))
+; clean: pre-exec code validation needs the modern codesigning class.
+; Foreign status queries are separately refused by the legacy target filters.
+(deny asr-parser-enter (with send-signal SIGKILL))
+(deny coalition-info (with send-signal SIGKILL))
+(deny consume-extension (with send-signal SIGKILL))
+(deny darwin-notification-post (with send-signal SIGKILL))
+(deny file-clone (with send-signal SIGKILL))
+(deny file-graft (with send-signal SIGKILL))
+(deny file-link (with send-signal SIGKILL))
+(deny file-lock (with send-signal SIGKILL))
+(deny file-map-executable (with send-signal SIGKILL))
+(deny file-read-xattr (with send-signal SIGKILL))
+(deny file-ungraft (with send-signal SIGKILL))
+; database: statfs uses its home volume, not its directory.
+(deny fs-info (with send-signal SIGKILL))
+(allow fs-info (literal (param "VOLUME")))
+; database: locks on its own files.
+(allow file-lock (literal (param "HOME")) (subpath (param "HOME")))
+(deny fs-snapshot-mount (with send-signal SIGKILL))
+(deny iokit-get-properties (with send-signal SIGKILL))
+(deny iokit-open-service (with send-signal SIGKILL))
+(deny isp-command-send (with send-signal SIGKILL))
+(deny mach-bootstrap (with send-signal SIGKILL))
+(deny mach-cross-domain-lookup (with send-signal SIGKILL))
+; user: directory lookup needs derived Mach reply ports; narrowing remains open.
+(deny mach-task-exception-port-set (with send-signal SIGKILL))
+(deny necp-client-open (with send-signal SIGKILL))
+(deny socket-ioctl (with send-signal SIGKILL))
+(deny socket-option-get (with send-signal SIGKILL))
+(deny socket-option-set (with send-signal SIGKILL))
+(deny system-memorystatus-control (with send-signal SIGKILL))
+(deny system-necp-client-action (with send-signal SIGKILL))
+(deny system-privilege (with send-signal SIGKILL))
+(deny process-info-codesignature (with send-signal SIGKILL))
+(deny process-info-sandbox-container (with send-signal SIGKILL))
 ; clean: dynamic loader and C runtime startup.
 (allow process-exec* (literal (param "LAUNCHER")) (literal (param "BIN")))
 ; clean: dynamic loader host setup.
 (allow mach-priv-host-port)
-; clean: dynamic loader resolves this named sysctl.
-(allow sysctl-write (sysctl-name "kern.bootargs"))
-; clean: dynamic loader resolves this named sysctl.
-(allow sysctl-write (sysctl-name "kern.iossupportversion"))
-; clean: dynamic loader resolves this named sysctl.
-(allow sysctl-write (sysctl-name "kern.osproductversion"))
-; clean: dynamic loader resolves this named sysctl.
-(allow sysctl-write (sysctl-name "kern.osvariant_status"))
-; clean: dynamic loader resolves this named sysctl.
-(allow sysctl-write (sysctl-name "security.mac.lockdown_mode_state"))
+; go-help: numeric processor and page-size queries.
+(allow sysctl-read)
 ; clean: dynamic loader validates its own code.
-(allow process-codesigning* (target self))
+(allow process-codesigning* (target {{PROCESS_TARGET}}))
 ; clean: dynamic loader path resolution; global visibility is an open limit.
 (allow file-read-metadata)
 ; clean: dynamic loader trace-device ioctl.
@@ -24,8 +64,8 @@
 (allow file-read-data (literal (param "BIN")) (literal (param "LAUNCHER")) (literal (param "WORKDIR")))
 ; clean: loader root lookup.
 (allow file-read* (literal (param "ROOT")))
-; clean: system runtime resources.
-(allow file-read-data (subpath (param "SYSTEM")))
+; clean: runtime image on the sealed preboot volume.
+(allow file-read-data (subpath (param "RUNTIME")))
 ; clean: dynamic loader trace-device read.
 (allow file-read-data (literal (param "TRACE_DEVICE")))
 ; clean: dynamic loader trace setup.
@@ -42,3 +82,11 @@
 (deny process-info* (with send-signal SIGKILL))
 ; self-information: runtime and own-process queries.
 (allow process-info* (target {{PROCESS_TARGET}}))
+
+{{FILE_RULES}}
+
+; database: SQLite membership lookup.
+(allow mach-lookup (global-name "com.apple.system.opendirectoryd.membership"))
+
+; database: SQLite system information cannot be narrowed by type (open limit).
+(allow system-info)

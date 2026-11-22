@@ -9,10 +9,30 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <libproc.h>
+#include <stdint.h>
+enum { code_status = 0 };
+extern int csops(pid_t,unsigned int,void *,size_t);
 
 static int operation(int argc, char **argv) {
     if (argc < 2) return -1;
     const char *mode = argv[1];
+    if (!strcmp(mode,"pipeline")) {
+        if(argc!=6)return 64;
+        execl(argv[2],argv[2],"-c","\"$1\" \"$3\" | \"$2\" -c | { read n; printf '%s\\n' \"$n\"; }","pipeline",argv[3],argv[4],argv[5],NULL);
+        return 35;
+    }
+    if (!strcmp(mode,"system-value")) {
+        int status=system("exit 7");
+        if(status==-1 || !WIFEXITED(status) || WEXITSTATUS(status)!=7)return 36;
+        puts("value=7");return 0;
+    }
+    if (!strcmp(mode,"execute")) {
+        if(argc<4)return 64;
+        int twin=!strcmp(argv[argc-1],"twin");
+        const char *path=twin?argv[3]:argv[2];
+        execl(path,path,"clean",NULL);
+        puts("fallback");return 0;
+    }
     int twin = argc > 2 && !strcmp(argv[argc-1], "twin");
 
     if (!strcmp(mode, "left-child") || !strcmp(mode, "timeout-child")) {
@@ -107,13 +127,14 @@ static int operation(int argc, char **argv) {
         if (rc == KERN_SUCCESS) { if (port) mach_port_deallocate(mach_task_self(), port); puts("performed"); }
         puts("fallback"); return 0;
     }
-    if (!strcmp(mode, "arguments") || !strcmp(mode, "process-environment") || !strcmp(mode,"process-pidinfo") || !strcmp(mode, "signal")) {
+    if (!strcmp(mode, "arguments") || !strcmp(mode, "process-environment") || !strcmp(mode,"process-pidinfo") || !strcmp(mode, "signal") || !strcmp(mode,"codesigning")) {
         if (argc < 3) return 64;
         pid_t target = (pid_t)strtol(argv[2], NULL, 10);
         if (target <= 1) return 64;
         if (twin) target = getpid();
         int rc;
-        if (!strcmp(mode,"process-pidinfo")) {
+        if(!strcmp(mode,"codesigning")){uint32_t flags;rc=csops(target,code_status,&flags,sizeof(flags));}
+        else if (!strcmp(mode,"process-pidinfo")) {
  struct proc_bsdinfo info;
  rc = proc_pidinfo(target,PROC_PIDTBSDINFO,0,&info,sizeof(info)) == sizeof(info) ? 0 : -1;
  } else if (!strcmp(mode, "signal")) {
@@ -166,6 +187,11 @@ static int operation(int argc, char **argv) {
         strcpy(unix_address.sun_path,argv[2]);
     }
     int rc = -1;
+    /* Listening is tested only on loopback. Both forms bind first; the
+       listen-only test profile grants this setup operation explicitly. */
+    if (listening && bind(fd,(struct sockaddr *)&address,sizeof(address))) {
+        close(fd); return 44;
+    }
     if (!twin) {
         if (binding) rc = bind(fd,(struct sockaddr *)&address,sizeof(address));
         else if (listening) rc = listen(fd,1);

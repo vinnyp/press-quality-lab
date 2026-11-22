@@ -27,15 +27,43 @@ func profile(computation bool) string {
 	if computation {
 		target = "same-sandbox"
 	}
-	return strings.ReplaceAll(strings.ReplaceAll(template, "{{PROCESS_RULES}}", rules), "{{PROCESS_TARGET}}", target)
+	fileRules := `; home-read: a read in the redirected home.
+(allow file-read* (literal (param "HOME")) (subpath (param "HOME")))
+; home-write: a write in the redirected home.
+(allow file-write* (subpath (param "HOME")))`
+	if computation {
+		fileRules = `; pipeline: only these declared system executables are children.
+(allow process-exec* (literal (param "SHELL")) (literal (param "SHELL_IMPL")))
+(allow process-exec* (literal (param "CAT")))
+(allow process-exec* (literal (param "FILTER")))
+; pipeline: child images must be readable.
+(allow file-read-data (literal (param "SHELL")) (literal (param "SHELL_IMPL")) (literal (param "BIN_DIR")) (literal (param "USR_BIN_DIR")))
+; pipeline: shell probes a terminal, but the harness creates a terminal-free session.
+(allow file-read-data file-write-data (literal (param "TTY_DEVICE")))
+(allow file-read-data (literal (param "CAT")))
+(allow file-read-data (literal (param "FILTER")))
+; declared-read: the pipeline consumes this declared file.
+(allow file-read-data (literal (param "DECLARED")))
+; database-read: its declared WAL and shared-memory side files.
+(allow file-read-data (literal (param "WAL")))
+(allow file-read-data (literal (param "SHM")))
+; seed-read: pristine seed input, with no write grant.
+(allow file-read-data (literal (param "SEED")))
+; directory: scratch-directory metadata and traversal.
+(allow file-read-data (literal (param "HOME")))
+; home-write: computations write only to scratch.
+(allow file-write* (subpath (param "HOME")))`
+	}
+	return strings.NewReplacer("{{PROCESS_RULES}}", rules, "{{PROCESS_TARGET}}", target, "{{FILE_RULES}}", fileRules).Replace(template)
 }
 
 type result struct {
-	output   string
-	marked   bool
-	timedOut bool
-	status   syscall.WaitStatus
-	err      error
+	output     string
+	diagnostic string
+	marked     bool
+	timedOut   bool
+	status     syscall.WaitStatus
+	err        error
 }
 
 func run(binary string, args, env []string, dir string) result {
@@ -48,7 +76,7 @@ func runBudget(binary string, args, env []string, dir string, budget time.Durati
 	cmd := exec.CommandContext(ctx, binary, args...)
 	cmd.Env = env
 	cmd.Dir = dir
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	// Only this command's newly created group is signalled.
 	cmd.Cancel = func() error {
 		err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
@@ -65,7 +93,7 @@ func runBudget(binary string, args, env []string, dir string, budget time.Durati
 		// End remaining group members after both ordinary exits and timeouts.
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 	}
-	r := result{output: out.String(), marked: diagnostic.String() == "confined\n", timedOut: ctx.Err() != nil, err: err}
+	r := result{output: out.String(), diagnostic: diagnostic.String(), marked: diagnostic.String() == "confined\n", timedOut: ctx.Err() != nil, err: err}
 	if cmd.ProcessState != nil {
 		r.status, _ = cmd.ProcessState.Sys().(syscall.WaitStatus)
 	}
@@ -74,4 +102,27 @@ func runBudget(binary string, args, env []string, dir string, budget time.Durati
 
 func (r result) killed() bool {
 	return r.marked && !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == ""
+}
+
+// Required refusals are independent of the rendered template. This also checks
+// kill modifiers for query-only operations, whose destructive effects must not
+// be attempted by the self-test.
+const requiredRefusals = `default asr-parser-enter coalition-info consume-extension darwin-notification-post file-clone file-graft file-link file-map-executable file-read-xattr file-ungraft fs-quota* fs-snapshot-mount iokit-get-properties iokit-open-service isp-command-send mach-bootstrap mach-cross-domain-lookup mach-task-exception-port-set mach-task-special-port* necp-client-open nvram* process-iopolicy* socket-ioctl socket-option-get socket-option-set system-memorystatus-control system-necp-client-action system-privilege process-info-codesignature process-info-sandbox-container process-info*`
+
+func refusalsIntact(p string, computation bool) bool {
+	if !strings.Contains(p, `(deny fs-info (with send-signal SIGKILL))`) {
+		return false
+	}
+	if !strings.Contains(p, `(deny file-lock (with send-signal SIGKILL))`) {
+		return false
+	}
+	for _, op := range strings.Fields(requiredRefusals) {
+		if !strings.Contains(p, "(deny "+op+" (with send-signal SIGKILL))") {
+			return false
+		}
+	}
+	if computation && !strings.Contains(p, "(deny syscall-unix (syscall-number SYS_setsid SYS_setpgid) (with send-signal SIGKILL))") {
+		return false
+	}
+	return true
 }
