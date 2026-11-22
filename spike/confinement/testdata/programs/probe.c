@@ -12,11 +12,14 @@
 extern char **environ;
 #include "files.h"
 #include "operations.h"
+#include "witnesses.h"
 
 /* All process targets are children created here, never caller-supplied pids. */
 int main(int argc, char **argv) {
     alarm(4);
-    int answer = file_operation(argc, argv);
+    int answer = witness(argc, argv);
+    if (answer != -1) return answer;
+    answer = file_operation(argc, argv);
     if (answer != -1) return answer;
     answer = operation(argc, argv);
     if (answer != -1) return answer;
@@ -27,8 +30,13 @@ int main(int argc, char **argv) {
         for (char **entry = environ; *entry; entry++) puts(*entry);
         return 0;
     }
-    if (!strcmp(argv[1], "terminal")) {
+    if (!strcmp(argv[1], "terminal") || !strcmp(argv[1], "terminal-open")) {
         if (getsid(0) != getpid() || getpgrp() != getpid()) return 42;
+        if (!strcmp(argv[1], "terminal-open")) {
+            int fd = open("/dev/tty", O_RDWR | O_NOCTTY);
+            if (fd >= 0) { close(fd); return 43; }
+            if (errno != ENXIO) return 44;
+        }
         puts("terminal absent"); return 0;
     }
     if (!strcmp(argv[1], "descriptors")) {

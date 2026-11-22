@@ -31,7 +31,7 @@ func TestOperationInventory(t *testing.T) {
 					// Each open class is required by startup, metadata lookup or Go's numeric
 					// hardware queries. Unsupported kill modifiers are deliberately excluded.
 					switch op {
-					case "dynamic-code-generation", "exception-entitlement", "process-exec-update-label", "system-info", "file-read-metadata", "process-codesigning", "sandbox-check", "syscall-mach", "syscall-mig", "syscall-unix", "file-test-existence", "system-fcntl", "system-mac-syscall", "mach-derive-port", "sysctl-read", "mach-priv-host-port":
+					case "dynamic-code-generation", "system-info", "file-read-metadata", "process-codesigning", "sandbox-check", "syscall-mach", "syscall-mig", "syscall-unix", "file-test-existence", "system-fcntl", "system-mac-syscall", "mach-derive-port", "sysctl-read", "mach-priv-host-port":
 						want = "1"
 					case "process-fork":
 						if computation {
@@ -93,5 +93,5 @@ func TestEntitlementFileBoundary(t *testing.T) {
 			})
 		}
 	}
-	t.Log("open limit: exception-entitlement and process-exec-update-label reject send-signal; neither has a plain deny")
+	t.Log("open limit: exception-entitlement and process-exec-update-label reject send-signal; both have a plain deny")
 }

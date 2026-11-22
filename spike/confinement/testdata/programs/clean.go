@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/user"
 	"runtime"
@@ -53,6 +54,11 @@ func main() {
 	runtime.GC()
 	workers.Wait()
 	switch os.Args[1] {
+	case "resolver":
+		if _, err := net.LookupHost("decoy.invalid"); err == nil {
+			os.Exit(9)
+		}
+		fmt.Println("lookup failed")
 	case "help":
 		fmt.Println("usage: synthetic [help|user|exit]")
 	case "user":

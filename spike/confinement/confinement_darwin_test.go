@@ -115,7 +115,7 @@ func (f fixture) invoke(text, mode string, twin bool) result {
 }
 
 func (f fixture) parameters() []string {
-	parameters := []string{"BIN=" + f.probe, "LAUNCHER=" + f.launcher, "WORKDIR=" + f.root, "VOLUME=" + f.volume, "HOME=" + filepath.Join(f.root, "home"), "ROOT=/", "SYSTEM=/System/Library", "SYSTEM_ROOT=/System", "RUNTIME=/System/Volumes/Preboot", "TRACE_DEVICE=/dev/dtracehelper", "NULL_DEVICE=/dev/null", "RANDOM_DEVICE=/dev/urandom", "SHELL=/bin/sh", "SHELL_IMPL=/bin/bash", "BIN_DIR=/bin", "USR_BIN_DIR=/usr/bin", "TTY_DEVICE=/dev/tty", "CAT=/bin/cat", "FILTER=/usr/bin/wc", "DECLARED=" + filepath.Join(f.root, "declared"), "SEED=" + filepath.Join(f.root, "seed"), "WAL=" + filepath.Join(f.root, "wal"), "SHM=" + filepath.Join(f.root, "shm")}
+	parameters := []string{"BIN=" + f.probe, "LAUNCHER=" + f.launcher, "WORKDIR=" + f.root, "VOLUME=" + f.volume, "HOME=" + filepath.Join(f.root, "home"), "ROOT=/", "SYSTEM=/System/Library", "SYSTEM_ROOT=/System", "RUNTIME=/System/Volumes/Preboot/Cryptexes", "TRACE_DEVICE=/dev/dtracehelper", "NULL_DEVICE=/dev/null", "RANDOM_DEVICE=/dev/urandom", "SHELL=/bin/sh", "SHELL_IMPL=/bin/bash", "BIN_DIR=/bin", "USR_BIN_DIR=/usr/bin", "TTY_DEVICE=/dev/tty", "CAT=/bin/cat", "FILTER=/usr/bin/wc", "DECLARED=" + filepath.Join(f.root, "declared"), "SEED=" + filepath.Join(f.root, "seed"), "WAL=" + filepath.Join(f.root, "wal"), "SHM=" + filepath.Join(f.root, "shm")}
 	for _, parameter := range f.params {
 		key := strings.SplitN(parameter, "=", 2)[0] + "="
 		replaced := false
@@ -262,7 +262,7 @@ func TestAllowanceWitnesses(t *testing.T) {
 						witness.args = []string{path, path, filepath.Join(f.root, "unused")}
 					}
 				}
-				for _, input := range []string{"SHELL", "CAT", "FILTER"} {
+				for _, input := range []string{"SHELL", "CAT", "FILTER", "BIN_DIR", "USR_BIN_DIR"} {
 					if strings.Contains(line, `param "`+input+`"`) {
 						mode, want = "pipeline", "5\n"
 						witness.args = []string{"/bin/sh", "/bin/cat", "/usr/bin/wc", filepath.Join(f.root, "declared")}

@@ -180,7 +180,11 @@ func TestRefusalMutations(t *testing.T) {
 			if !strings.HasPrefix(line, "(deny ") {
 				continue
 			}
-			for _, mutation := range []string{"remove-denial", "remove-kill"} {
+			mutations := []string{"remove-denial"}
+			if strings.Contains(line, "(with send-signal SIGKILL)") {
+				mutations = append(mutations, "remove-kill")
+			}
+			for _, mutation := range mutations {
 				runScenario(t, fmt.Sprintf("%s/%d/%s", profileName(computation), index, mutation), func(t *testing.T) {
 					repeat(t, func() bool {
 						replacement := ""

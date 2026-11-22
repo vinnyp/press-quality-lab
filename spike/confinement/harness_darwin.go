@@ -32,16 +32,10 @@ func profile(computation bool) string {
 ; home-write: a write in the redirected home.
 (allow file-write* (subpath (param "HOME")))`
 	if computation {
-		fileRules = `; pipeline: only these declared system executables are children.
-(allow process-exec* (literal (param "SHELL")) (literal (param "SHELL_IMPL")))
-(allow process-exec* (literal (param "CAT")))
-(allow process-exec* (literal (param "FILTER")))
-; pipeline: child images must be readable.
-(allow file-read-data (literal (param "SHELL")) (literal (param "SHELL_IMPL")) (literal (param "BIN_DIR")) (literal (param "USR_BIN_DIR")))
-; pipeline: shell probes a terminal, but the harness creates a terminal-free session.
+		fileRules = `; script-pipeline: arbitrary system tools and their executable images.
+(allow process-exec* file-read-data (subpath (param "BIN_DIR")) (subpath (param "USR_BIN_DIR")))
+; system-value: shell terminal probe in a terminal-free session.
 (allow file-read-data file-write-data (literal (param "TTY_DEVICE")))
-(allow file-read-data (literal (param "CAT")))
-(allow file-read-data (literal (param "FILTER")))
 ; declared-read: the pipeline consumes this declared file.
 (allow file-read-data (literal (param "DECLARED")))
 ; database-read: its declared WAL and shared-memory side files.
@@ -115,6 +109,11 @@ func refusalsIntact(p string, computation bool) bool {
 	}
 	if !strings.Contains(p, `(deny file-lock (with send-signal SIGKILL))`) {
 		return false
+	}
+	for _, op := range []string{"exception-entitlement", "process-exec-update-label"} {
+		if !strings.Contains(p, "(deny "+op+")") {
+			return false
+		}
 	}
 	for _, op := range strings.Fields(requiredRefusals) {
 		if !strings.Contains(p, "(deny "+op+" (with send-signal SIGKILL))") {

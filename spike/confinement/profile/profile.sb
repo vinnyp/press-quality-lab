@@ -6,7 +6,9 @@
 ; user: lookup needs implicit sandbox-check, syscall-mig and mach-derive-port.
 ; clean: file-test-existence remains visible with global file metadata.
 ; exception-entitlement and process-exec-update-label reject kill modifiers;
-; they retain platform behavior, an open limit tested with a signed reader.
+; both are refused silently; the signed reader tests the file boundary.
+(deny exception-entitlement)
+(deny process-exec-update-label)
 (deny fs-quota* (with send-signal SIGKILL))
 (deny nvram* (with send-signal SIGKILL))
 (deny process-iopolicy* (with send-signal SIGKILL))
