@@ -59,6 +59,9 @@ Blocking the network is therefore not evidence that no request was attempted.
 - **One strict JSON subject file.** It needs no dependency. Governs CR8, CR9. (session-settled: user-directed — chosen over TOML, YAML and Markdown: the judge's input rules apply directly and no second grammar is needed.)
 - **A computation is any executable.** It keeps `pql` a single binary. Governs CR34, CR35, CR39. (session-settled: user-directed — chosen over built-in operations, a values file and a Python contract: users bring any language without adding a runtime to the engine.)
 - **A computation has its own confinement.** R16 governs the subject, and ordinary scripts need child processes. Governs CR35, CR36, CR37. (session-settled: user-approved — chosen over the subject's no-child rule: that rule kills an ordinary shell pipeline.)
+- **Programs run from a private copy.** macOS starts a program only if it may read the executable's directory. Governs CR32, CR62, CR76, CR112. (session-settled: user-directed — chosen over running in place: that shows the program the names of everything installed beside it.)
+- **A computation's process group is ended, and the escape is a stated limit.** macOS cannot refuse a child that leaves its group through `posix_spawn` without also refusing that call. Governs CR35. (session-settled: user-directed — chosen over tracking processes by their sandbox or forbidding `posix_spawn`: the first relies on a private call that can kill unrelated processes, and the second breaks Python, Node, `xargs` and `system()`.)
+- **Two operations are refused without a kill.** macOS rejects the kill on them. Governs CR67. (session-settled: user-directed — chosen over leaving both allowed: an untested entitlement could widen the confinement.)
 - **The CLI agreeing with itself can fail but cannot earn green.** Green needs a known answer. Governs CR32, CR33, CR37. (session-settled: user-directed — chosen over crediting agreement or banning self-checks: two commands can share a bug, and a disagreement is still worth reporting.)
 - **Every grade runs on a seeded throwaway copy.** Known answers need known data. Governs CR14, CR15, CR16, CR17. (session-settled: user-directed — chosen over a snapshot or the real store: results must repeat and real data must not be touched.)
 - **The subject file can declare how to run offline.** Live-first CLIs would otherwise have no measurable reads. Governs CR13. (session-settled: user-approved — chosen over default invocations only: those reads attempt the network and are all not-measured.)
@@ -72,6 +75,9 @@ Blocking the network is therefore not evidence that no request was attempted.
 - **A rejected record is the engine's failure.** Governs CR47. (session-settled: user-approved — chosen over reporting a verdict: the judge gave none.)
 - **A confinement refusal is never red.** The objective rules out a red the engine caused. Governs CR20, CR67. (session-settled: user-approved — chosen over letting the subject carry on after a refusal: its failure would look like its own defect.)
 - **A planted secret's read is proved.** An author's declaration is not an observation. Governs CR31, CR68. (session-settled: user-approved — chosen over trusting the declared location: a place never read gives a green that proves nothing.)
+- **A read takes two signals.** macOS kills at open, so the control run alone counts a file that was opened and never read. Governs CR31. (session-settled: user-directed — chosen over calling an open a read or using the access time alone: the first credits an unread secret, and the second has nothing to catch another reader.)
+- **Version 1.0 supports only the macOS 27 versions the spike's record names as passed, 27.0.1 and 27.2.** macOS 26.7.2 rejects the profile, which names operations that version does not know, and a later 27 release may add operations the profile does not refuse. Each further version is supported once the record names it as passed. Governs CR6, KTD5. (session-settled: user-directed — chosen over building and testing a second profile for macOS 26, and over supporting every 27 release, which the owner confirmed on 2026-11-23: every other system already falls under CR23.)
+- **Any write to the planted file is refused.** The spike showed four ways to move its access time without a read under the home's write grant. Governs CR31. (session-settled: user-directed — chosen over allowing writes and refusing time changes across the home: a CLI that rewrites its credential file during the probe is then not observed, which never gives false credit.)
 - **Synthetic programs decide the spike's pass.** The real subject's run gates the seal. Governs CR6, CR66. (session-settled: user-approved — chosen over making that run part of the 2026-11-28 pass: a late approval would stop the work for a reason that is not evidence.)
 - **A test run is scripted at every level.** Nothing verified that it was offline. Governs CR49, CR73. (session-settled: user-approved — chosen over labelling its evidence offline: that would claim what a fake verifier cannot show.)
 - **A malformed command line and a rejected request have different codes.** Both existing contracts are kept. Governs CR71, CR72. (session-settled: user-approved — chosen over one code for both: the rulebook gives a rejected request 2 and the command already gives a malformed line 64.)
@@ -114,7 +120,7 @@ The requirements' A1 (user), A2 (operator agent) and A4 (subject CLI) apply unch
   - **Trigger:** A1 or A2 asks for a grade.
   - **Steps:** Read and validate the subject file. Fix the required set. Test the confinement. Discover commands by confined help, as a check. Run the subject on fresh seeded copies. Run computations separately. Build the record and call the judge.
   - **Outcome:** One judge document gives the exit code and every verdict. The scorecard and stored record add the run's evidence and details, per CR69.
-  - **Covered by:** CR8 to CR48, CR109 to CR114, CR62 to CR64, CR67 to CR72, CR74 to CR92, CR94, CR98 to CR103, CR107, CR108
+  - **Covered by:** CR8 to CR48, CR109 to CR115, CR62 to CR64, CR67 to CR72, CR74 to CR92, CR94, CR98 to CR103, CR107, CR108
 
 ```mermaid
 flowchart TB
@@ -157,8 +163,8 @@ flowchart TB
 - CR13. The file can declare arguments and environment for offline invocation, and every scorecard shows them, with environment values masked.
 - CR87. Offline settings state which invocations they apply to, never apply to discovery, and cannot be a help or version request.
 - CR86. Any unfilled placeholder, including a declared or discovered command with no safety class, makes a required check on an always-applicable dimension `placeholder_unfilled`, so the run cannot exit 0.
-- CR76. The seed and every declared file resolve inside the subject file's directory, which is neither the user's home nor above it, and a declared executable grants a read of that one executable file only.
-- CR112. Each declared file and executable is a regular file, and a grant covers that one file and never a directory.
+- CR76. The seed and every declared file resolve inside the subject file's directory, which is neither the user's home nor above it, and a declared executable grants a read of that one executable file and, as CR112 says, of the private directory its copy runs from.
+- CR112. Each declared file and executable is a regular file, and a grant covers that one file and never a directory, with one exception. The subject and a computation's executable each run as a byte-identical copy in its own throwaway directory that holds nothing else, which is not writable by them and which each may list, because macOS starts no program without that read. The specification states that a program sees the copy's path and finds nothing installed beside the original.
 - CR77. The seed is copied by content, and a seed holding a link or special file is rejected before collection.
 
 **State and confinement**
@@ -167,13 +173,14 @@ flowchart TB
 - CR15. The run records the seed's digest, and with no seed the home is empty.
 - CR16. The subject cannot write outside its throwaway home.
 - CR17. The subject cannot read the user's real state for that CLI.
-- CR62. The subject can read file contents only from its binary, the system paths a process needs to run, and its throwaway home.
+- CR62. The subject can read file contents only from its binary and the listing CR112 allows, the system paths a process needs to run, and its throwaway home.
 - CR63. The engine builds the environment of the subject and of each computation from an allow-list and the subject file's literal declarations, and passes no other variable through.
-- CR67. Any operation the confinement refuses ends the subject's process, so the check is not-measured and never red.
+- CR67. Any operation the confinement refuses ends the subject's process, so the check is not-measured and never red. The specification names the only exceptions: `exception-entitlement` and `process-exec-update-label`, which macOS cannot refuse with a kill, are refused without one, and a computation executing a setuid or setgid program fails with EPERM and no kill. It states that each such refusal is silent.
 - CR78. The profile is a fixed template that receives every path as a canonical parameter, never as profile text.
 - CR80. The subject can reach only an allow-list of system services, and can neither read another process's environment or arguments nor signal another process.
 - CR81. CR80 binds a computation too, except toward processes in its own sandbox.
 - CR82. The engine fixes home, temporary directory, search path, locale and time zone, gives no terminal, input or inherited descriptor, and rejects a declaration that overrides these or sets a loader variable.
+- CR115. The engine refuses to run as root.
 - CR83. The specification lists the allowed system paths and services, and states which file metadata stays visible.
 
 **What the subject's run means**
@@ -203,19 +210,19 @@ flowchart TB
 - CR30. The store-unchanged probe is not-measured as `empty_target` when nothing non-empty is left to compare.
 - CR100. An exclusion cannot cover the declared store or any path the seed supplied, so a seed is prepared without bookkeeping files.
 - CR101. The store-unchanged probe credits only after its comparison detected a change made in a control copy, compares names and contents only, and follows a stated rule for database side files.
-- CR31. The planted-secret probe is observed only when an invocation finishes with its declared successful exit and an otherwise identical control run, which kills only on reading the planted file's contents, is killed.
+- CR31. The planted-secret probe is observed only when an invocation finishes with its declared successful exit and moved the planted file's access time, which it cannot set, and an otherwise identical control run, which kills on opening that file for reading, is killed. The subject cannot set that access time because any write to the planted file, and any unlink or create on the throwaway home and on every directory below it on the file's path, kills it, so a subject that rewrites the file is not observed. The self-test first shows that the volume records a read's access time, or the probe is not-measured. The specification states two limits: another process reading the file during such an invocation looks like the subject's read, and a read that returns no bytes at the end of the file moves its access time and counts as a read.
 - CR107. The planted file is a credential file, or a seeded-state file for which the specification says why reading it proves the secret was read, which a multi-record database never is.
-- CR84. A leak is the planted secret, in any listed encoding, in a captured stream or in any file of the used home other than the planted one, excluded paths included.
+- CR84. A leak is the planted secret, in any listed encoding, in a captured stream or in any file of the used home other than the planted one, excluded paths included. The specification states the limits that a leak through the system's unified log, which the allowed logging service reaches, is not seen, and that on a Mac bound to a directory server a user or group lookup can reach that server.
 - CR110. The engine inspects a used home without following a link, opening a special file or reading past a bound, and reports a link or special file the subject created as a change.
 - CR113. A leak scan stopped by any bound, on a stream or in the home, is not-measured and never held.
 - CR68. With no proved read the planted-secret probe is not-measured as `input_missing`, as it is for a secret that only an environment variable can carry.
 
 **Authored checks and expected values**
 
-- CR32. Every observed value comes from the engine running the subject's binary under its confinement.
+- CR32. Every observed value comes from the engine running the subject's binary, as the copy CR112 describes, under its confinement.
 - CR33. A check whose expected value uses the subject's captured output is non-crediting, as fixed from its declared inputs before collection.
 - CR34. An expected value is a literal or the one JSON value printed by a user's executable, which is named as an argument list and run without a shell.
-- CR35. A computation runs with no network and a time budget, may start child processes, and has every descendant ended with it.
+- CR35. A computation runs with no network and a time budget, may start child processes, is killed on `setsid` or `setpgid` in the process that calls it, and has its whole process group ended with it. The specification states that a child which leaves the group through `posix_spawn` escapes that ending and stays in the computation's confinement.
 - CR36. A computation cannot execute or read the subject's binary or be given a file with the same content, and the specification states that any other copy escapes this.
 - CR37. A computation receives only the pristine seed and the captured outputs its check declares, never the subject's used home.
 - CR64. A computation can read file contents only from its executable and declared files, system paths and what CR37 gives it, and can write only to its own scratch directory, never to the seed.
@@ -281,7 +288,7 @@ flowchart TB
 - CAE5. **Covers CR33.** Given `list` reporting 10 and `count` reporting 9, when a self-check compares them, then the dimension is red.
 - CAE6. **Covers CR35, CR36.** Given a computation that pipes its declared input through another program, then it returns its value. Given one that invokes the subject's binary, then the subject does not run.
 - CAE7. **Covers CR29, CR30.** Given a read command that appends only to an excluded journal, then the probe holds and the exclusion is shown. Given a write to any other file, then it is red. Given a home with nothing non-empty outside the excluded paths, then it is not-measured as `empty_target`.
-- CAE8. **Covers CR31, CR68.** Given a subject with no file it reads a secret from, or a declared file that the control run shows it never reads, when it is graded, then the probe is not-measured and the run does not exit zero.
+- CAE8. **Covers CR31, CR68.** Given a subject with no file it reads a secret from, or a declared file that the proof shows it never reads, a file it only opens included, when it is graded, then the probe is not-measured and the run does not exit zero.
 - CAE9. **Covers CR12, CR25.** Given a nested command with no safety class, when the subject is graded, then its help may be read, its action is not requested, and the run is not-measured naming that command.
 - CAE10. **Covers CR13, CR18.** Given a live-first read, when it runs with no offline declaration and attempts the network, then it is not-measured. When a declared offline invocation avoids the attempt, then it is judged and the declaration is shown.
 - CAE11. **Covers CR16, CR17.** Given a subject that ignores the redirected home, when it runs, then the user's real state is neither read nor changed.
@@ -337,7 +344,7 @@ flowchart TB
 ### Dependencies / Assumptions
 
 - The trust in CR16 to CR20, CR62, CR64, CR67, CR80 and CR81 rests on one platform control: a kill-on-refusal sandbox profile, enforced on macOS by `sandbox-exec`. The hardened profile passed a live check on test programs on 2026-11-22, with clean runs judged by their output.
-- `sandbox-exec` is deprecated. It worked on macOS 27.2, and other versions, including CI's, are untested.
+- `sandbox-exec` is deprecated. The spike passed on macOS 27.2 and on GitHub's macOS 27.0.1 image, and macOS 26.7.2 rejects the profile. Other versions are untested.
 - A kill-on-attempt sandbox is assumed to work for a real printed CLI with a local SQLite store. No printed CLI has been run under it.
 - Every default-scope dimension other than `side-effect-integrity` and `pii-secret-hygiene`, so including `idempotency`, is assumed to have an authored route to credit. A review of the routing tables supports this, and the specification's author confirms it dimension by dimension.
 - A subject that reads no secret from a file has no route to a green run in version 1.0, because `pii-secret-hygiene` can be neither N/A nor credited.
@@ -407,7 +414,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 
 ## Planning Contract
 
-**Product Contract preservation:** changed: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
+**Product Contract preservation:** changed: CR31, CR67 and CR84 amended and CR115 added on 2026-11-23, after the spike's second review found forgeries of the read proof and further limits, and the owner chose to refuse any write to the planted file and to state the limits; the owner also passed the gate for the macOS 27 versions the record names as passed. Two Key Decisions added and one line under Dependencies / Assumptions updated with them. CR32, CR62, CR76 and CR112 amended on 2026-11-22, after the spike showed that a program needs a read of its executable's directory and the owner chose a private copy. CR31 and CAE8 amended on 2026-11-22, after the spike's review found that the control run kills at open and the owner required both signals. CR67 amended on 2026-11-22, after the spike found two operations that cannot carry a kill and the owner chose to refuse both and state the limit. CR35 amended on 2026-11-22, after the spike showed that not every descendant can be ended and the owner chose the stated limit. Earlier: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
 
 ### Key Technical Decisions
 
@@ -563,7 +570,7 @@ docs/specs/
 | Risk | Response |
 |---|---|
 | Deny by default needs allowances that reopen delegation | Each allowance gets its own violator. One that cannot be closed is a stated limit or a failed gate |
-| The runner is macOS 26 and the developer machine 27.2 | Both are tested by 2026-11-28 and KTD5 states what is supported |
+| A macOS release the spike did not test | KTD5 supports only the versions the record names as passed; macOS 26.7.2 failed and is unsupported |
 | A workflow started by hand must already be on `main` | The spike's workflow runs on its pull request and is deleted before that merge |
 | A spike or test is silently skipped on Linux | macOS-only results come only from a macOS run, and a skip is reported as a skip |
 | An operator agent's own sandbox stops nesting, so its grades are all not-measured | U3 records it, and the next action names a sandboxed parent |
@@ -633,11 +640,13 @@ Waits on: nothing.
   - Covers CAE19. A nested parent, an unparsable profile and a profile with its kill removed each fail the self-test and are never counted as a subject exit.
   - Covers CAE20. A path holding profile syntax grants nothing.
   - Covers CAE6. A computation's pipeline returns the right value, and its attempt to execute or read the subject fails.
+  - A computation's `setsid` or `setpgid` is killed, a child left in its group is ended with it, and a child that left through `posix_spawn` is recorded as the limit and is still confined.
   - A lookup of each system service outside the allow-list is killed, from a subject and from a computation.
   - Covers CAE31. A loopback bind and a listen are each killed.
+  - A program starts from its private copy, lists only itself there, cannot write there, and is killed listing the directory above.
   - The self-test's programs fail only for the operation each tests, under the subject's profile and the computation's.
   - An inherited descriptor and an attempt at delegation through an allowed service are refused, or recorded as an open limit.
-  - The read proof kills a reader and spares a program that only stats the file.
+  - The read proof holds for a read, a mapping and a copy, and not for an open without a read, a stat or an attempt to set the access time.
   - File write, user lookup, Go help and SQLite with a write-ahead log each finish with the known output.
   - A plain database read records which side files it creates.
 - **Verification:** Every violator is killed and every twin is correct in 25 of 25 runs, and deleting any one deny or kill makes a named test fail.
@@ -687,7 +696,7 @@ This is separate because the owner must read and ratify the text, and one pull r
 ### U5. Collection rules
 
 - **Goal:** Write the rules from the subject file to each observation.
-- **Requirements:** CF2. CR8 to CR41, CR58, CR62 to CR64, CR67, CR68, CR70, CR74 to CR78, CR80 to CR87, CR98, CR100, CR101, CR107, CR109 to CR113. KTD1, KTD8.
+- **Requirements:** CF2. CR8 to CR41, CR58, CR62 to CR64, CR67, CR68, CR70, CR74 to CR78, CR80 to CR87, CR98, CR100, CR101, CR107, CR109 to CR113, CR115. KTD1, KTD8.
 - **Dependencies:** U3. Only `confinement.md` waits for U4's freeze, so the rest is drafted beside U4 from 2026-11-28.
 - **Files:** Create `collection-rules.md` and `confinement.md` in `docs/specs/conformance-collection-1.0/`.
 - **Approach:**
