@@ -706,6 +706,45 @@ def draft(root):
             for child in node.get(key, []):
                 check_keywords(child)
 
+    open_objects = {
+        ("schema/baseline.schema.json", "/properties/preimages"),
+        *( ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/" + suffix)
+           for suffix in ("env", "parameters", "expected/oneOf/1") ),
+        ("schema/subject-file.schema.json", "/$defs/offline/properties/env"),
+    }
+    fragments = {
+        ("schema/subject-file.schema.json", "/properties/secret/oneOf/2/if"),
+        ("schema/subject-file.schema.json", "/properties/secret/oneOf/2/then"),
+    }
+
+    def check_objects(node, name, path=""):
+        arbitrary_values = {
+            ("schema/subject-file.schema.json", "/$defs/expected/oneOf/0/properties/literal"),
+            ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/parameters/additionalProperties"),
+            ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/expected/oneOf/1/additionalProperties"),
+        }
+        if node is True and (name, path) not in arbitrary_values:
+            raise Error(f"unconstrained schema: {name} {path}")
+        if isinstance(node, dict):
+            site = (name, path)
+            if node.get("type") == "object" or "properties" in node:
+                if site not in open_objects | fragments and node.get("additionalProperties") is not False:
+                    raise Error(f"open object: {name} {path}")
+                optional = {"detail"} if site == ("schema/case.schema.json", "/properties/entry/properties/fixtures/items") else set()
+                if site in fragments:
+                    optional = {"kind"} if path.endswith("/if") else {"reason"}
+                missing = set(node.get("properties", {})) - set(node.get("required", [])) - optional
+                if missing:
+                    raise Error(f"properties not required: {name} {path}: {sorted(missing)}")
+            for key in ("properties", "$defs", "patternProperties"):
+                for key_name, child in node.get(key, {}).items():
+                    check_objects(child, name, path + "/" + key + "/" + key_name)
+            for key in ("additionalProperties", "items", "propertyNames", "if", "then", "else"):
+                check_objects(node.get(key), name, path + "/" + key)
+            for key in ("allOf", "anyOf", "oneOf", "prefixItems"):
+                for index, child in enumerate(node.get(key, [])):
+                    check_objects(child, name, path + "/" + key + "/" + str(index))
+
     def check_refs(node, resolver):
         if isinstance(node, dict):
             if "$ref" in node:
@@ -719,6 +758,7 @@ def draft(root):
     for name, (schema, uri) in schemas.items():
         if name not in ("schema/judge-input.schema.json", "schema/judge-output.schema.json"):
             check_keywords(schema)
+            check_objects(schema, name)
         check_refs(schema, registry.resolver(uri))
 
     def validator(schema, resolver):
@@ -742,12 +782,14 @@ def draft(root):
         return result
 
     def locations(value, constraints, path=()):
-        if path and path[-1] in ("judge_input", "judge_output"):
+        judge_subtree = any(isinstance(s, dict) and s.get("$ref", "").split("#")[0] in
+                            ("judge-input.schema.json", "judge-output.schema.json") for s, _ in constraints)
+        expanded = [part for schema, resolver in constraints for part in parts(schema, resolver, value)]
+        yield path, value, expanded, constraints
+        if judge_subtree:
             for kind in counts:
                 counts[kind]["skipped: judge subtree"] += 1
             return
-        expanded = [part for schema, resolver in constraints for part in parts(schema, resolver, value)]
-        yield path, value, expanded, constraints
         children = value.items() if isinstance(value, dict) else enumerate(value) if isinstance(value, list) else []
         for key, child in children:
             selected = []
@@ -862,10 +904,11 @@ def draft(root):
                         counts[kind]["rejected"] += 1
                     else:
                         failures.append(f"accepted {kind} mutant: {label} {location}")
-    if seen != {"subject-file.schema.json", "record.schema.json", "baseline.schema.json", "case.schema.json"}:
+    if seen != {Path(name).name for name in schemas if name.endswith(".schema.json") and Path(name).name not in ("judge-input.schema.json", "judge-output.schema.json")}:
         raise Error("missing example for a kit schema")
     for kind, count in counts.items():
         print(f"{kind}: made={count['made']} rejected={count['rejected']}; " + "; ".join(f"{why}={n}" for why, n in sorted(count.items()) if why.startswith("skipped:")))
     for failure in failures:
         print(failure, file=sys.stderr)
+    print("Limit: a widened type, enum or bound cannot be caught without an outside oracle.")
     return int(bool(failures))

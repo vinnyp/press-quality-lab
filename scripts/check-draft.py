@@ -10,6 +10,7 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     root = Path(temporary) / "kit"
     shutil.copytree(source, root)
 
+    # The earlier draft step fills the uv cache used by --offline here.
     def run():
         return subprocess.run(
             ["uv", "run", "--offline", "runner.py", "--draft"], cwd=root,
@@ -17,14 +18,20 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
             capture_output=True, text=True, timeout=60, check=False,
         )
 
+    def refused():
+        result = run()
+        if result.returncode != 2 or "refused: draft folder contains KIT.sha256" not in result.stderr:
+            raise RuntimeError("wrong draft refusal: " + str(result.returncode) + " " + result.stderr)
+        guard = subprocess.run(["bash", "-c", "[[ ! -e KIT.sha256 && ! -L KIT.sha256 ]]"], cwd=root, timeout=10, check=False)
+        if guard.returncode == 0:
+            raise RuntimeError("check.sh guard accepted seal")
+
     seal = root / "KIT.sha256"
     seal.write_text("synthetic seal\n")
-    if run().returncode != 2:
-        raise RuntimeError("regular seal was accepted")
+    refused()
     seal.unlink()
     seal.symlink_to("absent-seal")
-    if run().returncode != 2:
-        raise RuntimeError("dangling seal was accepted")
+    refused()
     seal.unlink()
     normal = run()
     if normal.returncode != 0:

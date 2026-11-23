@@ -39,6 +39,9 @@ func enumSites(v any, path string, found map[string][]any) {
 		if values, ok := node["enum"].([]any); ok {
 			found[path] = values
 		}
+		if value, ok := node["const"]; ok {
+			found[path] = append(found[path], value)
+		}
 		for key, child := range node {
 			enumSites(child, path+"/"+key, found)
 		}
@@ -49,9 +52,9 @@ func enumSites(v any, path string, found map[string][]any) {
 	}
 }
 
-func TestOutputSchemaCopy(t *testing.T) {
+func TestJudgeSchemaCopies(t *testing.T) {
 	for _, name := range []string{"judge-input.schema.json", "judge-output.schema.json"} {
-		t.Run(name, func(t *testing.T) {
+		t.Run(strings.ReplaceAll(name, ".", "_"), func(t *testing.T) {
 			if !bytes.Equal(read(t, filepath.Join(kit, "schema", name)), read(t, filepath.Join(sealed, "schema", name))) {
 				t.Fatal("schema differs from sealed judge")
 			}
@@ -76,7 +79,7 @@ func TestSchemaEnums(t *testing.T) {
 		t.Fatal("no schemas")
 	}
 	for _, file := range files {
-		t.Run(filepath.Base(file), func(t *testing.T) {
+		t.Run(strings.ReplaceAll(filepath.Base(file), ".", "_"), func(t *testing.T) {
 			var v any
 			decode(t, read(t, file), &v)
 			sites := map[string][]any{}
@@ -84,6 +87,16 @@ func TestSchemaEnums(t *testing.T) {
 			for site, values := range sites {
 				var expected []any
 				switch {
+				case oracles[filepath.Base(file)] != nil:
+					expected = oracles[filepath.Base(file)][site]
+				case filepath.Base(file) == "subject-file.schema.json" && (site == "/properties/secret/oneOf/2/properties/kind" || site == "/properties/secret/oneOf/2/if/properties/kind"):
+					expected = []any{"credential", "seeded_state"}
+				case filepath.Base(file) == "case.schema.json" && site == "/properties/kind":
+					expected = []any{"judge-checked", "derivation-only"}
+				case filepath.Base(file) == "case.schema.json" && site == "/properties/entry/properties/fixtures/items/properties/kind":
+					expected = []any{"link", "special_file", "oversized_output", "invalid_bytes", "planted_secret"}
+				case filepath.Base(file) == "baseline.schema.json" && site == "/properties/baseline/properties/entries/items/properties/kind":
+					expected = input["/$defs/baseline/properties/entries/items/properties/kind"]
 				case strings.HasSuffix(site, "/properties/dimension") || site == "/$defs/dimension":
 					expected = input["/properties/required/items/properties/dimension"]
 				case filepath.Base(file) == "record.schema.json" && site == "/properties/next_actions/items/oneOf/0/properties/reason":
@@ -105,6 +118,16 @@ func TestSchemaEnums(t *testing.T) {
 						}
 					}
 				default:
+					parts := strings.Split(site, "/")
+					property := ""
+					for i := 0; i+1 < len(parts); i++ {
+						if parts[i] == "properties" || parts[i] == "$defs" {
+							property = parts[i+1]
+						}
+					}
+					if slices.Contains([]string{"reason", "failure_kind", "tier", "claimed_tier", "dimension", "kind", "outcome"}, property) {
+						t.Errorf("unmapped enum site %s", site)
+					}
 					continue
 				}
 				if len(expected) == 0 {
@@ -112,7 +135,7 @@ func TestSchemaEnums(t *testing.T) {
 					continue
 				}
 				for _, value := range values {
-					if !slices.Contains(expected, value) {
+					if !slices.ContainsFunc(expected, func(want any) bool { return reflect.DeepEqual(want, value) }) {
 						t.Errorf("%s enum value %v absent from sealed judge site", site, value)
 					}
 				}
@@ -141,7 +164,7 @@ func TestExampleRecords(t *testing.T) {
 		t.Fatal("no records")
 	}
 	for _, file := range files {
-		t.Run(filepath.Base(file), func(t *testing.T) {
+		t.Run(strings.ReplaceAll(filepath.Base(file), ".", "_"), func(t *testing.T) {
 			var record struct {
 				Input    json.RawMessage `json:"judge_input"`
 				Output   any             `json:"judge_output"`
