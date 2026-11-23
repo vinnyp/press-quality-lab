@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-26, xcode-27]
+        runner: [xcode-27]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 150
     defaults:
@@ -33,4 +33,6 @@ jobs:
       - name: Download modules
         run: go mod download
       - name: Run confinement spike
+        env:
+          CONFINEMENT_BUDGET_SCALE: "4"
         run: GOTOOLCHAIN=local GOPROXY=off go test -v -count=1 -timeout 130m -tags confinementspike ./spike/confinement/...

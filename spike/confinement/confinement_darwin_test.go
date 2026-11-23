@@ -316,15 +316,32 @@ func (f fixture) invokeOn(t *testing.T, text, mode string, twin bool) result {
 	executed.Add(1)
 	budget := f.budget
 	if budget == 0 {
-		budget = 5 * time.Second
+		budget = defaultBudget()
 	}
+	var r result
 	if text == "" {
-		return runBudgetWithFiles(f.launcher, args, f.env, f.home(), budget, f.launcherFiles, f.firstLine)
+		r = runBudgetWithFiles(f.launcher, args, f.env, f.home(), budget, f.launcherFiles, f.firstLine)
+	} else {
+		if f.nested {
+			args = append([]string{"-p", "(version 1)(allow default)", "/usr/bin/sandbox-exec"}, args...)
+		}
+		r = runBudgetWithFiles("/usr/bin/sandbox-exec", args, f.env, f.home(), budget, f.launcherFiles, f.firstLine)
 	}
-	if f.nested {
-		args = append([]string{"-p", "(version 1)(allow default)", "/usr/bin/sandbox-exec"}, args...)
+	if r.timedOut && t != nil {
+		t.Logf("run timed out after %v: mode=%s marked=%v ready=%v", budget, mode, r.marked, r.ready)
 	}
-	return runBudgetWithFiles("/usr/bin/sandbox-exec", args, f.env, f.home(), budget, f.launcherFiles, f.firstLine)
+	return r
+}
+
+// The default budget only bounds a run that hangs; no scenario measures it.
+// A slow machine may scale it with CONFINEMENT_BUDGET_SCALE (1 to 10).
+// Scenarios that test a budget set their own.
+func defaultBudget() time.Duration {
+	scale, err := strconv.Atoi(os.Getenv("CONFINEMENT_BUDGET_SCALE"))
+	if err != nil || scale < 1 || scale > 10 {
+		scale = 1
+	}
+	return time.Duration(scale) * 5 * time.Second
 }
 
 func (f fixture) home() string {
