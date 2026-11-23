@@ -38,7 +38,7 @@ func confinementSelfTest(t *testing.T, f fixture, p string, computation bool) bo
 		passed = passed && ok
 	}
 	f.args = nil
-	if !correct(f.invoke(p, "clean", false), "clean\n") {
+	if !correct(f.invokeOn(t, p, "clean", false), "clean\n") {
 		return false
 	}
 	for _, mode := range []string{"file-read", "file-map", "file-write", "file-create"} {
@@ -59,7 +59,7 @@ func confinementSelfTest(t *testing.T, f fixture, p string, computation bool) bo
 			rules += "\n(allow file-write-data (literal (param \"CREATE_TARGET\")))\n"
 		}
 		before := decoySnapshot(probe.args[0])
-		check(mode, probe.invoke(rules, mode, false).killed() && before == decoySnapshot(probe.args[0]))
+		check(mode, probe.invokeOn(t, rules, mode, false).killed() && before == decoySnapshot(probe.args[0]))
 	}
 	for _, mode := range []string{"tcp", "unix", "udp", "bind", "listen"} {
 		network, quiet, closeDecoy := networkDecoy(t, f, mode)
@@ -67,22 +67,22 @@ func confinementSelfTest(t *testing.T, f fixture, p string, computation bool) bo
 		if mode == "listen" {
 			rules += "\n(allow network-bind (local ip \"localhost:*\"))\n"
 		}
-		r := network.invoke(rules, mode, false)
+		r := network.invokeOn(t, rules, mode, false)
 		untouched := quiet()
 		closeDecoy()
 		check(mode, r.killed() && untouched)
 	}
-	check("sysctl-read", f.invoke(p, "witness-sysctl", false).killed())
+	check("sysctl-read", f.invokeOn(t, p, "witness-sysctl", false).killed())
 	service := f
 	service.args = []string{"com.apple.pasteboard.1"}
-	check("service", service.invoke(p, "service", false).killed())
+	check("service", service.invokeOn(t, p, "service", false).killed())
 	if computation {
-		check("child", correct(f.invoke(p, "child", false), "performed\nfallback\n"))
+		check("child", correct(f.invokeOn(t, p, "child", false), "performed\nfallback\n"))
 		for _, mode := range []string{"session", "group"} {
-			check(mode, childKilled(f.invoke(p, mode, false)))
+			check(mode, childKilled(f.invokeOn(t, p, mode, false)))
 		}
 	} else {
-		check("child", f.invoke(p, "child", false).killed())
+		check("child", f.invokeOn(t, p, "child", false).killed())
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -119,7 +119,7 @@ func confinementSelfTest(t *testing.T, f fixture, p string, computation bool) bo
 		if mode == "priority" {
 			rules += "\n(allow process-info-pidinfo)\n"
 		}
-		killed := probe.invoke(rules, mode, false).killed()
+		killed := probe.invokeOn(t, rules, mode, false).killed()
 		events := make([]syscall.Kevent_t, 1)
 		n, err := waitEvent(queue, nil, events, 20*time.Millisecond)
 		check(mode, killed && err == nil && n == 0)
@@ -164,7 +164,18 @@ func TestConfinementApplication(t *testing.T) {
 					if form == "unparsable-profile" || form == "missing-profile" || form == "missing-launcher" {
 						application := probe
 						application.args = nil
-						r := application.invoke(p, "clean", false)
+						application, release, err := application.prepareImagesOn(t)
+						if err != nil {
+							t.Fatal("prepare application images")
+						}
+						defer release()
+						r := application.invokeOn(t, p, "clean", false)
+						if form == "missing-launcher" {
+							want := "sandbox-exec: execvp() of '" + application.launcher + "' failed: No such file or directory\n"
+							if !r.status.Exited() || r.status.ExitStatus() != 71 || r.diagnostic != want {
+								return false
+							}
+						}
 						if r.marked || r.timedOut || r.err == nil || r.output != "" {
 							return false
 						}
@@ -223,11 +234,11 @@ func TestPathParametersSmoke(t *testing.T) {
 		runScenario(t, profileName(computation), func(t *testing.T) {
 			repeat(t, func() bool {
 				f.args = nil
-				if !correct(f.invoke(profile(computation), "clean", false), "clean\n") {
+				if !correct(f.invokeOn(t, profile(computation), "clean", false), "clean\n") {
 					return false
 				}
 				f.args = []string{original.args[0], original.args[0], filepath.Join(root, "unused")}
-				return f.invoke(profile(computation), "file-read", false).killed()
+				return f.invokeOn(t, profile(computation), "file-read", false).killed()
 			})
 		})
 	}
@@ -337,7 +348,7 @@ func TestLauncherExecFailure(t *testing.T) {
 					if failure {
 						probe.probe = invalid
 					}
-					r := probe.invoke(profile(computation), "exit-launch-code", false)
+					r := probe.invokeOn(t, profile(computation), "exit-launch-code", false)
 					diagnostic := "confined\n"
 					if failure {
 						diagnostic += "launch-failed\n"
@@ -376,7 +387,7 @@ func TestLauncherFailureMarkerMutation(t *testing.T) {
 	for _, computation := range []bool{false, true} {
 		runScenario(t, profileName(computation), func(t *testing.T) {
 			repeat(t, func() bool {
-				r := f.invoke(profile(computation), "unused", false)
+				r := f.invokeOn(t, profile(computation), "unused", false)
 				// The ordinary failure test requires startFailed. This mutant
 				// loses that distinction while preserving the same exit code.
 				return !r.startFailed && r.marked && !r.ready && !r.timedOut && !r.harnessKilled && r.status.Exited() && r.status.ExitStatus() == 71 && r.output == "" && r.diagnostic == "confined\n"
@@ -414,20 +425,18 @@ func TestExitedChildObservation(t *testing.T) {
 }
 
 func TestKillExitDetails(t *testing.T) {
-	runScenario(t, "exit-detail", func(t *testing.T) {
-		repeat(t, func() bool {
-			executed.Add(1)
-			r := result{ready: true, marked: true, status: syscall.WaitStatus(syscall.SIGKILL), diagnostic: "confined\n"}
-			if !r.killed() {
-				return false
+	for _, row := range []struct {
+		name   string
+		detail uint32
+		want   bool
+	}{
+		{"ordinary", 0, true}, {"memory", syscall.NOTE_EXIT_MEMORY, false}, {"code-signing", syscall.NOTE_EXIT_CSERROR, false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			r := result{ready: true, marked: true, status: syscall.WaitStatus(syscall.SIGKILL), diagnostic: "confined\n", exitDetail: row.detail}
+			if r.killed() != row.want {
+				t.Error("kill classification differs")
 			}
-			for _, detail := range []uint32{syscall.NOTE_EXIT_MEMORY, syscall.NOTE_EXIT_CSERROR} {
-				r.exitDetail = detail
-				if r.killed() {
-					return false
-				}
-			}
-			return true
 		})
-	})
+	}
 }

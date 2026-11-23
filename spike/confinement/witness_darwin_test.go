@@ -18,7 +18,7 @@ func TestSilentRefusals(t *testing.T) {
 			runScenario(t, profileName(computation)+"/"+op, func(t *testing.T) {
 				repeat(t, func() bool {
 					f.args = []string{op}
-					return correct(f.invoke(profile(computation), "inventory", false), op+"=0\n")
+					return correct(f.invokeOn(t, profile(computation), "inventory", false), op+"=0\n")
 				})
 			})
 		}
@@ -63,7 +63,7 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 						if w.mode == "map" {
 							mapped.freshImages = true
 							var release func()
-							mapped, release, err = mapped.prepareImages()
+							mapped, release, err = mapped.prepareImagesOn(t)
 							if err != nil {
 								t.Fatal("prepare mapped image")
 							}
@@ -73,7 +73,7 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 						if w.mode == "xattr" {
 							setup := f
 							setup.args = []string{source, source, filepath.Join(root, "unused")}
-							if !correct(setup.invoke("", "file-xattr", false), "performed\nfallback\n") {
+							if !correct(setup.invokeOn(t, "", "file-xattr", false), "performed\nfallback\n") {
 								t.Fatal("prepare xattr decoy")
 							}
 						}
@@ -83,7 +83,7 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 							token := filepath.Join(root, "extension-token")
 							issuer := f
 							issuer.args = []string{source, token}
-							if !correct(issuer.invoke("", "extension-token", false), "issued\n") {
+							if !correct(issuer.invokeOn(t, "", "extension-token", false), "issued\n") {
 								t.Log("native extension issuance for the decoy failed")
 								return false
 							}
@@ -137,7 +137,7 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 						if extensionTarget != "" {
 							targetBefore = decoySnapshot(extensionTarget)
 						}
-						r := probe.invoke(p, "witness-"+w.mode, form == "twin")
+						r := probe.invokeOn(t, p, "witness-"+w.mode, form == "twin")
 						unchanged := before == decoySnapshot(source)
 						if extensionTarget != "" {
 							unchanged = unchanged && targetBefore == decoySnapshot(extensionTarget)
@@ -217,7 +217,7 @@ func TestSystemResolversSmoke(t *testing.T) {
 						if confined {
 							p = profile(computation)
 						}
-						r := entry.f.invoke(p, "resolver", false)
+						r := entry.f.invokeOn(t, p, "resolver", false)
 						if confined {
 							return r.killed()
 						}
@@ -249,7 +249,7 @@ func TestPrebootListingSmoke(t *testing.T) {
 					if form == "positive" {
 						p = ""
 					}
-					r := f.invoke(p, "preboot", form == "twin")
+					r := f.invokeOn(t, p, "preboot", form == "twin")
 					if form == "confined" {
 						return r.killed()
 					}
@@ -276,7 +276,7 @@ func TestExecutableScriptPipelines(t *testing.T) {
 			}
 			probe := f
 			probe.probe = script
-			repeat(t, func() bool { return correct(probe.invoke(profile(true), "unused", false), entry.want) })
+			repeat(t, func() bool { return correct(probe.invokeOn(t, profile(true), "unused", false), entry.want) })
 		})
 	}
 }
@@ -341,7 +341,7 @@ func TestSystemToolBoundariesSmoke(t *testing.T) {
 					if form == "positive" {
 						p = ""
 					}
-					r := probe.invoke(p, "system-child", false)
+					r := probe.invokeOn(t, p, "system-child", false)
 					unchanged := before == decoySnapshot(target)
 					untouched := true
 					if quiet != nil {
@@ -406,7 +406,7 @@ func TestSystemHTTPClientSmoke(t *testing.T) {
 (allow process-exec* file-read-data (literal (param "HTTP_TOOL")))
 `
 					}
-					r := probe.invoke(p, "replace-tool", false)
+					r := probe.invokeOn(t, p, "replace-tool", false)
 					untouched := quiet()
 					if confined {
 						return r.killed() && untouched
@@ -422,6 +422,6 @@ func TestComputationTerminalOpen(t *testing.T) {
 	t.Parallel()
 	f := computationFixture(t)
 	runScenario(t, "open-tty", func(t *testing.T) {
-		repeat(t, func() bool { return correct(f.invoke(profile(true), "terminal-open", false), "terminal absent\n") })
+		repeat(t, func() bool { return correct(f.invokeOn(t, profile(true), "terminal-open", false), "terminal absent\n") })
 	})
 }

@@ -85,7 +85,7 @@ func TestFileBoundaries(t *testing.T) {
 								p = strings.ReplaceAll(p, "(with send-signal SIGKILL)", "")
 							}
 							before := decoySnapshot(bad)
-							r := probe.invoke(p, "file-"+mode, form == "twin")
+							r := probe.invokeOn(t, p, "file-"+mode, form == "twin")
 							if form == "positive" || form == "attribution" {
 								return correct(r, "performed\nfallback\n")
 							}
@@ -142,7 +142,7 @@ func TestContentReadProof(t *testing.T) {
 			}
 			probe := f
 			probe.args = []string{path, path, filepath.Join(f.home(), "unused"), canary}
-			r := probe.invoke("", "file-secret-read", false)
+			r := probe.invokeOn(t, "", "file-secret-read", false)
 			at, err := accessTime(path)
 			if err != nil {
 				t.Fatal("inspect calibration")
@@ -157,7 +157,7 @@ func TestContentReadProof(t *testing.T) {
 		t.Logf("not-measured=%d", notMeasured)
 	})
 	for _, computation := range []bool{false, true} {
-		for _, mode := range []string{"read", "pread", "map", "copy", "open", "stat", "times", "setattr", "fsetattr", "replace", "rename-times", "recreate", "uncalibrated-read"} {
+		for _, mode := range []string{"read", "pread", "map", "copy", "open", "stat", "times", "setattr", "fsetattr", "replace", "rename-times", "recreate", "recreate-without-denial", "uncalibrated-read"} {
 			runScenario(t, profileName(computation)+"/"+mode, func(t *testing.T) {
 				repeat(t, func() bool {
 					home, err := filepath.EvalSymlinks(t.TempDir())
@@ -173,8 +173,11 @@ func TestContentReadProof(t *testing.T) {
 					probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
 					probe.args = []string{secret, secret, filepath.Join(home, "copied"), canary}
 					scenarioCalibrated := calibrated && mode != "uncalibrated-read"
-					operationMode := strings.TrimPrefix(mode, "uncalibrated-")
+					operationMode := strings.TrimSuffix(strings.TrimPrefix(mode, "uncalibrated-"), "-without-denial")
 					ordinary := profile(computation)
+					if mode == "recreate-without-denial" {
+						ordinary = strings.Replace(ordinary, `(deny file-write* (literal (param "PLANTED")) (with send-signal SIGKILL))`, "", 1)
+					}
 					control := ordinary + `
 (deny file-read-data (literal (param "PLANTED")) (with send-signal SIGKILL))
 `
@@ -185,7 +188,7 @@ func TestContentReadProof(t *testing.T) {
 					if err != nil {
 						t.Fatal("stat planted file")
 					}
-					r := probe.invoke(ordinary, "file-secret-"+operationMode, false)
+					r := probe.invokeOn(t, ordinary, "file-secret-"+operationMode, false)
 					at, err := accessTime(secret)
 					if err != nil {
 						t.Fatal("inspect access time")
@@ -197,7 +200,10 @@ func TestContentReadProof(t *testing.T) {
 					stable := os.SameFile(before, after)
 					moved := !at.Equal(old)
 					t.Logf("ordinary-exit=%d access-time-moved=%v", r.status, moved)
-					c := probe.invoke(control, "file-secret-"+operationMode, false)
+					c := probe.invokeOn(t, control, "file-secret-"+operationMode, false)
+					if mode == "recreate-without-denial" {
+						return correct(r, "performed\nfallback\n") && moved && c.killed() && !stable && !(stable && readMeasured(scenarioCalibrated, moved, c.killed()))
+					}
 					if mode == "times" || mode == "setattr" || mode == "fsetattr" || mode == "replace" || mode == "rename-times" || mode == "recreate" {
 						return r.killed() && c.killed() && !moved
 					}
@@ -211,7 +217,11 @@ func TestContentReadProof(t *testing.T) {
 						return c.killed() && !moved && !readMeasured(scenarioCalibrated, moved, c.killed())
 					}
 					if !scenarioCalibrated {
-						t.Log("not-measured: volume calibration did not record reads")
+						if mode != "uncalibrated-read" {
+							t.Error("read proof not measured: volume calibration did not record reads")
+							return false
+						}
+						t.Log("not-measured: deliberately uncalibrated control")
 						return stable && !readMeasured(scenarioCalibrated, moved, c.killed())
 					}
 					return stable && readMeasured(scenarioCalibrated, moved, c.killed())
@@ -247,7 +257,7 @@ func TestHomeWrite(t *testing.T) {
 	for _, computation := range []bool{false, true} {
 		runScenario(t, profileName(computation), func(t *testing.T) {
 			repeat(t, func() bool {
-				if !correct(f.invoke(profile(computation), "file-home", false), "home written\n") {
+				if !correct(f.invokeOn(t, profile(computation), "file-home", false), "home written\n") {
 					return false
 				}
 				data, err := os.ReadFile(filepath.Join(f.root, "home", "state"))
@@ -280,7 +290,7 @@ func TestHomeLinkInspectionSmoke(t *testing.T) {
 				probe.params = []string{"HOME=" + home, "DECLARED=" + good}
 				probe.args = []string{target, good, filepath.Join(home, "link")}
 				before := decoySnapshot(target)
-				if !probe.invoke(profile(computation), "file-symlink", false).killed() {
+				if !probe.invokeOn(t, profile(computation), "file-symlink", false).killed() {
 					return false
 				}
 				links := 0
@@ -346,7 +356,7 @@ func TestHomeRootProtection(t *testing.T) {
 						if form == "remove-kill" {
 							p = strings.Replace(p, line, strings.Replace(line, " (with send-signal SIGKILL)", "", 1), 1)
 						}
-						r := probe.invoke(p, mode, form == "twin")
+						r := probe.invokeOn(t, p, mode, form == "twin")
 						info, err := os.Lstat(home)
 						unchanged := err == nil && info.IsDir() && info.Mode()&os.ModeSymlink == 0
 						if form == "confined" {
@@ -404,7 +414,19 @@ func TestPlantedTimestampForgery(t *testing.T) {
 							p = strings.Replace(p, line, strings.Replace(line, " (with send-signal SIGKILL)", "", 1), 1)
 						}
 						before := decoySnapshot(secret)
-						r := probe.invoke(p, "file-secret-"+mode, form == "twin")
+						beforeAccess, err := accessTime(secret)
+						if err != nil {
+							t.Fatal("inspect planted access time")
+						}
+						r := probe.invokeOn(t, p, "file-secret-"+mode, form == "twin")
+						afterAccess, err := accessTime(secret)
+						if err != nil {
+							t.Fatal("inspect planted access time after run")
+						}
+						otherAccess, err := accessTime(other)
+						if err != nil {
+							t.Fatal("inspect twin access time")
+						}
 						unchanged := before == decoySnapshot(secret)
 						if form == "confined" {
 							return r.killed() && unchanged
@@ -412,7 +434,10 @@ func TestPlantedTimestampForgery(t *testing.T) {
 						if form == "remove-kill" {
 							return correct(r, "fallback\n") && unchanged
 						}
-						return correct(r, "performed\nfallback\n") && (form != "twin" || unchanged)
+						if form == "twin" {
+							return correct(r, "performed\nfallback\n") && unchanged && !otherAccess.Equal(old)
+						}
+						return correct(r, "performed\nfallback\n") && !afterAccess.Equal(beforeAccess)
 					})
 				})
 			}
@@ -430,8 +455,10 @@ func TestReadMeasurementInputs(t *testing.T) {
 		{"unchanged-access-time", true, false, true, false},
 		{"control-survived", true, true, false, false},
 	} {
-		runScenario(t, row.name, func(t *testing.T) {
-			repeat(t, func() bool { executed.Add(1); return readMeasured(row.calibrated, row.moved, row.killed) == row.want })
+		t.Run(row.name, func(t *testing.T) {
+			if readMeasured(row.calibrated, row.moved, row.killed) != row.want {
+				t.Error("read measurement differs")
+			}
 		})
 	}
 }
@@ -459,7 +486,7 @@ func TestEndOfFileReadObservation(t *testing.T) {
 				probe := f
 				probe.params = []string{"HOME=" + home, "PLANTED=" + path}
 				probe.args = []string{path, path, filepath.Join(home, "unused"), canary}
-				r := probe.invoke(profile(computation), "file-secret-eof", false)
+				r := probe.invokeOn(t, profile(computation), "file-secret-eof", false)
 				at, err := accessTime(path)
 				if err != nil {
 					t.Fatal("inspect observation")

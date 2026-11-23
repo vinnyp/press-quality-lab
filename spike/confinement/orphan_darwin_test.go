@@ -56,7 +56,7 @@ func TestOrphanAfterGroupEndSmoke(t *testing.T) {
 						pid = candidate
 						return os.WriteFile(filepath.Join(root, "observed"), nil, 0600)
 					}
-					r := probe.invoke(p, mode, false)
+					r := probe.invokeOn(t, p, mode, false)
 					if pid <= 1 || !correct(r, strconv.Itoa(pid)+"\n") {
 						return false
 					}

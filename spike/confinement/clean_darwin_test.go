@@ -32,7 +32,7 @@ func TestGoCleanPrograms(t *testing.T) {
 		for _, mode := range []string{"help", "user", "exit"} {
 			runScenario(t, profileName(computation)+"/"+mode, func(t *testing.T) {
 				repeat(t, func() bool {
-					r := f.invoke(profile(computation), mode, false)
+					r := f.invokeOn(t, profile(computation), mode, false)
 					if mode == "exit" {
 						return r.marked && !r.timedOut && r.status.Exited() && r.status.ExitStatus() == 3 && r.output == "exit three\n"
 					}
@@ -60,11 +60,11 @@ func TestDatabaseCleanPrograms(t *testing.T) {
 				probe := databaseFixture(t, f)
 				p := profile(computation)
 
-				rr := probe.invoke(p, "write", false)
+				rr := probe.invokeOn(t, p, "write", false)
 				if !correct(rr, "written 7\n") {
 					return false
 				}
-				return correct(probe.invoke(p, "read", false), "side-files=wal,shm\nvalue=7\n")
+				return correct(probe.invokeOn(t, p, "read", false), "side-files=wal,shm\nvalue=7\n")
 			})
 		})
 	}
@@ -99,7 +99,7 @@ func TestOrdinaryProgramsSmoke(t *testing.T) {
 						want = "stream\n" + want
 						diagnostic = "diagnostic\n"
 					}
-					r := f.invoke(profile(computation), "ordinary-"+mode, false)
+					r := f.invokeOn(t, profile(computation), "ordinary-"+mode, false)
 					if !correct(r, want, diagnostic) {
 						t.Logf("status=%d marked=%v", r.status, r.marked)
 					}
@@ -109,7 +109,7 @@ func TestOrdinaryProgramsSmoke(t *testing.T) {
 		}
 		runScenario(t, profileName(computation)+"/go", func(t *testing.T) {
 			repeat(t, func() bool {
-				r := g.invoke(profile(computation), "ordinary", false)
+				r := g.invokeOn(t, profile(computation), "ordinary", false)
 				if !correct(r, "ordinary ok\n") {
 					t.Logf("status=%d marked=%v", r.status, r.marked)
 				}
@@ -133,7 +133,7 @@ func TestOrdinaryProgramsSmoke(t *testing.T) {
 			probe.probe = script
 			repeat(t, func() bool {
 				before := decoySnapshot(filepath.Join(f.home(), "state"))
-				r := probe.invoke(profile(true), "unused", false)
+				r := probe.invokeOn(t, profile(true), "unused", false)
 				if entry.name != "substitution" {
 					return r.killed() && before == decoySnapshot(filepath.Join(f.home(), "state"))
 				}
@@ -168,7 +168,7 @@ func TestDatabaseDeclaredInputSmoke(t *testing.T) {
 				}
 				setup := f
 				setup.args = []string{seed}
-				if !correct(setup.invoke("", "write", false), "written 7\n") {
+				if !correct(setup.invokeOn(t, "", "write", false), "written 7\n") {
 					return false
 				}
 				before := decoySnapshot(seed)
@@ -196,7 +196,7 @@ func TestDatabaseDeclaredInputSmoke(t *testing.T) {
 				if form == "private-copy" {
 					mode, want = "read", "side-files=wal,shm\nvalue=7\n"
 				}
-				r := probe.invoke(p, mode, false)
+				r := probe.invokeOn(t, p, mode, false)
 				if form == "direct-seed" {
 					return r.killed() && before == decoySnapshot(seed)
 				}

@@ -229,9 +229,9 @@ static int operation(int argc, char **argv) {
                 for (int i = 0; i < n && p < end; i++) { while (p < end && *p) p++; p++; }
                 if (!strcmp(mode, "arguments")) {
                     if (args >= end || !*args) return 11;
-                    if (!twin && argc > 3 && strcmp(argv[3],"twin")) {
+                    if (argc > 3 && strcmp(argv[3],"twin")) {
                         int found=0; char *a=args;
-                        for (int i=0;i<n && a<end;i++) { if (digest_matches(a,argv[3])) found=1; a+=strlen(a)+1; }
+                        for (int i=0;i<n && a<end;i++) { if (twin ? !strcmp(a,argv[3]) : digest_matches(a,argv[3])) found=1; a+=strlen(a)+1; }
                         if (!found) return 28;
                     }
                 } else {

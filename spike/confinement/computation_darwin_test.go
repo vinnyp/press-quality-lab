@@ -40,7 +40,7 @@ func TestComputationValues(t *testing.T) {
 					want = "5\n"
 				}
 				p := profile(true)
-				r := probe.invoke(p, mode, false)
+				r := probe.invokeOn(t, p, mode, false)
 				if !correct(r, want) {
 					t.Logf("status=%d marked=%v output=%q", r.status, r.marked, r.output)
 				}
@@ -96,7 +96,7 @@ func TestComputationFileIsolationSmoke(t *testing.T) {
 						p = strings.ReplaceAll(p, "(with send-signal SIGKILL)", "")
 					}
 					before := decoySnapshot(scenario.target)
-					r := probe.invoke(p, scenario.mode, form == "twin")
+					r := probe.invokeOn(t, p, scenario.mode, form == "twin")
 					if form == "positive" {
 						return correct(r, "performed\nfallback\n")
 					}
@@ -159,7 +159,7 @@ func TestSubjectInToolDirectory(t *testing.T) {
 							p = strings.Replace(p, line, strings.Replace(line, " (with send-signal SIGKILL)", "", 1), 1)
 						}
 						before := decoySnapshot(target.path)
-						r := probe.invoke(p, mode, form == "twin")
+						r := probe.invokeOn(t, p, mode, form == "twin")
 						unchanged := before == decoySnapshot(target.path)
 						if form == "confined" {
 							return r.killed() && unchanged
@@ -202,7 +202,7 @@ func TestComputationPrivilegedImage(t *testing.T) {
 	f.args = []string{target}
 	runScenario(t, "platform-refusal", func(t *testing.T) {
 		repeat(t, func() bool {
-			r := f.invoke(profile(true), "setid-execute", false)
+			r := f.invokeOn(t, profile(true), "setid-execute", false)
 			return correct(r, "privileged image refused\n") && !r.harnessKilled && !r.status.Signaled()
 		})
 	})

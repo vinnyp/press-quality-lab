@@ -41,7 +41,7 @@ func TestOperationInventorySmoke(t *testing.T) {
 							want = "1"
 						}
 					}
-					r := probe.invoke(profile(computation), "inventory", false)
+					r := probe.invokeOn(t, profile(computation), "inventory", false)
 					if want == "0" && r.killed() {
 						return true
 					}
@@ -83,7 +83,7 @@ func TestEntitlementFileBoundarySmoke(t *testing.T) {
 						p = strings.ReplaceAll(p, "(with send-signal SIGKILL)", "")
 					}
 					before := decoySnapshot(f.args[0])
-					r := probe.invoke(p, "file-read", form == "twin")
+					r := probe.invokeOn(t, p, "file-read", form == "twin")
 					if before != decoySnapshot(f.args[0]) {
 						return false
 					}

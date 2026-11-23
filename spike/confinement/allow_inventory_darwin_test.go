@@ -202,8 +202,10 @@ func TestHiddenProfileForms(t *testing.T) {
 			strings.Replace(p, "(deny default (with send-signal SIGKILL))", "(deny default (with send-signal SIGKILL)) (allow default)", 1),
 			strings.Replace(p, "(allow mach-priv-host-port)", " (allow mach-priv-host-port)", 1),
 		} {
-			runScenario(t, profileName(computation), func(t *testing.T) {
-				repeat(t, func() bool { executed.Add(1); return profileLinesReviewed(p) && !profileLinesReviewed(mutant) })
+			t.Run(profileName(computation), func(t *testing.T) {
+				if !profileLinesReviewed(p) || profileLinesReviewed(mutant) {
+					t.Error("hidden profile form accepted")
+				}
 			})
 		}
 	}

@@ -185,7 +185,10 @@ func (images cachedImages) change(hashes [2][sha256.Size]byte) string {
 	return ""
 }
 
-func (f fixture) prepareImages() (fixture, func(), error) {
+func (f fixture) prepareImages() (fixture, func(), error) { return f.prepareImagesOn(f.owner) }
+
+func (f fixture) prepareImagesOn(t *testing.T) (fixture, func(), error) {
+	f.owner = t
 	if f.prepared {
 		return f, func() {}, nil
 	}
@@ -275,11 +278,16 @@ func (f fixture) prepareImages() (fixture, func(), error) {
 }
 
 func (f fixture) invoke(text, mode string, twin bool) result {
+	return f.invokeOn(f.owner, text, mode, twin)
+}
+
+func (f fixture) invokeOn(t *testing.T, text, mode string, twin bool) result {
+	f.owner = t
 	if !f.prepared {
 		if text == "" {
 			f.freshImages = true
 		}
-		prepared, release, err := f.prepareImages()
+		prepared, release, err := f.prepareImagesOn(t)
 		if err != nil {
 			if f.owner != nil {
 				f.owner.Fatal("prepare private images: ", err)
@@ -412,7 +420,7 @@ func TestProcessIsolationSmoke(t *testing.T) {
 				t.Parallel()
 				f := newFixture(t)
 				repeat(t, func() bool {
-					r := f.invoke(profile(computation), mode, false)
+					r := f.invokeOn(t, profile(computation), mode, false)
 					if mode == "clean" {
 						return correct(r, "clean\n")
 					}
@@ -435,7 +443,7 @@ func TestPositiveControlsAndTwins(t *testing.T) {
 		runScenario(t, "unconfined/"+mode, func(t *testing.T) {
 			t.Parallel()
 			f := newFixture(t)
-			repeat(t, func() bool { return correct(f.invoke("", mode, false), "performed\nfallback\n") })
+			repeat(t, func() bool { return correct(f.invokeOn(t, "", mode, false), "performed\nfallback\n") })
 		})
 		// Escapes have permitted twins only in a computation, where fork is allowed.
 		computation := mode != "child"
@@ -446,7 +454,7 @@ func TestPositiveControlsAndTwins(t *testing.T) {
 			if mode == "child" {
 				want = "fallback\n"
 			}
-			repeat(t, func() bool { return correct(f.invoke(profile(computation), mode, true), want) })
+			repeat(t, func() bool { return correct(f.invokeOn(t, profile(computation), mode, true), want) })
 		})
 	}
 }
@@ -583,11 +591,11 @@ func TestAllowanceWitnesses(t *testing.T) {
 						probe := witness
 						if witness.probe == database.probe {
 							probe = databaseFixture(t, witness)
-							if mode == "read" && !correct(probe.invoke("", "write", false), "written 7\n") {
+							if mode == "read" && !correct(probe.invokeOn(t, "", "write", false), "written 7\n") {
 								return false
 							}
 						}
-						return correct(probe.invoke(profile(computation), mode, false), want, wantDiagnostic)
+						return correct(probe.invokeOn(t, profile(computation), mode, false), want, wantDiagnostic)
 					})
 				})
 				broken := strings.Replace(profile(computation), allowance.original, allowance.replacement, 1)
@@ -596,11 +604,11 @@ func TestAllowanceWitnesses(t *testing.T) {
 						probe := witness
 						if witness.probe == database.probe {
 							probe = databaseFixture(t, witness)
-							if mode == "read" && !correct(probe.invoke("", "write", false), "written 7\n") {
+							if mode == "read" && !correct(probe.invokeOn(t, "", "write", false), "written 7\n") {
 								return false
 							}
 						}
-						r := probe.invoke(broken, mode, false)
+						r := probe.invokeOn(t, broken, mode, false)
 						return !r.timedOut && !r.startFailed && !r.harnessKilled && !correct(r, want, wantDiagnostic)
 					})
 				})
@@ -621,7 +629,7 @@ func TestDefaultRuleMutations(t *testing.T) {
 			repeat(t, func() bool {
 				// The subject child-start self-test must reject each broken profile.
 				p := strings.Replace(profile(false), mutation.from, mutation.to, 1)
-				r := f.invoke(p, "child", false)
+				r := f.invokeOn(t, p, "child", false)
 				if r.timedOut || !r.marked || r.killed() {
 					return false
 				}
@@ -663,12 +671,12 @@ func TestChildInputs(t *testing.T) {
 		}
 		runScenario(t, name+"/environment", func(t *testing.T) {
 			repeat(t, func() bool {
-				return correct(f.invoke(profile(computation), "environment", false), strings.Join(f.env, "\n")+"\n")
+				return correct(f.invokeOn(t, profile(computation), "environment", false), strings.Join(f.env, "\n")+"\n")
 			})
 		})
 		runScenario(t, name+"/descriptors", func(t *testing.T) {
 			repeat(t, func() bool {
-				r := f.invoke(profile(computation), "descriptors", false)
+				r := f.invokeOn(t, profile(computation), "descriptors", false)
 				return correct(r, "descriptors clean\n")
 			})
 		})
@@ -692,7 +700,7 @@ func TestChildInputs(t *testing.T) {
 			t.Fatal("compile launcher mutation")
 		}
 		repeat(t, func() bool {
-			r := mutant.invoke(profile(false), "descriptors", false)
+			r := mutant.invokeOn(t, profile(false), "descriptors", false)
 			return !r.timedOut && r.marked && r.status.Exited() && r.status.ExitStatus() == 9 && r.output == ""
 		})
 	})
@@ -733,7 +741,7 @@ func TestNetwork(t *testing.T) {
 (allow network-bind (local ip "localhost:*"))
 `
 						}
-						r := probe.invoke(p, mode, form == "twin")
+						r := probe.invokeOn(t, p, mode, form == "twin")
 						quiet := untouched()
 						switch form {
 						case "confined":
@@ -854,7 +862,7 @@ func networkDecoy(t *testing.T, f fixture, mode string) (fixture, func() bool, f
 
 func processPolicy(computation bool, mode, form string) string {
 	p := profile(computation)
-	if mode == "process-codesignature" || mode == "process-container" {
+	if mode == "process-codesignature" {
 		// Isolate this information class from generic process-information
 		// refusals and the default kill in both controls.
 		p = strings.Replace(p, "(deny default (with send-signal SIGKILL))", "(deny default)", 1)
@@ -868,7 +876,6 @@ func processPolicy(computation bool, mode, form string) string {
 	if form == "attribution" {
 		operation := map[string]string{
 			"process-codesignature": "process-info-codesignature",
-			"process-container":     "process-info-sandbox-container",
 			"arguments":             "process-info-pidinfo",
 			"process-environment":   "process-info-pidinfo",
 			"process-pidinfo":       "process-info-pidinfo",
@@ -899,6 +906,9 @@ func TestProcessAccess(t *testing.T) {
 		for _, computation := range []bool{false, true} {
 			for _, mode := range []string{"process-codesignature", "arguments", "process-environment", "process-pidinfo", "signal", "codesigning", "signature", "process-record", "priority", "rusage"} {
 				forms := []string{"confined", "twin", "positive", "attribution", "without-kill"}
+				if mode == "arguments" || mode == "process-environment" {
+					forms = append(forms, "wrong-digest")
+				}
 				if mode == "process-codesignature" {
 					forms = append(forms, "without-deny")
 				}
@@ -907,7 +917,7 @@ func TestProcessAccess(t *testing.T) {
 						t.Parallel()
 						f := newFixture(t)
 						repeat(t, func() bool {
-							prepared, release, err := f.prepareImages()
+							prepared, release, err := f.prepareImagesOn(t)
 							if err != nil {
 								t.Fatal("prepare private images")
 							}
@@ -920,6 +930,9 @@ func TestProcessAccess(t *testing.T) {
 							}
 							canary := hex.EncodeToString(secret[:])
 							p := processPolicy(computation, mode, form)
+							if form == "wrong-digest" {
+								p = ""
+							}
 							victim := exec.CommandContext(ctx, prepared.probe, "victim", canary)
 							if victimSandboxed {
 								victimPolicy := profile(true)
@@ -962,14 +975,25 @@ func TestProcessAccess(t *testing.T) {
 							probe := prepared
 							digest := sha256.Sum256([]byte(canary))
 							probe.args = []string{strconv.Itoa(victim.Process.Pid), hex.EncodeToString(digest[:])}
+							if form == "wrong-digest" {
+								wrong := sha256.Sum256([]byte("wrong digest"))
+								probe.args[1] = hex.EncodeToString(wrong[:])
+							}
 							probe.env = append([]string{}, prepared.env...)
 							probeMode, twin := mode, form == "twin"
-							if twin && computation && mode != "priority" && mode != "process-record" && mode != "process-container" {
+							if twin && computation && mode != "priority" && mode != "process-record" {
 								probeMode = "sandbox-" + mode
 								probe.args = []string{strconv.Itoa(victim.Process.Pid)}
 								twin = false
 							}
-							r := probe.invoke(p, probeMode, twin)
+							r := probe.invokeOn(t, p, probeMode, twin)
+							if form == "wrong-digest" {
+								want := 28
+								if mode == "process-environment" {
+									want = 29
+								}
+								return r.marked && !r.timedOut && r.status.Exited() && r.status.ExitStatus() == want && r.output == "" && r.diagnostic == "confined\n"
+							}
 							wantDeath := (form == "positive" || form == "attribution") && mode == "signal"
 							duration := 20 * time.Millisecond
 							if wantDeath {
@@ -991,7 +1015,7 @@ func TestProcessAccess(t *testing.T) {
 								return correct(r, "fallback\n") && alive
 							}
 							want := "performed\nfallback\n"
-							if form == "twin" && (mode == "priority" || mode == "process-record" || mode == "process-container") {
+							if form == "twin" && (mode == "priority" || mode == "process-record") {
 								want = "fallback\n"
 							}
 							return correct(r, want) && alive
@@ -1008,7 +1032,7 @@ func TestServices(t *testing.T) {
 	f := newFixture(t)
 	for _, computation := range []bool{false, true} {
 		runScenario(t, fmt.Sprintf("%s/user", profileName(computation)), func(t *testing.T) {
-			repeat(t, func() bool { return correct(f.invoke(profile(computation), "user", false), "user ok\n") })
+			repeat(t, func() bool { return correct(f.invokeOn(t, profile(computation), "user", false), "user ok\n") })
 		})
 		for _, service := range []string{"com.apple.cfprefsd.daemon", "com.apple.pasteboard.1", "com.apple.securityd.xpc", "com.apple.coreservices.appleevents", "com.apple.bsd.dirhelper", "com.apple.coreservices.launchservicesd"} {
 			for _, form := range []string{"confined", "twin", "positive", "attribution", "without-kill"} {
@@ -1026,7 +1050,7 @@ func TestServices(t *testing.T) {
 						if form == "without-kill" {
 							p = strings.ReplaceAll(p, "(with send-signal SIGKILL)", "")
 						}
-						r := probe.invoke(p, "service", form == "twin")
+						r := probe.invokeOn(t, p, "service", form == "twin")
 						if form == "confined" {
 							return r.killed()
 						}
@@ -1054,7 +1078,7 @@ func TestComputationOwnProcesses(t *testing.T) {
 			t.Parallel()
 			f := newFixture(t)
 			repeat(t, func() bool {
-				r := f.invoke(profile(true), "sandbox-"+mode, false)
+				r := f.invokeOn(t, profile(true), "sandbox-"+mode, false)
 				if !correct(r, "performed\nfallback\n") {
 					t.Logf("own-process status=%d ready=%v timed-out=%v output-bytes=%d diagnostic-bytes=%d", r.status, r.ready, r.timedOut, len(r.output), len(r.diagnostic))
 				}
@@ -1072,13 +1096,13 @@ func TestDescendantsSmoke(t *testing.T) {
 			t.Parallel()
 			f := newFixture(t)
 			p := strings.Replace(profile(true), "(deny syscall-unix (syscall-number SYS_setsid SYS_setpgid) (with send-signal SIGKILL))", "", 1)
-			repeat(t, func() bool { return correct(f.invoke(p, mode, false), "performed\nfallback\n") })
+			repeat(t, func() bool { return correct(f.invokeOn(t, p, mode, false), "performed\nfallback\n") })
 		})
 		runScenario(t, mode+"/without-kill", func(t *testing.T) {
 			t.Parallel()
 			f := newFixture(t)
 			p := strings.Replace(profile(true), "(deny syscall-unix (syscall-number SYS_setsid SYS_setpgid) (with send-signal SIGKILL))", "(deny syscall-unix (syscall-number SYS_setsid SYS_setpgid))", 1)
-			repeat(t, func() bool { return correct(f.invoke(p, mode, false), "fallback\nfallback\n") })
+			repeat(t, func() bool { return correct(f.invokeOn(t, p, mode, false), "fallback\nfallback\n") })
 		})
 	}
 	for _, mode := range []string{"spawn-session", "spawn-group"} {
@@ -1096,7 +1120,7 @@ func TestDescendantsSmoke(t *testing.T) {
 					if form == "without-kill" {
 						p = strings.ReplaceAll(p, "(with send-signal SIGKILL)", "")
 					}
-					r := probe.invoke(p, mode, form == "twin")
+					r := probe.invokeOn(t, p, mode, form == "twin")
 					unchanged := quiet()
 					if form == "confined" {
 						return childKilled(r) && unchanged
@@ -1133,7 +1157,7 @@ func TestSubjectNetworkImagesSmoke(t *testing.T) {
 					if form == "without-kill" {
 						p = strings.ReplaceAll(p, "(with send-signal SIGKILL)", "")
 					}
-					r := probe.invoke(p, mode, form == "twin")
+					r := probe.invokeOn(t, p, mode, form == "twin")
 					unchanged := quiet()
 					if form == "confined" {
 						return r.killed() && unchanged
@@ -1164,7 +1188,7 @@ func TestRemainingGroupEnded(t *testing.T) {
 			repeat(t, func() bool {
 				probeWithBudget := f
 				probeWithBudget.budget = 250 * time.Millisecond
-				r := probeWithBudget.invoke(profile(true), mode, false)
+				r := probeWithBudget.invokeOn(t, profile(true), mode, false)
 				pid, err := strconv.Atoi(strings.TrimSpace(r.output))
 				if err != nil || pid <= 1 || !r.marked {
 					return false
@@ -1172,7 +1196,7 @@ func TestRemainingGroupEnded(t *testing.T) {
 				// Query only the pid printed by the child we started. Zombies have ended.
 				probe := f
 				probe.args = []string{strconv.Itoa(pid)}
-				check := probe.invoke("", "ended", false)
+				check := probe.invokeOn(t, "", "ended", false)
 				return correct(check, "ended\n") && (r.timedOut == (mode == "timeout-child"))
 			})
 		})
@@ -1208,7 +1232,7 @@ func TestProcessInformationMutations(t *testing.T) {
 					probe := f
 					probe.args = []string{strconv.Itoa(cmd.Process.Pid)}
 					p := strings.Replace(profile(computation), mutation.from, mutation.to, 1)
-					r := probe.invoke(p, "process-pidinfo", false)
+					r := probe.invokeOn(t, p, "process-pidinfo", false)
 					want := "fallback\n"
 					if mutation.name == "remove-denial" {
 						want = "performed\nfallback\n"
@@ -1226,7 +1250,9 @@ func TestNoControllingTerminal(t *testing.T) {
 		runScenario(t, profileName(computation), func(t *testing.T) {
 			t.Parallel()
 			f := newFixture(t)
-			repeat(t, func() bool { return correct(f.invoke(profile(computation), "terminal", false), "terminal absent\n") })
+			repeat(t, func() bool {
+				return correct(f.invokeOn(t, profile(computation), "terminal", false), "terminal absent\n")
+			})
 		})
 	}
 }
@@ -1253,11 +1279,11 @@ func TestImplicitAllowanceWitnesses(t *testing.T) {
 				var startupKills atomic.Int64
 				repeat(t, func() bool {
 					p := profile(computation)
-					if !correct(f.invoke(p, entry.mode, false), entry.want) {
+					if !correct(f.invokeOn(t, p, entry.mode, false), entry.want) {
 						return false
 					}
 					broken := p + "\n(deny " + entry.operation + " (with send-signal SIGKILL))\n"
-					r := f.invoke(broken, entry.mode, false)
+					r := f.invokeOn(t, broken, entry.mode, false)
 					// Most of these classes are needed by every process, so the
 					// trusted launcher is killed before it can write its marker.
 					// The kill is then the refusal's only when the harness did not
@@ -1265,7 +1291,7 @@ func TestImplicitAllowanceWitnesses(t *testing.T) {
 					// must have marked. This shows that startup needs the class,
 					// not that the program alone does.
 					startup := !r.marked && r.diagnostic == ""
-					held := (r.marked || startup) && !r.harnessKilled && !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == ""
+					held := implicitRefusal(r)
 					if held && startup {
 						startupKills.Add(1)
 					}
@@ -1286,17 +1312,17 @@ func TestSubjectDirectSessionAndGroupSmoke(t *testing.T) {
 	f := newFixture(t)
 	for _, mode := range []string{"direct-session", "direct-group"} {
 		runScenario(t, mode, func(t *testing.T) {
-			repeat(t, func() bool { return correct(f.invoke(profile(false), mode, false), "session leader refused\n") })
+			repeat(t, func() bool { return correct(f.invokeOn(t, profile(false), mode, false), "session leader refused\n") })
 		})
 	}
 	runScenario(t, "plain-spawn", func(t *testing.T) {
-		repeat(t, func() bool { return f.invoke(profile(false), "spawn", false).killed() })
+		repeat(t, func() bool { return f.invokeOn(t, profile(false), "spawn", false).killed() })
 	})
 	runScenario(t, "plain-spawn-positive", func(t *testing.T) {
-		repeat(t, func() bool { return correct(f.invoke("", "spawn", false), "clean\nperformed\nfallback\n") })
+		repeat(t, func() bool { return correct(f.invokeOn(t, "", "spawn", false), "clean\nperformed\nfallback\n") })
 	})
 	runScenario(t, "plain-spawn-twin", func(t *testing.T) {
-		repeat(t, func() bool { return correct(f.invoke(profile(false), "spawn", true), "fallback\n") })
+		repeat(t, func() bool { return correct(f.invokeOn(t, profile(false), "spawn", true), "fallback\n") })
 	})
 }
 
@@ -1315,7 +1341,7 @@ func TestServiceNamesAreExact(t *testing.T) {
 					probe := f
 					probe.args = []string{allowed + suffix}
 					repeat(t, func() bool {
-						return probe.invoke(profile(computation), "service", false).killed() && correct(probe.invoke(profile(computation)+"\n(allow mach-lookup)", "service", false), "fallback\n")
+						return probe.invokeOn(t, profile(computation), "service", false).killed() && correct(probe.invokeOn(t, profile(computation)+"\n(allow mach-lookup)", "service", false), "fallback\n")
 					})
 				})
 			}
@@ -1364,4 +1390,33 @@ func allowanceRemovalTargets(p string) []allowanceRemoval {
 		}
 	}
 	return removals
+}
+
+func implicitRefusal(r result) bool {
+	return r.exitDetail&(syscall.NOTE_EXIT_MEMORY|syscall.NOTE_EXIT_CSERROR) == 0 && (r.marked || r.diagnostic == "") && !r.harnessKilled && !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == ""
+}
+
+func TestImplicitRefusalInputs(t *testing.T) {
+	base := result{marked: true, status: syscall.WaitStatus(syscall.SIGKILL)}
+	for _, row := range []struct {
+		name   string
+		change func(*result)
+		want   bool
+	}{
+		{"marked", func(*result) {}, true},
+		{"unmarked-empty-diagnostic", func(r *result) { r.marked = false }, true},
+		{"harness-killed", func(r *result) { r.harnessKilled = true }, false},
+		{"unmarked-diagnostic", func(r *result) { r.marked = false; r.diagnostic = "exec failed" }, false},
+		{"memory", func(r *result) { r.exitDetail = syscall.NOTE_EXIT_MEMORY }, false},
+		{"code-signing", func(r *result) { r.exitDetail = syscall.NOTE_EXIT_CSERROR }, false},
+		{"timed-out", func(r *result) { r.timedOut = true }, false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			r := base
+			row.change(&r)
+			if implicitRefusal(r) != row.want {
+				t.Error("implicit refusal classification differs")
+			}
+		})
+	}
 }

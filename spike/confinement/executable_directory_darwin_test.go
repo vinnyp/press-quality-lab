@@ -25,14 +25,14 @@ func TestExecutableDirectoryBoundarySmoke(t *testing.T) {
 						probe.freshImages = true
 						var release func()
 						var err error
-						probe, release, err = probe.prepareImages()
+						probe, release, err = probe.prepareImagesOn(t)
 						if err != nil {
 							t.Fatal("prepare private image")
 						}
 						defer release()
 						before := decoySnapshot(probe.probe)
 						writeDecoy(t, filepath.Join(f.home(), "state"))
-						r := probe.invoke(p, mode, form == "twin")
+						r := probe.invokeOn(t, p, mode, form == "twin")
 						if form == "confined" && mode != "image-list" {
 							return r.killed() && before == decoySnapshot(probe.probe)
 						}
@@ -61,7 +61,7 @@ func TestWorkingDirectoryListing(t *testing.T) {
 					if form == "positive" {
 						p = ""
 					}
-					r := probe.invoke(p, "directory-list", form == "twin")
+					r := probe.invokeOn(t, p, "directory-list", form == "twin")
 					if form == "confined" {
 						return r.killed()
 					}
@@ -106,7 +106,7 @@ func TestWritableDirectoryPermissionsSmoke(t *testing.T) {
 					if form == "positive-removal" {
 						p = ""
 					}
-					r := probe.invoke(p, mode, false)
+					r := probe.invokeOn(t, p, mode, false)
 					_, statErr := os.Lstat(target)
 					if form == "strict-query" {
 						return r.killed() && statErr == nil
@@ -126,7 +126,7 @@ func TestChangedImageSetFailsClosed(t *testing.T) {
 	for _, change := range []string{"mode", "change-time", "unlink", "extra-entry", "directory-mode"} {
 		runScenario(t, change, func(t *testing.T) {
 			f := newFixture(t)
-			prepared, _, err := f.prepareImages()
+			prepared, _, err := f.prepareImagesOn(t)
 			if err != nil {
 				t.Fatal("prepare images")
 			}
@@ -158,7 +158,7 @@ func TestChangedImageSetFailsClosed(t *testing.T) {
 			}
 			repeat(t, func() bool {
 				executed.Add(1)
-				_, _, err := f.prepareImages()
+				_, _, err := f.prepareImagesOn(t)
 				return err != nil
 			})
 		})
