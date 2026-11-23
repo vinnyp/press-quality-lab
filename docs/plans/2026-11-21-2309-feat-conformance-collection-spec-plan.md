@@ -22,7 +22,7 @@ The prefix is needed because the citation test reads every bare R or AE number u
 - **Means:** A sealed conformance collection specification, gated by a no-network spike and proved by a synthetic subject and a two-sided corpus. A builder with only this repository can then build the grade command without inventing a rule (KTD1, KTD7, KTD9).
 - **Authority:** The sealed judge 1.0 first, then this Product Contract, then the Planning Contract, then a unit. A requirement wins over a decision of planning. An input with two honest readings goes to the owner.
 - **Stop conditions:** A failed spike gate (KTD6), a need to download, use a key or use the network for the real subject (CR4), or any change that would need judge 1.1.
-- **Execution profile:** Deep. Three pull requests: the spike, the draft specification, then the corpus and seal. The main session writes the specification and a coding agent writes the code (KTD16).
+- **Execution profile:** Deep. Four pull requests: the spike, the draft specification, the corpus and seal, then the spike's removal. The main session writes the specification and a coding agent writes the code (KTD16).
 - **Who finishes:** The executing session opens each pull request and stops. The owner merges and ratifies.
 - **Product authority:** The owner, who ratifies and seals the specification. This plan covers phase 2 only. The grade command, the first real grade and steering are not active scope.
 - **Open blockers:** None for planning. PR1 and PR2 are merged (#8, #9). The spike passed for macOS 27.0.1 and 27.2 (CR6), the real subject ran offline and confined (CR4), the confinement rules froze on 2026-11-23, and the draft specification is on `main`.
@@ -388,7 +388,7 @@ Planning schedules each of these. Any that changes a verdict reaches the owner u
 - [Rulebook](../specs/judge-1.0/rulebook.md): §3 scopes, §6 exclusions and credit, §12 anchoring, §13 closed lists, §14 what is kept from CDR spec 0.9.1.
 - [Evidence record](../specs/judge-1.0/evidence-record.md), [judge contract](../specs/judge-1.0/judge-contract.md) and [errata](../specs/judge-1.0-errata.md), whose E-4 binds the engine.
 - [A test's expected value must not come from the code under test](../solutions/best-practices/test-oracle-must-not-come-from-code-under-test.md).
-- `check.sh` checks only judge 1.0's folder today, and `.github/workflows/ci.yml` has only Linux jobs.
+- `check.sh` checks judge 1.0's sealed folder and the draft collection kit, and `.github/workflows/ci.yml` has only Linux jobs.
 
 Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on macOS 27.2 as an ordinary user. They orient the spike and do not answer it.
 
@@ -430,7 +430,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 
 - KTD1. **The profile denies by default and kills on refusal.** The surveyed sandboxes deny by default, and an allow-by-default profile cannot kill what it does not list. Each allowance is added for a named clean program that needs it. Implements CR62, CR67, CR80, CR83. (session-settled: user-approved — chosen over extending the allow-by-default profile of the feasibility probes: unlisted operations would pass unseen.)
 - KTD2. **Spike code is throwaway.** It lives in `spike/confinement/`, serves the spike and the recording of the synthetic subject's behaviour, is never imported by `cmd/` or `internal/`, is not given to the phase 3 builder, and is deleted in the seal's pull request. The profile's authority is the specification's text. (session-settled: user-approved — chosen over keeping the harness: it would become a collector built before the corpus was reviewed.)
-- KTD3. **The real subject runs by 2026-12-03 and the confinement rules freeze on 2026-12-04.** A later change to the rules re-records every behaviour that depends on them. Implements CR4, CR66. (session-settled: user-approved — chosen over running it any time before the seal: a late surprise would invalidate the recorded corpus.)
+- KTD3. **The real subject runs by 2026-12-03 and the confinement rules freeze on 2026-12-04.** Both happened on 2026-11-23. A later change to the rules re-records every behaviour that depends on them. Implements CR4, CR66. (session-settled: user-approved — chosen over running it any time before the seal: a late surprise would invalidate the recorded corpus.)
 - KTD5. **Supported means tested.** A macOS version is supported when the spike's record names it as passed, and CR23 covers every other.
 - KTD6. **A failed gate brings options within a day.** The owner gets the options and a recommendation, and only chapters that do not depend on confinement continue. Implements CR6, CR66. (session-settled: user-approved — chosen over stopping all work without a next step: the Product Contract names no choice for the owner at that point.)
 - KTD22. **The real subject's seed is written by a helper that calls the CLI's own store code.** It lives in the scratch copy only, never in the subject's library checkout, and runs at a fixed time so dated output repeats. Implements CR4. (session-settled: user-directed — chosen over raw SQL after a first run, whose typed columns must match the CLI's by hand, and a loopback mock API with the CLI's sync, which needs HTTP calls the approval may not cover.)
@@ -440,7 +440,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 - KTD7. **The text lands as a draft, the seal comes last.** The specification is merged at its final path with a draft notice and no `KIT.sha256`. Reviews finish, the text freezes, the owner ratifies the manifest's digest, and only then is the manifest committed. An edit after ratification needs a new ratification. Implements CR60. (session-settled: user-approved — chosen over one pull request at the seal: the owner could not read the text apart from several hundred case files.)
 - KTD8. **Rule ids begin with Q and a family letter.** The families are QS subject file, QH home and confinement, QO outcome, QD discovery, QP probes, QA authored checks, QE engine to judge and QT test entry. The judge uses single letters, and the citation test claims every bare R and AE number.
 - KTD9. **Each case says what checks it.** Every case carries its input: subject file, request and scope, form or recorded behaviour, baseline and fixture descriptions. A case that yields a record is `judge-checked` from record to verdict. A case that ends before any record is `derivation-only`. The runner also counts the behaviour-to-record step of every case as unchecked, and never adds it to passes. Implements CR51, CR55. (session-settled: user-approved — chosen over one kind of case: the judge can confirm record to verdict and nothing before it.)
-- KTD11. **The blind reader works from an export.** It holds the frozen text, the schemas, and each sampled case's input with its recorded behaviour, and no expected evidence, verdict, cited rule or worked example. The sample is drawn once, with the first frozen text's digest as the random seed, with at least one case per rule family and 20 in all. Later rounds keep that sample, add a case for any changed rule it lacks, and derive again only cases of changed rules. Implements CR104. (session-settled: user-approved — chosen over a reader in the repository: committed cases would give it the answers.)
+- KTD11. **The blind reader works from an export.** Amended 2026-11-23: the sample is every judge-checked public case and every private case, re-derived whole after any change, because agents' model calls are not tracked and a 20-case sample sees about one case in seven (conflict call-out on the settled sample size; U9 carries the amended rule). It holds the frozen text, the schemas, and each sampled case's input with its recorded behaviour, and no expected evidence, verdict, cited rule or worked example. The sample is drawn once, with the first frozen text's digest as the random seed, with at least one case per rule family and 20 in all. Later rounds keep that sample, add a case for any changed rule it lacks, and derive again only cases of changed rules. Implements CR104. (session-settled: user-approved — chosen over a reader in the repository: committed cases would give it the answers.)
 - KTD12. **The private half is one case per rule and a catalogue of seeded collection mistakes.** It stays outside the repository, is checked through the judge locally, and the seal note publishes only its count and digest. Implements CR54. (session-settled: user-approved — chosen over an unsized set: a count and digest let the seal name what it was scored against.)
 - KTD13. **The kit copies the judge kit's pattern and its runner.** `runner.py` and `common.py` are copied and extended, because one kit cannot import another's modules. The judge's folder is not touched.
 - KTD14. **Fixtures that cannot be tracked are described and built at run time.** The case format describes links, special files, oversized output, invalid bytes and planted secrets. No symlink, secret-shaped string or home path is committed, and no gitleaks allowlist is added.
@@ -456,32 +456,45 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 
 **The corpus and the seal**
 
-- KTD25. **Behaviour is recorded once, locally, through the spike's harness, before the spike is deleted.**
-  - Each form is built once per recording session and reused after an unchanged check, because a new executable per run stalls the system's assessment service (see Research).
-  - Each recording names its form's source digest, the system and build, and the commit.
-  - The gate rebuilds every form on Linux and fails when a form's source digest differs from its recording's, so a changed form must be re-recorded on macOS before it merges.
-  - A recording keeps each stream as its byte count, its digest and a bounded head. It never keeps a canary: a leak is recorded as the encoding it was found in.
+- KTD25. **Behaviour is recorded once, locally, by the main session, under a contract the text defines.**
+  - **The contract.** A recording's fields are specified in `collection-contract.md` §8 and `schema/behaviour.schema.json` (U11). Recordings are sealed data, and phase 3's scripted verifier reads them.
+  - **Who runs it.** The main session or the owner runs each recording outside any agent sandbox, because `sandbox-exec` exits 71 under a sandboxed parent. It uses the spike's harness, which stays byte-identical. A need to change it stops the work (KTD6).
+  - **How.** Each violating form runs unconfined first against KTD20's decoys, as the positive control that its act happens. Every form then runs five times under the frozen profile. Each form is built once and reused after an unchanged check (see Research).
+  - **What it names.** Each recording names its form's source digest, the digest of the rendered profile template and launcher, the system and build, and the commit.
+  - **Drift.** The gate rebuilds every form on Linux and fails when a digest differs from its recording's, so a changed form is re-recorded on macOS before it merges.
+  - **What it never keeps.** No absolute path, and no canary: a leak is recorded by place and encoding.
+  - **When it writes.** The recording test writes recordings only when asked explicitly. Otherwise it checks against them.
 
   Implements CR52, CR66. (Follows the owner's Linux-only decision of 2026-11-23: recordings are local evidence under `AGENTS.md`.)
 - KTD26. **The collection runner gains a case mode.**
-  - **A judge-checked case:** the runner runs `pql judge` twice on the case's expected record, and compares the judge's whole output and exit code with the case's expectation.
-  - **A derivation-only case:** the runner validates it and counts it unchecked, never passed.
-  - **Corpus-level rules** live in `internal/collectionkit/cases_test.go`, so the gate enforces them: every rule and acceptance example has a case, every not-measured case has a twin, and every defect is red on its named check.
+  - **A judge-checked case** holds `input.json`, a judge input that `schema/judge-input.schema.json` validates. Its `expect` holds the judge's full output and the engine's exit code. The runner runs `pql judge` twice and compares the whole output and exit code.
+  - **A derivation-only case** holds the engine's exit code and the deciding rule id. The runner validates it and counts it unchecked, never passed.
+  - **Before the seal**, `--unsealed` runs case mode without a manifest, prints `UNSEALED`, and is refused once `KIT.sha256` exists. `--schema-root <kit>` validates a case directory outside the kit against the kit's schemas.
+  - **When the judge disagrees with a hand-written output**, the case is re-derived from the rulebook and the deciding rule named. The judge's output is never copied in.
+  - **Corpus-level rules** live in `internal/collectionkit/cases_test.go`, so the gate enforces them.
 
-  Implements CR51, CR53, CR55. Chosen over extending the judge kit's partial-expect format: a collection case must pin the whole judge output, because a builder's record is scored against it.
+  Implements CR51, CR53, CR55. Chosen over the judge kit's partial-expect format: a builder's record is scored against the whole output.
 - KTD27. **The case format is revised before any case is written.**
-  - **`input`** replaces `entry`, so the word does not collide with the test entry.
-  - **New fields:**
-    - `verifier` (`real` or `scripted`), which tags CR55's cases;
-    - `form`, which names a recorded behaviour;
-    - `host`, which holds system facts a form cannot carry: the macOS version, whether the self-test passed, whether the known-fast control kept within its bound, and whether the volume records reads;
-    - `named_check`, for a defect case.
-  - **PR #9's two minors are closed:** a `probe` discriminator on the stored preimage's `parameters`, and `examples/invalid/`, a directory of instances the draft mode must reject.
+  - **`input` replaces `entry`.** It holds the subject file's name, the form, the request and scope, the `host` facts, `verifier` (`real` or `scripted`), the baseline and the fixture descriptions.
+  - **Fields outside `input`** are `named_check` (a check id), `twin` and `rules`. The export can then drop them.
+  - **A derivation-only reason** is a rule id, not free text.
+  - **PR #9's two minors are closed:** a `probe` discriminator on the stored preimage's `parameters`, and `examples/invalid/`. Each file there is named `<schema>-<rule>-NN.json` and breaks one schema-detectable rule, and the draft mode must reject it.
+  - **Acceptance examples are not tagged in cases.** They are the plan's own ids and stay out of the folder; U8's review log maps them.
 - KTD28. **A small generator writes check ids and digests, and nothing else.**
-  - **What it is:** `scripts/collection-ids.py` implements only QE2's preimage, RFC 8785 and the seed digest, from the text.
-  - **Its tests:** they recompute the specification's worked id and every example's ids.
-  - **Everything else in a case is written by hand** from the text and the recorded behaviour. No expected value comes from `pql` output, because the oracle must not come from the code under test (see Research).
-  - **Where it lives:** outside the sealed folder, so the seal does not depend on it. A builder can also compute ids from the text.
+  - **What it is.** `scripts/collection_ids.py` reads hand-written preimages and seed directories and prints ids and digests per QE2. It builds no required set.
+  - **Its tests** use RFC 8785's test vectors (non-BMP key order, number forms), the specification's worked ids, and every example.
+  - **Its cross-check.** A `check.sh` step recomputes every case's ids from the preimages the case stores, and every seed digest from its seed.
+  - **Everything else in a case is written by hand** from the text and the recordings, and no expected value comes from `pql` output (see Research).
+  - **Where it lives.** Outside the sealed folder: a builder computes ids from the text.
+- KTD29. **A scripted host makes the engine-side controls scorable.**
+  - **What it scripts.** Under the `scripted` build tag, the test entry takes a scripted-host input that forces each control's result: confinement applied, the self-test, the known-fast control, the read calibration, the store comparator's control, the read proof's control and the private-copy check.
+  - **Its cases** run on the scripted verifier, so a collector that ignores a failed control fails them.
+
+  Implements CR49, CR55. Chosen over labelling those cases as record-only: a collector could then ignore every control and still score fully.
+- KTD30. **A case is assembled from its form's canonical directory.**
+  - **The canonical directory.** Each form has `subjects/<form>/`, holding its canonical subject file, its seed and its computations.
+  - **Assembly.** A case names its form, and the runner, the cross-check and a phase 3 collector assemble one temporary directory before applying §1. It holds the case's subject file, a copy of the form's seed at `seed/`, the built form at `bin/subject`, and the form's computations under `computations/`. A case's subject file uses those fixed names, so QS8 and QS9 hold.
+  - **The planted secret's token** is a plain marker string such as `PLANTED-TOKEN-0001`, so the secret scan passes with no allowlist.
 
 ### High-Level Technical Design
 
@@ -490,15 +503,20 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 ```mermaid
 flowchart TB
   U1[U1 macOS spike] --> U3[U3 runner image and spike record]
-  U3 -->|pass by 11-28| U4[U4 real subject by 12-03, freeze 12-04]
+  U3 -->|pass by 11-28| U4[U4 real subject and freeze, done 11-23]
   U3 -->|pass by 11-28| U5[U5 rules for collection]
   U4 -->|confinement.md only| U5
   U4 -->|allowance-dependent routes only| U6
   U5 --> U6[U6 rules toward the judge]
-  U6 -->|draft read by owner, 12-05| U7[U7 synthetic subject]
-  U7 --> U8[U8 corpus by 12-12]
-  U8 --> U9[U9 blind derivation and reviews]
+  U6 -->|draft merged 11-23| U11[U11 text before recording]
+  U11 --> U12[U12 kit code]
+  U12 --> U13[U13 thin slice, known-good form]
+  U13 --> U7[U7 every form recorded]
+  U7 --> U8[U8 public corpus by 12-12]
+  U8 --> U14[U14 private half]
+  U14 --> U9[U9 blind derivation and reviews]
   U9 -->|ratified digest| U10[U10 seal by 12-19]
+  U10 -->|PR3 merged| U15[U15 spike removal, PR4]
 ```
 
 **What produces and checks a case**
@@ -576,14 +594,15 @@ docs/specs/
     CASES.md
     schema/
     examples/  examples/invalid/
-    subjects/                       the forms' seeds
+    subjects/<form>/                canonical subject file, seed, computations
     behaviour/<form>.json
     cases/<id>/
     runner.py  common.py
     KIT.sha256                      added at the seal
   conformance-collection-1.0-errata.md
   conformance-collection-1.0-seal.md
-scripts/collection-ids.py           check ids and digests only (KTD28)
+scripts/collection_ids.py           check ids and digests only (KTD28)
+scripts/collection-export.py        the blind reader's export (U9)
 ```
 
 ### Where each deferred question is answered
@@ -624,7 +643,11 @@ scripts/collection-ids.py           check ids and digests only (KTD28)
 | A form changes after its behaviour was recorded | KTD25: the gate compares each form's source digest with its recording's |
 | The corpus and the generator share a misreading of QE2 | KTD28: the generator does ids only, and its test recomputes the specification's worked id; U9's reader computes ids from the text |
 | One author writes the specification, the corpus and the private half | U9's blind reader on a different model, and the corpus review |
-| The spike's harness is gone after the seal, so a form cannot be re-recorded | Re-recording waits for phase 3's collector, which runs the same profile; the recordings stay in the sealed folder |
+| The spike's harness is gone after PR4, so a form cannot be re-recorded | Re-recording waits for phase 3, whose verifier reads the recording contract U11 defines; the recordings stay in the sealed folder |
+| A form's violation never happens, so its recording proves nothing | KTD25's unconfined positive control must show the act before the confined run counts |
+| A recording run inside an agent's sandbox fails everywhere | KTD25: the main session or the owner runs it, outside any agent sandbox |
+| U7 needs a profile or harness change, which voids macOS 27.0.1's support | U13 and U7 stop and go to the owner (KTD6) |
+| A Go crash ends by `SIGKILL` under the profile, so a red crash cannot be built | U13 checks it first; a `SIGKILL` goes to the owner under CR58 |
 | Recorded output trips the citation test | U7's subject test rejects a bare requirement number in any recording |
 
 Considered and not built: checking that every CR and CAE cited in the new folder is defined in this plan. The plan's requirements are amended often and live outside `docs/specs/`, so a pinned check would fight that. A cited CR found undefined in review would change this.
@@ -641,7 +664,7 @@ Considered and not built: checking that every CR and CAE cited in the new folder
 - [A clean control must assert on its output](../solutions/best-practices/clean-control-must-assert-on-output.md) shapes every spike scenario.
 - [A test's expected value must not come from the code under test](../solutions/best-practices/test-oracle-must-not-come-from-code-under-test.md) shapes KTD2, KTD11, KTD16 and KTD28.
 - [A fresh executable for every run stalls a parallel macOS sandbox suite](../solutions/test-failures/fresh-executable-per-run-stalls-parallel-sandbox-suite.md) shapes KTD25: each form is built once and reused.
-- [In a macOS sandbox profile the later matching rule decides](../solutions/best-practices/sandbox-profile-later-rule-decides.md) holds for any profile change U7's recording needs.
+- [In a macOS sandbox profile the later matching rule decides](../solutions/best-practices/sandbox-profile-later-rule-decides.md) holds for reading the frozen profile; U13 and U7 change none of it.
 - `docs/specs/judge-1.0/` is the kit pattern. Its `common.py` refuses symlinks and unlisted files.
 - [GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners) and [manually run workflows](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow) shape U3.
 - [seccomp filters](https://www.kernel.org/doc/html/latest/userspace-api/seccomp_filter.html) cannot dereference pointers, so they never see a path. This is why CR5 leaves Linux out.
@@ -651,7 +674,7 @@ Considered and not built: checking that every CR and CAE cited in the new folder
 
 ## Implementation Units
 
-The work ships as three pull requests. Each merge is the owner's.
+The work ships as four pull requests. Each merge is the owner's.
 
 | Unit | Title | Key paths | Depends on |
 |---|---|---|---|
@@ -660,10 +683,15 @@ The work ships as three pull requests. Each merge is the owner's.
 | U4 | Real subject run and freeze | `docs/spikes/`, `spike/confinement/` | U3 |
 | U5 | Collection rules | `docs/specs/conformance-collection-1.0/` | U3, and U4 for confinement |
 | U6 | Rules toward the judge, schemas and tables | `docs/specs/conformance-collection-1.0/` | U5, and U4 for routes that depend on an allowance |
-| U7 | Synthetic subject and behaviour | `testdata/collection-subject/`, the new folder's `behaviour/` | U6 |
-| U8 | Corpus, runner and private half | `docs/specs/conformance-collection-1.0/cases/`, `scripts/collection-ids.py` | U7 |
-| U9 | Blind derivation and reviews | `docs/agent-reviews/` | U8 |
-| U10 | Seal, CI and plan update | `check.sh`, `docs/specs/` | U9 |
+| U11 | Specification additions before any recording | the new folder's text, `schema/` | U6 |
+| U12 | Kit code: case mode, generator and corpus tests | the new folder's runner, `scripts/`, `internal/collectionkit/` | U11 |
+| U13 | Thin slice: known-good form end to end | `testdata/collection-subject/`, `subjects/`, `behaviour/` | U12 |
+| U7 | Synthetic subject and behaviour | `testdata/collection-subject/`, `subjects/`, `behaviour/` | U13 |
+| U8 | Public corpus | `docs/specs/conformance-collection-1.0/cases/` | U7 |
+| U14 | Private half | outside the repository | U8 |
+| U9 | Blind derivation and reviews | `docs/agent-reviews/`, `scripts/` | U14 |
+| U10 | Seal and plan update | `check.sh`, `docs/specs/` | U9 |
+| U15 | Remove the spike | `spike/`, `AGENTS.md` | U10 |
 
 ### PR1: The spike, by 2026-11-28
 
@@ -820,161 +848,244 @@ Waits on: PR2, merge order only. PR2 is merged.
 
 This is separate because ratification reviews a large corpus and a digest, which one reviewer cannot read well together with the specification's first draft.
 
-### U7. Synthetic subject and behaviour
+The units run in this order: U11, U12, U13, U7, U8, U14, U9, U10.
 
-- **Goal:** Build the known-good subject and its defect forms, and record what each does under the frozen profile.
-- **Requirements:** CR50, CR52, CR66. KTD2, KTD15, KTD16, KTD20, KTD25.
+### U11. Specification additions before any recording
+
+- **Goal:** Write the text the recordings, the cases and phase 3 depend on, before any form is recorded or any case written.
+- **Requirements:** CR50, CR52, CR53, CR55, CR56, CR104. KTD16, KTD25, KTD27, KTD29, KTD30.
 - **Dependencies:** U6.
 - **Files:**
-  - Create `testdata/collection-subject/` (one standard-library program, each form fixed at build time) and `internal/collectionkit/subject_test.go`.
-  - Create `spike/confinement/subject_record_darwin_test.go`, tagged `confinementspike`, deleted with the spike in U10.
-  - Create `docs/specs/conformance-collection-1.0/behaviour/<form>.json`, one per form, and the forms' seeds under the new folder's `subjects/`.
+  - Modify the new folder's `collection-contract.md`, `credit-and-routes.md`, `confinement.md` and `collection-rules.md`.
+  - Create `schema/behaviour.schema.json`.
+  - Modify `schema/case.schema.json`, `schema/baseline.schema.json` and `examples/`.
 - **Approach:**
-  1. Derive one defect form per named check from `credit-and-routes.md` §1 to §3. Add one form for each acceptance example whose outcome a subject's own act decides:
-     - CAE1: tries the network and ignores the error;
-     - CAE2: starts a harmless child;
-     - CAE3: kills itself, crashes by another signal, and overruns;
-     - CAE10: live-first;
-     - CAE11: ignores the redirected home;
-     - CAE15: writes a cache outside its home;
-     - CAE16: reads a decoy key file and its environment;
-     - CAE26: leaks the canary to its journal;
-     - CAE27: signals a decoy process;
-     - CAE29: leaves a link to a decoy;
-     - CAE31: listens on loopback;
-     - CAE32: writes the canary past the scan's bound.
-  2. Give the computation's own acceptance example (CAE6) two computation programs under the same folder: one pipes its declared input, and one invokes the subject's binary.
-  3. Record each form through the spike's harness, under the frozen subject profile and the planted-secret read proof, against KTD20's decoys. Record every invocation the corpus will cite:
-     - the help tree;
-     - the bare binary;
-     - each declared command with and without its offline setting;
-     - each runbook step.
-  4. Run the recording locally on macOS 27.2 and attach its log to the pull request, as `AGENTS.md` requires.
-- **Execution note:** Write each form's failing behaviour assertion before the form. The known-good form prints what it computed, and its assertion compares that output with literals, not just the exit status (see Research).
-- **Patterns to follow:**
-  - the spike harness's `prepareImagesOn`, one private copy per form, checked unchanged before each reuse;
-  - the spike's `testdata/programs/` layout for programs that ignore errors on purpose.
+  1. **Recorded behaviour (KTD25).** Add a section to `collection-contract.md` §8 defining each recording's fields, keyed by invocation: words, offline arguments, environment names, runbook and step position, or computation. For each invocation it records:
+     - the markers seen, and the end: exit code, or signal and its attribution;
+     - each stream as its byte count, its SHA-256 over the kept bytes, whether it was cut, and its head, the whole stream for any invocation a predicate reads;
+     - the home's changes, by name and content digest, with the control copy's detected change;
+     - the planted file's access-time move, device and inode, and the control invocation's end;
+     - each leak as `{place, encoding, bound_reached}`, never the canary;
+     - each decoy's state, and a computation's printed value;
+     - the unconfined positive control's result for a violating form.
+
+     Write `schema/behaviour.schema.json` to match it, and one example.
+  2. **Scripted host (KTD29).** Add a scripted-host input to the test entry. Under the `scripted` build tag, it forces the result of each control a form cannot make fail: whether confinement was applied (with `sandbox-exec`'s exit), the self-test, the known-fast control, the read-calibration, the store comparator's control, the read proof's control and the private-copy check. Its cases run on the scripted verifier.
+  3. **Credit conditions.** Make a route a binding credit condition wherever it states a mechanical property. `graceful-failure` credits only with an accepted code that is not 0. `output-conformance` credits only with `stdout_json_equals`, `json_path_equals` or `row_count`. Any other dimension with no condition is stated as a limit: a check routed there by its author credits.
+  4. **Worked ids.** Add three hand-verified worked ids to QE2: an authored literal check, a computation with a precondition, and a planted secret.
+  5. **The deleted suite.** Reword QH9 and the `credit-and-routes.md` §3 self-test row to cite the spike record, by commit, as the one-time demonstration that each self-test program is necessary.
+  6. **CR56.** Add CR56's statement to §8 as an informative note, marked as not binding a collector.
+  7. **The case format (KTD27, KTD30).** Revise it with the rule for assembling a case, and close PR #9's two minors.
+- **Test scenarios:**
+  - The draft mode reaches every subschema of the new behaviour schema through its example.
+  - Each new worked id recomputes from the printed preimage.
+  - The citation and secret scans pass on every new file.
+- **Verification:** The draft kit passes in `check.sh`, and a review on a different model finds no open Blocker or Major in the additions.
+
+### U12. Kit code: case mode, generator and corpus tests
+
+- **Goal:** Give the corpus its runner, its id cross-check and its gate tests, written by the coding agent from U11's text.
+- **Requirements:** CR51, CR53, CR55. KTD13, KTD19, KTD26, KTD28.
+- **Dependencies:** U11.
+- **Files:**
+  - Modify the new folder's `runner.py` and `common.py`, `check.sh`, and `scripts/check-draft.py`.
+  - Create `scripts/collection_ids.py`, `scripts/test_collection_ids.py` and `internal/collectionkit/cases_test.go`.
+- **Approach:**
+  1. **Case mode (KTD26).** Add it, with `--unsealed`. That flag prints `UNSEALED`, skips the manifest, still refuses stray files, and is refused once `KIT.sha256` exists. Add `--schema-root <kit>`, so a case directory outside the kit validates against the kit's schemas.
+  2. **The generator (KTD28).** It reads hand-written preimages and seed directories, and prints ids and digests. Its tests use RFC 8785's test vectors (non-BMP key order, number forms), the specification's worked ids, and every example.
+  3. **`check.sh` steps:** run the generator's tests; recompute every case's ids from its stored preimages and its seed digest from its seed; and compare stream counts and digests with the case's recording.
+  4. **`cases_test.go`.** It enforces structure from the start. It enforces coverage only from the commit in which `CASES.md` declares the corpus complete (U8); before that it lists what is uncovered and fails on structural errors alone. It checks:
+     - every rule id, every table row of `credit-and-routes.md` §2, §4 and §5 and of QA9, both sides of each credit condition, and each adjacent pair of §2's reason order has a case, with judge-checked coverage reported per rule;
+     - every not-measured case has a twin whose counterpart check is held and crediting, and which differs in one input;
+     - every defect is red on its named check only;
+     - every invocation a case's subject file declares is in its form's recording.
+- **Execution note:** Write each corpus rule's failing test before the rule. Show each guard failing on a broken scratch copy.
+- **Test scenarios:**
+  - A changed expected field, exit code or id fails the runner or the cross-check.
+  - `--unsealed` beside a manifest is refused, and a stray file in a case directory is refused.
+  - A case citing an unrecorded invocation fails `cases_test.go`.
+  - A table row with no case fails `cases_test.go`, and so does a credit condition covered on one side only.
+- **Verification:** The gate and `check.sh` pass on the example cases, and each guard has been shown to fail on a broken copy.
+
+### U13. Thin slice: known-good form end to end
+
+- **Goal:** Prove the whole chain on one form before scaling: form, canonical subject file, recording, one judge-checked case, case mode and every cross-check.
+- **Requirements:** CR50, CR51, CR52. KTD25, KTD26, KTD30.
+- **Dependencies:** U12.
+- **Files:**
+  - Create `testdata/collection-subject/` (the known-good form only), `internal/collectionkit/subject_test.go`, `spike/confinement/subject_record_darwin_test.go`, the new folder's `subjects/known-good/`, `behaviour/known-good.json` and one case under `cases/`.
+- **Approach:**
+  1. **Go crash check.** Before writing forms, run a one-off local check of whether a Go program with traceback mode `crash` ends by its own signal or by `SIGKILL` under the frozen profile. A `SIGKILL` stops the unit: CR21's red crash would then be unreachable for a confined Go subject, and that reading goes to the owner under CR58.
+  2. **The form and its subject file.** Build the known-good form and author its canonical subject file, with offline settings, a seeded-state secret, bookkeeping, runbooks for all 17 default dimensions and their computations.
+  3. **The recording run** (KTD25):
+     - unconfined first, as the positive control, then under the frozen profile;
+     - five runs per invocation;
+     - by the main session, outside any agent sandbox, with the log attached to the pull request.
+  4. **The case.** Write one judge-checked case from the text and the recording, then run case mode and every cross-check on it.
+- **Execution note:** The recording test adds one file and changes nothing else under `spike/`. Any need to change the profile, the launcher or the harness stops the unit and goes to the owner (KTD6), because macOS 27.0.1 stays supported only while they are unchanged.
 - **Test file:** `internal/collectionkit/subject_test.go`.
   - **What it catches:**
-    - a form that does not build, or that imports anything outside the standard library;
-    - a form whose source digest differs from its recording;
-    - a benign invocation whose output on Linux differs from what was recorded on macOS.
-  - **What it misses:** whether a recording is a true account of a violating form. Only the tagged recording run shows that.
+    - a form that does not build, or that imports outside the standard library;
+    - a digest that differs from its recording;
+    - a recording that fails its schema, or that holds an absolute path, a bare requirement number or a canary-shaped string;
+    - a benign invocation whose Linux output, with the launcher's marker stripped, differs from the recording. A benign invocation is the help tree, the bare binary, or a read with its offline setting on the known-good seed.
+  - **What it misses:** whether a recording is true for a violating form. Only the positive control and the confined recording show that.
 - **Test scenarios:**
-  - The known-good form gives the literal output its seed implies for a route to each of the 17 default dimensions, and refuses its destructive command without confirmation.
-  - Covers CAE4 and CAE5. One form reports 9 of 10 from two commands, and another reports 10 and 9.
-  - Covers CAE3. The three forms end in three distinct ways. The crashing form sets Go's traceback mode to crash, because a plain fault exits 2 with no signal.
-  - Covers CAE7 and CAE26. Forms write only a journal, rewrite the store on a read, and leak the canary plain and encoded.
-  - Covers CAE10. The live-first form is killed without its offline setting and runs with it.
-  - Covers CAE9 and CAE28. Forms hide, rename and add a command without changing the count.
-  - Covers CAE1, CAE2, CAE15, CAE16, CAE27, CAE29, CAE31 and CAE32. Each form's recording shows the kill or the decoy left untouched, and the decoy unharmed.
-  - Covers CAE6. The piping computation returns its value, and the computation that invokes the subject is killed before the subject runs.
-  - Every defect form differs from the known-good form in its named behaviour and no other, checked on a shared invocation list.
-  - No recorded output holds a bare requirement or acceptance-example number, because the citation test reads every JSON file under `docs/`.
-- **Verification:**
-  - Every form builds in the gate, and its digest matches its recording.
-  - A recording exists for every form, from one local macOS 27.2 run on the pull request's head or on a commit whose later changes leave the subject and the harness untouched.
+  - The known-good form's output equals the literal values its seed implies, for a route to each of the 17 default dimensions.
+  - Five recordings of each invocation have the same outcome class and equal digests for benign streams.
+  - The slice's case passes case mode and every cross-check, and fails when one expected field is changed.
+- **Verification:** The slice passes the gate and `check.sh`. Any format change it forced is made before U7 starts.
 
-### U8. Corpus, runner and private half
+### U7. Synthetic subject and behaviour
 
-- **Goal:** Give every rule and acceptance example a case, and check what can be checked before a collector exists.
-- **Requirements:** CR51, CR53 to CR56. KTD9, KTD12, KTD13, KTD14, KTD26, KTD27, KTD28.
-- **Dependencies:** U7.
+- **Goal:** Build and record every defect form and computation the corpus needs.
+- **Requirements:** CR50, CR52, CR66. KTD2, KTD15, KTD16, KTD20, KTD25, KTD30.
+- **Dependencies:** U13.
 - **Files:**
-  - Modify the new folder's `schema/case.schema.json`, `schema/baseline.schema.json`, `examples/`, `runner.py` and `common.py`.
-  - Create:
-    - `examples/invalid/`;
-    - `cases/<id>/`, each with `case.json`, the subject file and its expected record or stated engine exit;
-    - `CASES.md`;
-    - `internal/collectionkit/cases_test.go`;
-    - `scripts/collection-ids.py` and its test.
-  - Modify `check.sh` and `docs/specs/conformance-collection-1.0/collection-contract.md`.
+  - Extend `testdata/collection-subject/` and `internal/collectionkit/subject_test.go`.
+  - Create `subjects/<form>/` and `behaviour/<form>.json` in the new folder for every form.
 - **Approach:**
-  1. Revise the case format and close PR #9's two minors (KTD27). The draft mode keeps reaching every subschema.
-  2. Add CR56's statement to `collection-contract.md`'s test-entry section: phase 3's real verifier is proven by local macOS runs stated in each pull request, and the scripted verifier runs in Linux CI. This lands before U9 freezes the text.
-  3. Write `scripts/collection-ids.py` from QE2 alone (KTD28). Its test recomputes the worked id, and a new `check.sh` step runs it with `python3 -I` and `PYTHONDONTWRITEBYTECODE=1`, so the `cases` job does too.
-  4. Write each case from the text and the recorded behaviour:
-     - **its input:** subject file, request and scope, form, `host` facts, baseline, fixture descriptions;
-     - **its expectation:** the full judge output and exit code for a judge-checked case, or the engine's exit and stated reason for a derivation-only case.
-  5. Tag every case with its rules, kind, verifier and twin.
-  6. Cover CAE12 and CAE19 with judge-checked cases. Their `host` facts give an unsupported system, a nested sandbox, a broken profile and a kill that does not fire, and each yields a record in which every check that runs the subject is not observed with `network_unverifiable`.
-  7. Cover the acceptance examples that end before any record exists as derivation-only cases:
-     - CAE13 and CAE18: a judge-rejected record, an unknown flag and a Safety marker;
-     - CAE20 and CAE24: rejected declared paths, and a store listed as bookkeeping;
-     - CAE30: two probes on one command.
-  8. Confirm every judge-checked case through the real judge, in case mode.
-  9. Write the private half, one case per rule and a catalogue of seeded collection mistakes (KTD12), in a private directory outside every repository. Check it with the same runner, and record its count and digest for the seal note.
-- **Patterns to follow:**
-  - `docs/specs/judge-1.0/cases/` and `CASES.md`: one directory per case, ids `case-NNN`;
-  - the judge kit's runner, which runs each case twice, refuses stray files and checks the file set.
-- **Test file:** `internal/collectionkit/cases_test.go`.
-  - **What it catches:** an uncovered rule or acceptance example, a missing twin, a wrong record-to-verdict claim, and a defect that is not red on its named check.
-  - **What it misses:** whether a record is the one a collector would build from the behaviour. U9's blind derivation and phase 3 check that.
+  1. **The closed form list.** Each entry names the case it serves:
+     - one form per row of `credit-and-routes.md` §3 that a subject's own act decides;
+     - one form per defect a probe or credit route can catch: a wrong count, a self-agreeing pair (CAE4, CAE5), and one writer for each of the store-unchanged outcomes (CAE7);
+     - leaks of the canary plain and in each listed encoding (CAE26), and past the scan's bound (CAE32);
+     - an open-only reader (CAE8);
+     - forms that hide, rename and add a command (CAE9, CAE28);
+     - a printer of 17 MB, invalid UTF-8 and a 33-digit number (CAE21);
+     - forms that kill themselves, crash by another signal, and overrun (CAE3);
+     - forms for these acts:
+       - CAE1: tries the network and ignores the error;
+       - CAE2: starts a harmless child;
+       - CAE10: is live-first;
+       - CAE11: ignores the redirected home;
+       - CAE15: writes a cache outside its home;
+       - CAE16: reads a decoy key file and its environment;
+       - CAE27: signals a decoy process;
+       - CAE29: leaves a link to a decoy;
+       - CAE31: listens on loopback;
+     - the CAE6 computations: one pipes its declared input, one invokes the subject's binary.
+
+     The §3 rows that only the engine or host can make fail need no form: the scripted host covers them (KTD29).
+  2. **The canonical subject file.** Author one per form, declaring every invocation the corpus cites.
+  3. **Recording.** Record every form as U13 did: positive control unconfined, then five confined runs per invocation.
+- **Execution note:** The same stop rule as U13 holds for any change under `spike/`.
 - **Test scenarios:**
-  - A rule id in the text with no case fails, as does a case naming an unknown rule.
-  - An acceptance example with no case fails.
-  - A not-measured case without a twin that grades green fails.
+  - Each violating form's positive control shows its act: a decoy touched, a connection seen, a signal delivered, a link present.
+  - Each violating form's confined recording shows the kill, or the refusal the text states, paired with that act.
+  - The crashing form's end is a signal other than `SIGKILL`.
+  - Every defect form differs from the known-good form in its named behaviour and no other, on a shared invocation list.
+- **Verification:**
+  - Every form is recorded from one local macOS 27.2 session on a commit whose later changes leave the forms, the subject files and `spike/` untouched.
+  - The gate's digest check passes for every form.
+
+### U8. Public corpus
+
+- **Goal:** Give every rule, table row and acceptance example a case, and report the corpus checkpoint.
+- **Requirements:** CR51, CR53 to CR55, CR105. KTD9, KTD14, KTD26, KTD27, KTD29, KTD30.
+- **Dependencies:** U7.
+- **Files:** Create `cases/<id>/` and `CASES.md` in the new folder.
+- **Approach:**
+  1. Write each case from the text and the recordings alone, using only recorded invocations.
+     - A judge-checked case holds `input.json`, a judge input, and `expect`, the full judge output and the engine's exit code.
+     - A derivation-only case holds the engine's exit code and the deciding rule id.
+     - Each case also holds its hand-written preimages, so U12's cross-check can recompute its ids.
+  2. **Placing the acceptance examples:**
+     - **Judge-checked:** CAE12 and CAE19, through scripted-host facts; CAE30, as a pre-check the judge accepts; and CAE23, through scripted-host facts for the control.
+     - **Derivation-only:** CAE13, because the engine's 70 differs from the judge's exit; CAE18, CAE20 and CAE24, which end before any record exists.
+     - **Scripted baselines** cover QT2's baseline cases.
+  3. When the real judge disagrees with a hand-written output, re-derive from the rulebook and name the deciding rule. Never copy the judge's output into the case.
+  4. Add one case per stated limit, labelled as a known false pass.
+  5. Report to the owner by 2026-12-12 whether the corpus checkpoint was met, and what a moved date does to the 2027-01-25 halfway check (CR105, CR106).
+- **Test scenarios:**
+  - Covers CAE8, CAE12, CAE17, CAE19 and CAE22. Those records give the stated not-measured results through the judge, and none is red.
+  - Covers CAE14. A scripted anchor is refused as a test run, and every other anchor case is tagged `real`.
   - The known-good record exits 0 in the default scope and in the destructive scope.
   - Each defect's record is red on its named check, and on no other.
-  - Covers CAE8, CAE12, CAE17, CAE19 and CAE22. Those records give the stated not-measured results through the judge, and none is red.
-  - Covers CAE14. A scripted anchor is refused as a test run, and every other anchor case, refusals included, is tagged `real`.
-  - Covers CAE13, CAE18, CAE20, CAE21, CAE23, CAE24, CAE25 and CAE30. Each has a case of the kind that can check it.
-  - A derivation-only case is never counted as passed, and a skip set that differs from the declared one fails.
-  - Changing one expected exit code, or one field of an expected judge output, makes the runner fail.
-  - Each instance under `examples/invalid/` is rejected by the draft mode and names the rule it breaks.
 - **Verification:**
-  - Every rule (100 today) and all 32 acceptance examples have cases, and the judge-checked and derivation-only counts are reported apart.
-  - The private half passes through the judge locally, and its count and digest are recorded.
+  - `cases_test.go` and the case mode pass.
+  - A table in the review log maps all 32 acceptance examples to cases. Acceptance examples are the plan's own ids, which stay out of the folder.
+
+### U14. Private half
+
+- **Goal:** Build the private set that scores builds, and check that it can catch collection mistakes.
+- **Requirements:** CR54. KTD12.
+- **Dependencies:** U8.
+- **Files:** None in this repository. The private directory sits outside every repository.
+- **Approach:**
+  1. **The cases.** Write one case per rule from public forms and recordings only, in the public format.
+  2. **The catalogue.** Each seeded collection mistake is an entry `{rule, case, wrong record}`. The runner shows the wrong record differs from the case's expected judge input on QE19's fields, and gives a different verdict. Some entries are proposed by the blind reader on a different model.
+  3. **The checks.** Run case mode with `--unsealed` and `--schema-root` over the private directory, locally.
+  4. **The scoring rule.** State it in the private directory's notes. A build scores on QE19's fields. A build that disagrees with a private case makes the case a hypothesis, checked against the text before the build is marked wrong.
+- **Verification:** Every private case passes through the judge, and every catalogue entry is shown to differ and to change the verdict.
 
 ### U9. Blind derivation and reviews
 
 - **Goal:** Show that a reader with only the text reaches the same evidence.
 - **Requirements:** CR58 to CR60, CR104. KTD11, KTD16.
-- **Dependencies:** U8.
-- **Files:** Create a dated log in `docs/agent-reviews/`. Modify the new folder's `runner.py` with the export and the sampling, whose scenarios run in `check.sh`.
+- **Dependencies:** U14.
+- **Files:**
+  - Create `scripts/collection-export.py` and a dated log in `docs/agent-reviews/`.
+  - Modify `check.sh` for the export's scenarios, and the four text files and `schema/case.schema.json` to remove the draft notices.
 - **Approach:**
-  1. Freeze the text, then export it for the blind reader, a different model run through `dispatch-worker`.
-  2. Route each disagreement to the owner with both readings.
-  3. Run the standards, different-model and corpus reviews. The corpus review also reads the synthetic subject's forms against their recordings.
-  4. Verify each finding before acting, and cite private cases by rule id only.
+  1. Remove the draft notices from the four text files and the case schema's title. Then freeze the text, whose digest is the SHA-256 over the four `.md` files in sorted name order, and export it.
+     - **The export holds:** the frozen text and schemas; each case's input with forms renamed to opaque ids; and the recordings.
+     - **It leaves out:** `examples/`, `CASES.md`, expected evidence, verdicts, rule ids, and the fields `named_check`, `twin` and `verifier`.
+     - **QE2's worked ids stay**, because they are normative text.
+  2. The blind reader, a different model run through `dispatch-worker`, derives the expected judge input for every judge-checked public case and every private case. It also computes every id from the text.
+  3. **Comparison.** Compare each derivation on QE19's fields, the required set's fields and the ids. Each disagreement goes to the owner with both readings.
+  4. **After a change.** After any rule change, re-derive the whole set.
+  5. **Reviews.** Run the standards, different-model and corpus reviews. The corpus review reads the forms against their recordings.
 - **Test scenarios:**
-  - The export holds the sampled cases' inputs and recorded behaviour, and no expected evidence, verdict, cited rule, worked example or `CASES.md`.
-  - The same digest draws the same sample.
-  - A changed rule selects exactly the cases that cite it for another derivation.
+  - A grep of the export finds no rule id, check-family word, form label or expected value.
+  - A changed rule makes every case derive again.
 - **Verification:** The last derivation round has no disagreement, and the reviews have no open Blocker or Major.
 
-### U10. Seal, CI and plan update
+### U10. Seal and plan update
 
-- **Goal:** Seal what the owner ratified and leave nothing of the spike behind.
-- **Requirements:** CF1. CR56, CR57, CR60, CR61, CR106. KTD2, KTD7, KTD12.
+- **Goal:** Seal what the owner ratified.
+- **Requirements:** CF1. CR57, CR60, CR61, CR106. KTD7, KTD12.
 - **Dependencies:** U9.
 - **Files:**
-  - **Create:** `KIT.sha256` in the new folder, and `docs/specs/conformance-collection-1.0-seal.md`.
+  - Create `KIT.sha256` in the new folder, and `docs/specs/conformance-collection-1.0-seal.md`.
   - **Modify:**
-    - the new folder's text: remove the draft notices, and make `confinement.md`'s mentions of the spike final;
-    - `check.sh`: replace the draft steps with sealed ones;
-    - `docs/specs/README.md`;
-    - `docs/plans/2026-11-21-engine-plan.md`;
-    - `AGENTS.md`: its checks section names the spike's test command;
-    - the two learnings in `docs/solutions/` that point at spike paths, to say the code was removed at the seal.
-  - **Delete:** `spike/confinement/`, `scripts/draft-guard.sh` and `scripts/check-draft.py`.
+    - `check.sh`, replacing the draft steps with sealed ones and keeping the generator's tests and the id cross-check;
+    - `scripts/check-draft.py`, `docs/specs/README.md` and `docs/plans/2026-11-21-engine-plan.md`.
 - **Approach:**
-  1. Make the text final, then put the manifest's digest to the owner.
-  2. Commit the manifest after ratification. Put the private half's count and digest in the seal note.
+  1. Put the manifest's digest, over the text U9 froze, to the owner. The text is not edited after the freeze; an edit returns it to U9.
+  2. After ratification, commit the manifest. The seal note holds the private directory's manifest digest and count, taken now.
   3. Make `check.sh` verify both kits' digests and file sets, and run both runners. `shasum -c` alone does not see an extra file.
-  4. Update the engine plan as CR61 says:
+  4. Update the engine plan for every item of CR61:
+     - the decisions settled here;
      - §3's specified items;
      - §4's rule on what is read from the judge's output;
      - the phase 2 line that still names Linux;
-     - phase 3's test entry and local macOS evidence (CR56);
-     - §7's risk row for the deprecated sandbox;
+     - phase 3's test entry and local macOS evidence;
+     - a new §7 risk row for the deprecated sandbox;
+     - phase 3's duty to repeat the self-test necessity demonstration;
      - any date moved under CR106.
 - **Test scenarios:**
   - Changing, adding or removing one file in the sealed folder fails `check.sh`.
   - Judge 1.0's digest still verifies, and all 383 of its cases pass.
-  - No file imports, runs or names the deleted spike as a current source.
-  - The sealed `collection-contract.md` states phase 3's local macOS evidence (CR56).
 - **Verification:** CI is green on the pull request, and the sealed digest is the one the owner ratified.
+
+### PR4: Spike removal, after PR3
+
+Waits on: PR3, merge order only.
+
+This is separate because `AGENTS.md` lets a local macOS run count as a pull request's evidence only when every later commit leaves the tested paths unchanged. Deleting the harness inside PR3 would void U7's recordings.
+
+### U15. Remove the spike
+
+- **Goal:** Leave nothing of the spike behind.
+- **Requirements:** CF1. KTD2.
+- **Dependencies:** U10.
+- **Files:**
+  - Delete `spike/confinement/` and `scripts/draft-guard.sh`.
+  - Modify `AGENTS.md`, whose checks section names the spike's command, and the two learnings in `docs/solutions/` that point at spike paths, to say the code was removed after the seal.
+- **Test scenarios:**
+  - No file imports, runs or names the deleted spike as a current source.
+  - The gate and `check.sh` pass with the folder sealed.
+- **Verification:** CI is green, and the sealed digest is unchanged.
 
 ---
 
@@ -986,11 +1097,12 @@ This is separate because ratification reviews a large corpus and a digest, which
 | Kits and cases | `./check.sh` | every pull request | judge 1.0 passes 383 of 383, and from U10 the collection kit verifies |
 | Secrets and paths | `./scan.sh` on tracked files and the commit range | every pull request | exits 0 with no allowlist |
 | macOS spike | `go test -count=1 -tags confinementspike ./spike/confinement/...` on each tested macOS | U1, U3, U4 | 25 of 25 in every scenario, judged by output |
-| Behaviour recording | U7's tagged recording run, local on macOS 27.2, with its log, system, command and commit stated in the pull request as `AGENTS.md` requires | U7 | every form recorded, and every digest matches |
+| Behaviour recording | U13's and U7's tagged recording runs, local on macOS 27.2 outside any agent sandbox, with the log, system, command and commit stated in the pull request as `AGENTS.md` requires | U13, U7 | every violating form's positive control shows its act, five confined runs agree, and every digest matches |
 | Subject's name | KTD21's search | every push | no hit |
 | Sealed judge | `shasum -a 256 -c KIT.sha256` in `docs/specs/judge-1.0` | every pull request | unchanged |
-| Collection cases | the new folder's runner in case mode, against the built judge, from `check.sh`; draft mode as well until U10 | U8 to U10 | every judge-checked case passes, and the other count is shown apart |
-| Corpus rules | `internal/collectionkit/cases_test.go` in the gate, and the id generator's test from `check.sh` | U8 to U10 | every rule and acceptance example covered, twins present, defects red on their named check; the generator recomputes the worked id |
+| Collection cases | the new folder's runner in case mode, with `--unsealed` until U10, against the built judge, from `check.sh` | U12 to U10 | every judge-checked case passes, and the other count is shown apart |
+| Corpus rules | `internal/collectionkit/cases_test.go` in the gate; the generator's tests and the id cross-check from `check.sh` | U12 to U10 | every rule, table row and credit-condition side covered once the corpus is declared complete; twins present; defects red on their named check; every case's ids recompute |
+| Blind derivation | U9's export and the different-model reader | U9 | no disagreement in the last round |
 | Mutation by hand | break the guarded rule in a scratch copy | every test added | the named test fails |
 | Review | a reviewer who did not write it, and one different model for the specification | each pull request | no open Blocker or Major |
 | CI | the pull request's own `gate`, `cases` and `scan` checks | every merge | green |
@@ -1000,11 +1112,11 @@ This is separate because ratification reviews a large corpus and a digest, which
 ## Definition of Done
 
 - The Product Contract's Success Criteria hold.
-- U1 and U3 to U10 each meet their Verification line.
+- U1 and U3 to U15 each meet their Verification line.
 - The spike record says pass or fail for each system, and the real subject's run is recorded without its name or output.
 - The sealed folder's digest is the ratified one, and CI verifies it beside judge 1.0.
 - Every rule and acceptance example has a case, and no derivation-only case is reported as passed.
 - The private half's count and digest are in the seal note, and none of its content is in the repository.
 - The engine plan is updated and names no real subject.
-- `spike/confinement/`, the draft-only scripts and any abandoned attempt are gone from the tree. The temporary workflow went in PR2.
+- After PR4, `spike/confinement/`, the draft-only guard and any abandoned attempt are gone from the tree. The temporary workflow went in PR2.
 - Each lesson that corrected a wrong belief went through `ce-compound` in the pull request that produced it.
