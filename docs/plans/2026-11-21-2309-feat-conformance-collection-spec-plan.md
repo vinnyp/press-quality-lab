@@ -481,9 +481,10 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
   Implements CR51, CR53, CR55. Chosen over the judge kit's partial-expect format: a builder's record is scored against the whole output.
 - KTD27. **The case format is revised before any case is written.**
   - **`input` replaces `entry`.** It holds the subject file's name, the form, the request and scope, the `host` facts, `verifier` (`real` or `scripted`), the baseline and the fixture descriptions.
-  - **Fields outside `input`** are `named_check` (a check id), `twin`, `rules` and `covers`. The export can then drop them.
-  - **`covers`** names the table rows, credit-condition sides and reason-order pairs a case exercises, from a closed vocabulary such as `credit:determinism:fails`, `encoding:base64url-nopad`, `help:clap`, `predicate:row_count` and `order:QO4>QO5`. `cases_test.go` checks the tags against the tables, and review checks that each case's content matches its tags.
-  - **`input.invocations`** lists every invocation the case's subject file implies, so the test checks set membership against the recording and never works out invocations itself.
+  - **Fields outside `input`** are `named_check` (a check id), `twin`, `rules`, `covers` and `invocations`. The export drops them.
+  - **`covers`** names the table rows, credit-condition sides and reason-order pairs a case exercises. Each tag is `<table>:<row>[:<side>]`, with the row named verbatim from its table, for example `credit:determinism:fails`, `encoding:base64url-nopad`, `help:clap`, `predicate:row_count` and `order:QO4>QO5`. The expected tag set is derived from the tables, and any other tag fails.
+  - **Tags are checked against the case wherever the case shows them.** `predicate:` must match the predicates in the subject file, `encoding:` the recording's leaks, `help:` the format of the form's recorded help, and `credit:` the expected `crediting` and the dimension's state in `expect`. Only `order:` tags rest on review, against the expected reason.
+  - **`invocations`** lists every invocation the case's subject file implies, so the test checks set membership against the recording and never works out invocations itself. The id cross-check also fails when an evidence target's invocation is missing from it. U9's derivation is the backstop for an invocation left off both.
   - **A derivation-only reason** is a rule id, not free text.
   - **PR #9's two minors are closed:** a `probe` discriminator on the stored preimage's `parameters`, and `examples/invalid/`. Each file there is named `<schema>-<rule>-NN.json` and breaks one schema-detectable rule, and the draft mode must reject it.
   - **Acceptance examples are not tagged in cases.** They are the plan's own ids and stay out of the folder; U8's review log maps them.
@@ -505,7 +506,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
   - **The canonical directory.** Each form has `subjects/<form>/`, holding its canonical subject file, its seed and its computations.
   - **Assembly.** A case names its form, and the runner, the cross-check and a phase 3 collector assemble one temporary directory before applying §1. It holds the case's subject file, a copy of the form's seed at `seed/`, the built form at `bin/subject`, and the form's computations under `computations/`. A case's subject file uses those fixed names, so QS8 and QS9 hold.
   - **The planted secret's token** is a plain marker string such as `PLANTED-TOKEN-0001`, so the secret scan passes with no allowlist.
-  - **Computations** are committed, platform-independent files: `/bin/sh` scripts, or files a tool under `/bin` or `/usr/bin` reads. They are never built, so their digests, which enter check ids, are the same on every system.
+  - **Computations** are committed POSIX `sh` scripts that use only tools present on both macOS and Linux (`cat`, `cut`, `grep`, `head`, `sort`, `tr`, `wc`), or files those tools read. They are never built, so their digests, which enter check ids, are the same on every system.
 
 ### High-Level Technical Design
 
@@ -552,7 +553,7 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-  S[spike/confinement, deleted at seal] -->|behaviour| K[docs/specs/conformance-collection-1.0]
+  S[spike/confinement, deleted in PR4] -->|behaviour| K[docs/specs/conformance-collection-1.0]
   G[testdata/collection-subject] -->|built forms| S
   T[internal/collectionkit, tests only] -->|builds and checks| G
   T -->|checks cases and schemas| K
@@ -871,7 +872,7 @@ The units run in this order: U11, U12, U13, U7, U8, U14, U9, U10.
   - Create `schema/behaviour.schema.json`.
   - Modify `schema/case.schema.json`, `schema/baseline.schema.json` and `examples/`.
 - **Approach:**
-  0. **Go crash check, first.** Before writing any text, the main session runs a one-off local check: does a Go program with traceback mode `crash` end by its own signal, or by `SIGKILL`, under the frozen profile? A `SIGKILL` stops PR3. CR21's red crash would then be unreachable for a confined Go subject, and that reading goes to the owner under CR58.
+  0. **Go crash check, first.** Before writing any text, the main session runs a one-off local check, outside any agent sandbox: does a Go program with traceback mode `crash` end by its own signal, or by `SIGKILL`, under the frozen profile? A sandboxed main session hands the check to the owner. A `SIGKILL` stops PR3. CR21's red crash would then be unreachable for a confined Go subject, and that reading goes to the owner under CR58.
   1. **Recorded behaviour (KTD25).** Add a section to `collection-contract.md` §8 defining each recording's fields, keyed by invocation: words, offline arguments, environment names, runbook and step position, or computation. For each invocation it records:
      - the markers seen, and the end: exit code, or signal and its attribution;
      - each stream as its byte count, its SHA-256 over the kept bytes, whether it was cut, and its head, the whole stream for any invocation a predicate reads;
@@ -882,12 +883,12 @@ The units run in this order: U11, U12, U13, U7, U8, U14, U9, U10.
      - the unconfined positive control's result for a violating form.
 
      Write `schema/behaviour.schema.json` to match it, and one example.
-  2. **Scripted host (KTD29, CR49).** Add a scripted-host input to the test entry, with its subschema and its precedence over a recording. Under the `scripted` build tag, it forces the result of each control a form cannot make fail: whether confinement was applied (with `sandbox-exec`'s exit), the self-test, the known-fast control, the read-calibration, the store comparator's control, the read proof's control and the private-copy check. Its cases run on the scripted verifier.
+  2. **Scripted host (KTD29, CR49).** Add a scripted-host input to the test entry, with its subschema and its precedence over a recording. Under the `scripted` build tag, it forces the result of each control a form cannot make fail: whether confinement was applied (with `sandbox-exec`'s exit), the self-test, the known-fast control, the read-calibration, the store comparator's control, the read proof's control, the private-copy check, and a kill's attribution (an exit detail, or a kill by another process). Its cases run on the scripted verifier.
   3. **Credit conditions (CR43, CR92).** Make a route a binding credit condition wherever it states a mechanical property, and list each change among the readings the owner sees before ratification. `graceful-failure` credits only with an accepted code that is not 0. `output-conformance` credits only with `stdout_json_equals`, `json_path_equals` or `row_count`. Any other dimension with no condition is stated as a limit: a check routed there by its author credits.
   4. **Worked ids.** Add three hand-verified worked ids to QE2: an authored literal check, a computation with a precondition, and a planted secret.
   5. **The deleted suite.** Reword QH9 and the `credit-and-routes.md` §3 self-test row to cite the spike record, by commit, as the one-time demonstration that each self-test program is necessary.
   6. **CR56.** Add CR56's statement to §8 as an informative note, marked as not binding a collector.
-  7. **The case format (KTD27, KTD30).** Revise it with the rule for assembling a case, and close PR #9's two minors.
+  7. **The case format (KTD27, KTD30).** Revise it with the rule for assembling a case and the `covers` grammar as a pattern in `case.schema.json`, and close PR #9's two minors.
 - **Test scenarios:**
   - The draft mode reaches every subschema of the new behaviour schema through its example.
   - Each new worked id recomputes from the printed preimage.
@@ -1046,10 +1047,10 @@ The units run in this order: U11, U12, U13, U7, U8, U14, U9, U10.
 - **Approach:**
   1. Remove the draft notices from the four text files and the case schema's title. Then freeze the text. Its digest is the SHA-256 of the four files' `shasum -a 256` lines, sorted by name; U10's manifest later covers the whole folder. Export it.
      - **The export holds:** the frozen text and schemas; each case's `input`, `verifier` included, with forms renamed to opaque ids in fields, file names and paths; and the recordings, under the same opaque names.
-     - **It leaves out:** `examples/`, `CASES.md`, expected evidence, verdicts, and the fields `named_check`, `twin`, `rules` and `covers`.
+     - **It leaves out:** `examples/`, `CASES.md`, expected evidence, verdicts, and the fields `named_check`, `twin`, `rules`, `covers` and `invocations`.
      - **QE2's worked ids stay**, because they are normative text.
-  2. The blind reader, a different model run through `dispatch-worker`, derives the expected judge input for every judge-checked public case and every private case. It also computes every id from the text.
-  3. **Comparison.** Compare each derivation on QE19's fields, the required set's fields and the ids. Each disagreement goes to the owner with both readings. A disagreement on a private case stays in the private directory, and the public log cites it by rule id only.
+  2. The blind reader, a different model run through `dispatch-worker`, derives the expected judge input for every judge-checked public case and every private case. It also derives each case's invocation list and computes every id from the text.
+  3. **Comparison.** Compare each derivation on QE19's fields, the required set's fields, the invocation list and the ids. Each disagreement goes to the owner with both readings. A disagreement on a private case stays in the private directory, and the public log cites it by rule id only.
   4. **After a change.** After any rule change, re-derive the whole set.
   5. **Reviews.** Run the standards, different-model and corpus reviews. The corpus review reads the forms against their recordings.
 - **Test scenarios:**
