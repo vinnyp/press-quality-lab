@@ -3,6 +3,7 @@
 package confinement
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -262,5 +263,27 @@ func TestGoStartupAllowanceWitnesses(t *testing.T) {
 				repeat(t, func() bool { return startupRefused(probe.invokeOn(t, broken, entry.mode, false)) })
 			})
 		}
+	}
+}
+
+func TestCoreFoundationUIDWitness(t *testing.T) {
+	f := buildGoProgram(t, newFixture(t), "security.go")
+	for _, matching := range []bool{false, true} {
+		runScenario(t, fmt.Sprintf("matching=%v", matching), func(t *testing.T) {
+			probe := f
+			probe.env = append([]string(nil), f.env...)
+			for i, value := range probe.env {
+				if strings.HasPrefix(value, "__CF_USER_TEXT_ENCODING=") && !matching {
+					probe.env[i] = fmt.Sprintf("__CF_USER_TEXT_ENCODING=0x%X:0x0:0x0", os.Getuid()+1)
+				}
+			}
+			repeat(t, func() bool {
+				r := probe.invokeOn(t, profile(false), "security", false)
+				if matching {
+					return correct(r, "security ok\n")
+				}
+				return startupRefused(r)
+			})
+		})
 	}
 }

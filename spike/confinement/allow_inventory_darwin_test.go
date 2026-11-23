@@ -80,6 +80,7 @@ const reviewedComputationAllows = `(allow mach-task-special-port-set (target sam
 
 func TestExactAllowInventory(t *testing.T) {
 	t.Parallel()
+	assertPlantedDirectoryProfileText(t)
 	for _, computation := range []bool{false, true} {
 		if !profileLinesReviewed(profile(computation)) {
 			t.Error("profile contains a hidden or indented form")

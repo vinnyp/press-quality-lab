@@ -8,6 +8,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -21,6 +22,10 @@ import (
 var template string
 
 func profile(computation bool) string {
+	return plantedProfile(computation, 0)
+}
+
+func plantedProfile(computation bool, depth int) string {
 	rules := ""
 	if computation {
 		rules = "; child: the computation must be able to start and reap a child.\n(allow process-fork)\n; sandbox-signal: a computation manages its own child.\n(allow signal (target same-sandbox))\n(deny syscall-unix (syscall-number SYS_setsid SYS_setpgid) (with send-signal SIGKILL))"
@@ -56,6 +61,11 @@ func profile(computation bool) string {
 (deny file-write* (literal (param "PLANTED")) (with send-signal SIGKILL))
 ; home-root: keep the redirected root in place while allowing writes within it.
 (deny file-write-unlink file-write-create (literal (param "HOME")) (with send-signal SIGKILL))`
+	if !computation {
+		for i := 1; i <= depth; i++ {
+			fileRules += fmt.Sprintf("\n(deny file-write-unlink file-write-create (literal (param \"PLANTED_DIR_%d\")) (with send-signal SIGKILL))", i)
+		}
+	}
 	if computation {
 		fileRules += `
 ; subject-boundary: tool directory grants never expose the subject.
@@ -65,7 +75,7 @@ func profile(computation bool) string {
 }
 
 // Prevent CoreFoundation startup from reading the user-database home.
-const coreFoundationEncoding = "__CF_USER_TEXT_ENCODING=0x1F5:0x0:0x0"
+var coreFoundationEncoding = fmt.Sprintf("__CF_USER_TEXT_ENCODING=0x%X:0x0:0x0", os.Getuid())
 
 type result struct {
 	output        string

@@ -296,6 +296,24 @@ func (f fixture) invokeOn(t *testing.T, text, mode string, twin bool) result {
 		args = []string{"-f", f.profileFile}
 	}
 	parameters := f.parameters()
+	if strings.Contains(text, "PLANTED_DIR_1") {
+		values := map[string]string{}
+		for _, parameter := range parameters {
+			key, value, _ := strings.Cut(parameter, "=")
+			values[key] = value
+		}
+		relative, err := filepath.Rel(values["HOME"], filepath.Dir(values["PLANTED"]))
+		if err != nil || relative == ".." || strings.HasPrefix(relative, "../") {
+			t.Fatal("planted path outside home")
+		}
+		current := values["HOME"]
+		if relative != "." {
+			for i, part := range strings.Split(relative, string(filepath.Separator)) {
+				current = filepath.Join(current, part)
+				parameters = append(parameters, fmt.Sprintf("PLANTED_DIR_%d=%s", i+1, current))
+			}
+		}
+	}
 	for _, parameter := range parameters {
 		args = append(args, "-D", parameter)
 	}
