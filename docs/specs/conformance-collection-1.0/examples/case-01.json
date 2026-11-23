@@ -16,7 +16,9 @@
     "fixtures": []
   },
   "expect": {
-    "exit_code": 4
+    "exit_code": 4,
+    "judge_output": null,
+    "reason": null
   },
   "twin": null
 }

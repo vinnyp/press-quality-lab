@@ -273,12 +273,20 @@
             }
           },
           "parameters": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true,
+            "description": "A probe's parameters as QE2 lists them."
           },
           "expected": {
-            "type": [
-              "object",
-              "null"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "An expected source as QE2 gives it."
+              }
             ]
           }
         }

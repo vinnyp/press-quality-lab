@@ -111,7 +111,44 @@
     },
     "expect": {
       "type": "object",
-      "description": "What the case expects: for judge-checked, the record's judge input and the judge's verdict and exit code; for derivation-only, the engine's exit code and its stated reason."
+      "additionalProperties": false,
+      "required": [
+        "exit_code",
+        "judge_output",
+        "reason"
+      ],
+      "description": "For judge-checked, the judge's output and exit code; for derivation-only, the engine's exit code and the reason it states.",
+      "properties": {
+        "exit_code": {
+          "enum": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            64,
+            70
+          ]
+        },
+        "judge_output": {
+          "oneOf": [
+            {
+              "$ref": "judge-output.schema.json"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4096
+        }
+      }
     },
     "twin": {
       "type": [
