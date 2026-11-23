@@ -34,13 +34,15 @@
   | `offline_args` | the arguments every applying offline setting appends, in order; `[]` when none applies |
   | `env` | an object mapping each declared environment name that applies to the lowercase hexadecimal SHA-256 of its value's UTF-8 bytes |
   | `budget_seconds` | the invocation's budget |
-
-  For a check with no invocation or with several (discovery, the planted secret, and a probe check with no command), `words` and `budget_seconds` are `null`, `offline_args` is `[]` and `env` is `{}`; the planted secret carries its per-command values in `parameters`. A placeholder enters the preimage as the placeholder object exactly as written.
   | `seed` | the seed's digest, as below, or `null` with no seed |
   | `store` | the declared store, or `null` |
   | `bookkeeping` | the declared bookkeeping paths, sorted by their UTF-8 bytes |
   | `parameters` | a probe's parameters, as below; for an authored check, `{"exit_codes": its own exit codes, or null}` |
   | `expected` | an authored check's expected source, as below; `null` for a probe |
+
+  For a check with no invocation or with several (discovery, the planted secret, and a probe check with no command), `words` and `budget_seconds` are `null`, `offline_args` is `[]` and `env` is `{}`; the planted secret carries its per-command values in `parameters`. A placeholder enters the preimage as the parsed placeholder object, in RFC 8785 form like everything else.
+
+  Every digest in this specification is the lowercase hexadecimal SHA-256 of the bytes it names.
 
   **A probe's parameters:**
 
@@ -50,7 +52,7 @@
   | bare | `{"exit_codes": the bare binary's declared codes, or null}` |
   | byte_bound | `{"bound": n}` |
   | exit_codes | `{"exit_codes": [the declared codes, as the file lists them]}` |
-  | planted_secret | `{"path": p, "kind": k, "token": the token's SHA-256 in hexadecimal, "commands": [one object per listed command, in the file's order, with that invocation's `words`, `offline_args`, `env` and `budget_seconds`]}`; with `secret` `null`, `{}` |
+  | planted_secret | `{"path": p, "kind": k, "token": the token's SHA-256 in hexadecimal, "commands": [one object per listed command, in the file's order, with that invocation's `words`, `offline_args`, `env` and `budget_seconds`]}`; with `secret` `null`, `{}`; with `secret` a placeholder, `{"secret": the placeholder object}` |
   | store_unchanged | `{}` |
 
   A probe check with no command has the parameters `{}`.
@@ -127,7 +129,7 @@
   | `evaluator` | `{"kind": "deterministic", "model": null}` |
 
   **Targets.**
-  - Each invocation is a target of kind `invocation`. Its id is the check's id, or the check's id followed by `#` and the invocation's position from 1 when the check has more than one invocation. Discovery's help requests are numbered in the order QD2 gives; the planted secret's invocations in the order its commands are listed. A control invocation is never a target.
+  - Each invocation is a target of kind `invocation`. Its id is the check's id, or the check's id followed by `#` and the invocation's position from 1 when the check has more than one invocation. Discovery's help requests are numbered in the order QD2 gives; the planted secret's invocations in the order its commands are listed, counting listed commands only. A control invocation is never a target.
   - The store-unchanged probe adds the declared store as a target of kind `artifact`. The planted-secret probe adds the planted file the same way. Each artifact's id is its path relative to the home, and its tier is the tier of the invocation that used it.
 
   A check that is not observed has an `outcome` of `not_observed` and carries its reason and the invocation it would have used.

@@ -12,7 +12,7 @@
 | Bare invocation | QP2 | `availability` | one | yes | only by §2 of `collection-rules.md` |
 | Byte bound | QP3 | `bounding` | one per declared `safe` command with a `byte_bound` | yes | no such command (`empty_target`, one check) |
 | Declared exit codes | QP4 | `execution` | one per declared `safe` command with `exit_codes` | yes | no such command (`empty_target`, one check) |
-| Planted secret | QP10 to QP13 | `pii-secret-hygiene` | one | yes | no secret, or no invocation proved a read (`input_missing`); a scan stopped by a bound (`harness_fault`) |
+| Planted secret | QP10 to QP13 | `pii-secret-hygiene` | one | yes | no secret, or no invocation proved a read (`input_missing`); a scan stopped by a bound, or a control that ran and was not killed (`harness_fault`) |
 | Store unchanged | QP6 to QP9 | `side-effect-integrity` | one per declared `safe` command with `writes: false` | yes | no such command (`empty_target`, one check); nothing left to compare (`empty_target`); no control detected a change (`harness_fault`) |
 
 Every probe can also be not observed by §2 of `collection-rules.md` and by a placeholder (QS5). Every generated check other than discovery is not observed with `precondition_unmet` when discovery did not find a declared command (QD4). `bounding` can therefore be judged from generated checks alone, as can `discoverability`, `availability` and `execution`.

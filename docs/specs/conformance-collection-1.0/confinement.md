@@ -279,7 +279,7 @@
   - sets the access time a day before the modification time before each invocation;
   - refuses, with a kill, any write to the planted file and any unlink or create on the throwaway home and on every directory below it on the file's path, so the subject cannot set the access time by writing, renaming or replacing the file;
   - records the file's device and inode before and after;
-  - runs an otherwise identical control invocation whose profile also kills on opening the planted file for reading, with the extra line of QH11.
+  - when QO7's condition holds, runs an otherwise identical control invocation whose profile also kills on opening the planted file for reading, with the extra line of QH11.
   The read is proved when the ordinary invocation finished with its declared successful exit, the access time moved, the device and inode are unchanged, and the control was killed (QP11).
 - **QH28. Stated limits of the proof.** Another process reading the file during the invocation looks like the subject's read. A read that returns no bytes at the end of the file moves its access time and counts as a read.
 

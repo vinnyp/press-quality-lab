@@ -32,7 +32,7 @@
 - **Citations.** Requirement numbers (R16, R42 …) are the requirements document's.
 - **The judge's words.** Words the judge's rulebook defines, such as dimension, record, crediting and tier, mean what it says they mean.
 - **Always-applicable dimension.** A dimension that rulebook §6 excludes on no subject fact.
-- **The bare binary.** The bare binary is a command of every subject, whether or not the file declares it. An entry with `words: []` only sets its class, exit codes, bound and budget; without one, it is `safe`, `writes: false`, succeeds only by exiting 0, has no bound, and has a budget of 10 seconds. Discovery never lists it, never counts it in `declared_count`, and never reports it missing.
+- **The bare binary.** The bare binary is a command of every subject, whether or not the file declares it. An entry with `words: []` sets every field QS6 lists, as for any command, except that its class cannot be `destructive`: such an entry rejects the file. Without an entry, the bare binary is `safe`, succeeds only by exiting 0, has no bound, has a budget of 10 seconds, and is not run by the store-unchanged probe. Discovery never lists it, never counts it in `declared_count`, and never reports it missing.
 - **An invocation's command.** It is the command whose words are the longest prefix of the invocation's words. The bare binary's empty word list is a prefix of every invocation.
 
 **What binds.** These opening paragraphs and §1 to §5 bind a collector. The files in `examples/` are informative; where one disagrees with a rule, the rule is right. §6 records how requirements were read and only explains. Where it disagrees with a rule, the rule is right. In `confinement.md` and `collection-contract.md`, every numbered section binds except the readings tables. A comment line in the profile template is part of the template's text, though it grants nothing.
@@ -91,7 +91,7 @@
   - A setting applies to an invocation exactly when it lists the words of the invocation's command. It applies the same way to every generated probe and every runbook step, and never to discovery (§3).
   - Its arguments are appended after the invocation's own words. When several settings apply, their arguments are appended in the order the settings appear in the file.
   - Rejecting conditions:
-    - a setting that lists words no declared command has;
+    - a setting that lists words no command has, the bare binary's empty list being always allowed;
     - two settings that apply to one command and set the same environment name;
     - an argument equal to `--help`, `-h`, `help`, `--version`, `-v` or `version`.
   - A declared environment value is a literal string. The engine adds it to the allow-listed environment of QH12 and masks it in every record and scorecard (QE18). It enters check ids only as its digest (QE2).
@@ -109,7 +109,7 @@
   - runbooks that hold more than 2,048 checks in all;
   - more than 512 declared commands, or more than 1,024 markers;
   - a literal longer than 64 KiB in its canonical form, or nested deeper than 48;
-  - a number in a literal that is not finite or whose value an IEEE-754 double cannot hold exactly, so that RFC 8785 writes every literal number without changing it;
+  - a number in a literal whose nearest IEEE-754 double is infinite, or whose nearest double, written by RFC 8785 and read back as a decimal, has a different value from the number. `0.1` and `0.10` are accepted and both enter a check id as `0.1`; `9007199254740993` and `1e400` are rejected; `-0` is accepted and enters a check id as `0`;
   - a runbook or step name holding a character below U+0020.
 - **QS12. Content-equal files.** A declared file, an executable a computation names, or a seed file whose content digest equals the binary's rejects the file, because a computation could otherwise run the subject from it (QH17).
 
@@ -117,7 +117,17 @@
 
 These rules turn one invocation of the subject into an outcome for the check it serves. `confinement.md` says how each condition below is seen. QO6 says how they apply to a computation, and QO7 how a check with several invocations combines them.
 
-**Which reason wins.** For any check, try in this order and stop at the first that applies: QO1; a placeholder the check depends on (QS5); QD4; the rules below for each invocation; then the probe's or the predicate's own rules. QS5's override of an otherwise held check comes last of all.
+**Which reason wins.** For any check, try in this order and stop at the first that applies:
+1. QO1;
+2. a placeholder the check depends on (QS5);
+3. QD4;
+4. `earlier_step_failed` (QA7);
+5. a changed private copy (QH8);
+6. the computation of the check's expected value or precondition (QA6), and a cut capture (QA4);
+7. the rules below for each invocation;
+8. the probe's or the predicate's own rules.
+
+QS5's override of an otherwise held check comes last of all.
 
 **First match.**
 
@@ -143,11 +153,14 @@ These rules turn one invocation of the subject into an outcome for the check it 
     - for an `exit_code` predicate, the check's expected code;
     - for the bare-invocation and declared-exit-code probes, as QP2 and QP4 say;
     - for an authored check with its own `exit_codes`, those codes;
-  - for every other check, the codes of a successful run of the invocation's command (QS6).
+    - for every other check, the codes of a successful run of the invocation's command (QS6).
   - Every other result is judged by the check's own predicate, and a predicate that does not hold gives `predicate`.
+- **QO6. A computation's own run.** A computation's run (QA4) changes only its check:
+  - When the confinement was not applied to it, it was killed by its confinement, it could not start, or it ran past its budget, the check is not observed with `computation_failed`.
+  - When QO1 holds for the grade, the check is not observed with `network_unverifiable` like every other check.
 - **QO7. A check with several invocations.**
-  - **Discovery.** For each help request, QO1 to QO4 decide as for any invocation. Every other end of a help request is QD5.
-  - **The read proof's control invocation** (QP11) is expected to be killed after the marker. Any other end of it makes the planted-secret check not observed with `harness_fault`.
+  - **Discovery.** Discovery makes every help request QD2 reaches, whatever an earlier one's end, and whatever `declared_count` holds. For each help request, QO1 to QO4 decide as for any invocation, and every other end is QD5. When QO1 to QO4 decide any help request, the first such request in QD2's order decides discovery.
+  - **The read proof's control invocation** (QP11) runs for a listed command only when that command's ordinary invocation finished with a successful code, moved the planted file's access time, and left its device and inode unchanged. When the control runs and ends any way other than a kill after the marker, two identical invocations behaved differently, and the planted-secret check is not observed with `harness_fault`. This is tried after step 1 of the list below and before step 2.
   - **The planted-secret probe** combines its invocations, first match:
     1. a leak found in any invocation: `not_held` with `predicate`;
     2. an invocation that QO1 to QO4 decide: that invocation's result, taking the first such invocation in the order the commands are listed;
@@ -156,9 +169,6 @@ These rules turn one invocation of the subject into an outcome for the check it 
     5. otherwise not observed with `input_missing`.
 
     An exit code other than a successful one, or a crash, only means that invocation proved no read.
-- **QO6. A computation's own run.** A computation's run (QA4) changes only its check:
-  - When the confinement was not applied to it, it was killed by its confinement, it could not start, or it ran past its budget, the check is not observed with `computation_failed`.
-  - When QO1 holds for the grade, the check is not observed with `network_unverifiable` like every other check.
 
 ## 3. Discovery
 
@@ -169,7 +179,8 @@ These rules turn one invocation of the subject into an outcome for the check it 
   - **What is read.** Help output is read from standard output, and from standard error when standard output is empty. How a command list is read is as §5 of `credit-and-routes.md` says.
   - **A leaf.** A help that exits 0 and lists no command section belongs to a leaf command.
   - **What is counted.** Every listed command at every level counts, a command that has commands of its own included. The commands `help` and `completion`, and any command the help marks as hidden, are left out.
-  - **Order.** Help requests are made, and numbered as targets (QE8), depth first, each command's children in the order its help lists them.
+  - **Order.** Help requests are made, and numbered as targets (QE8), depth first, each command's children in the order its help lists them. A command left out of the count is never asked for help.
+  - **Bounds.** Discovery makes at most 4,096 help requests and descends at most 64 words deep. A walk that would pass either bound is not observed with `precondition_unmet`, and the scorecard names the bound.
 - **QD3. What discovery compares.** Discovery compares names as well as the count. It holds when every declared command was found and the number found equals `declared_count`. With every declared command found:
   - a different count is `not_held` with `predicate`;
   - each command found but not declared is named on the scorecard and has no safety class, so QS5 applies.
@@ -293,7 +304,9 @@ These rules turn one invocation of the subject into an outcome for the check it 
 
   - **`path`** is a JSON Pointer (RFC 6901) for `json_path_equals` and `row_count`, and `null` for every other predicate. A `path` that names nothing, or output that is not one JSON value, makes either predicate not hold.
   - **Matching types.** The expected value of `exit_code`, `stdout_bytes_at_most` and `row_count` is a whole number, and of `stdout_equals`, `stdout_contains`, `stdout_not_contains` and `stderr_contains` a string. `stdout_empty` takes the literal `null`. A check that breaks this or the rule for `path` rejects the file.
-  - **Its own exit codes.** A check may give `exit_codes`, the codes it accepts (QO5); with `null`, it accepts the codes of a successful run of its command.
+  - **Its own exit codes.** A check may give `exit_codes`, the codes it accepts (QO5); with `null`, it accepts the codes of a successful run of its command. An `exit_code` check that also gives `exit_codes` rejects the file.
+  - **Whole numbers and equal values.** A whole number is an integer as the judge contract's §3 spells one. A computation that supplies the expected value of a predicate needing a whole number and prints anything else is `computation_failed`. Two JSON values are equal when they have the same type and: numbers are equal in value; strings have the same code points, with no normalisation; arrays have equal items in the same order; objects have the same keys with equal values, in any order.
+  - **Outside the required set.** A check left out of the required set is not evaluated, and never stops a runbook.
   - **An empty target.** A predicate an empty target would satisfy reports the target's size: the number of bytes, or of array items, it evaluated.
   - **A precondition.** A check that asserts emptiness has a `precondition`: a computation over the pristine seed that prints `true` when the data exists. The observed precondition is `true` when it printed `true`, and `false` when it printed any other JSON value; the check's outcome is still its predicate's. A precondition that fails as QA6 says makes the check not observed with `computation_failed`. A check that asserts emptiness with no precondition, or that does not assert emptiness and has one, rejects the file.
   - **A cut stream.** A predicate other than `stdout_bytes_at_most` that needs a stream the engine cut (QE10) is not observed with `harness_fault`.
