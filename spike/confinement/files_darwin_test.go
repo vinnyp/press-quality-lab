@@ -132,54 +132,7 @@ func TestContentReadProof(t *testing.T) {
 	}
 	canary := hex.EncodeToString(random[:])
 	old := time.Unix(946684800, 0)
-	for _, computation := range []bool{false, true} {
-		for _, mode := range []string{"read", "pread", "map", "copy", "open", "stat", "times"} {
-			runScenario(t, profileName(computation)+"/"+mode, func(t *testing.T) {
-				repeat(t, func() bool {
-					home, err := filepath.EvalSymlinks(t.TempDir())
-					if err != nil {
-						t.Fatal("resolve proof home")
-					}
-					secret := filepath.Join(home, "planted")
-					if os.WriteFile(secret, []byte(canary+strings.Repeat(" ", 8192)), 0600) != nil {
-						t.Fatal("plant canary")
-					}
-					probe := f
-					probe.params = []string{"HOME=" + home, "PLANTED=" + secret}
-					probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
-					probe.args = []string{secret, secret, filepath.Join(home, "copied"), canary}
-					ordinary := profile(computation)
-					control := ordinary + `
-(deny file-read-data (literal (param "PLANTED")) (with send-signal SIGKILL))
-`
-					if os.Chtimes(secret, old, old.Add(24*time.Hour)) != nil {
-						t.Fatal("set initial access time")
-					}
-					r := probe.invoke(ordinary, "file-secret-"+mode, false)
-					at, err := accessTime(secret)
-					if err != nil {
-						t.Fatal("inspect access time")
-					}
-					moved := !at.Equal(old)
-					t.Logf("ordinary-exit=%d access-time-moved=%v", r.status, moved)
-					c := probe.invoke(control, "file-secret-"+mode, false)
-					if mode == "times" {
-						return r.killed() && c.killed() && !moved
-					}
-					if !correct(r, "performed\nfallback\n") {
-						return false
-					}
-					if mode == "stat" {
-						return correct(c, "performed\nfallback\n") && !moved
-					}
-					if mode == "open" {
-						return c.killed() && !moved && !readMeasured(true, moved, c.killed())
-					}
-					return readMeasured(true, moved, c.killed())
-				})
-			})
-		}
-	}
+	calibrated := true
 	runScenario(t, "calibration", func(t *testing.T) {
 		notMeasured := 0
 		repeat(t, func() bool {
@@ -194,14 +147,78 @@ func TestContentReadProof(t *testing.T) {
 			if err != nil {
 				t.Fatal("inspect calibration")
 			}
-			calibrated := !at.Equal(old)
-			if !calibrated {
+			observed := !at.Equal(old)
+			calibrated = calibrated && observed
+			if !observed {
 				notMeasured++
 			}
-			return correct(r, "performed\nfallback\n") && readMeasured(calibrated, calibrated, true) == calibrated && !readMeasured(true, false, true)
+			return correct(r, "performed\nfallback\n")
 		})
 		t.Logf("not-measured=%d", notMeasured)
 	})
+	for _, computation := range []bool{false, true} {
+		for _, mode := range []string{"read", "pread", "map", "copy", "open", "stat", "times", "setattr", "fsetattr", "replace", "rename-times", "recreate", "uncalibrated-read"} {
+			runScenario(t, profileName(computation)+"/"+mode, func(t *testing.T) {
+				repeat(t, func() bool {
+					home, err := filepath.EvalSymlinks(t.TempDir())
+					if err != nil {
+						t.Fatal("resolve proof home")
+					}
+					secret := filepath.Join(home, "planted")
+					if os.WriteFile(secret, []byte(canary+strings.Repeat(" ", 8192)), 0600) != nil {
+						t.Fatal("plant canary")
+					}
+					probe := f
+					probe.params = []string{"HOME=" + home, "PLANTED=" + secret}
+					probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+					probe.args = []string{secret, secret, filepath.Join(home, "copied"), canary}
+					scenarioCalibrated := calibrated && mode != "uncalibrated-read"
+					operationMode := strings.TrimPrefix(mode, "uncalibrated-")
+					ordinary := profile(computation)
+					control := ordinary + `
+(deny file-read-data (literal (param "PLANTED")) (with send-signal SIGKILL))
+`
+					if os.Chtimes(secret, old, old.Add(24*time.Hour)) != nil {
+						t.Fatal("set initial access time")
+					}
+					before, err := os.Stat(secret)
+					if err != nil {
+						t.Fatal("stat planted file")
+					}
+					r := probe.invoke(ordinary, "file-secret-"+operationMode, false)
+					at, err := accessTime(secret)
+					if err != nil {
+						t.Fatal("inspect access time")
+					}
+					after, err := os.Stat(secret)
+					if err != nil {
+						t.Fatal("stat planted file after run")
+					}
+					stable := os.SameFile(before, after)
+					moved := !at.Equal(old)
+					t.Logf("ordinary-exit=%d access-time-moved=%v", r.status, moved)
+					c := probe.invoke(control, "file-secret-"+operationMode, false)
+					if mode == "times" || mode == "setattr" || mode == "fsetattr" || mode == "replace" || mode == "rename-times" || mode == "recreate" {
+						return r.killed() && c.killed() && !moved
+					}
+					if !correct(r, "performed\nfallback\n") {
+						return false
+					}
+					if mode == "stat" {
+						return correct(c, "performed\nfallback\n") && !moved
+					}
+					if mode == "open" {
+						return c.killed() && !moved && !readMeasured(scenarioCalibrated, moved, c.killed())
+					}
+					if !scenarioCalibrated {
+						t.Log("not-measured: volume calibration did not record reads")
+						return stable && !readMeasured(scenarioCalibrated, moved, c.killed())
+					}
+					return stable && readMeasured(scenarioCalibrated, moved, c.killed())
+				})
+			})
+		}
+	}
 	t.Log("open limit: another process reading the planted file can move its access time")
 }
 
@@ -352,55 +369,107 @@ func TestHomeRootProtection(t *testing.T) {
 func TestPlantedTimestampForgery(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	var random [32]byte
-	if _, err := rand.Read(random[:]); err != nil {
-		t.Fatal("create timestamp canary")
-	}
-	secret := filepath.Join(f.home(), "planted")
-	twin := filepath.Join(f.home(), "other")
-	for _, path := range []string{secret, twin} {
-		if os.WriteFile(path, random[:], 0600) != nil {
-			t.Fatal("prepare timestamp targets")
-		}
-	}
-	f.args = []string{secret, twin, filepath.Join(f.home(), "unused"), hex.EncodeToString(random[:16])}
-	f.params = []string{"PLANTED=" + secret}
-	line := `(deny file-write-times (literal (param "PLANTED")) (with send-signal SIGKILL))`
+	line := `(deny file-write* (literal (param "PLANTED")) (with send-signal SIGKILL))`
 	for _, computation := range []bool{false, true} {
-		for _, form := range []string{"confined", "twin", "positive", "remove-denial", "remove-kill"} {
-			runScenario(t, profileName(computation)+"/"+form, func(t *testing.T) {
-				repeat(t, func() bool {
-					old := time.Unix(946684800, 0)
-					if os.Chtimes(secret, old, old.Add(24*time.Hour)) != nil || os.Chtimes(twin, old, old) != nil {
-						t.Fatal("set timestamp targets")
-					}
-					p := profile(computation)
-					switch form {
-					case "positive":
-						p = ""
-					case "remove-denial":
-						p = strings.Replace(p, line, "", 1)
-					case "remove-kill":
-						p = strings.Replace(p, line, strings.Replace(line, " (with send-signal SIGKILL)", "", 1), 1)
-					}
-					r := f.invoke(p, "file-secret-times", form == "twin")
-					after, err := accessTime(secret)
-					if err != nil {
-						t.Fatal("inspect protected timestamp")
-					}
-					if form == "confined" {
-						return r.killed() && after.Equal(old)
-					}
-					if form == "remove-kill" {
-						return correct(r, "fallback\n") && after.Equal(old)
-					}
-					if form == "twin" {
-						other, err := accessTime(twin)
-						return err == nil && correct(r, "performed\nfallback\n") && after.Equal(old) && other.Equal(time.Unix(1, 0))
-					}
-					return correct(r, "performed\nfallback\n") && after.Equal(time.Unix(1, 0))
+		for _, mode := range []string{"times", "setattr", "fsetattr", "replace", "rename-times", "recreate"} {
+			for _, form := range []string{"confined", "twin", "positive", "remove-denial", "remove-kill"} {
+				runScenario(t, profileName(computation)+"/"+mode+"/"+form, func(t *testing.T) {
+					repeat(t, func() bool {
+						home, err := filepath.EvalSymlinks(t.TempDir())
+						if err != nil {
+							t.Fatal("resolve forgery root")
+						}
+						secret, other := filepath.Join(home, "planted"), filepath.Join(home, "other")
+						var random [16]byte
+						if _, err := rand.Read(random[:]); err != nil {
+							t.Fatal("make canary")
+						}
+						canary := hex.EncodeToString(random[:])
+						old := time.Unix(946684800, 0)
+						for _, path := range []string{secret, other} {
+							if os.WriteFile(path, []byte(canary), 0600) != nil || os.Chtimes(path, old, old.Add(24*time.Hour)) != nil {
+								t.Fatal("prepare forgery decoys")
+							}
+						}
+						probe := f
+						probe.params = []string{"HOME=" + home, "PLANTED=" + secret}
+						probe.args = []string{secret, other, filepath.Join(home, "fresh"), canary}
+						p := profile(computation)
+						switch form {
+						case "positive":
+							p = ""
+						case "remove-denial":
+							p = strings.Replace(p, line, "", 1)
+						case "remove-kill":
+							p = strings.Replace(p, line, strings.Replace(line, " (with send-signal SIGKILL)", "", 1), 1)
+						}
+						before := decoySnapshot(secret)
+						r := probe.invoke(p, "file-secret-"+mode, form == "twin")
+						unchanged := before == decoySnapshot(secret)
+						if form == "confined" {
+							return r.killed() && unchanged
+						}
+						if form == "remove-kill" {
+							return correct(r, "fallback\n") && unchanged
+						}
+						return correct(r, "performed\nfallback\n") && (form != "twin" || unchanged)
+					})
 				})
-			})
+			}
 		}
+	}
+}
+
+func TestReadMeasurementInputs(t *testing.T) {
+	for _, row := range []struct {
+		name                            string
+		calibrated, moved, killed, want bool
+	}{
+		{"read", true, true, true, true},
+		{"volume-without-read-times", false, true, true, false},
+		{"unchanged-access-time", true, false, true, false},
+		{"control-survived", true, true, false, false},
+	} {
+		runScenario(t, row.name, func(t *testing.T) {
+			repeat(t, func() bool { executed.Add(1); return readMeasured(row.calibrated, row.moved, row.killed) == row.want })
+		})
+	}
+}
+
+func TestEndOfFileReadObservation(t *testing.T) {
+	f := newFixture(t)
+	for _, computation := range []bool{false, true} {
+		runScenario(t, profileName(computation), func(t *testing.T) {
+			movedCount := 0
+			for range repetitions {
+				home, err := filepath.EvalSymlinks(t.TempDir())
+				if err != nil {
+					t.Fatal("resolve observation root")
+				}
+				path := filepath.Join(home, "planted")
+				var random [16]byte
+				if _, err := rand.Read(random[:]); err != nil {
+					t.Fatal("create observation canary")
+				}
+				canary := hex.EncodeToString(random[:])
+				old := time.Unix(946684800, 0)
+				if os.WriteFile(path, []byte(canary), 0600) != nil || os.Chtimes(path, old, old.Add(24*time.Hour)) != nil {
+					t.Fatal("prepare observation")
+				}
+				probe := f
+				probe.params = []string{"HOME=" + home, "PLANTED=" + path}
+				probe.args = []string{path, path, filepath.Join(home, "unused"), canary}
+				r := probe.invoke(profile(computation), "file-secret-eof", false)
+				at, err := accessTime(path)
+				if err != nil {
+					t.Fatal("inspect observation")
+				}
+				if !at.Equal(old) {
+					movedCount++
+				}
+				t.Logf("open limit: a zero-byte read at end of file moved access time=%v; normal successful exit=%v", !at.Equal(old), correct(r, "performed\nfallback\n"))
+			}
+			t.Logf("executed=%d observations=%d access-time-moved=%d; no read credit or pass claimed", repetitions, repetitions, movedCount)
+		})
 	}
 }

@@ -13,7 +13,7 @@ func TestExecutableDirectoryBoundarySmoke(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	for _, computation := range []bool{false, true} {
-		for _, mode := range []string{"image-list", "image-parent", "image-write"} {
+		for _, mode := range []string{"image-list", "image-parent", "image-write", "image-chmod", "image-unlink"} {
 			for _, form := range []string{"confined", "twin", "positive"} {
 				runScenario(t, profileName(computation)+"/"+mode+"/"+form, func(t *testing.T) {
 					repeat(t, func() bool {
@@ -21,9 +21,20 @@ func TestExecutableDirectoryBoundarySmoke(t *testing.T) {
 						if form == "positive" {
 							p = ""
 						}
-						r := f.invoke(p, mode, form == "twin")
+						probe := f
+						probe.freshImages = true
+						var release func()
+						var err error
+						probe, release, err = probe.prepareImages()
+						if err != nil {
+							t.Fatal("prepare private image")
+						}
+						defer release()
+						before := decoySnapshot(probe.probe)
+						writeDecoy(t, filepath.Join(f.home(), "state"))
+						r := probe.invoke(p, mode, form == "twin")
 						if form == "confined" && mode != "image-list" {
-							return r.killed()
+							return r.killed() && before == decoySnapshot(probe.probe)
 						}
 						return correct(r, "performed\nfallback\n")
 					})
@@ -109,4 +120,47 @@ func TestWritableDirectoryPermissionsSmoke(t *testing.T) {
 		}
 	}
 	t.Log("open limit: permitting a shared directory's access(W_OK) probe also permits removing it; the shell's probe is refused")
+}
+
+func TestChangedImageSetFailsClosed(t *testing.T) {
+	for _, change := range []string{"mode", "change-time", "unlink", "extra-entry", "directory-mode"} {
+		runScenario(t, change, func(t *testing.T) {
+			f := newFixture(t)
+			prepared, _, err := f.prepareImages()
+			if err != nil {
+				t.Fatal("prepare images")
+			}
+			switch change {
+			case "mode", "change-time":
+				if os.Chmod(prepared.probe, 0700) != nil {
+					t.Fatal("change image mode")
+				}
+				if change == "change-time" && os.Chmod(prepared.probe, 0500) != nil {
+					t.Fatal("restore image mode")
+				}
+			case "directory-mode":
+				defer func() {
+					if os.Chmod(filepath.Dir(prepared.probe), 0700) != nil {
+						t.Error("restore own image directory for cleanup")
+					}
+				}()
+				if os.Chmod(filepath.Dir(prepared.probe), 0500) != nil {
+					t.Fatal("change image directory mode")
+				}
+			case "unlink":
+				if os.Remove(prepared.probe) != nil {
+					t.Fatal("remove own temporary image")
+				}
+			case "extra-entry":
+				if os.WriteFile(filepath.Join(filepath.Dir(prepared.probe), "extra"), nil, 0600) != nil {
+					t.Fatal("add image entry")
+				}
+			}
+			repeat(t, func() bool {
+				executed.Add(1)
+				_, _, err := f.prepareImages()
+				return err != nil
+			})
+		})
+	}
 }

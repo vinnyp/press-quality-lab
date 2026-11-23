@@ -54,6 +54,10 @@ type fixture struct {
 	launcherFiles         []*os.File
 	firstLine             func(string) error
 	prepared              bool
+	owner                 *testing.T
+	missingLauncher       bool
+	freshImages           bool
+	selfTestResults       map[string]bool
 }
 
 func newFixture(t *testing.T) fixture {
@@ -73,7 +77,7 @@ func newFixture(t *testing.T) fixture {
 		}
 		mount = append(mount, byte(v))
 	}
-	f := fixture{volume: string(mount), root: root, launcher: filepath.Join(root, "launcher"), probe: filepath.Join(root, "probe")}
+	f := fixture{owner: t, volume: string(mount), root: root, launcher: filepath.Join(root, "launcher"), probe: filepath.Join(root, "probe")}
 	home := filepath.Join(root, "home")
 	if os.Mkdir(home, 0700) != nil {
 		t.Fatal("create redirected home")
@@ -101,8 +105,9 @@ type imageCacheKey struct {
 }
 
 type cachedImages struct {
-	root string
-	info [2]os.FileInfo
+	root        string
+	info        [2]os.FileInfo
+	directories [3]os.FileInfo
 }
 
 var imageCache = struct {
@@ -124,28 +129,60 @@ func exactImageEntries(path string, names ...string) bool {
 }
 
 func (images cachedImages) intact(hashes [2][sha256.Size]byte) bool {
+	return images.change(hashes) == ""
+}
+
+func imageMetadataChange(info, before os.FileInfo) string {
+	if !os.SameFile(info, before) {
+		return "identity changed"
+	}
+	if info.Mode() != before.Mode() {
+		return "mode changed"
+	}
+	if info.Size() != before.Size() {
+		return "size changed"
+	}
+	if !info.ModTime().Equal(before.ModTime()) {
+		return "modification time changed"
+	}
+	if info.Sys().(*syscall.Stat_t).Ctimespec != before.Sys().(*syscall.Stat_t).Ctimespec {
+		return "change time changed"
+	}
+	return ""
+}
+
+func (images cachedImages) change(hashes [2][sha256.Size]byte) string {
 	if !exactImageEntries(images.root, "launcher", "program") {
-		return false
+		return "image-set entries changed"
+	}
+	for i, name := range []string{"", "program", "launcher"} {
+		info, err := os.Lstat(filepath.Join(images.root, name))
+		if err != nil || !info.IsDir() {
+			return "image directory missing or replaced"
+		}
+		if reason := imageMetadataChange(info, images.directories[i]); reason != "" {
+			return "image directory " + reason
+		}
 	}
 	for i, name := range []string{"program", "launcher"} {
 		dir := filepath.Join(images.root, name)
-		dirInfo, err := os.Lstat(dir)
-		if err != nil || !dirInfo.IsDir() || !exactImageEntries(dir, "image") {
-			return false
+		if !exactImageEntries(dir, "image") {
+			return name + " directory entries changed"
 		}
 		path := filepath.Join(dir, "image")
 		info, err := os.Lstat(path)
-		if err != nil || !info.Mode().IsRegular() || info.Mode() != 0500 ||
-			!os.SameFile(info, images.info[i]) || info.Size() != images.info[i].Size() ||
-			!info.ModTime().Equal(images.info[i].ModTime()) {
-			return false
+		if err != nil || !info.Mode().IsRegular() {
+			return name + " image missing or replaced"
+		}
+		if reason := imageMetadataChange(info, images.info[i]); reason != "" {
+			return name + " image " + reason
 		}
 		data, err := os.ReadFile(path)
 		if err != nil || sha256.Sum256(data) != hashes[i] {
-			return false
+			return name + " image content changed"
 		}
 	}
-	return true
+	return ""
 }
 
 func (f fixture) prepareImages() (fixture, func(), error) {
@@ -173,12 +210,11 @@ func (f fixture) prepareImages() (fixture, func(), error) {
 	}
 	key := imageCacheKey{f.root, probe, launcher, hashes[0], hashes[1]}
 	images, found := imageCache.sets[key]
-	if found && !images.intact(hashes) {
-		if err := os.RemoveAll(images.root); err != nil {
-			return f, nil, err
-		}
-		delete(imageCache.sets, key)
+	if f.freshImages {
 		found = false
+	}
+	if found && !images.intact(hashes) {
+		return f, nil, fmt.Errorf("private image set changed: %s", images.change(hashes))
 	}
 	if !found {
 		root, err := os.MkdirTemp(f.root, "images-")
@@ -204,14 +240,25 @@ func (f fixture) prepareImages() (fixture, func(), error) {
 				return fail(err)
 			}
 		}
+		for i, name := range []string{"", "program", "launcher"} {
+			images.directories[i], err = os.Lstat(filepath.Join(root, name))
+			if err != nil {
+				return fail(err)
+			}
+		}
 		if !images.intact(hashes) {
 			return fail(fmt.Errorf("executable copy differs"))
 		}
-		imageCache.sets[key] = images
+		if !f.freshImages {
+			imageCache.sets[key] = images
+		}
 	}
 	original := f.probe
 	f.probe = filepath.Join(images.root, "program", "image")
 	f.launcher = filepath.Join(images.root, "launcher", "image")
+	if f.missingLauncher {
+		f.launcher = filepath.Join(images.root, "launcher", "missing")
+	}
 	f.args = append([]string{}, f.args...)
 	for index, arg := range f.args {
 		if arg == original {
@@ -220,13 +267,23 @@ func (f fixture) prepareImages() (fixture, func(), error) {
 	}
 	f.params = append(append([]string{}, f.params...), "BIN_PARENT="+filepath.Dir(f.probe), "LAUNCHER_PARENT="+filepath.Dir(f.launcher))
 	f.prepared = true
-	return f, func() {}, nil
+	return f, func() {
+		if !f.freshImages && !images.intact(hashes) && f.owner != nil {
+			f.owner.Fatal("private image set changed after run: ", images.change(hashes))
+		}
+	}, nil
 }
 
 func (f fixture) invoke(text, mode string, twin bool) result {
 	if !f.prepared {
+		if text == "" {
+			f.freshImages = true
+		}
 		prepared, release, err := f.prepareImages()
 		if err != nil {
+			if f.owner != nil {
+				f.owner.Fatal("prepare private images: ", err)
+			}
 			return result{err: err, startFailed: true}
 		}
 		defer release()
@@ -274,7 +331,7 @@ func (f fixture) home() string {
 func (f fixture) parameters() []string {
 	zone, _ := filepath.EvalSymlinks("/usr/share/zoneinfo/America/New_York")
 	zoneRules, _ := filepath.EvalSymlinks("/usr/share/zoneinfo/posixrules")
-	parameters := []string{"ZONE_RULES=" + zoneRules, "ZONEFILE=" + zone, "BIN=" + f.probe, "BIN_PARENT=" + filepath.Dir(f.probe), "LAUNCHER_PARENT=" + filepath.Dir(f.launcher), "LAUNCHER=" + f.launcher, "PLANTED=" + filepath.Join(f.root, "home", "planted"), "SUBJECT=" + filepath.Join(f.root, "subject"), "SUBJECT_COPY=" + filepath.Join(f.root, "subject-copy"), "ZERO_DEVICE=/dev/zero", "STDOUT_DEVICE=/dev/fd/1", "STDERR_DEVICE=/dev/fd/2", "VOLUME=" + f.volume, "HOME=" + filepath.Join(f.root, "home"), "ROOT=/", "SYSTEM=/System/Library", "SYSTEM_ROOT=/System", "RUNTIME=/System/Volumes/Preboot/Cryptexes", "TRACE_DEVICE=/dev/dtracehelper", "NULL_DEVICE=/dev/null", "RANDOM_DEVICE=/dev/urandom", "SHELL=/bin/sh", "SHELL_IMPL=/bin/bash", "BIN_DIR=/bin", "USR_BIN_DIR=/usr/bin", "TTY_DEVICE=/dev/tty", "CAT=/bin/cat", "FILTER=/usr/bin/wc", "DECLARED=" + filepath.Join(f.root, "declared"), "SEED=" + filepath.Join(f.root, "seed"), "WAL=" + filepath.Join(f.root, "wal"), "SHM=" + filepath.Join(f.root, "shm")}
+	parameters := []string{"ZONE_RULES=" + zoneRules, "ZONEFILE=" + zone, "BIN=" + f.probe, "BIN_PARENT=" + filepath.Dir(f.probe), "LAUNCHER_PARENT=" + filepath.Dir(f.launcher), "LAUNCHER=" + f.launcher, "PLANTED=" + filepath.Join(f.root, "home", "planted"), "SUBJECT=" + filepath.Join(f.root, "subject"), "SUBJECT_COPY=" + filepath.Join(f.root, "subject-copy"), "ZERO_DEVICE=/dev/zero", "STDOUT_DEVICE=/dev/fd/1", "STDERR_DEVICE=/dev/fd/2", "VOLUME=" + f.volume, "HOME=" + filepath.Join(f.root, "home"), "ROOT=/", "SYSTEM_ROOT=/System", "RUNTIME=/System/Volumes/Preboot/Cryptexes", "TRACE_DEVICE=/dev/dtracehelper", "NULL_DEVICE=/dev/null", "RANDOM_DEVICE=/dev/urandom", "BIN_DIR=/bin", "USR_BIN_DIR=/usr/bin", "TTY_DEVICE=/dev/tty", "DECLARED=" + filepath.Join(f.root, "declared"), "SEED=" + filepath.Join(f.root, "seed")}
 	for _, parameter := range f.params {
 		key := strings.SplitN(parameter, "=", 2)[0] + "="
 		replaced := false
@@ -395,6 +452,11 @@ func TestPositiveControlsAndTwins(t *testing.T) {
 }
 
 func TestAllowanceWitnesses(t *testing.T) {
+	for _, c := range []bool{false, true} {
+		if !profileLinesReviewed(profile(c)) {
+			t.Fatal("profile contains hidden forms")
+		}
+	}
 	t.Parallel()
 	for _, computation := range []bool{false, true} {
 		for index, allowance := range allowanceRemovalTargets(profile(computation)) {
@@ -452,9 +514,6 @@ func TestAllowanceWitnesses(t *testing.T) {
 					witness = f
 					mode, want = "ordinary-timezone", "ordinary ok\n"
 				}
-				if strings.Contains(line, `param "SYSTEM"`) {
-					mode, want = "user", "user ok\n"
-				}
 				if strings.Contains(line, `param "HOME"`) {
 					if strings.Contains(line, "file-read") {
 						mode, want = "file-read", "performed\nfallback\n"
@@ -477,7 +536,7 @@ func TestAllowanceWitnesses(t *testing.T) {
 						witness.args = []string{path, path, filepath.Join(f.root, "unused")}
 					}
 				}
-				for _, input := range []string{"SHELL", "CAT", "FILTER", "BIN_DIR", "USR_BIN_DIR"} {
+				for _, input := range []string{"BIN_DIR", "USR_BIN_DIR"} {
 					if strings.Contains(line, `param "`+input+`"`) {
 						mode, want = "pipeline", "5\n"
 						witness.args = []string{"/bin/sh", "/bin/cat", "/usr/bin/wc", filepath.Join(f.root, "declared")}
@@ -499,12 +558,9 @@ func TestAllowanceWitnesses(t *testing.T) {
 					mode, want = "sandbox-signal", "performed\nfallback\n"
 				}
 
-				if strings.Contains(line, "fs-info") || strings.Contains(line, "file-lock") || strings.Contains(line, "membership") || strings.Contains(line, "system-info") || strings.Contains(line, `param "WAL"`) || strings.Contains(line, `param "SHM"`) {
+				if strings.Contains(line, "fs-info") || strings.Contains(line, "file-lock") || strings.Contains(line, "membership") || strings.Contains(line, "system-info") {
 					witness = database
 					mode, want = "write", "written 7\n"
-					if strings.Contains(line, `param "WAL"`) || strings.Contains(line, `param "SHM"`) {
-						mode, want = "read", "side-files=wal,shm\nvalue=7\n"
-					}
 				}
 				if computation && strings.Contains(line, `file-read-data (literal (param "HOME"))`) {
 					mode, want = "file-directory", "directory ok\n"
@@ -813,10 +869,10 @@ func processPolicy(computation bool, mode, form string) string {
 		operation := map[string]string{
 			"process-codesignature": "process-info-codesignature",
 			"process-container":     "process-info-sandbox-container",
-			"arguments":             "process-info-pidinfo sysctl-read",
-			"process-environment":   "process-info-pidinfo sysctl-read",
+			"arguments":             "process-info-pidinfo",
+			"process-environment":   "process-info-pidinfo",
 			"process-pidinfo":       "process-info-pidinfo",
-			"process-record":        "process-info-pidinfo sysctl-read",
+			"process-record":        "process-info-pidinfo",
 			"signal":                "signal",
 			"codesigning":           "process-legacy-codesigning-status-get",
 			"signature":             "process-legacy-codesigning-cdhash-get",
@@ -899,16 +955,18 @@ func TestProcessAccess(t *testing.T) {
 								t.Fatal("create victim observer")
 							}
 							defer syscall.Close(queue)
-							changes := []syscall.Kevent_t{{Ident: uint64(victim.Process.Pid), Filter: syscall.EVFILT_PROC, Flags: syscall.EV_ADD | syscall.EV_ONESHOT, Fflags: syscall.NOTE_EXIT}}
+							changes := []syscall.Kevent_t{{Ident: uint64(victim.Process.Pid), Filter: syscall.EVFILT_PROC, Flags: syscall.EV_ADD | syscall.EV_ONESHOT, Fflags: syscall.NOTE_EXIT | syscall.NOTE_EXIT_DETAIL}}
 							if _, err := syscall.Kevent(queue, changes, nil, nil); err != nil {
 								t.Fatal("register victim observer")
 							}
 							probe := prepared
-							probe.args = []string{strconv.Itoa(victim.Process.Pid), canary}
-							probe.env = append(append([]string{}, prepared.env...), "DECOY_CANARY="+canary)
+							digest := sha256.Sum256([]byte(canary))
+							probe.args = []string{strconv.Itoa(victim.Process.Pid), hex.EncodeToString(digest[:])}
+							probe.env = append([]string{}, prepared.env...)
 							probeMode, twin := mode, form == "twin"
 							if twin && computation && mode != "priority" && mode != "process-record" && mode != "process-container" {
 								probeMode = "sandbox-" + mode
+								probe.args = []string{strconv.Itoa(victim.Process.Pid)}
 								twin = false
 							}
 							r := probe.invoke(p, probeMode, twin)
@@ -972,9 +1030,6 @@ func TestServices(t *testing.T) {
 						if form == "confined" {
 							return r.killed()
 						}
-						if form == "attribution" {
-							p += "\n(allow mach-lookup (global-name \"" + service + "\"))\n"
-						}
 						if form == "without-kill" {
 							return correct(r, "fallback\n")
 						}
@@ -986,6 +1041,9 @@ func TestServices(t *testing.T) {
 	}
 	t.Log("open limit: protocols of allowed services are untested; refused services are tested by lookup only")
 	t.Log("open limit: global file metadata visibility remains")
+	t.Log("open limit: com.apple.logd permits unified-log writes outside the home, beyond stream and home leak scans")
+	t.Log("open limit: on a directory-server-bound Mac, user and group lookups can become network queries")
+	t.Log("open limit: notification state is shared with other processes")
 }
 
 func TestComputationOwnProcesses(t *testing.T) {
@@ -1192,6 +1250,7 @@ func TestImplicitAllowanceWitnesses(t *testing.T) {
 			runScenario(t, profileName(computation)+"/"+entry.operation, func(t *testing.T) {
 				t.Parallel()
 				f := newFixture(t)
+				var startupKills atomic.Int64
 				repeat(t, func() bool {
 					p := profile(computation)
 					if !correct(f.invoke(p, entry.mode, false), entry.want) {
@@ -1199,9 +1258,23 @@ func TestImplicitAllowanceWitnesses(t *testing.T) {
 					}
 					broken := p + "\n(deny " + entry.operation + " (with send-signal SIGKILL))\n"
 					r := f.invoke(broken, entry.mode, false)
-					return !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == ""
+					// Most of these classes are needed by every process, so the
+					// trusted launcher is killed before it can write its marker.
+					// The kill is then the refusal's only when the harness did not
+					// kill and nothing at all was written; otherwise the launcher
+					// must have marked. This shows that startup needs the class,
+					// not that the program alone does.
+					startup := !r.marked && r.diagnostic == ""
+					held := (r.marked || startup) && !r.harnessKilled && !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == ""
+					if held && startup {
+						startupKills.Add(1)
+					}
+					if !held {
+						t.Logf("implicit-refusal marked=%v harness-killed=%v timed-out=%v wait-status=%d", r.marked, r.harnessKilled, r.timedOut, r.status)
+					}
+					return held
 				})
-				t.Logf("implicit allowance=%s clean-program=%s", entry.operation, entry.mode)
+				t.Logf("implicit allowance=%s clean-program=%s killed-at-startup=%d", entry.operation, entry.mode, startupKills.Load())
 			})
 		}
 	}

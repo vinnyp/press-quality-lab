@@ -1,4 +1,5 @@
 #include <sys/mman.h>
+#include <sys/attr.h>
 #include <sys/time.h>
 #include <sys/xattr.h>
 #include <copyfile.h>
@@ -55,8 +56,35 @@ static int file_operation(int argc, char **argv) {
         if(argc<6 || strlen(argv[5])!=32)return 64;
         if(!strcmp(mode,"file-secret-stat")){struct stat st;rc=stat(path,&st);if(!rc&&st.st_size<32)return 38;}
         else if(!strcmp(mode,"file-secret-times")) { struct timeval times[2]={{1,0},{1,0}};rc=utimes(path,times); }
+        else if(!strcmp(mode,"file-secret-setattr") || !strcmp(mode,"file-secret-fsetattr")) {
+            struct attrlist attrs={0};attrs.bitmapcount=ATTR_BIT_MAP_COUNT;attrs.commonattr=ATTR_CMN_ACCTIME;
+            struct timespec at={1,0};
+            fd=open(path,O_RDONLY);
+            if(fd>=0)rc=!strcmp(mode,"file-secret-setattr")?setattrlist(path,&attrs,&at,sizeof(at),0):fsetattrlist(fd,&attrs,&at,sizeof(at),0);
+        }
+        else if(!strcmp(mode,"file-secret-replace") || !strcmp(mode,"file-secret-rename-times") || !strcmp(mode,"file-secret-recreate")) {
+            fd=open(path,O_RDONLY);
+            if(fd>=0) {
+                if(!strcmp(mode,"file-secret-rename-times")) {
+                    struct timeval times[2]={{1,0},{1,0}};
+                    if(!rename(path,destination)) { rc=utimes(destination,times);if(rename(destination,path))rc=-1; }
+                } else {
+                    const char *fresh=!strcmp(mode,"file-secret-replace")?destination:path;
+                    if(strcmp(mode,"file-secret-recreate") || !unlink(path)) {
+                        int out=open(fresh,O_WRONLY|O_CREAT|O_TRUNC,0600);
+                        if(out>=0) {
+                            rc=write(out,argv[5],32)==32?0:-1;
+                            if(close(out))rc=-1;
+                            if(!rc && fresh==destination)rc=rename(destination,path);
+                        }
+                    }
+                }
+            }
+        }
         else {
             fd=open(path,O_RDONLY);
+            if(fd>=0 && !strcmp(mode,"file-secret-eof")) { char byte;if(lseek(fd,0,SEEK_END)>=0)rc=read(fd,&byte,1)==0?0:-1; }
+
             if(fd>=0 && !strcmp(mode,"file-secret-open"))rc=0;
             if(fd>=0 && !strcmp(mode,"file-secret-pread")){char data[32];rc=pread(fd,data,32,0)==32&&!memcmp(data,argv[5],32)?0:-1;}
             if(fd>=0 && !strcmp(mode,"file-secret-copy")){char data[32];int out=open(destination,O_WRONLY|O_CREAT|O_TRUNC,0600);if(out>=0){rc=read(fd,data,32)==32&&write(out,data,32)==32?0:-1;if(close(out))rc=-1;}}

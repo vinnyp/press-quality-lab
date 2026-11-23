@@ -49,7 +49,7 @@ func TestOrphanAfterGroupEndSmoke(t *testing.T) {
 						}
 						// The trusted parent has not reaped its child or exited.
 						// Registration binds the observer before either can happen.
-						changes := []syscall.Kevent_t{{Ident: uint64(candidate), Filter: syscall.EVFILT_PROC, Flags: syscall.EV_ADD | syscall.EV_ONESHOT, Fflags: syscall.NOTE_EXIT | syscall.NOTE_EXITSTATUS}}
+						changes := []syscall.Kevent_t{{Ident: uint64(candidate), Filter: syscall.EVFILT_PROC, Flags: syscall.EV_ADD | syscall.EV_ONESHOT, Fflags: syscall.NOTE_EXIT | syscall.NOTE_EXITSTATUS | syscall.NOTE_EXIT_DETAIL}}
 						if _, err := syscall.Kevent(queue, changes, nil, nil); err != nil {
 							return err
 						}
@@ -79,7 +79,7 @@ func TestOrphanAfterGroupEndSmoke(t *testing.T) {
 					_, fallbackErr := os.Lstat(filepath.Join(root, "fallback"))
 					untouched := quiet()
 					if confined {
-						return status.Signaled() && status.Signal() == syscall.SIGKILL && os.IsNotExist(fallbackErr) && untouched
+						return events[0].Fflags&(syscall.NOTE_EXIT_MEMORY|syscall.NOTE_EXIT_CSERROR) == 0 && status.Signaled() && status.Signal() == syscall.SIGKILL && os.IsNotExist(fallbackErr) && untouched
 					}
 					return status.Exited() && status.ExitStatus() == 0 && fallbackErr == nil && !untouched
 				})

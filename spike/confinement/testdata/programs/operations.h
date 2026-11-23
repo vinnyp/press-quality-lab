@@ -1,4 +1,10 @@
 #include <sys/resource.h>
+#include <CommonCrypto/CommonDigest.h>
+static int digest_matches(const char *value,const char *expected) {
+ unsigned char digest[CC_SHA256_DIGEST_LENGTH];char text[65];
+ CC_SHA256(value,(CC_LONG)strlen(value),digest);for(int i=0;i<32;i++)snprintf(text+2*i,3,"%02x",digest[i]);
+ return !strcmp(text,expected);
+}
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/sysctl.h>
@@ -27,6 +33,13 @@ static int operation(int argc, char **argv) {
         int status=system("exit 7");
         if(status==-1 || !WIFEXITED(status) || WEXITSTATUS(status)!=7)return 36;
         puts("value=7");return 0;
+    }
+    if (!strcmp(mode,"setid-execute")) {
+        if(argc!=3)return 64;
+        struct stat info;if(stat(argv[2],&info) || !(info.st_mode&(S_ISUID|S_ISGID)))return 65;
+        operation_ready();execl(argv[2],argv[2],NULL);
+        if(errno!=EPERM)return 66;
+        puts("privileged image refused");return 0;
     }
     if (!strcmp(mode,"execute")) {
         if(argc<4)return 64;
@@ -175,18 +188,14 @@ static int operation(int argc, char **argv) {
         if (rc == KERN_SUCCESS) { if (port) mach_port_deallocate(mach_task_self(), port); puts("performed"); }
         puts("fallback"); return 0;
     }
-    if (!strcmp(mode,"process-container") || !strcmp(mode,"process-codesignature") || !strcmp(mode,"process-record") || !strcmp(mode, "arguments") || !strcmp(mode, "process-environment") || !strcmp(mode,"process-pidinfo") || !strcmp(mode, "signal") || !strcmp(mode,"codesigning") || !strcmp(mode,"signature") || !strcmp(mode,"priority") || !strcmp(mode,"rusage")) {
+    if (!strcmp(mode,"process-codesignature") || !strcmp(mode,"process-record") || !strcmp(mode, "arguments") || !strcmp(mode, "process-environment") || !strcmp(mode,"process-pidinfo") || !strcmp(mode, "signal") || !strcmp(mode,"codesigning") || !strcmp(mode,"signature") || !strcmp(mode,"priority") || !strcmp(mode,"rusage")) {
         if (argc < 3) return 64;
         pid_t target = (pid_t)strtol(argv[2], NULL, 10);
         if (target <= 1) return 64;
         if (twin) target = getpid();
         if(strcmp(mode,"priority"))operation_ready();
         int rc;
-        if(!strcmp(mode,"process-container")) {
-            char path[4096];
-            rc=twin ? -1 : sandbox_container_path_for_pid(target,path,sizeof(path));
-        }
-        else if(!strcmp(mode,"process-codesignature")) {
+        if(!strcmp(mode,"process-codesignature")) {
             uint32_t flags;
             rc=csops(target,code_status,&flags,sizeof(flags));
         }
@@ -220,16 +229,16 @@ static int operation(int argc, char **argv) {
                 for (int i = 0; i < n && p < end; i++) { while (p < end && *p) p++; p++; }
                 if (!strcmp(mode, "arguments")) {
                     if (args >= end || !*args) return 11;
-                    if (argc > 3 && strcmp(argv[3],"twin")) {
+                    if (!twin && argc > 3 && strcmp(argv[3],"twin")) {
                         int found=0; char *a=args;
-                        for (int i=0;i<n && a<end;i++) { if (!strcmp(a,argv[3])) found=1; a+=strlen(a)+1; }
+                        for (int i=0;i<n && a<end;i++) { if (digest_matches(a,argv[3])) found=1; a+=strlen(a)+1; }
                         if (!found) return 28;
                     }
                 } else {
                     if (p >= end || !*p) return 12;
-                    if (argc > 3 && strcmp(argv[3],"twin")) {
+                    if (!twin && argc > 3 && strcmp(argv[3],"twin")) {
                         int found=0;
-                        while(p<end && *p) { if (!strncmp(p,"DECOY_CANARY=",13) && !strcmp(p+13,argv[3])) found=1; p+=strlen(p)+1; }
+                        while(p<end && *p) { if (!strncmp(p,"DECOY_CANARY=",13) && digest_matches(p+13,argv[3])) found=1; p+=strlen(p)+1; }
                         if (!found) return 29;
                     }
                 }

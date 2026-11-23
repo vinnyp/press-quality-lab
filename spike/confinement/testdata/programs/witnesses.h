@@ -11,6 +11,14 @@
 static int witness(int argc, char **argv) {
     if (argc < 2) return -1;
     const char *mode = argv[1];
+    if (!strcmp(mode,"witness-sysctl")) {
+        char data[256];size_t size=sizeof(data);
+        int twin=!strcmp(argv[argc-1],"twin");
+        operation_ready();
+        int rc=sysctlbyname(twin?"kern.hostname":"kern.osrelease",data,&size,NULL,0);
+        if(!rc && size>0)puts("performed");
+        puts("fallback");return 0;
+    }
     if (!strcmp(mode,"extension-token")) {
         if(argc!=4)return 64;
         char *(*issue)(const char *,const char *,uint32_t)=dlsym(RTLD_DEFAULT,"sandbox_extension_issue_file");
@@ -106,32 +114,12 @@ static int witness(int argc, char **argv) {
         if(write(diagnostic,"operation-ready\n",16)!=16)return 81;
         if(!twin)rc=consume(token)>=0 ? 0 : -1;
         if(dup2(diagnostic,2)<0 || close(diagnostic) || close(sink))return 82;
-    } else if (!strcmp(op,"task-port")) {
-        mach_port_t port=MACH_PORT_NULL;
-        if(!twin)rc=task_get_special_port(mach_task_self(),TASK_HOST_PORT,&port)==KERN_SUCCESS ? 0 : -1;
-        if(port)mach_port_deallocate(mach_task_self(),port);
     } else if (!strcmp(op,"exception-port")) {
         if(!twin)rc=task_set_exception_ports(mach_task_self(),EXC_MASK_BAD_ACCESS,MACH_PORT_NULL,EXCEPTION_DEFAULT,THREAD_STATE_NONE)==KERN_SUCCESS ? 0 : -1;
     } else if (!strcmp(op,"necp")) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
         if(!twin) {fd=(int)syscall(SYS_necp_open,0);rc=fd;}
-#pragma clang diagnostic pop
-    } else if (!strcmp(op,"memory")) {
-        /* GET_MEMLIMIT_EXCESS reads only this probe's memory limits. */
-        int limits[4]={0};
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        if(!twin)rc=(int)syscall(SYS_memorystatus_control,11,getpid(),0,limits,sizeof(uint64_t));
-#pragma clang diagnostic pop
-    } else if (!strcmp(op,"coalition")) {
-        /* Obtain only this probe's coalition ids, then make a read-only query. */
-        uint64_t ids[2]={0};
-        if(proc_pidinfo(getpid(),20 /* own coalition ids */,0,ids,sizeof(ids))!=(int)sizeof(ids))return 66;
-        uint64_t data[64]={0};size_t length=sizeof(data);
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        if(!twin)rc=(int)syscall(SYS_coalition_info,ids[0],1,data,&length);
 #pragma clang diagnostic pop
     } else if (!strcmp(op, "xattr")) {
         char data[8];

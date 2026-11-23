@@ -30,7 +30,7 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 	witnesses := []struct{ op, mode string }{
 		{"iokit-get-properties", "properties"}, {"consume-extension", "extension"}, {"mach-task-exception-port-set", "exception-port"}, {"necp-client-open", "necp"},
 		{"file-read-xattr", "xattr"}, {"file-link", "link"}, {"file-clone", "clone"},
-		{"file-lock", "lock"}, {"file-map-executable", "map"}, {"fs-info", "fs"},
+		{"sysctl-read", "sysctl"}, {"file-lock", "lock"}, {"file-map-executable", "map"}, {"fs-info", "fs"},
 		{"process-iopolicy*", "policy"}, {"socket-option-get", "socket-get"},
 		{"socket-option-set", "socket-set"}, {"socket-ioctl", "socket-ioctl"},
 	}
@@ -59,8 +59,16 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 						}
 						source := filepath.Join(root, "source")
 						writeDecoy(t, source)
+						mapped := f
 						if w.mode == "map" {
-							source = f.probe
+							mapped.freshImages = true
+							var release func()
+							mapped, release, err = mapped.prepareImages()
+							if err != nil {
+								t.Fatal("prepare mapped image")
+							}
+							defer release()
+							source = mapped.probe
 						}
 						if w.mode == "xattr" {
 							setup := f
@@ -82,7 +90,7 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 							source = token
 						}
 						destination := filepath.Join(root, "destination")
-						probe := f
+						probe := mapped
 						probe.args = []string{source, destination}
 						probe.params = []string{"DECLARED=" + source, "SOURCE=" + source, "DESTINATION=" + destination}
 						p := profile(computation)
@@ -109,7 +117,11 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 						}
 						line := "(deny " + w.op + " (with send-signal SIGKILL))"
 						if form == "attribution" {
-							p += "\n(allow " + w.op + ")\n"
+							if w.mode == "sysctl" {
+								p += "\n(allow sysctl-read (sysctl-name \"kern.osrelease\"))\n"
+							} else {
+								p += "\n(allow " + w.op + ")\n"
+							}
 						}
 						if form == "without-kill" {
 							p = strings.Replace(p, line, "(deny "+w.op+")", 1)
@@ -140,7 +152,7 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 							return correct(r, "fallback\n")
 						}
 						want := "performed\nfallback\n"
-						if form == "twin" {
+						if form == "twin" && w.mode != "sysctl" {
 							want = "fallback\n"
 						}
 						return correct(r, want)
@@ -148,7 +160,7 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 				})
 			}
 		}
-		covered := map[string]bool{"process-info-codesignature": true, "default": true, "process-info*": true, "syscall-unix": true, "file-write-times": true, "file-write-unlink": true, "file-read-data": true}
+		covered := map[string]bool{"process-info-codesignature": true, "default": true, "process-info*": true, "syscall-unix": true, "file-write*": true, "file-write-unlink": true, "file-read-data": true}
 		// Only these operations lack a usable harmless behavioral witness. The list
 		// is closed; an additional unwitnessed operation is a test failure.
 		structuralOnly := map[string]bool{

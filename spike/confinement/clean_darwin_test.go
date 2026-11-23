@@ -79,7 +79,7 @@ func databaseFixture(t *testing.T, f fixture) fixture {
 	}
 	path := filepath.Join(root, "data")
 	f.args = []string{path}
-	f.params = []string{"HOME=" + root, "DECLARED=" + path, "WAL=" + path + "-wal", "SHM=" + path + "-shm"}
+	f.params = []string{"HOME=" + root, "DECLARED=" + path}
 	f.env = []string{"HOME=" + root, "TMPDIR=" + root, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
 	return f
 }

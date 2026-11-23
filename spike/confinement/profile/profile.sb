@@ -1,9 +1,12 @@
 (version 1)
 (deny default (with send-signal SIGKILL))
+(deny sysctl-read (with send-signal SIGKILL))
 ; The inventory queries machine-administration classes without attempting them.
-; clean: startup needs implicit dynamic-code-generation, syscall-mach,
-; syscall-unix, system-fcntl and system-mac-syscall. Their scope is an open limit.
-; user: lookup needs implicit sandbox-check, syscall-mig and mach-derive-port.
+; Startup of the launcher or the program needs implicit dynamic-code-generation,
+; file-test-existence, sandbox-check, syscall-mach, syscall-mig, syscall-unix,
+; system-fcntl and system-mac-syscall: refusing one kills before the launcher's
+; marker, so the witness shows startup needs it, not that the program alone does.
+; user: lookup needs implicit mach-derive-port. Their scope is an open limit.
 ; clean: file-test-existence remains visible with global file metadata.
 ; exception-entitlement and process-exec-update-label reject kill modifiers;
 ; both are refused silently; the signed reader tests the file boundary.

@@ -52,7 +52,7 @@ func profile(computation bool) string {
 	}
 	fileRules += `
 ; read-proof: the planted file access time cannot be forged.
-(deny file-write-times (literal (param "PLANTED")) (with send-signal SIGKILL))
+(deny file-write* (literal (param "PLANTED")) (with send-signal SIGKILL))
 ; home-root: keep the redirected root in place while allowing writes within it.
 (deny file-write-unlink file-write-create (literal (param "HOME")) (with send-signal SIGKILL))`
 	if computation {
@@ -70,6 +70,7 @@ type result struct {
 	ready         bool
 	startFailed   bool
 	harnessKilled bool
+	exitDetail    uint32
 	timedOut      bool
 	status        syscall.WaitStatus
 	err           error
@@ -84,6 +85,9 @@ func runBudget(binary string, args, env []string, dir string, budget time.Durati
 }
 
 func runBudgetWithFiles(binary string, args, env []string, dir string, budget time.Duration, launcherFiles []*os.File, firstLine func(string) error) result {
+	return runBudgetWithObserver(binary, args, env, dir, budget, launcherFiles, firstLine, nil)
+}
+func runBudgetWithObserver(binary string, args, env []string, dir string, budget time.Duration, launcherFiles []*os.File, firstLine func(string) error, beforeObservation func(int)) result {
 	ctx, cancel := context.WithTimeout(context.Background(), budget)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, binary, args...)
@@ -122,15 +126,20 @@ func runBudgetWithFiles(binary string, args, env []string, dir string, budget ti
 	err := cmd.Start()
 	started := err == nil
 	supervisorKilled := false
+	var exitDetail uint32
 	if started {
-		changes := []syscall.Kevent_t{{Ident: uint64(cmd.Process.Pid), Filter: syscall.EVFILT_PROC, Flags: syscall.EV_ADD | syscall.EV_ONESHOT, Fflags: syscall.NOTE_EXIT}}
+		if beforeObservation != nil {
+			beforeObservation(cmd.Process.Pid)
+		}
+		changes := []syscall.Kevent_t{{Ident: uint64(cmd.Process.Pid), Filter: syscall.EVFILT_PROC, Flags: syscall.EV_ADD | syscall.EV_ONESHOT, Fflags: syscall.NOTE_EXIT | syscall.NOTE_EXIT_DETAIL}}
 		events := make([]syscall.Kevent_t, 1)
 		n, observationErr := waitEvent(queue, changes, events, budget+time.Second)
-		// Registering on a leader that already exited fails with ESRCH, as the
-		// call's error or as an EV_ERROR event. The leader is still unreaped,
-		// so its id cannot have been reused, and ESRCH can only mean it exited.
-		exitedBeforeRegistration := errors.Is(observationErr, syscall.ESRCH) ||
-			(observationErr == nil && n == 1 && events[0].Flags&syscall.EV_ERROR != 0 && syscall.Errno(events[0].Data) == syscall.ESRCH)
+		// Registration supplies no event list, so an already-exited leader
+		// reports ESRCH as the call errno. It remains unreaped and cannot be reused.
+		exitedBeforeRegistration := errors.Is(observationErr, syscall.ESRCH)
+		if n == 1 {
+			exitDetail = events[0].Fflags & syscall.NOTE_EXIT_DETAIL_MASK
+		}
 		if !exitedBeforeRegistration && (observationErr != nil || n != 1 || events[0].Flags&syscall.EV_ERROR != 0 || events[0].Fflags&syscall.NOTE_EXIT == 0) {
 			supervisorKilled = true
 		}
@@ -143,7 +152,7 @@ func runBudgetWithFiles(binary string, args, env []string, dir string, budget ti
 	rawDiagnostic := diagnostic.String()
 	ready := strings.Contains(rawDiagnostic, "operation-ready\n")
 	cleanDiagnostic := strings.ReplaceAll(rawDiagnostic, "operation-ready\n", "")
-	r := result{output: out.String(), diagnostic: cleanDiagnostic, ready: ready, startFailed: !started || rawDiagnostic == "confined\nlaunch-failed\n", harnessKilled: supervisorKilled, marked: strings.HasPrefix(cleanDiagnostic, "confined\n"), timedOut: ctx.Err() != nil, err: err}
+	r := result{exitDetail: exitDetail, output: out.String(), diagnostic: cleanDiagnostic, ready: ready, startFailed: !started || rawDiagnostic == "confined\nlaunch-failed\n", harnessKilled: supervisorKilled, marked: strings.HasPrefix(cleanDiagnostic, "confined\n"), timedOut: ctx.Err() != nil, err: err}
 	if cmd.ProcessState != nil {
 		r.status, _ = cmd.ProcessState.Sys().(syscall.WaitStatus)
 	}
@@ -151,7 +160,8 @@ func runBudgetWithFiles(binary string, args, env []string, dir string, budget ti
 }
 
 // Register once before waiting: repeating EV_ADD after an interrupted wait can
-// replace a queued one-shot exit event. Observation retries never re-register.
+// replace a queued one-shot exit event. Registration retries only EINTR; an
+// exited child reports ESRCH through errno. Observation retries never re-register.
 func waitEvent(queue int, changes, events []syscall.Kevent_t, budget time.Duration) (int, error) {
 	deadline := time.Now().Add(budget)
 	if len(changes) != 0 {
@@ -178,18 +188,18 @@ func waitEvent(queue int, changes, events []syscall.Kevent_t, budget time.Durati
 }
 
 func (r result) killed() bool {
-	return r.ready && !r.harnessKilled && !r.startFailed && r.marked && !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == "" && r.diagnostic == "confined\n"
+	return r.exitDetail&(syscall.NOTE_EXIT_MEMORY|syscall.NOTE_EXIT_CSERROR) == 0 && r.ready && !r.harnessKilled && !r.startFailed && r.marked && !r.timedOut && r.status.Signaled() && r.status.Signal() == syscall.SIGKILL && r.output == "" && r.diagnostic == "confined\n"
 }
 
 // Required refusals are independent of the rendered template. This also checks
 // kill modifiers for query-only operations, whose destructive effects must not
 // be attempted by the self-test.
-const requiredRefusals = `default asr-parser-enter coalition-info consume-extension darwin-notification-post file-clone file-graft file-link file-map-executable file-read-xattr file-ungraft fs-quota* fs-snapshot-mount iokit-get-properties iokit-open-service isp-command-send mach-bootstrap mach-cross-domain-lookup mach-task-exception-port-set mach-task-special-port* necp-client-open nvram* process-iopolicy* socket-ioctl socket-option-get socket-option-set system-memorystatus-control system-necp-client-action system-privilege process-info-codesignature process-info-sandbox-container process-info*`
+const requiredRefusals = `default sysctl-read asr-parser-enter coalition-info consume-extension darwin-notification-post file-clone file-graft file-link file-map-executable file-read-xattr file-ungraft fs-quota* fs-snapshot-mount iokit-get-properties iokit-open-service isp-command-send mach-bootstrap mach-cross-domain-lookup mach-task-exception-port-set mach-task-special-port* necp-client-open nvram* process-iopolicy* socket-ioctl socket-option-get socket-option-set system-memorystatus-control system-necp-client-action system-privilege process-info-codesignature process-info-sandbox-container process-info*`
 
 func refusalsIntact(p string, computation bool) bool {
 	for _, line := range []string{
 		`(deny file-write-unlink file-write-create (literal (param "HOME")) (with send-signal SIGKILL))`,
-		`(deny file-write-times (literal (param "PLANTED")) (with send-signal SIGKILL))`,
+		`(deny file-write* (literal (param "PLANTED")) (with send-signal SIGKILL))`,
 	} {
 		if !strings.Contains(p, line) {
 			return false

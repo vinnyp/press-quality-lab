@@ -35,7 +35,12 @@ static int directory_operation(int argc, char **argv) {
         int twin = !strcmp(argv[argc-1], "twin");
         if (!strcmp(argv[1], "image-parent") && !twin) { end = strrchr(path,'/'); if (!end) return 64; *end = 0; }
         operation_ready();
-        if (!strcmp(argv[1], "image-write")) {
+        if (!strcmp(argv[1],"image-chmod") || !strcmp(argv[1],"image-unlink")) {
+            char target[4096];const char *base=twin?getenv("HOME"):path;
+            if(snprintf(target,sizeof(target),"%s/%s",base,twin?"state":"image")>=(int)sizeof(target))return 64;
+            int rc=!strcmp(argv[1],"image-chmod")?chmod(target,0700):unlink(target);
+            if(!rc)puts("performed");
+        } else if (!strcmp(argv[1], "image-write")) {
             const char *base = twin ? getenv("HOME") : path;
             char dest[4096]; if (snprintf(dest,sizeof(dest),"%s/new",base)>=(int)sizeof(dest)) return 64;
             int fd = open(dest,O_WRONLY|O_CREAT,0600);

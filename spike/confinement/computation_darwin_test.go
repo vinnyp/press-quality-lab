@@ -178,3 +178,33 @@ func TestSubjectInToolDirectory(t *testing.T) {
 		}
 	}
 }
+
+func TestComputationPrivilegedImage(t *testing.T) {
+	f := computationFixture(t)
+	entries, err := os.ReadDir("/usr/bin")
+	if err != nil {
+		t.Fatal("list granted tools")
+	}
+	target := ""
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			t.Fatal("stat granted tool")
+		}
+		if info.Mode().IsRegular() && info.Mode()&(os.ModeSetuid|os.ModeSetgid) != 0 {
+			target = filepath.Join("/usr/bin", entry.Name())
+			break
+		}
+	}
+	if target == "" {
+		t.Fatal("no privileged image available for confined test")
+	}
+	f.args = []string{target}
+	runScenario(t, "platform-refusal", func(t *testing.T) {
+		repeat(t, func() bool {
+			r := f.invoke(profile(true), "setid-execute", false)
+			return correct(r, "privileged image refused\n") && !r.harnessKilled && !r.status.Signaled()
+		})
+	})
+	t.Log("open limit: a setuid or setgid image in the granted system directory returns EPERM without a kill; a third silent refusal")
+}
