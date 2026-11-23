@@ -35,7 +35,7 @@
 - **QH10. Kill on refusal.** The profile starts from `(deny default (with send-signal SIGKILL))`. Refusing by default does not refuse every operation, so every operation the engine relies on refusing is also listed by name, with a kill.
 - **QH11. A fixed template.** The profile is the fixed template below, the same for every subject. Every path reaches it as a parameter (`-D NAME=value`, read by `(param "NAME")`), canonical and absolute, and never as profile text. A path holding profile syntax therefore grants nothing.
 
-  The template, with `{{PROCESS_TARGET}}`, `{{PROCESS_RULES}}` and `{{FILE_RULES}}` filled as the table after it says. The `;` lines are comments; each allowance's comment names what needs it. Lines are emitted in the order written, because a later rule cannot widen what an earlier refusal kills.
+  The template, with `{{PROCESS_TARGET}}`, `{{PROCESS_RULES}}` and `{{FILE_RULES}}` filled as the table after it says. The `;` lines are comments; each allowance's comment names what needs it. Lines are emitted in the order written: when two rules match one operation, the later rule decides, so each refusal that narrows an allowance comes after it.
 
 ```
 (version 1)
