@@ -42,7 +42,7 @@ The "Route to credit" and "Source" columns describe how a dimension is usually m
 | `error-message-quality` | An authored check that an error's standard error names the problem, such as the bad flag | Literal | the predicate is `stderr_contains` | none |
 | `token-economy` | An authored check that a command's output stays within a declared size for a declared request | Literal | the predicate is `stdout_bytes_at_most` | none |
 | `side-effect-integrity` | Store unchanged (QP6 to QP9) only | The pristine seed | never: only the probe credits | a subject that is not store-backed, which the judge excludes |
-| `idempotency` | An authored runbook that runs a writing command twice and checks the store against what a computation derives from the seed and one application | Computation | the expected value comes from a computation, and the runbook runs the same writing command at least twice | a read-only subject, which the judge excludes |
+| `idempotency` | An authored runbook that runs a writing command twice and checks the store against what a computation derives from the seed and one application | Computation | the expected value comes from a computation, and the runbook runs at least twice the same command, which has `writes: true` or is `destructive` | a read-only subject, which the judge excludes |
 | `destructive-guard` | An authored check, in a scope with `destructive`, that a destructive command without its confirmation refuses: by its exit code, or by a standard-error message | Literal | the step's command is `destructive` | a subject without destructive operations, which the judge excludes |
 | `pii-secret-hygiene` | Planted secret (QP10 to QP13) only | The canary the engine planted | never: only the probe credits | a subject that reads no secret from a file |
 
@@ -86,7 +86,7 @@ A **section heading** is a line that starts with no space and is one of these:
 
 | Generator | Heading |
 |---|---|
-| Cobra | `Available Commands:`, `Additional Commands:`, or any other line ending in ` Commands:` that Cobra prints for a command group |
+| Cobra | `Available Commands:`, `Additional Commands:`, or any other line ending in ` Commands:`, as Cobra prints for a command group |
 | urfave/cli | `COMMANDS:` |
 | clap | `Commands:` or `SUBCOMMANDS:` |
 

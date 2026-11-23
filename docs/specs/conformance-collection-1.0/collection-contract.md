@@ -9,6 +9,7 @@
 - **QE1. Version and change.** This specification's version string is `1.0`.
   - **When the string changes.** It changes when, and only when, some subject file, scope and subject behaviour can lead to a different record for the judge or a different engine exit code. Every other change is editorial and goes in the dated errata note `docs/specs/conformance-collection-1.0-errata.md`, outside the sealed folder.
   - **Ratification.** The owner ratifies each version.
+  - **Reading older files.** A later specification version states which subject-file versions it reads. Version strings take the form `<major>.<minor>`.
   - **Other version strings.** Three strings are versioned on their own, and each changes only when its own format does:
     - the subject file's `subject_file_version`;
     - the stored record's and baseline's `record_version` and `baseline_version`;
@@ -29,25 +30,27 @@
   | `earlier` | the ids of every check of every earlier step of the runbook, in step order and then check order; `[]` for a probe |
   | `dimension` | the dimension the check feeds |
   | `predicate`, `path` | the authored check's predicate and its `path`; `null` for a probe |
-  | `words` | the invocation's words; `null` for discovery and for a probe check that has no command |
+  | `words` | the invocation's words |
   | `offline_args` | the arguments every applying offline setting appends, in order; `[]` when none applies |
   | `env` | an object mapping each declared environment name that applies to the lowercase hexadecimal SHA-256 of its value's UTF-8 bytes |
-  | `budget_seconds` | the invocation's budget; `null` for discovery |
+  | `budget_seconds` | the invocation's budget |
+
+  For a check with no invocation or with several (discovery, the planted secret, and a probe check with no command), `words` and `budget_seconds` are `null`, `offline_args` is `[]` and `env` is `{}`; the planted secret carries its per-command values in `parameters`. A placeholder enters the preimage as the placeholder object exactly as written.
   | `seed` | the seed's digest, as below, or `null` with no seed |
   | `store` | the declared store, or `null` |
   | `bookkeeping` | the declared bookkeeping paths, sorted by their UTF-8 bytes |
-  | `parameters` | a probe's parameters, as below; `{}` for an authored check |
+  | `parameters` | a probe's parameters, as below; for an authored check, `{"exit_codes": its own exit codes, or null}` |
   | `expected` | an authored check's expected source, as below; `null` for a probe |
 
   **A probe's parameters:**
 
   | Probe | Parameters |
   |---|---|
-  | discovery | `{"declared_count": n, "commands": [the words of each declared command, sorted by their canonical form's bytes]}` |
+  | discovery | `{"declared_count": n, "commands": [the words of each declared command except the bare binary, sorted by their canonical form's bytes]}` |
   | bare | `{"exit_codes": the bare binary's declared codes, or null}` |
   | byte_bound | `{"bound": n}` |
   | exit_codes | `{"exit_codes": [the declared codes, as the file lists them]}` |
-  | planted_secret | `{"path": p, "kind": k, "token": the token's SHA-256 in hexadecimal, "commands": [each listed command's words, in the file's order]}` |
+  | planted_secret | `{"path": p, "kind": k, "token": the token's SHA-256 in hexadecimal, "commands": [one object per listed command, in the file's order, with that invocation's `words`, `offline_args`, `env` and `budget_seconds`]}`; with `secret` `null`, `{}` |
   | store_unchanged | `{}` |
 
   A probe check with no command has the parameters `{}`.
@@ -75,10 +78,10 @@
   ```
 
   Its id is `46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7`. The declared-exit-code check on the same command differs in `probe`, `dimension` and `parameters`, so the two probes on one command get two ids.
-- **QE3. A fixed set.** The engine fixes the required set from the subject file, the judge's rulebook and the requested scope before discovery or any other check runs (R21). It holds every generated check QP1 places and every authored check whose scope is requested. Evidence never adds to it or removes from it.
+- **QE3. A fixed set.** The engine fixes the required set from the subject file, the judge's rulebook and the requested scope before discovery or any other check runs (R21). It holds every generated check QP1 places, and every authored check whose dimension is in the requested scope and whose runbook may run in it (QA7). Evidence never adds to it or removes from it.
 - **QE4. Baselines and missing ids.**
   - **What a baseline holds.** It stores each check's preimage beside its entry.
-  - **Which baseline a grade uses.** The baseline the user names. Without one, it uses the newest baseline stored for the subject file's canonical path.
+  - **Which baseline a grade uses.** The baseline the user names. Without one, it uses the baseline with the latest `created_at` stored for the subject file's canonical path.
   - **Missing ids.** When the baseline holds ids the new required set lacks, the engine lists each one. It names the cause from the stored preimage: the command, step or runbook that is gone, or the preimage keys whose values changed. It writes the list as a JSON array of the missing ids, sorted. That file is the form `pql anchor` accepts as its retired list. The engine retires none by itself.
 
 ## 3. Before collection
@@ -118,13 +121,13 @@
   |---|---|
   | `outcome`, `reason`, `failure_kind` | by §2 of `collection-rules.md` and the check's predicate |
   | `target_size` | for an empty-satisfiable check that was observed, the number of bytes or items its predicate evaluated |
-  | `precondition_observed` | for a check that asserts emptiness and was observed, `true` |
+  | `precondition_observed` | for a check that asserts emptiness and was observed, the observed precondition (QA9) |
   | `expected`, `observed` | bounded as QE10 says |
   | `tier` | as QE9 says |
   | `evaluator` | `{"kind": "deterministic", "model": null}` |
 
   **Targets.**
-  - Each invocation is a target of kind `invocation`. Its id is the check's id, or the check's id followed by `#` and the invocation's position from 1 when the check has more than one invocation.
+  - Each invocation is a target of kind `invocation`. Its id is the check's id, or the check's id followed by `#` and the invocation's position from 1 when the check has more than one invocation. Discovery's help requests are numbered in the order QD2 gives; the planted secret's invocations in the order its commands are listed. A control invocation is never a target.
   - The store-unchanged probe adds the declared store as a target of kind `artifact`. The planted-secret probe adds the planted file the same way. Each artifact's id is its path relative to the home, and its tier is the tier of the invocation that used it.
 
   A check that is not observed has an `outcome` of `not_observed` and carries its reason and the invocation it would have used.
@@ -136,15 +139,15 @@
     - its SHA-256 over the kept bytes;
     - whether it was cut;
     - its first 64 KiB decoded as UTF-8, with each ill-formed byte replaced by U+FFFD.
-  - **The whole record.** The `expected` and `observed` values of all evidence together are held to 4 MiB. The cap is applied in the order of check ids. Past it, a value is replaced by an object holding only its byte count and SHA-256.
+  - **The whole record.** The `expected` and `observed` values of all evidence together are held to 4 MiB, measured on the serialized JSON the engine sends. The cap is applied in the order of check ids. Past it, a value is replaced by an object holding only its byte count and SHA-256.
   - **The subject file.** A literal is bounded at 64 KiB and at a nesting depth of 48 (QS11).
-
-  With QS11's bounds, these keep every record inside the judge contract's §3.
+  - **Why this fits.** QS11 allows at most 3,587 required checks: 2,048 authored, three probes with one check per command for at most 512 commands each, and three more. Without its values, each check costs at most about 2 KiB across `required`, its evidence and its baseline entry, names included, which is under 8 MiB in all. Markers add at most 1,024 small objects. With the 4 MiB of values, a record stays under 13 MiB, inside the judge contract's 16 MiB.
+  - **A last bound.** A record that would still pass 15 MiB has values replaced by digests in reverse id order until it fits. One that cannot fit is an engine fault, exit 70.
 - **QE11. Markers.** Each expected-failure marker in the subject file reaches the judge as given, naming its runbook as the record and its dimension.
 
 ## 5. Next actions
 
-- **QE12. Every reason has a next action.** The scorecard shows the next action for each reason. For a check that is not observed, it appears beside the check. For a dimension's own reason, `placeholder_unfilled` on an unstated fact or `scope_not_requested`, it appears beside the dimension. The stored record keeps each next action against the check id or the dimension it belongs to.
+- **QE12. Every reason this specification reports has a next action.** The scorecard shows the next action for each reason. For a check that is not observed, it appears beside the check. For a dimension's own reason, `placeholder_unfilled` on an unstated fact or `scope_not_requested`, it appears beside the dimension. The stored record keeps each next action against the check id or the dimension it belongs to.
 
   | Reason | Next action |
   |---|---|

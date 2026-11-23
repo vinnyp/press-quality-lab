@@ -232,7 +232,12 @@
         "targets": [
           {
             "kind": "invocation",
-            "id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3",
+            "id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3#1",
+            "tier": "live"
+          },
+          {
+            "kind": "invocation",
+            "id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3#2",
             "tier": "live"
           }
         ],

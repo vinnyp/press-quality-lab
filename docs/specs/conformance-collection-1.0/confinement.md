@@ -216,7 +216,7 @@
   | `ZONE_RULES` | `/usr/share/zoneinfo/posixrules`, resolved |
   | `SERVICES`, `PROTOCOLS` | `/private/etc/services`, `/private/etc/protocols` |
   | `PLANTED` | the planted secret's file in the throwaway home, or a path that names no file when the probe does not run |
-| `PLANTED_DIR_n` | each directory between the home and the planted file, as the subject file block says |
+  | `PLANTED_DIR_n` | each directory between the home and the planted file, as the subject file block says |
   | `BIN_DIR`, `USR_BIN_DIR` | `/bin`, `/usr/bin` (computation only) |
   | `TTY_DEVICE` | `/dev/tty` (computation only) |
   | `DECLARED_n`, `SEED_n` | each declared file, and each file of the pristine seed (computation only) |
@@ -256,7 +256,7 @@
   - it may run and read the system's tools under `/bin` and `/usr/bin`;
   - it may read its executable, its declared files and the pristine seed, and it may write only in its own scratch directory, never in the seed;
   - it may use `/dev/tty` read and write, which reaches nothing because it has no controlling terminal (QH13).
-- **QH17. The subject's binary.** A computation cannot run or read the subject's binary, its private copy, or a file given to it with the same content. The specification states the limit that a copy at any other path escapes this.
+- **QH17. The subject's binary.** A computation cannot run or read the subject's binary or its private copy, and no file it is given has the same content: QS12 rejects such a subject file. The specification states the limit that a copy at any other path escapes this.
 - **QH18. Sessions and groups.** A computation is killed when it calls `setsid` or `setpgid`. When it ends, its whole process group is ended with it.
 - **QH19. A child that leaves.** A child started through `posix_spawn` with a new session or process group leaves the group and outlives its ending. It stays inside the computation's confinement. The specification states this limit.
 - **QH20. No network.** A computation has no network, as the subject does, and the same rules decide a kill (QH21).
