@@ -5,7 +5,11 @@ permissions:
   contents: read
 jobs:
   confinement-spike:
-    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-26, xcode-27]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     defaults:
       run:
