@@ -10,6 +10,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -77,7 +78,7 @@ type result struct {
 }
 
 func run(binary string, args, env []string, dir string) result {
-	return runBudget(binary, args, env, dir, 5*time.Second)
+	return runBudget(binary, args, env, dir, defaultBudget())
 }
 
 func runBudget(binary string, args, env []string, dir string, budget time.Duration) result {
@@ -257,3 +258,16 @@ func (w *lineOutput) Write(p []byte) (int, error) {
 	}
 	return len(p), nil
 }
+
+// Budgets only bound a run that hangs or must outlive its program's start;
+// no scenario measures their exact value. A slow machine may scale them with
+// CONFINEMENT_BUDGET_SCALE (1 to 10).
+func budgetScale() int {
+	scale, err := strconv.Atoi(os.Getenv("CONFINEMENT_BUDGET_SCALE"))
+	if err != nil || scale < 1 || scale > 10 {
+		return 1
+	}
+	return scale
+}
+
+func defaultBudget() time.Duration { return time.Duration(budgetScale()) * 5 * time.Second }

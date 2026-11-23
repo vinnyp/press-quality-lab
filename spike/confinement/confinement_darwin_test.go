@@ -333,17 +333,6 @@ func (f fixture) invokeOn(t *testing.T, text, mode string, twin bool) result {
 	return r
 }
 
-// The default budget only bounds a run that hangs; no scenario measures it.
-// A slow machine may scale it with CONFINEMENT_BUDGET_SCALE (1 to 10).
-// Scenarios that test a budget set their own.
-func defaultBudget() time.Duration {
-	scale, err := strconv.Atoi(os.Getenv("CONFINEMENT_BUDGET_SCALE"))
-	if err != nil || scale < 1 || scale > 10 {
-		scale = 1
-	}
-	return time.Duration(scale) * 5 * time.Second
-}
-
 func (f fixture) home() string {
 	for _, p := range f.parameters() {
 		if strings.HasPrefix(p, "HOME=") {
@@ -1204,7 +1193,10 @@ func TestRemainingGroupEnded(t *testing.T) {
 		runScenario(t, mode, func(t *testing.T) {
 			repeat(t, func() bool {
 				probeWithBudget := f
-				probeWithBudget.budget = 250 * time.Millisecond
+				// The child sleeps 2 seconds, so the budget stays well under that:
+				// a child that outlived the budget must be ended by the group kill,
+				// not by its own exit.
+				probeWithBudget.budget = min(time.Duration(budgetScale())*250*time.Millisecond, time.Second)
 				r := probeWithBudget.invokeOn(t, profile(true), mode, false)
 				pid, err := strconv.Atoi(strings.TrimSpace(r.output))
 				if err != nil || pid <= 1 || !r.marked {
