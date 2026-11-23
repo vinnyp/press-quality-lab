@@ -185,8 +185,6 @@ func (images cachedImages) change(hashes [2][sha256.Size]byte) string {
 	return ""
 }
 
-func (f fixture) prepareImages() (fixture, func(), error) { return f.prepareImagesOn(f.owner) }
-
 func (f fixture) prepareImagesOn(t *testing.T) (fixture, func(), error) {
 	f.owner = t
 	if f.prepared {
@@ -275,10 +273,6 @@ func (f fixture) prepareImagesOn(t *testing.T) (fixture, func(), error) {
 			f.owner.Fatal("private image set changed after run: ", images.change(hashes))
 		}
 	}, nil
-}
-
-func (f fixture) invoke(text, mode string, twin bool) result {
-	return f.invokeOn(f.owner, text, mode, twin)
 }
 
 func (f fixture) invokeOn(t *testing.T, text, mode string, twin bool) result {
@@ -615,7 +609,10 @@ func TestAllowanceWitnesses(t *testing.T) {
 							}
 						}
 						r := probe.invokeOn(t, broken, mode, false)
-						return !r.timedOut && !r.startFailed && !r.harnessKilled && !correct(r, want, wantDiagnostic)
+						// sandbox-exec exiting before the launcher's marker means the
+						// profile was never applied, so the removal was not evaluated.
+						applied := r.marked || !r.status.Exited()
+						return applied && !r.timedOut && !r.startFailed && !r.harnessKilled && !correct(r, want, wantDiagnostic)
 					})
 				})
 			})
@@ -1193,10 +1190,13 @@ func TestRemainingGroupEnded(t *testing.T) {
 		runScenario(t, mode, func(t *testing.T) {
 			repeat(t, func() bool {
 				probeWithBudget := f
-				// The child sleeps 2 seconds, so the budget stays well under that:
-				// a child that outlived the budget must be ended by the group kill,
-				// not by its own exit.
+				// The child lives 10 seconds and the timeout-child parent 12. A
+				// check that finishes within the child's life can only see it
+				// ended because the group kill ended it; a later check proves
+				// nothing and fails.
+				const childLife = 10 * time.Second
 				probeWithBudget.budget = min(time.Duration(budgetScale())*250*time.Millisecond, time.Second)
+				start := time.Now()
 				r := probeWithBudget.invokeOn(t, profile(true), mode, false)
 				pid, err := strconv.Atoi(strings.TrimSpace(r.output))
 				if err != nil || pid <= 1 || !r.marked {
@@ -1206,6 +1206,10 @@ func TestRemainingGroupEnded(t *testing.T) {
 				probe := f
 				probe.args = []string{strconv.Itoa(pid)}
 				check := probe.invokeOn(t, "", "ended", false)
+				if elapsed := time.Since(start); elapsed >= childLife {
+					t.Logf("not measured: the check finished %v after the run started, beyond the child's life", elapsed)
+					return false
+				}
 				return correct(check, "ended\n") && (r.timedOut == (mode == "timeout-child"))
 			})
 		})

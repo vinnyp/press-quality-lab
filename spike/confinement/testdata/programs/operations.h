@@ -96,9 +96,9 @@ static int operation(int argc, char **argv) {
     if (!strcmp(mode, "left-child") || !strcmp(mode, "timeout-child")) {
         pid_t child = fork();
         if (child < 0) return 15;
-        if (!child) { close(0); close(1); close(2); sleep(2); _exit(0); }
+        if (!child) { close(0); close(1); close(2); sleep(10); _exit(0); }
         printf("%d\n", child); fflush(stdout);
-        if (!strcmp(mode, "timeout-child")) { alarm(0); sleep(3); }
+        if (!strcmp(mode, "timeout-child")) { alarm(0); sleep(12); }
         return 0;
     }
     if (!strcmp(mode, "spawn-session") || !strcmp(mode, "spawn-group")) {

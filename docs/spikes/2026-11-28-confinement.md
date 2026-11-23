@@ -12,9 +12,9 @@ The spike asks whether macOS can confine a subject CLI and a computation tightly
 | GitHub runner `macos-26`, image `macos26` 20261117.0516.1 | 26.7.2 (25G332) | arm64 | 1.27.4 | Apple clang 21.0.0 | fails closed: the profile does not parse |
 | GitHub runner `xcode-27` (preview), image 20261104.0337.1 | 27.0.1 (26A434) | arm64 | 1.27.4 | Apple clang 21.0.0 | passes: 1,956 of 1,956 scenarios, 25 of 25 runs each, in 77 minutes |
 
-**macOS 26.7.2** does not know four operation names the profile uses: `fs-info`, `asr-parser-enter`, `coalition-info` and `isp-command-send`. `sandbox-exec` rejects the profile with exit 65 before any program starts. The harness counts that as a confinement that could not be applied, never as a subject's exit, so every scenario that starts a program failed and none passed. The profile's vocabulary belongs to one macOS version. A profile for macOS 26 would need its own operation list and its own run of this suite. On that runner's volume a read also did not move the access time, so the read proof could not be measured there.
+**macOS 26.7.2** does not know four operation names the profile uses: `fs-info`, `asr-parser-enter`, `coalition-info` and `isp-command-send`. `sandbox-exec` rejects the profile with exit 65 before any program starts. The harness counts that as a confinement that could not be applied, never as a subject's exit, so every confined clean program and violator failed. The allowance-removal checks were the exception: 106 of them passed there, because a profile that never started the launcher counted as the program failing without its allowance. That check now treats such a run as not evaluated. The profile's vocabulary belongs to one macOS version. A profile for macOS 26 would need its own operation list and its own run of this suite. On that runner's volume a read also did not move the access time, so the read proof could not be measured there.
 
-**macOS 27.0.1** parses the profile and starts every clean program. A full run on that three-core runner took 81 minutes. Of 1,956 scenarios, 1,953 were correct in 25 of 25 runs. Three Go clean-program scenarios were each correct in 24 of 25. Each Go run took about 2.6 seconds there, against a 5-second budget that only bounds a hung run, so a timeout is the likely cause, but that run did not log it. The liveness budgets were then made scalable through `CONFINEMENT_BUDGET_SCALE`, and runs now log a timeout. A rerun with the scale at four fixed the Go scenarios. It then showed that the compiler helper and the 250 ms group-cleanup budget were also too short on that runner. Once those were scaled too, a full run passed every scenario. The scale changes no budget a scenario measures, and the group-cleanup budget stays under its child's two-second life.
+**macOS 27.0.1** parses the profile and starts every clean program. A full run on that three-core runner took 81 minutes. Of 1,956 scenarios, 1,953 were correct in 25 of 25 runs ([run](https://github.com/vinnyp/press-quality-lab/actions/runs/45128403814)). Three Go clean-program scenarios were each correct in 24 of 25. Each Go run took about 2.6 seconds there, against a 5-second budget that only bounds a hung run, so a timeout is the likely cause, but that run did not log it. An earlier run there also failed the resolver smoke test in 1 or 2 of 25 runs, because a lookup can wait on slow DNS. That test now has a fixed 20-second budget, which cannot let a confined row pass, because a kill must not be a timeout. The liveness budgets that failed on the runner were then made scalable through `CONFINEMENT_BUDGET_SCALE`, and runs now log a timeout. A rerun with the scale at four fixed the Go scenarios. It then showed that the compiler helper and the 250 ms group-cleanup budget were also too short on that runner. Once those were scaled too, a full run passed every scenario. The scale changes no budget a scenario measures. The group-cleanup scenario's child now lives 10 seconds, and the scenario fails as not measured if its check finishes after that, so only the group kill can end the child in time.
 
 Runner jobs:
 - macOS 27.0.1 full pass: https://github.com/vinnyp/press-quality-lab/actions/runs/45152589899
@@ -27,7 +27,7 @@ Runner jobs:
 - Landlock refuses an operation without ending the process;
 - a ptrace supervisor was not attempted.
 
-Support is per version (KTD5). Only the macOS versions above are tested. Every other system falls under CR23.
+Support is per version (KTD5): version 1.0 supports macOS 27.0.1 and 27.2, the versions this record names as passed. Every other system, a later 27 release included, falls under CR23 until this record names it as passed.
 
 ## Method
 
@@ -132,6 +132,7 @@ These operations are refused with a kill, but no harmless attempt could witness 
 - **System information:** `system-info` is granted whole for SQLite.
 - **Exit detail:** the system kills a program whose signed code page is corrupted, but reports no exit detail for it. The harness's filter for memory and code-signing kills is therefore unwitnessed, and such a kill after a violator's readiness marker would look like a refusal kill.
 - **Private copy:** untested on signed and Homebrew-installed binaries.
+- **Nested planted files:** only a planted file directly in the home was tested. The refusal of unlink and create on each directory down to a deeper planted file is required by CR31 but untested.
 - **Operation catalog:** the inventory queries a fixed catalog of operation names taken from this macOS version. A later version may add operations it does not know.
 
 ## Findings for the specification
@@ -141,16 +142,17 @@ These operations are refused with a kill, but no harmless attempt could witness 
 - **Kill-on-refusal makes startup fragile.** Refusals a process normally survives become fatal. The minimal allowances were found by allowing every class and then removing one at a time, never by adding one at a time.
 - **A new executable file costs about 20 ms at its first launch**, because the system assesses it. Copying the program for every run made the system's assessment service fall behind under parallel load, and launches stalled past their budget. Make the CR112 copy once per grade and check it unchanged before each reuse.
 - **The access time is not proof of a read on its own.** Under the home's write grant, `setattrlist`, a rename or replace around the file, and unlink and recreate each moved it with no read. Killing every write to the planted file closes these. A credential file deeper than the home's top level also needs every directory above it protected from unlink and create.
+- **Running as root.** The profile grants the host port unconditionally, and that port is inert only for an ordinary user, so the engine refuses to run as root (CR115).
 - **Exit observation:** registering for a child's exit after it has exited fails with ESRCH. Because the child is not yet reaped, that can only mean it already exited.
 - **The profile is tied to a macOS version.** An operation name one version does not know makes the whole profile unparsable, and the confinement then cannot be applied at all. The engine needs one reviewed profile per supported version, and a check that the version it runs on is one of them.
 - **Some volumes do not record a read's access time.** On the macOS 26 runner's volume a read did not move it. The CR31 calibration then makes the read proof not-measured, which the suite reports as a failure, never as a pass.
 
 ## Owner decisions, 2026-11-23
 
-1. **Supported systems:** macOS 27 only in version 1.0. A profile for macOS 26 was not built.
-2. **The planted file:** any write to it is refused with a kill, and so is any unlink or create on each directory between the throwaway home and the file (CR31). A CLI that rewrites its credential file during the probe is therefore not observed.
+1. **Supported systems:** in version 1.0, the macOS 27 versions this record names as passed. A profile for macOS 26 was not built.
+2. **The planted file:** any write to it is refused with a kill, and so is any unlink or create on the home and on every directory below it on the file's path (CR31). A CLI that rewrites its credential file during the probe is therefore not observed.
 3. **A zero-byte read at end of file:** CR31 states it as a limit. Such a read moves the access time and counts as a read.
 4. **Further text:**
    - CR84 states that a leak through the unified log is not seen, and that a directory lookup can reach a server.
-   - CR67 names setuid and setgid exec as a silent refusal.
+   - CR67 names a computation's setuid and setgid exec as a silent refusal.
    - CR115 makes the engine refuse to run as root.
