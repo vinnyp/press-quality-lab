@@ -710,6 +710,7 @@ def draft(root):
 
     open_objects = {
         ("schema/baseline.schema.json", "/properties/preimages"),
+        ("schema/baseline.schema.json", "/$defs/source/properties/computation/properties/files"),
         *( ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/" + suffix)
            for suffix in ("env", "expected/oneOf/2/properties/computation/properties/files") ),
         ("schema/subject-file.schema.json", "/$defs/offline/properties/env"),
@@ -741,9 +742,13 @@ def draft(root):
         if node is None:
             return
         schema_sites.add((name, path))
-        constraining = {"type", "const", "enum", "$ref", "oneOf", "anyOf", "allOf"}
-        if path.rsplit("/", 1)[-1] in {"if", "then", "else"}:
-            constraining.add("properties")
+        constraining = set("""
+            type const enum pattern minLength maxLength format
+            minimum maximum exclusiveMinimum exclusiveMaximum multipleOf
+            minItems maxItems uniqueItems items prefixItems contains
+            minProperties maxProperties required properties patternProperties
+            additionalProperties propertyNames $ref allOf anyOf oneOf not if then else
+        """.split())
         if isinstance(node, dict) and not set(node).intersection(constraining):
             raise Error(f"unconstrained schema: {name} {path}")
         if node is True and (name, path) not in arbitrary_values:
@@ -805,9 +810,9 @@ def draft(root):
         return result
 
     def locations(value, constraints, path=()):
-        judge_subtree = any(isinstance(s, dict) and s.get("$ref", "").split("#")[0] in
-                            ("judge-input.schema.json", "judge-output.schema.json") for s, _ in constraints)
         expanded = [part for schema, resolver in constraints for part in parts(schema, resolver, value)]
+        judge_subtree = any(isinstance(s, dict) and s.get("$ref", "").split("#")[0] in
+                            ("judge-input.schema.json", "judge-output.schema.json") for s, _ in expanded)
         yield path, value, expanded, constraints
         if judge_subtree:
             for kind in counts:
@@ -875,17 +880,28 @@ def draft(root):
             if branch in node:
                 cover(value, node[branch], name, pointer + "/" + branch)
         if isinstance(value, dict):
+            if node.get("additionalProperties") is False:
+                reached.add((name, pointer + "/additionalProperties"))
             for key, child in value.items():
                 escaped = key.replace("~", "~0").replace("/", "~1")
                 if key in node.get("properties", {}):
                     cover(child, node["properties"][key], name, pointer + "/properties/" + escaped)
-                elif "additionalProperties" in node:
+                matches = [(pattern, branch) for pattern, branch in node.get("patternProperties", {}).items()
+                           if re.search(pattern, key)]
+                for pattern, branch in matches:
+                    escaped_pattern = pattern.replace("~", "~0").replace("/", "~1")
+                    cover(child, branch, name, pointer + "/patternProperties/" + escaped_pattern)
+                if key not in node.get("properties", {}) and not matches and "additionalProperties" in node:
                     cover(child, node["additionalProperties"], name, pointer + "/additionalProperties")
                 if "propertyNames" in node:
                     cover(key, node["propertyNames"], name, pointer + "/propertyNames")
-        if isinstance(value, list) and "items" in node:
-            for child in value:
-                cover(child, node["items"], name, pointer + "/items")
+        if isinstance(value, list):
+            prefix = node.get("prefixItems", [])
+            for index, child in enumerate(value):
+                if index < len(prefix):
+                    cover(child, prefix[index], name, pointer + f"/prefixItems/{index}")
+                elif "items" in node:
+                    cover(child, node["items"], name, pointer + "/items")
 
     counts = {kind: Counter() for kind in ("unknown_field", "wrong_type", "missing_required")}
     failures = []
@@ -944,7 +960,12 @@ def draft(root):
                     required = sorted({k for s, _ in constraints if isinstance(s, dict) for k in s.get("required", [])})
                     if required:
                         for missing in required:
-                            proposals.append(("missing_required", {k: v for k, v in original.items() if k != missing}))
+                            replacement = {k: v for k, v in original.items() if k != missing}
+                            # Removing a discriminator can select another valid union branch.
+                            if all(validator(s, r).is_valid(replacement) for s, r in raw_constraints):
+                                counts["missing_required"]["skipped: valid alternative branch"] += 1
+                            else:
+                                proposals.append(("missing_required", replacement))
                     else:
                         counts["missing_required"]["skipped: no required fields"] += 1
                 for kind, replacement in proposals:
