@@ -28,5 +28,7 @@ jobs:
           clang --version | sed -n '1p'
       - name: Download modules
         run: go mod download
+      - name: Diagnose startup allowances on this system
+        run: GOTOOLCHAIN=local GOPROXY=off go test -v -count=1 -timeout 15m -tags confinementspike,startupdiagnosis -run '^TestStartupDiagnosis$' ./spike/confinement/... || true
       - name: Run confinement spike
         run: GOTOOLCHAIN=local GOPROXY=off go test -v -count=1 -timeout 40m -tags confinementspike ./spike/confinement/...
