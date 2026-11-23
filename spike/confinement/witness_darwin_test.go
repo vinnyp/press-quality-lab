@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestSilentRefusals(t *testing.T) {
@@ -217,11 +218,19 @@ func TestSystemResolversSmoke(t *testing.T) {
 						if confined {
 							p = profile(computation)
 						}
-						r := entry.f.invokeOn(t, p, "resolver", false)
+						// A resolver can wait on slow DNS; the budget is not what
+						// this smoke test measures, so it gets more time.
+						probe := entry.f
+						probe.budget = 20 * time.Second
+						r := probe.invokeOn(t, p, "resolver", false)
+						ok := correct(r, "lookup failed\n")
 						if confined {
-							return r.killed()
+							ok = r.killed()
 						}
-						return correct(r, "lookup failed\n")
+						if !ok {
+							t.Logf("resolver run: marked=%v ready=%v timed-out=%v harness-killed=%v wait-status=%d output-bytes=%d", r.marked, r.ready, r.timedOut, r.harnessKilled, r.status, len(r.output))
+						}
+						return ok
 					})
 				})
 			}

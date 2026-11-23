@@ -10,7 +10,7 @@ jobs:
       matrix:
         runner: [macos-26, xcode-27]
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 150
     defaults:
       run:
         shell: bash
@@ -32,7 +32,5 @@ jobs:
           clang --version | sed -n '1p'
       - name: Download modules
         run: go mod download
-      - name: Diagnose startup allowances on this system
-        run: GOTOOLCHAIN=local GOPROXY=off go test -v -count=1 -timeout 15m -tags confinementspike,startupdiagnosis -run '^TestStartupDiagnosis$' ./spike/confinement/... || true
       - name: Run confinement spike
-        run: GOTOOLCHAIN=local GOPROXY=off go test -v -count=1 -timeout 40m -tags confinementspike ./spike/confinement/...
+        run: GOTOOLCHAIN=local GOPROXY=off go test -v -count=1 -timeout 130m -tags confinementspike ./spike/confinement/...
