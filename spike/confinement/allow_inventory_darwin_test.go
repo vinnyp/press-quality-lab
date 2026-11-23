@@ -24,6 +24,7 @@ const reviewedSubjectAllows = `(allow mach-task-special-port-set (target self))
 (allow file-write-data (literal (param "STDOUT_DEVICE")) (literal (param "STDERR_DEVICE")))
 (allow file-read-data (literal (param "ZONEFILE")))
 (allow file-read-data (literal (param "ZONE_RULES")))
+(allow file-read-data (literal (param "SERVICES")) (literal (param "PROTOCOLS")))
 (allow file-read-data (literal (param "BIN")) (literal (param "LAUNCHER")))
 (allow file-read* (literal (param "ROOT")))
 (allow file-read-data (subpath (param "RUNTIME")))
@@ -53,6 +54,7 @@ const reviewedComputationAllows = `(allow mach-task-special-port-set (target sam
 (allow file-write-data (literal (param "STDOUT_DEVICE")) (literal (param "STDERR_DEVICE")))
 (allow file-read-data (literal (param "ZONEFILE")))
 (allow file-read-data (literal (param "ZONE_RULES")))
+(allow file-read-data (literal (param "SERVICES")) (literal (param "PROTOCOLS")))
 (allow file-read-data (literal (param "BIN")) (literal (param "LAUNCHER")))
 (allow file-read* (literal (param "ROOT")))
 (allow file-read-data (subpath (param "RUNTIME")))
@@ -109,6 +111,7 @@ func TestExactSystemParameters(t *testing.T) {
 		"NULL_DEVICE": "/dev/null", "RANDOM_DEVICE": "/dev/urandom", "ZERO_DEVICE": "/dev/zero",
 		"STDOUT_DEVICE": "/dev/fd/1", "STDERR_DEVICE": "/dev/fd/2", "TTY_DEVICE": "/dev/tty",
 		"TRACE_DEVICE": "/dev/dtracehelper",
+		"SERVICES":     "/private/etc/services", "PROTOCOLS": "/private/etc/protocols",
 	}
 	for key, source := range map[string]string{"ZONEFILE": "/usr/share/zoneinfo/America/New_York", "ZONE_RULES": "/usr/share/zoneinfo/posixrules"} {
 		resolved, err := filepath.EvalSymlinks(source)

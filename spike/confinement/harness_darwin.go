@@ -64,6 +64,9 @@ func profile(computation bool) string {
 	return strings.NewReplacer("{{PROCESS_RULES}}", rules, "{{PROCESS_TARGET}}", target, "{{FILE_RULES}}", fileRules).Replace(template)
 }
 
+// Prevent CoreFoundation startup from reading the user-database home.
+const coreFoundationEncoding = "__CF_USER_TEXT_ENCODING=0x1F5:0x0:0x0"
+
 type result struct {
 	output        string
 	diagnostic    string

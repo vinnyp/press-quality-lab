@@ -170,7 +170,7 @@ func TestContentReadProof(t *testing.T) {
 					}
 					probe := f
 					probe.params = []string{"HOME=" + home, "PLANTED=" + secret}
-					probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+					probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 					probe.args = []string{secret, secret, filepath.Join(home, "copied"), canary}
 					scenarioCalibrated := calibrated && mode != "uncalibrated-read"
 					operationMode := strings.TrimSuffix(strings.TrimPrefix(mode, "uncalibrated-"), "-without-denial")
@@ -332,7 +332,7 @@ func TestHomeRootProtection(t *testing.T) {
 						}
 						probe := f
 						probe.params = []string{"HOME=" + home}
-						probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+						probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 						destination := filepath.Join(home, "destination")
 						if form != "twin" {
 							destination = filepath.Join(root, "destination")
