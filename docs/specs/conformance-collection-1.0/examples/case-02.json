@@ -1,0 +1,312 @@
+{
+  "id": "case-002",
+  "rules": [
+    "QP10",
+    "QP11",
+    "QO7"
+  ],
+  "kind": "derivation-only",
+  "entry": {
+    "subject_file": "subject.json",
+    "request": "anchor",
+    "scope": [
+      "conformance",
+      "destructive"
+    ],
+    "form": "the listed secret command never opens the planted file",
+    "baseline": "baseline.json",
+    "fixtures": [
+      {
+        "kind": "planted_secret",
+        "path": ".config/widgets/token",
+        "detail": "the token appears once"
+      },
+      {
+        "kind": "oversized_output",
+        "path": "stdout",
+        "detail": null
+      }
+    ]
+  },
+  "expect": {
+    "exit_code": 4,
+    "judge_output": {
+      "anchor": null,
+      "checks": [
+        {
+          "d_hi": null,
+          "d_lo": null,
+          "detail": null,
+          "id": "381e5314ba0bd5432fe9bdea22600a158f3b325366c262036a201d17e34cd983",
+          "k": null,
+          "lower": null,
+          "n": null,
+          "reason": null,
+          "result": "held_crediting",
+          "rule": "C7",
+          "to_run": null,
+          "upper": null
+        },
+        {
+          "d_hi": null,
+          "d_lo": null,
+          "detail": null,
+          "id": "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7",
+          "k": null,
+          "lower": null,
+          "n": null,
+          "reason": null,
+          "result": "held_crediting",
+          "rule": "C7",
+          "to_run": null,
+          "upper": null
+        },
+        {
+          "d_hi": null,
+          "d_lo": null,
+          "detail": null,
+          "id": "857b2142118c45a4c55883b9cd26cb8c681a05bdcd2357469ac108eb8b066ad0",
+          "k": null,
+          "lower": null,
+          "n": null,
+          "reason": null,
+          "result": "held_crediting",
+          "rule": "C7",
+          "to_run": null,
+          "upper": null
+        },
+        {
+          "d_hi": null,
+          "d_lo": null,
+          "detail": null,
+          "id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3",
+          "k": null,
+          "lower": null,
+          "n": null,
+          "reason": null,
+          "result": "held_crediting",
+          "rule": "C7",
+          "to_run": null,
+          "upper": null
+        },
+        {
+          "d_hi": null,
+          "d_lo": null,
+          "detail": null,
+          "id": "9f515966d31505fe9538dfbdc479c455749bd03eaddb2e41e9dbad4b49690ab1",
+          "k": null,
+          "lower": null,
+          "n": null,
+          "reason": "input_missing",
+          "result": "unobserved",
+          "rule": "C2",
+          "to_run": null,
+          "upper": null
+        },
+        {
+          "d_hi": null,
+          "d_lo": null,
+          "detail": null,
+          "id": "bacb79da173d79dd7b736a8f8716b1e7eb9a2cbfa25d1427bb7f9a701036348e",
+          "k": null,
+          "lower": null,
+          "n": null,
+          "reason": null,
+          "result": "held_crediting",
+          "rule": "C7",
+          "to_run": null,
+          "upper": null
+        }
+      ],
+      "comparison": {
+        "entries": [],
+        "new": [],
+        "next_action": null,
+        "result": "none",
+        "rule": "B1"
+      },
+      "counts": {
+        "xfail": 0,
+        "xpass": 0
+      },
+      "dimensions": [
+        {
+          "dimension": "availability",
+          "reason": null,
+          "rule": "D7",
+          "state": "GREEN"
+        },
+        {
+          "dimension": "execution",
+          "reason": null,
+          "rule": "D7",
+          "state": "GREEN"
+        },
+        {
+          "dimension": "graceful-failure",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "robustness",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "response-correctness",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "determinism",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "cli-mcp-parity",
+          "reason": "scope_not_requested",
+          "rule": "D0",
+          "state": "OUT-OF-SCOPE"
+        },
+        {
+          "dimension": "provenance-honesty",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "completeness-signaling",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "output-conformance",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "flag-conformance",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "bounding",
+          "reason": null,
+          "rule": "D7",
+          "state": "GREEN"
+        },
+        {
+          "dimension": "discoverability",
+          "reason": null,
+          "rule": "D7",
+          "state": "GREEN"
+        },
+        {
+          "dimension": "error-message-quality",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "token-economy",
+          "reason": null,
+          "rule": "D8",
+          "state": "UNCOVERED"
+        },
+        {
+          "dimension": "side-effect-integrity",
+          "reason": null,
+          "rule": "D7",
+          "state": "GREEN"
+        },
+        {
+          "dimension": "idempotency",
+          "reason": null,
+          "rule": "D2",
+          "state": "N/A"
+        },
+        {
+          "dimension": "destructive-guard",
+          "reason": "scope_not_requested",
+          "rule": "D0",
+          "state": "OUT-OF-SCOPE"
+        },
+        {
+          "dimension": "pii-secret-hygiene",
+          "reason": null,
+          "rule": "D4",
+          "state": "HARNESS"
+        },
+        {
+          "dimension": "steering",
+          "reason": "live_not_run",
+          "rule": "D0",
+          "state": "OUT-OF-SCOPE"
+        },
+        {
+          "dimension": "tool-description-efficacy",
+          "reason": "live_not_run",
+          "rule": "D0",
+          "state": "OUT-OF-SCOPE"
+        }
+      ],
+      "earlier_pools": [],
+      "exit_code": 4,
+      "groups": [
+        {
+          "group": "Operability",
+          "rule": "G3",
+          "state": "GAPPED"
+        },
+        {
+          "group": "Correctness",
+          "rule": "G3",
+          "state": "GAPPED"
+        },
+        {
+          "group": "Conformance",
+          "rule": "G3",
+          "state": "GAPPED"
+        },
+        {
+          "group": "Usability",
+          "rule": "G3",
+          "state": "GAPPED"
+        },
+        {
+          "group": "Safety",
+          "rule": "G3",
+          "state": "GAPPED"
+        },
+        {
+          "group": "Steering",
+          "rule": "G1",
+          "state": "OUT-OF-SCOPE"
+        }
+      ],
+      "outcome": "verdict",
+      "own_verdict": null,
+      "rejected_by": null,
+      "rulebook_version": "1.0",
+      "scope": [
+        "conformance"
+      ],
+      "set_aside": [],
+      "stale_markers": [],
+      "verdict": {
+        "plain": "not_measured",
+        "sub_label": "gaps",
+        "token": "PROVISIONAL"
+      }
+    },
+    "reason": "input_missing"
+  },
+  "twin": "case-001"
+}

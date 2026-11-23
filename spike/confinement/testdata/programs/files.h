@@ -52,6 +52,12 @@ static int file_operation(int argc, char **argv) {
     }
     operation_ready();
     int rc = -1, fd = -1;
+    if (!strcmp(mode,"file-directory-rename") || !strcmp(mode,"file-directory-replace")) {
+        rc=rename(path,argv[3]);
+        if(!rc && !strcmp(mode,"file-directory-replace"))rc=mkdir(path,0700);
+        if(!rc)puts("performed");
+        puts("fallback");return 0;
+    }
     if (!strncmp(mode,"file-secret-",12)) {
         if(argc<6 || strlen(argv[5])!=32)return 64;
         if(!strcmp(mode,"file-secret-stat")){struct stat st;rc=stat(path,&st);if(!rc&&st.st_size<32)return 38;}

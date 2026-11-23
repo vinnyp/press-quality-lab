@@ -25,7 +25,7 @@ The prefix is needed because the citation test reads every bare R or AE number u
 - **Execution profile:** Deep. Three pull requests: the spike, the draft specification, then the corpus and seal. The main session writes the specification and a coding agent writes the code (KTD16).
 - **Who finishes:** The executing session opens each pull request and stops. The owner merges and ratifies.
 - **Product authority:** The owner, who ratifies and seals the specification. This plan covers phase 2 only. The grade command, the first real grade and steering are not active scope.
-- **Open blockers:** None for planning. The spike gates the specification work (CR1, CR6). Building and running the real subject needs the owner's separate approval (CR4).
+- **Open blockers:** None for planning. The spike passed for macOS 27.0.1 and 27.2 (CR6). The owner approved one offline build and confined run of the real subject (CR4).
 - **Dates:** Spike answered by 2026-11-28, specification draft by 2026-12-05, corpus by 2026-12-12, seal by 2026-12-19. A late checkpoint moves the date and cuts nothing (CR106).
 
 ---
@@ -414,7 +414,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 
 ## Planning Contract
 
-**Product Contract preservation:** changed: CR31, CR67 and CR84 amended and CR115 added on 2026-11-23, after the spike's second review found forgeries of the read proof and further limits, and the owner chose to refuse any write to the planted file and to state the limits; the owner also passed the gate for the macOS 27 versions the record names as passed. Two Key Decisions added and one line under Dependencies / Assumptions updated with them. CR32, CR62, CR76 and CR112 amended on 2026-11-22, after the spike showed that a program needs a read of its executable's directory and the owner chose a private copy. CR31 and CAE8 amended on 2026-11-22, after the spike's review found that the control run kills at open and the owner required both signals. CR67 amended on 2026-11-22, after the spike found two operations that cannot carry a kill and the owner chose to refuse both and state the limit. CR35 amended on 2026-11-22, after the spike showed that not every descendant can be ended and the owner chose the stated limit. Earlier: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
+**Product Contract preservation:** PR2's units were revised on 2026-11-23 with the spike's results, the repository's patterns and the owner's choice of seed; that planning revision changed no requirement. Requirement changes, newest first: CR31, CR67 and CR84 amended and CR115 added on 2026-11-23, after the spike's second review found forgeries of the read proof and further limits, and the owner chose to refuse any write to the planted file and to state the limits; the owner also passed the gate for the macOS 27 versions the record names as passed. Two Key Decisions added and one line under Dependencies / Assumptions updated with them. CR32, CR62, CR76 and CR112 amended on 2026-11-22, after the spike showed that a program needs a read of its executable's directory and the owner chose a private copy. CR31 and CAE8 amended on 2026-11-22, after the spike's review found that the control run kills at open and the owner required both signals. CR67 amended on 2026-11-22, after the spike found two operations that cannot carry a kill and the owner chose to refuse both and state the limit. CR35 amended on 2026-11-22, after the spike showed that not every descendant can be ended and the owner chose the stated limit. Earlier: CR5, CR6, CR56, CR88 and CAE25 amended, CR113, CR114 and CAE32 added, and Linux taken out of 1.0, after the owner's answers to the review before publication. Earlier: CR31, CR55, CR99, CR100, CR102, CR107, CAE3 and CAE7 corrected, and CR109 to CR112 and CAE29 to CAE31 added, after the owner approved the plan review's fixes and settled local ports on 2026-11-22. Also one line under Dependencies / Assumptions, reworded to cover what it meant, the phase's tests, probes and subject runs. The owner decided on 2026-11-22 that agents' model calls are not tracked as part of the work. The Linux time box is the one earlier decision the owner reversed.
 
 ### Key Technical Decisions
 
@@ -425,6 +425,7 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 - KTD3. **The real subject runs by 2026-12-03 and the confinement rules freeze on 2026-12-04.** A later change to the rules re-records every behaviour that depends on them. Implements CR4, CR66. (session-settled: user-approved — chosen over running it any time before the seal: a late surprise would invalidate the recorded corpus.)
 - KTD5. **Supported means tested.** A macOS version is supported when the spike's record names it as passed, and CR23 covers every other.
 - KTD6. **A failed gate brings options within a day.** The owner gets the options and a recommendation, and only chapters that do not depend on confinement continue. Implements CR6, CR66. (session-settled: user-approved — chosen over stopping all work without a next step: the Product Contract names no choice for the owner at that point.)
+- KTD22. **The real subject's seed is written by a helper that calls the CLI's own store code.** It lives in the scratch copy only, never in the subject's library checkout, and runs at a fixed time so dated output repeats. Implements CR4. (session-settled: user-directed — chosen over raw SQL after a first run, whose typed columns must match the CLI's by hand, and a loopback mock API with the CLI's sync, which needs HTTP calls the approval may not cover.)
 
 **The specification and its corpus**
 
@@ -442,6 +443,8 @@ Feasibility probes on 2026-11-21 and 2026-11-22 used throwaway test programs on 
 - KTD21. **The real subject's name is checked mechanically.** Before each push, its identifiers, kept outside the repository, are searched for in tracked files, the commit range, the branch name and the pull request's text.
 - KTD19. **A draft kit can be checked and says so.** The copied runner has a draft mode that needs no manifest, prints `UNSEALED`, and is refused once a manifest exists.
 - KTD17. **The judge's pre-check is an ordinary call with no evidence.** It uses the run's own request kind and carries the baseline. Only an anchor's carries retirements and accepted regressions, because the judge rejects them on a grade. Where one rejection rule covers both causes, the engine first excludes its own by validating the store and its generated checks, so that a pre-check rejection is the user's. Only whether it rejects, and by which rule, is read. Implements CR71.
+- KTD23. **The draft kit carries a byte-identical copy of the judge's output schema.** Its runner validates the judge's output with it, and a test compares the copy with the sealed file. Chosen over reading it from the judge's folder, because a sealed kit must verify on its own (KTD13).
+- KTD24. **The collection gives each reason a next action in its own table.** The judge's rulebook lists reasons with no next action, so the new folder defines them. Implements CR20, CR46.
 
 ### High-Level Technical Design
 
@@ -452,7 +455,8 @@ flowchart TB
   U1[U1 macOS spike] --> U3[U3 runner image and spike record]
   U3 -->|pass by 11-28| U4[U4 real subject by 12-03, freeze 12-04]
   U3 -->|pass by 11-28| U5[U5 rules for collection]
-  U4 -->|confinement and routes only| U6
+  U4 -->|confinement.md only| U5
+  U4 -->|allowance-dependent routes only| U6
   U5 --> U6[U6 rules toward the judge]
   U6 -->|draft read by owner, 12-05| U7[U7 synthetic subject]
   U7 --> U8[U8 corpus by 12-12]
@@ -577,10 +581,13 @@ docs/specs/
 | Inherited descriptors bypass the profile | A violator with an inherited descriptor is part of U1 |
 | The real subject's build needs downloads | Stop and ask. The approval covers an offline build only |
 | Review changes outdate earlier derivations | KTD7 freezes the text and KTD11 repeats only changed rules |
+| An empty store reads as success for the real subject | U4 judges each read by its output against the seed, and an empty result is not-measured |
+
+Considered and not built: checking that every CR and CAE cited in the new folder is defined in this plan. The plan's requirements are amended often and live outside `docs/specs/`, so a pinned check would fight that. A cited CR found undefined in review would change this.
 
 ### Planning Assumptions
 
-- `macos-26` is available free to this public repository and has Go 1.27.4. Whether the sandbox works there is what U3 finds out.
+- The `xcode-27` image (macOS 27.0.1, a preview) stays available to this public repository for U4's rerun. If it is withdrawn, U4 records that and reruns on macOS 27.2 alone. macOS 27.0.1 stays supported only while the profile is unchanged since its passing run; if U4 adds an allowance and 27.0.1 cannot be rerun, keeping or dropping it goes to the owner (KTD6).
 - The ruleset's required checks are still `gate`, `cases` and `scan`.
 - The owner reads the draft within two days of 2026-12-05 and can ratify on 2026-12-19.
 
@@ -603,9 +610,9 @@ The work ships as three pull requests. Each merge is the owner's.
 |---|---|---|---|
 | U1 | macOS confinement spike | `spike/confinement/` | none |
 | U3 | Runner image and spike record | `.github/workflows/`, `docs/spikes/` | U1 |
-| U4 | Real subject run and freeze | `docs/spikes/` | U3 |
+| U4 | Real subject run and freeze | `docs/spikes/`, `spike/confinement/` | U3 |
 | U5 | Collection rules | `docs/specs/conformance-collection-1.0/` | U3, and U4 for confinement |
-| U6 | Rules toward the judge, schemas and tables | `docs/specs/conformance-collection-1.0/` | U5 |
+| U6 | Rules toward the judge, schemas and tables | `docs/specs/conformance-collection-1.0/` | U5, and U4 for routes that depend on an allowance |
 | U7 | Synthetic subject and behaviour | `testdata/collection-subject/` | U6 |
 | U8 | Corpus, runner and private half | `docs/specs/conformance-collection-1.0/cases/` | U7 |
 | U9 | Blind derivation and reviews | `docs/agent-reviews/` | U8 |
@@ -675,65 +682,90 @@ This is separate because the owner must read and ratify the text, and one pull r
 ### U4. Real subject run and freeze
 
 - **Goal:** Learn what a real printed CLI needs, then freeze the confinement rules.
-- **Requirements:** CR4, CR66. KTD3, KTD6.
+- **Requirements:** CR4, CR31, CR66, CR112. KTD3, KTD5, KTD6, KTD22.
 - **Dependencies:** U3.
-- **Files:** Modify `docs/spikes/2026-11-28-confinement.md`.
+- **Files:** Modify `docs/spikes/2026-11-28-confinement.md`. Modify `spike/confinement/` only to add a violator and twin for a new allowance. Restore `.github/workflows/confinement-spike.yml` from its last version on the PR1 branch, and delete it before merge. The subject's scratch copy, seed helper, seed and run notes stay outside the repository.
 - **Approach:**
-  1. Build from a scratch copy with an allow-listed environment, a throwaway home, the module proxy and checksum lookups off, the local toolchain only and the module cache read-only.
-  2. Pass the self-test before every run, including each run after a new allowance.
-  3. Run with no network, key or real store, in a throwaway home.
-  4. Add an allowance only with a new violator and twin in U1's suite.
-  5. Run U1 again on the runner image under the final rules, with U3's workflow restored on the branch and deleted before merge.
-  6. Record counts and allowances, then freeze on 2026-12-04.
-- **Execution note:** The owner's approval covers this one offline build and run. A download, key or network need stops the unit.
+  1. Copy the subject's checkout to a scratch directory outside the repository and build it there with an allow-listed environment, `GOPROXY=off`, checksum lookups off, `GOFLAGS=-mod=readonly`, `GOTOOLCHAIN=local` and a read-only module cache. Every module it needs is already in the local cache. A missing one stops the unit.
+  2. Write the seed with a helper program in the scratch copy that calls the CLI's own store code at a fixed time (KTD22). Each run gets a fresh copy of that seed.
+  3. Set `HOME` itself to the throwaway home, not only the CLI's home setting, because the CLI also reads a legacy config file from the operating system's home lookup.
+  4. Pass the self-test before every run, including each run after a new allowance.
+  5. Run confined, with no network, key or real store: help, the local-only reads with explicit dates, and each live-first read both with and without its offline setting.
+  6. Record what each command writes during a read, such as the store and its journal, for the store-unchanged probe.
+  7. Add an allowance only with a new violator and twin in U1's suite.
+  8. Run U1 again under the final rules on macOS 27.2 and on the `xcode-27` image (macOS 27.0.1), with the liveness budgets scaled as on PR1's last run.
+  9. Record counts, allowances and the subject's behaviours, then mark the rules frozen on 2026-12-04.
+- **Execution note:** The owner's approval covers this one offline build and confined run, with the seed helper in the scratch copy only. A download, a key or a network need stops the unit (KTD6).
+- **Patterns to follow:** The spike harness's fixture, invocation and private-copy reuse in `spike/confinement/`, the clean-control learning, and the learning on fresh executables.
 - **Test scenarios:**
-  - Help and at least one declared offline read return output judged correct against a known seed.
-  - A live-first read without offline settings is killed.
-  - After any new allowance, all of U1 still passes on both tested macOS systems.
+  - Help prints its known text and writes nothing outside the throwaway home.
+  - A local-only read with explicit dates returns exactly the seeded rows.
+  - The same read against an empty store prints an empty list with exit 0, and is judged not-measured, never correct.
+  - A live-first read without its offline setting is killed.
+  - The same read with its offline setting returns the seeded rows.
+  - After any new allowance, every scenario of U1 passes 25 of 25 on both tested systems.
   - The subject's library checkout and the user's real state are unchanged.
-- **Verification:** The record marks the rules frozen without naming the subject or holding its output.
+- **Verification:** The record marks the rules frozen. It holds the counts, the allowances and what each read writes, and neither the subject's name nor its output.
 
 ### U5. Collection rules
 
 - **Goal:** Write the rules from the subject file to each observation.
-- **Requirements:** CF2. CR8 to CR41, CR58, CR62 to CR64, CR67, CR68, CR70, CR74 to CR78, CR80 to CR87, CR98, CR100, CR101, CR107, CR109 to CR113, CR115. KTD1, KTD8.
-- **Dependencies:** U3. Only `confinement.md` waits for U4's freeze, so the rest is drafted beside U4 from 2026-11-28.
+- **Requirements:** CF2. CR8 to CR41, CR58, CR62 to CR64, CR67, CR68, CR70, CR74 to CR78, CR80 to CR87, CR98, CR100, CR101, CR107, CR109 to CR113, CR115. KTD1, KTD5, KTD8.
+- **Dependencies:** U3. Only `confinement.md` waits for U4's freeze, so the rest is drafted beside U4.
 - **Files:** Create `collection-rules.md` and `confinement.md` in `docs/specs/conformance-collection-1.0/`.
 - **Approach:**
   1. Give every requirement above a rule id and closed lists, with the order in which rules are tried.
   2. State when each control runs and what its absence yields: self-test, read proof, comparator and timeout.
   3. Map a failed computation confinement as well as a subject's.
   4. Say which required check carries a command found only by discovery.
-  5. Take each two-way reading to the owner before writing it as settled.
-- **Patterns to follow:** The opening paragraphs, rule lists and closed lists of `docs/specs/judge-1.0/rulebook.md`.
+  5. Write the spike's findings in `confinement.md` as rules or stated limits:
+     - every refusal is listed explicitly, because refusing by default does not cover every operation;
+     - the profile belongs to one macOS version, and a grade on any version the record does not name as passed falls under CR23;
+     - a profile that `sandbox-exec` rejects means confinement was not applied, never a subject's result;
+     - the private copy is made once per grade and checked unchanged before each reuse;
+     - a kill counts only after the launcher's marker and the operation's readiness marker;
+     - the volume's calibration decides whether the read proof can be measured;
+     - every limit and every refusal checked by text only in the spike record.
+  6. Take each two-way reading to the owner before writing it as settled.
+- **Patterns to follow:** The opening paragraphs, rule lists, closed lists and settlement tables of `docs/specs/judge-1.0/rulebook.md`.
 - **Test expectation:** none -- specification text. U8 gives each rule a case and U9 tests the text by blind derivation.
-- **Verification:** Every cited requirement maps to a rule, every reason is in the rulebook's §13 with a next action, and the profile needs nothing from the spike's code.
+- **Verification:**
+  - Every cited requirement maps to a rule.
+  - Every limit in the spike record is a rule or a stated limit.
+  - The profile's text needs nothing from the spike's code.
 
 ### U6. Rules toward the judge, schemas and tables
 
 - **Goal:** Write how observations become a record, an exit code and stored state.
-- **Requirements:** CF2. CR42 to CR49, CR59, CR69, CR71 to CR73, CR79, CR88 to CR92, CR94, CR99, CR102, CR103, CR108, CR114. KTD7, KTD8, KTD17.
+- **Requirements:** CF2. CR42 to CR49, CR59, CR69, CR71 to CR73, CR79, CR88 to CR92, CR94, CR99, CR102, CR103, CR108, CR114. KTD7, KTD8, KTD13, KTD17, KTD19, KTD23, KTD24.
 - **Dependencies:** U5, drafted alongside it. Only the routes that depend on an allowance wait for U4.
 - **Files:** Create `collection-contract.md`, `credit-and-routes.md`, `schema/` and `examples/` in the new folder, and `docs/specs/conformance-collection-1.0-errata.md`. Create `runner.py` and `common.py` in the new folder, `internal/collectionkit/doc.go` and `internal/collectionkit/schema_test.go`. Modify `check.sh`, `internal/docrefs/docrefs_test.go` and `docs/specs/README.md`.
 - **Approach:**
-  1. Place every engine ending in the closed exit table, including an unreadable subject file and an unwritable store.
+  1. Place every engine ending in the closed exit table, including an unreadable subject file and an unwritable store. Use the existing usage and software exit codes of `cmd/pql`.
   2. Assign each clause of each judge rejection rule to user or engine, as KTD17 separates them.
   3. Give the 18 dimensions of the conformance scopes a route, the independent expected value and who has no route, and list `cli-mcp-parity` as in no scope.
   4. Give each false-pass and false-fail route a positive control.
   5. Define cleanup after the engine itself is killed.
-  6. Mark the folder a draft in the specifications' README.
-  7. Copy the runner and give it KTD19's draft mode and a check of schemas against examples, using the validator it already pins.
-  8. Run that draft mode from `check.sh`, so the `cases` job, which has uv, tests the runner and the Go gate never calls Python.
-- **Test file:** `internal/collectionkit/schema_test.go` catches drift between schemas, examples and the judge's enumerations. It cannot tell whether a rule is right. The runner's own scenarios run in `check.sh`.
+  6. Give every not-measured reason the collection can produce a next action, in the folder's own table (KTD24).
+  7. Mark the folder a draft in the specifications' README, with the notice on its own line so the seal can remove it.
+  8. Copy the runner and give it KTD19's draft mode. It needs no manifest, no cases and no judge, prints `UNSEALED`, checks each schema against the examples with the validator it already pins, and refuses once a manifest exists.
+  9. Copy the judge's output schema into the new folder byte for byte (KTD23).
+  10. Run each kit's steps in `check.sh` in its own subshell. The judge kit runs as now. The draft folder must hold no manifest and passes the draft mode, so the `cases` job, which has uv, tests the runner and the Go gate never calls Python.
+  11. Write the errata note in the shape of the judge's.
+- **Patterns to follow:** `docs/specs/judge-1.0/` for layout, schema style and the errata note's shape. Tests follow the table-driven style of `internal/docrefs/docrefs_test.go`, and the learning that a test's oracle must not come from the code under test.
+- **Test file:** `internal/collectionkit/schema_test.go` catches drift between schemas, examples and the judge's enumerations. It reads the enumerations from the sealed judge's input schema, not from the judge's code, and runs each example through the real judge. It cannot tell whether a rule is right. The runner's own scenarios run in `check.sh`.
 - **Test scenarios:**
   - The runner rejects an unknown field, a wrong type and a missing required field at every schema location.
-  - The runner's draft mode prints `UNSEALED` and refuses to run once a manifest exists.
+  - The runner's draft mode passes with no cases and no judge, and prints `UNSEALED`.
+  - The draft mode refuses to run once a manifest exists.
+  - `check.sh` fails when the draft folder holds a manifest before U10.
+  - The copied output schema differs from the sealed judge's by one byte, and a test fails.
   - Every reason, failure kind and tier in the new schemas is in the judge's input schema, read from that file.
   - Covers CAE30. Two probes on one command give two ids in the example required set.
-  - Each example record is accepted by the real judge and yields its stated exit code.
+  - Each example record is accepted by the real judge, with the exit code the text states.
   - Covers CAE13 and CAE18. The exit table gives 70, 64 and 2 for those three inputs and holds no path to 1 except a judged red.
   - The citation test fails on an undefined requirement number planted in the new folder.
-- **Verification:** The owner has the draft to read, with each open reading listed with both readings.
+- **Verification:** The owner has the draft to read, with each open reading listed with both readings, and every not-measured reason has a next action.
 
 ### PR3: Corpus and seal, by 2026-12-19
 

@@ -1,0 +1,44 @@
+{
+  "subject_file_version": "1.0",
+  "binary": "bin/widgets",
+  "facts": {
+    "read_only": true,
+    "has_destructive_ops": false,
+    "store_backed": false,
+    "has_cli": true,
+    "bounding": "none"
+  },
+  "commands": [
+    {
+      "words": [
+        "version"
+      ],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": null,
+      "byte_bound": null,
+      "budget_seconds": 5
+    }
+  ],
+  "declared_count": 1,
+  "seed": null,
+  "store": null,
+  "offline": [],
+  "bookkeeping": [],
+  "secret": {
+    "path": ".widgetsrc",
+    "kind": "credential",
+    "reason": null,
+    "token": "TOKEN-PLACEHOLDER",
+    "commands": [
+      [
+        "version"
+      ]
+    ]
+  },
+  "runbooks": [],
+  "markers": [],
+  "prompts": {
+    "version": "none"
+  }
+}

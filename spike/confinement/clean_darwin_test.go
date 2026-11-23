@@ -3,14 +3,21 @@
 package confinement
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
 
 func buildGoClean(t *testing.T, f fixture) fixture {
+	return buildGoProgram(t, f, "clean.go")
+}
+
+func buildGoProgram(t *testing.T, f fixture, source string) fixture {
 	t.Helper()
 	compiler, err := exec.LookPath("go")
 	if err != nil {
@@ -18,7 +25,7 @@ func buildGoClean(t *testing.T, f fixture) fixture {
 	}
 	f.probe = filepath.Join(f.root, "go-clean")
 	buildEnv := append(append([]string{}, f.env...), "GOCACHE="+filepath.Join(f.root, "cache"), "GOTOOLCHAIN=local", "GOPROXY=off", "GOSUMDB=off", "CGO_ENABLED=1")
-	r := runBudget(compiler, []string{"build", "-o", f.probe, "testdata/programs/clean.go"}, buildEnv, "", 2*time.Minute)
+	r := runBudget(compiler, []string{"build", "-o", f.probe, filepath.Join("testdata/programs", source)}, buildEnv, "", 2*time.Minute)
 	if r.err != nil {
 		t.Fatal("build Go clean program")
 	}
@@ -80,7 +87,7 @@ func databaseFixture(t *testing.T, f fixture) fixture {
 	path := filepath.Join(root, "data")
 	f.args = []string{path}
 	f.params = []string{"HOME=" + root, "DECLARED=" + path}
-	f.env = []string{"HOME=" + root, "TMPDIR=" + root, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+	f.env = []string{"HOME=" + root, "TMPDIR=" + root, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 	return f
 }
 
@@ -183,7 +190,7 @@ func TestDatabaseDeclaredInputSmoke(t *testing.T) {
 				before = decoySnapshot(seed)
 				probe := f
 				probe.params = []string{"HOME=" + scratch, "SEED=" + seed, "DECLARED=" + seed}
-				probe.env = []string{"HOME=" + scratch, "TMPDIR=" + scratch, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+				probe.env = []string{"HOME=" + scratch, "TMPDIR=" + scratch, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 				probe.args = []string{seed}
 				if form == "private-copy" || form == "twin" {
 					probe.args = []string{copyPath}
@@ -201,6 +208,81 @@ func TestDatabaseDeclaredInputSmoke(t *testing.T) {
 					return r.killed() && before == decoySnapshot(seed)
 				}
 				return correct(r, want) && before == decoySnapshot(seed)
+			})
+		})
+	}
+}
+
+func TestGoFrameworkAndServicePrograms(t *testing.T) {
+	t.Parallel()
+	for _, entry := range []struct{ name, source, mode, want string }{
+		{"security-framework", "security.go", "security", "security ok\n"},
+		{"service-port", "clean.go", "service-port", "443\n"},
+		{"protocol-name", "clean.go", "protocol-name", "127.0.0.1\n"},
+	} {
+		f := buildGoProgram(t, newFixture(t), entry.source)
+		for _, computation := range []bool{false, true} {
+			runScenario(t, profileName(computation)+"/"+entry.name, func(t *testing.T) {
+				repeat(t, func() bool { return correct(f.invokeOn(t, profile(computation), entry.mode, false), entry.want) })
+			})
+		}
+	}
+}
+
+// Startup may die before main can emit an operation-readiness marker. The
+// trusted launch marker and raw wait status still distinguish an applied
+// confinement from a launch failure or a supervisor timeout.
+func startupRefused(r result) bool {
+	return r.marked && !r.startFailed && !r.timedOut && !r.harnessKilled &&
+		r.exitDetail&(syscall.NOTE_EXIT_MEMORY|syscall.NOTE_EXIT_CSERROR) == 0 &&
+		r.status.Signaled() && r.status.Signal() == syscall.SIGKILL &&
+		r.output == "" && r.diagnostic == "confined\n"
+}
+
+func TestGoStartupAllowanceWitnesses(t *testing.T) {
+	t.Parallel()
+	for _, entry := range []struct{ name, source, mode string }{
+		{"encoding-environment", "security.go", "security"},
+		{"service-databases", "clean.go", "service-port"},
+	} {
+		f := buildGoProgram(t, newFixture(t), entry.source)
+		for _, computation := range []bool{false, true} {
+			runScenario(t, profileName(computation)+"/"+entry.name, func(t *testing.T) {
+				broken := profile(computation)
+				probe := f
+				if entry.name == "encoding-environment" {
+					probe.env = nil
+					for _, value := range f.env {
+						if !strings.HasPrefix(value, "__CF_USER_TEXT_ENCODING=") {
+							probe.env = append(probe.env, value)
+						}
+					}
+				} else {
+					broken = strings.Replace(broken, `(allow file-read-data (literal (param "SERVICES")) (literal (param "PROTOCOLS")))`, "", 1)
+				}
+				repeat(t, func() bool { return startupRefused(probe.invokeOn(t, broken, entry.mode, false)) })
+			})
+		}
+	}
+}
+
+func TestCoreFoundationUIDWitness(t *testing.T) {
+	f := buildGoProgram(t, newFixture(t), "security.go")
+	for _, matching := range []bool{false, true} {
+		runScenario(t, fmt.Sprintf("matching=%v", matching), func(t *testing.T) {
+			probe := f
+			probe.env = append([]string(nil), f.env...)
+			for i, value := range probe.env {
+				if strings.HasPrefix(value, "__CF_USER_TEXT_ENCODING=") && !matching {
+					probe.env[i] = fmt.Sprintf("__CF_USER_TEXT_ENCODING=0x%X:0x0:0x0", os.Getuid()+1)
+				}
+			}
+			repeat(t, func() bool {
+				r := probe.invokeOn(t, profile(false), "security", false)
+				if matching {
+					return correct(r, "security ok\n")
+				}
+				return startupRefused(r)
 			})
 		})
 	}

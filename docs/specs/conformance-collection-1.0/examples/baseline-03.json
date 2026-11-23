@@ -1,0 +1,245 @@
+{
+  "baseline_version": "1.0",
+  "spec_version": "1.0",
+  "rulebook_version": "1.0",
+  "subject_file_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "subject_file_path": "/opt/widgets/subject-02.json",
+  "created_at": "2026-11-22T09:00:00Z",
+  "baseline": {
+    "entries": [
+      {
+        "check_id": "06b4f3e0189e4312c17c09e7f115c96e2ee86c377eaebfcbe96e7f8fac8bdcb0",
+        "kind": "plain",
+        "dimension": "pii-secret-hygiene",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "3efbcb9a05c1ab8c19eafcc02de18be066b6193b3b42dae5757900990038c5e9",
+        "kind": "plain",
+        "dimension": "side-effect-integrity",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "b53ba5089e205263593ba33568ed744b60f75159f122a6c71629fd8ddce5e736",
+        "kind": "plain",
+        "dimension": "execution",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "289759ce02e3917187f72ae39bb61ed85c27f8e33257d9bcfd454ffe8c8e3746",
+        "kind": "plain",
+        "dimension": "availability",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "2b24881cbc5c0da883d5bb69d8b7e660fe4086759321cfdfbdcd5d2762586847",
+        "kind": "plain",
+        "dimension": "response-correctness",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      }
+    ]
+  },
+  "preimages": {
+    "06b4f3e0189e4312c17c09e7f115c96e2ee86c377eaebfcbe96e7f8fac8bdcb0": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "planted_secret",
+      "dimension": "pii-secret-hygiene",
+      "words": null,
+      "offline_args": [],
+      "env": {},
+      "budget_seconds": null,
+      "parameters": {
+        "path": ".config/widgets/token",
+        "kind": "seeded_state",
+        "text_sha256": "11bdf71a9d8c85d6aca52d6513c23b4765858dae71e7bf67363acf8012c93332",
+        "commands": [
+          {
+            "words": [
+              "list"
+            ],
+            "offline_args": [
+              "--offline"
+            ],
+            "env": {
+              "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+            },
+            "budget_seconds": 30
+          }
+        ]
+      }
+    },
+    "3efbcb9a05c1ab8c19eafcc02de18be066b6193b3b42dae5757900990038c5e9": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "store_unchanged",
+      "dimension": "side-effect-integrity",
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      "budget_seconds": 30,
+      "parameters": {}
+    },
+    "b53ba5089e205263593ba33568ed744b60f75159f122a6c71629fd8ddce5e736": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "exit_codes",
+      "dimension": "execution",
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      "budget_seconds": 30,
+      "parameters": {
+        "exit_codes": [
+          0
+        ]
+      }
+    },
+    "289759ce02e3917187f72ae39bb61ed85c27f8e33257d9bcfd454ffe8c8e3746": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "bare",
+      "dimension": "availability",
+      "words": [],
+      "offline_args": [],
+      "env": {},
+      "budget_seconds": 10,
+      "parameters": {
+        "exit_codes": [
+          0,
+          2
+        ]
+      }
+    },
+    "2b24881cbc5c0da883d5bb69d8b7e660fe4086759321cfdfbdcd5d2762586847": {
+      "scheme": "pql-check-id-1",
+      "runbook": "empty filter",
+      "step": "filter none",
+      "index": 0,
+      "earlier": [],
+      "predicate": "row_count",
+      "path": "/widgets",
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": {
+        "literal": 0,
+        "precondition": {
+          "computation": {
+            "argv": [
+              "/usr/bin/python3",
+              "{SUBJECT_DIR}/oracle/has-rows.py",
+              "{SEED}/data.json"
+            ],
+            "budget_seconds": 10,
+            "captures": [],
+            "files": {
+              "oracle/has-rows.py": "6910bddc39538fb92cc5f56ce6d92b0682dbae6e052b32d9000a8725013238cb"
+            }
+          }
+        }
+      },
+      "probe": null,
+      "dimension": "response-correctness",
+      "words": [
+        "list",
+        "--json",
+        "--name",
+        "none"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      "budget_seconds": 30,
+      "parameters": {
+        "exit_codes": null
+      }
+    }
+  }
+}

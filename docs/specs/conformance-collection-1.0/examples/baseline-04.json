@@ -1,0 +1,47 @@
+{
+  "baseline_version": "1.0",
+  "spec_version": "1.0",
+  "rulebook_version": "1.0",
+  "subject_file_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "subject_file_path": "/opt/widgets/subject-04.json",
+  "created_at": "2026-11-22T10:00:00Z",
+  "baseline": {
+    "entries": [
+      {
+        "check_id": "f6643b2e4961880d061a35c71aa052b23dc8e302d092cb569e7972dce6509026",
+        "kind": "plain",
+        "dimension": "availability",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "live",
+        "condition": null,
+        "k": null,
+        "n": null
+      }
+    ]
+  },
+  "preimages": {
+    "f6643b2e4961880d061a35c71aa052b23dc8e302d092cb569e7972dce6509026": {
+      "scheme": "pql-check-id-1",
+      "probe": "bare",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "dimension": "availability",
+      "predicate": null,
+      "path": null,
+      "words": [],
+      "offline_args": [],
+      "env": {},
+      "budget_seconds": 10,
+      "seed": null,
+      "store": null,
+      "bookkeeping": [],
+      "parameters": {
+        "exit_codes": null
+      },
+      "expected": null
+    }
+  }
+}

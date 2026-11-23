@@ -1,0 +1,58 @@
+{
+  "subject_file_version": "1.0",
+  "binary": {
+    "placeholder": "The path of the built binary, relative to this file."
+  },
+  "facts": {
+    "read_only": {
+      "placeholder": "State whether this holds for the CLI."
+    },
+    "has_destructive_ops": {
+      "placeholder": "State whether this holds for the CLI."
+    },
+    "store_backed": {
+      "placeholder": "State whether this holds for the CLI."
+    },
+    "has_cli": {
+      "placeholder": "State whether this holds for the CLI."
+    },
+    "bounding": {
+      "placeholder": "Say whether the CLI declares an output bound."
+    }
+  },
+  "commands": [
+    {
+      "words": [
+        "list"
+      ],
+      "class": {
+        "placeholder": "Is running list wanted in a grade?"
+      },
+      "writes": {
+        "placeholder": "Does list change anything in its home?"
+      },
+      "exit_codes": null,
+      "byte_bound": null,
+      "budget_seconds": 30
+    }
+  ],
+  "declared_count": {
+    "placeholder": "How many commands does the help list?"
+  },
+  "seed": {
+    "placeholder": "A directory of data the CLI reads."
+  },
+  "store": {
+    "placeholder": "The file the CLI keeps its data in."
+  },
+  "offline": [],
+  "bookkeeping": [],
+  "secret": {
+    "placeholder": "The file the CLI reads its secret from, if any."
+  },
+  "runbooks": [],
+  "markers": [],
+  "prompts": {
+    "version": "none"
+  }
+}

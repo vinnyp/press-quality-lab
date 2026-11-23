@@ -76,6 +76,8 @@
 (allow file-read-data (literal (param "ZONEFILE")))
 ; ordinary-timezone: libc also reads the system POSIX transition rules.
 (allow file-read-data (literal (param "ZONE_RULES")))
+; service-port and protocol-name: Go resolves named services and protocols.
+(allow file-read-data (literal (param "SERVICES")) (literal (param "PROTOCOLS")))
 ; clean: executable reads.
 (allow file-read-data (literal (param "BIN")) (literal (param "LAUNCHER")))
 ; clean: loader root lookup.

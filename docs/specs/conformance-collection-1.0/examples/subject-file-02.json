@@ -1,0 +1,240 @@
+{
+  "subject_file_version": "1.0",
+  "binary": "bin/widgets",
+  "facts": {
+    "read_only": false,
+    "has_destructive_ops": true,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "commands": [
+    {
+      "words": [],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0,
+        2
+      ],
+      "byte_bound": 4096,
+      "budget_seconds": 10
+    },
+    {
+      "words": [
+        "list"
+      ],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 65536,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "add"
+      ],
+      "class": "safe",
+      "writes": true,
+      "exit_codes": null,
+      "byte_bound": null,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "purge"
+      ],
+      "class": "destructive",
+      "writes": true,
+      "exit_codes": [
+        0,
+        1
+      ],
+      "byte_bound": null,
+      "budget_seconds": 30
+    }
+  ],
+  "declared_count": 3,
+  "seed": "seed",
+  "store": "data.json",
+  "offline": [
+    {
+      "applies_to": [
+        [
+          "list"
+        ],
+        [
+          "add"
+        ]
+      ],
+      "args": [
+        "--offline"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "1"
+      }
+    }
+  ],
+  "bookkeeping": [
+    ".local/state/widgets"
+  ],
+  "secret": {
+    "path": ".config/widgets/token",
+    "kind": "seeded_state",
+    "reason": "The CLI reads its API token from this file before every list.",
+    "token": "WIDGETS-TOKEN-PLACEHOLDER",
+    "commands": [
+      [
+        "list"
+      ]
+    ]
+  },
+  "runbooks": [
+    {
+      "name": "add then list",
+      "steps": [
+        {
+          "name": "add one",
+          "words": [
+            "add",
+            "gear"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "execution",
+              "predicate": "exit_code",
+              "path": null,
+              "expected": {
+                "literal": 0
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        },
+        {
+          "name": "list after add",
+          "words": [
+            "list",
+            "--json"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "json_path_equals",
+              "path": "/widgets/0/name",
+              "expected": {
+                "literal": "gear"
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "completeness-signaling",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "/usr/bin/python3",
+                    "{SUBJECT_DIR}/oracle/count.py",
+                    "{SEED}/data.json",
+                    "{CAPTURE:add one}"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [
+                    "oracle/count.py"
+                  ],
+                  "captures": [
+                    "add one"
+                  ]
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "empty filter",
+      "steps": [
+        {
+          "name": "filter none",
+          "words": [
+            "list",
+            "--json",
+            "--name",
+            "none"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "literal": 0
+              },
+              "precondition": {
+                "computation": {
+                  "argv": [
+                    "/usr/bin/python3",
+                    "{SUBJECT_DIR}/oracle/has-rows.py",
+                    "{SEED}/data.json"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [
+                    "oracle/has-rows.py"
+                  ],
+                  "captures": []
+                }
+              },
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "purge refuses",
+      "steps": [
+        {
+          "name": "purge without confirm",
+          "words": [
+            "purge"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "destructive-guard",
+              "predicate": "stderr_contains",
+              "path": null,
+              "expected": {
+                "literal": "--confirm"
+              },
+              "precondition": null,
+              "exit_codes": [
+                1
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "record": "add then list",
+      "dimension": "completeness-signaling"
+    }
+  ],
+  "prompts": {
+    "version": "none"
+  }
+}

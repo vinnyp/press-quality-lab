@@ -122,7 +122,11 @@ func accessTime(path string) (time.Time, error) {
 	return time.Unix(raw.Atimespec.Sec, raw.Atimespec.Nsec), nil
 }
 
-func TestContentReadProof(t *testing.T) {
+func TestContentReadProof(t *testing.T) { testContentReadProof(t, 0) }
+
+func TestNestedContentReadProof(t *testing.T) { testContentReadProof(t, 2) }
+
+func testContentReadProof(t *testing.T, depth int) {
 	t.Parallel()
 	t.Log("read-proof calibration: access time is planted one day before modification time; equal timestamps do not prove a plain read")
 	f := newFixture(t)
@@ -157,6 +161,9 @@ func TestContentReadProof(t *testing.T) {
 		t.Logf("not-measured=%d", notMeasured)
 	})
 	for _, computation := range []bool{false, true} {
+		if depth > 0 && computation {
+			continue
+		}
 		for _, mode := range []string{"read", "pread", "map", "copy", "open", "stat", "times", "setattr", "fsetattr", "replace", "rename-times", "recreate", "recreate-without-denial", "uncalibrated-read"} {
 			runScenario(t, profileName(computation)+"/"+mode, func(t *testing.T) {
 				repeat(t, func() bool {
@@ -164,17 +171,17 @@ func TestContentReadProof(t *testing.T) {
 					if err != nil {
 						t.Fatal("resolve proof home")
 					}
-					secret := filepath.Join(home, "planted")
+					secret := plantedTestPath(t, home, depth)
 					if os.WriteFile(secret, []byte(canary+strings.Repeat(" ", 8192)), 0600) != nil {
 						t.Fatal("plant canary")
 					}
 					probe := f
 					probe.params = []string{"HOME=" + home, "PLANTED=" + secret}
-					probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+					probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 					probe.args = []string{secret, secret, filepath.Join(home, "copied"), canary}
 					scenarioCalibrated := calibrated && mode != "uncalibrated-read"
 					operationMode := strings.TrimSuffix(strings.TrimPrefix(mode, "uncalibrated-"), "-without-denial")
-					ordinary := profile(computation)
+					ordinary := plantedProfile(computation, depth)
 					if mode == "recreate-without-denial" {
 						ordinary = strings.Replace(ordinary, `(deny file-write* (literal (param "PLANTED")) (with send-signal SIGKILL))`, "", 1)
 					}
@@ -332,7 +339,7 @@ func TestHomeRootProtection(t *testing.T) {
 						}
 						probe := f
 						probe.params = []string{"HOME=" + home}
-						probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+						probe.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 						destination := filepath.Join(home, "destination")
 						if form != "twin" {
 							destination = filepath.Join(root, "destination")
@@ -376,11 +383,18 @@ func TestHomeRootProtection(t *testing.T) {
 	}
 }
 
-func TestPlantedTimestampForgery(t *testing.T) {
+func TestPlantedTimestampForgery(t *testing.T) { testPlantedTimestampForgery(t, 0) }
+
+func TestNestedPlantedTimestampForgery(t *testing.T) { testPlantedTimestampForgery(t, 2) }
+
+func testPlantedTimestampForgery(t *testing.T, depth int) {
 	t.Parallel()
 	f := newFixture(t)
 	line := `(deny file-write* (literal (param "PLANTED")) (with send-signal SIGKILL))`
 	for _, computation := range []bool{false, true} {
+		if depth > 0 && computation {
+			continue
+		}
 		for _, mode := range []string{"times", "setattr", "fsetattr", "replace", "rename-times", "recreate"} {
 			for _, form := range []string{"confined", "twin", "positive", "remove-denial", "remove-kill"} {
 				runScenario(t, profileName(computation)+"/"+mode+"/"+form, func(t *testing.T) {
@@ -389,7 +403,7 @@ func TestPlantedTimestampForgery(t *testing.T) {
 						if err != nil {
 							t.Fatal("resolve forgery root")
 						}
-						secret, other := filepath.Join(home, "planted"), filepath.Join(home, "other")
+						secret, other := plantedTestPath(t, home, depth), filepath.Join(home, "other")
 						var random [16]byte
 						if _, err := rand.Read(random[:]); err != nil {
 							t.Fatal("make canary")
@@ -403,8 +417,8 @@ func TestPlantedTimestampForgery(t *testing.T) {
 						}
 						probe := f
 						probe.params = []string{"HOME=" + home, "PLANTED=" + secret}
-						probe.args = []string{secret, other, filepath.Join(home, "fresh"), canary}
-						p := profile(computation)
+						probe.args = []string{secret, other, filepath.Join(filepath.Dir(secret), "fresh"), canary}
+						p := plantedProfile(computation, depth)
 						switch form {
 						case "positive":
 							p = ""
@@ -498,5 +512,63 @@ func TestEndOfFileReadObservation(t *testing.T) {
 			}
 			t.Logf("executed=%d observations=%d access-time-moved=%d; no read credit or pass claimed", repetitions, repetitions, movedCount)
 		})
+	}
+}
+
+func plantedTestPath(t *testing.T, home string, depth int) string {
+	t.Helper()
+	if depth == 0 {
+		return filepath.Join(home, "planted")
+	}
+	parent := filepath.Join(home, ".config", "app")
+	if err := os.MkdirAll(parent, 0700); err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(parent, "creds")
+}
+
+func TestPlantedDirectoryForgery(t *testing.T) {
+	f := newFixture(t)
+	for _, level := range []string{".config", ".config/app"} {
+		for _, mode := range []string{"rename", "replace"} {
+			for _, protected := range []bool{false, true} {
+				runScenario(t, fmt.Sprintf("%s/%s/protected=%v", level, mode, protected), func(t *testing.T) {
+					repeat(t, func() bool {
+						home, err := filepath.EvalSymlinks(t.TempDir())
+						if err != nil {
+							t.Fatal(err)
+						}
+						secret := plantedTestPath(t, home, 2)
+						if err := os.WriteFile(secret, []byte("synthetic canary"), 0600); err != nil {
+							t.Fatal(err)
+						}
+						probe := f
+						probe.params = []string{"HOME=" + home, "PLANTED=" + secret}
+						probe.args = []string{filepath.Join(home, level), filepath.Join(home, "relocated"), filepath.Join(home, "unused")}
+						p := profile(false)
+						if protected {
+							p = plantedProfile(false, 2)
+						}
+						r := probe.invokeOn(t, p, "file-directory-"+mode, false)
+						if protected {
+							return r.killed()
+						}
+						return correct(r, "performed\nfallback\n")
+					})
+				})
+			}
+		}
+	}
+}
+
+func assertPlantedDirectoryProfileText(t *testing.T) {
+	t.Helper()
+	base := profile(false)
+	line := `(deny file-write-unlink file-write-create (literal (param "HOME")) (with send-signal SIGKILL))`
+	extra := `
+(deny file-write-unlink file-write-create (literal (param "PLANTED_DIR_1")) (with send-signal SIGKILL))
+(deny file-write-unlink file-write-create (literal (param "PLANTED_DIR_2")) (with send-signal SIGKILL))`
+	if strings.Contains(base, "PLANTED_DIR_") || plantedProfile(false, 2) != strings.Replace(base, line, line+extra, 1) {
+		t.Fatal("planted directory profile text differs")
 	}
 }

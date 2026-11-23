@@ -103,6 +103,20 @@ func main() {
 			os.Exit(31)
 		}
 		fmt.Println("ordinary ok")
+	case "protocol-name":
+		address, err := net.ResolveIPAddr("ip:icmp", "127.0.0.1")
+		if err != nil {
+			os.Exit(33)
+		}
+		fmt.Println(address.String())
+	case "service-port":
+		// Exercise Go's service-file resolver rather than libc delegation.
+		net.DefaultResolver.PreferGo = true
+		port, err := net.LookupPort("tcp", "https")
+		if err != nil {
+			os.Exit(32)
+		}
+		fmt.Println(port)
 	case "resolver":
 		if _, err := fmt.Fprint(os.Stderr, "operation-ready\n"); err != nil {
 			os.Exit(70)

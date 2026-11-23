@@ -232,7 +232,7 @@ func TestPathParametersSmoke(t *testing.T) {
 	if os.Mkdir(home, 0700) != nil {
 		t.Fatal("create syntax-bearing home")
 	}
-	f.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+	f.env = []string{"HOME=" + home, "TMPDIR=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 	for _, computation := range []bool{false, true} {
 		runScenario(t, profileName(computation), func(t *testing.T) {
 			repeat(t, func() bool {

@@ -1,0 +1,120 @@
+{
+  "baseline_version": "1.0",
+  "spec_version": "1.0",
+  "rulebook_version": "1.0",
+  "subject_file_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "subject_file_path": "/opt/widgets/subject-02.json",
+  "created_at": "2026-11-21T09:00:00Z",
+  "baseline": {
+    "entries": [
+      {
+        "check_id": "ced2e6f3f2379132e5ed26ed5b24f94f8bc2edce945f6bf42e0e8f411f9dd0d9",
+        "kind": "plain",
+        "dimension": "execution",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "c20f3ca6ff10a0d66c9a94d09ee589ecb78f4ddb7c55bf40666a25d7f703b741",
+        "kind": "plain",
+        "dimension": "completeness-signaling",
+        "result": "failed",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      }
+    ]
+  },
+  "preimages": {
+    "ced2e6f3f2379132e5ed26ed5b24f94f8bc2edce945f6bf42e0e8f411f9dd0d9": {
+      "scheme": "pql-check-id-1",
+      "probe": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      "runbook": "add then list",
+      "step": "add one",
+      "index": 0,
+      "earlier": [],
+      "dimension": "execution",
+      "predicate": "exit_code",
+      "path": null,
+      "words": [
+        "add",
+        "gear"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "budget_seconds": 30,
+      "parameters": {
+        "exit_codes": null
+      },
+      "expected": {
+        "literal": 0,
+        "precondition": null
+      }
+    },
+    "c20f3ca6ff10a0d66c9a94d09ee589ecb78f4ddb7c55bf40666a25d7f703b741": {
+      "scheme": "pql-check-id-1",
+      "probe": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      "runbook": "add then list",
+      "step": "list after add",
+      "index": 1,
+      "earlier": [
+        "ced2e6f3f2379132e5ed26ed5b24f94f8bc2edce945f6bf42e0e8f411f9dd0d9"
+      ],
+      "dimension": "completeness-signaling",
+      "predicate": "row_count",
+      "path": "/widgets",
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "budget_seconds": 30,
+      "parameters": {
+        "exit_codes": null
+      },
+      "expected": {
+        "computation": {
+          "argv": [
+            "/usr/bin/python3",
+            "{SUBJECT_DIR}/oracle/count.py",
+            "{SEED}/data.json",
+            "{CAPTURE:add one}"
+          ],
+          "budget_seconds": 10,
+          "captures": [
+            "add one"
+          ],
+          "files": {
+            "oracle/count.py": "6910bddc39538fb92cc5f56ce6d92b0682dbae6e052b32d9000a8725013238cb"
+          }
+        },
+        "precondition": null
+      }
+    }
+  }
+}

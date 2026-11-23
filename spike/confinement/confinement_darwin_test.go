@@ -89,7 +89,7 @@ func newFixture(t *testing.T) fixture {
 	if os.Mkdir(filepath.Join(home, "tmp"), 0700) != nil {
 		t.Fatal("create private temporary directory")
 	}
-	f.env = []string{"HOME=" + home, "TMPDIR=" + filepath.Join(home, "tmp"), "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+	f.env = []string{"HOME=" + home, "TMPDIR=" + filepath.Join(home, "tmp"), "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 	for _, build := range []struct{ source, binary string }{{"launcher.c", f.launcher}, {"probe.c", f.probe}} {
 		r := run("/usr/bin/clang", []string{"-Wall", "-Wextra", "-Werror", "-o", build.binary, filepath.Join("testdata/programs", build.source)}, f.env, "")
 		if r.err != nil {
@@ -296,6 +296,24 @@ func (f fixture) invokeOn(t *testing.T, text, mode string, twin bool) result {
 		args = []string{"-f", f.profileFile}
 	}
 	parameters := f.parameters()
+	if strings.Contains(text, "PLANTED_DIR_1") {
+		values := map[string]string{}
+		for _, parameter := range parameters {
+			key, value, _ := strings.Cut(parameter, "=")
+			values[key] = value
+		}
+		relative, err := filepath.Rel(values["HOME"], filepath.Dir(values["PLANTED"]))
+		if err != nil || relative == ".." || strings.HasPrefix(relative, "../") {
+			t.Fatal("planted path outside home")
+		}
+		current := values["HOME"]
+		if relative != "." {
+			for i, part := range strings.Split(relative, string(filepath.Separator)) {
+				current = filepath.Join(current, part)
+				parameters = append(parameters, fmt.Sprintf("PLANTED_DIR_%d=%s", i+1, current))
+			}
+		}
+	}
 	for _, parameter := range parameters {
 		args = append(args, "-D", parameter)
 	}
@@ -339,7 +357,7 @@ func (f fixture) home() string {
 func (f fixture) parameters() []string {
 	zone, _ := filepath.EvalSymlinks("/usr/share/zoneinfo/America/New_York")
 	zoneRules, _ := filepath.EvalSymlinks("/usr/share/zoneinfo/posixrules")
-	parameters := []string{"ZONE_RULES=" + zoneRules, "ZONEFILE=" + zone, "BIN=" + f.probe, "BIN_PARENT=" + filepath.Dir(f.probe), "LAUNCHER_PARENT=" + filepath.Dir(f.launcher), "LAUNCHER=" + f.launcher, "PLANTED=" + filepath.Join(f.root, "home", "planted"), "SUBJECT=" + filepath.Join(f.root, "subject"), "SUBJECT_COPY=" + filepath.Join(f.root, "subject-copy"), "ZERO_DEVICE=/dev/zero", "STDOUT_DEVICE=/dev/fd/1", "STDERR_DEVICE=/dev/fd/2", "VOLUME=" + f.volume, "HOME=" + filepath.Join(f.root, "home"), "ROOT=/", "SYSTEM_ROOT=/System", "RUNTIME=/System/Volumes/Preboot/Cryptexes", "TRACE_DEVICE=/dev/dtracehelper", "NULL_DEVICE=/dev/null", "RANDOM_DEVICE=/dev/urandom", "BIN_DIR=/bin", "USR_BIN_DIR=/usr/bin", "TTY_DEVICE=/dev/tty", "DECLARED=" + filepath.Join(f.root, "declared"), "SEED=" + filepath.Join(f.root, "seed")}
+	parameters := []string{"SERVICES=/private/etc/services", "PROTOCOLS=/private/etc/protocols", "ZONE_RULES=" + zoneRules, "ZONEFILE=" + zone, "BIN=" + f.probe, "BIN_PARENT=" + filepath.Dir(f.probe), "LAUNCHER_PARENT=" + filepath.Dir(f.launcher), "LAUNCHER=" + f.launcher, "PLANTED=" + filepath.Join(f.root, "home", "planted"), "SUBJECT=" + filepath.Join(f.root, "subject"), "SUBJECT_COPY=" + filepath.Join(f.root, "subject-copy"), "ZERO_DEVICE=/dev/zero", "STDOUT_DEVICE=/dev/fd/1", "STDERR_DEVICE=/dev/fd/2", "VOLUME=" + f.volume, "HOME=" + filepath.Join(f.root, "home"), "ROOT=/", "SYSTEM_ROOT=/System", "RUNTIME=/System/Volumes/Preboot/Cryptexes", "TRACE_DEVICE=/dev/dtracehelper", "NULL_DEVICE=/dev/null", "RANDOM_DEVICE=/dev/urandom", "BIN_DIR=/bin", "USR_BIN_DIR=/usr/bin", "TTY_DEVICE=/dev/tty", "DECLARED=" + filepath.Join(f.root, "declared"), "SEED=" + filepath.Join(f.root, "seed")}
 	for _, parameter := range f.params {
 		key := strings.SplitN(parameter, "=", 2)[0] + "="
 		replaced := false
@@ -478,7 +496,7 @@ func TestAllowanceWitnesses(t *testing.T) {
 				goFixture := f
 				// Compile only the clean program selected by this allowance.
 				// Each scenario still owns its binary and build cache.
-				if strings.Contains(line, "ZONEFILE") || strings.Contains(line, "sysctl-read") && !strings.Contains(line, "kern.hostname") && !strings.Contains(line, "kern.ngroups") && !strings.Contains(line, `(sysctl-name "hw.memsize")`) && !strings.Contains(line, `(sysctl-name "hw.pagesize")`) {
+				if strings.Contains(line, "SERVICES") || strings.Contains(line, "PROTOCOLS") || strings.Contains(line, "ZONEFILE") || strings.Contains(line, "sysctl-read") && !strings.Contains(line, "kern.hostname") && !strings.Contains(line, "kern.ngroups") && !strings.Contains(line, `(sysctl-name "hw.memsize")`) && !strings.Contains(line, `(sysctl-name "hw.pagesize")`) {
 					goFixture = buildGoClean(t, f)
 				}
 				sortFixture := f
@@ -517,6 +535,13 @@ func TestAllowanceWitnesses(t *testing.T) {
 				if strings.Contains(line, `(sysctl-name "hw.memsize")`) || strings.Contains(line, `(sysctl-name "hw.pagesize")`) {
 					witness = sortFixture
 					mode, want = "unused", "a\nb\n"
+				}
+				if strings.Contains(line, "SERVICES") || strings.Contains(line, "PROTOCOLS") {
+					witness = goFixture
+					mode, want = "service-port", "443\n"
+					if strings.Contains(line, "PROTOCOLS") {
+						mode, want = "protocol-name", "127.0.0.1\n"
+					}
 				}
 				if strings.Contains(line, "ZONE_RULES") {
 					witness = f

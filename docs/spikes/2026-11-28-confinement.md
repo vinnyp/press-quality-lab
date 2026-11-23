@@ -1,6 +1,6 @@
 # Confinement spike record
 
-The spike asks whether macOS can confine a subject CLI and a computation tightly enough for the conformance collection to trust what it observes (CR1 to CR3). It was run on synthetic programs only. This record states what was tested, on which systems, and every limit left open (CR7). The owner decides the gate (CR6).
+The spike asks whether macOS can confine a subject CLI and a computation tightly enough for the conformance collection to trust what it observes (CR1 to CR3). It was run on synthetic programs, and once, offline, on one real printed CLI. This record states what was tested, on which systems, and every limit left open (CR7). The owner decides the gate (CR6).
 
 **Status:** passed for macOS 27.0.1 and 27.2, by the owner's decision on 2026-11-23 (CR6, KTD5). The suite passes on macOS 27.2 and on GitHub's macOS 27.0.1 image. On macOS 26.7.2 it fails closed, because that version rejects the profile, so macOS 26 is unsupported and falls under CR23.
 
@@ -8,9 +8,9 @@ The spike asks whether macOS can confine a subject CLI and a computation tightly
 
 | System | macOS | Architecture | Go | Compiler | Result |
 |---|---|---|---|---|---|
-| Developer machine | 27.2 (26B123) | arm64, 18 cores | 1.27.4 | Apple clang 21.0.0 | passes: 1,956 of 1,956 scenarios, 25 of 25 runs each |
+| Developer machine | 27.2 (26B123) | arm64, 18 cores | 1.27.4 | Apple clang 21.0.0 | passes: 1,956 of 1,956 scenarios, 25 of 25 runs each; the final suite passes in full (see the freeze below) |
 | GitHub runner `macos-26`, image `macos26` 20261117.0516.1 | 26.7.2 (25G332) | arm64 | 1.27.4 | Apple clang 21.0.0 | fails closed: the profile does not parse |
-| GitHub runner `xcode-27` (preview), image 20261104.0337.1 | 27.0.1 (26A434) | arm64 | 1.27.4 | Apple clang 21.0.0 | passes: 1,956 of 1,956 scenarios, 25 of 25 runs each, in 77 minutes |
+| GitHub runner `xcode-27` (preview), image 20261104.0337.1 | 27.0.1 (26A434) | arm64 | 1.27.4 | Apple clang 21.0.0 | passes: 1,956 of 1,956 scenarios, 25 of 25 runs each, in 77 minutes; the final suite passes in full (see the freeze below) |
 
 **macOS 26.7.2** does not know four operation names the profile uses: `fs-info`, `asr-parser-enter`, `coalition-info` and `isp-command-send`. `sandbox-exec` rejects the profile with exit 65 before any program starts. The harness counts that as a confinement that could not be applied, never as a subject's exit, so every confined clean program and violator failed. The checks that expect a broken profile to fail passed there for the wrong reason: 106 allowance-removal checks, the self-test's whole-kill mutations and the application test's without-kill form, because a profile that never started the launcher fails every program. Each of these now requires that sandbox-exec applied the profile, and treats a run where it did not as not evaluated. The profile's vocabulary belongs to one macOS version. A profile for macOS 26 would need its own operation list and its own run of this suite. On that runner's volume a read also did not move the access time, so the read proof could not be measured there.
 
@@ -132,7 +132,7 @@ These operations are refused with a kill, but no harmless attempt could witness 
 - **System information:** `system-info` is granted whole for SQLite.
 - **Exit detail:** the system kills a program whose signed code page is corrupted, but reports no exit detail for it. The harness's filter for memory and code-signing kills is therefore unwitnessed, and such a kill after a violator's readiness marker would look like a refusal kill.
 - **Private copy:** untested on signed and Homebrew-installed binaries.
-- **Nested planted files:** only a planted file directly in the home was tested. The refusal of unlink and create on each directory down to a deeper planted file is required by CR31 but untested.
+- **Nested planted files:** tested since the first record. With the file at `.config/app/creds`, the read proof and its control hold, each rename and replace of the file or a directory above it is killed, and without the refusals on those directories the forgeries succeed.
 - **Operation catalog:** the inventory queries a fixed catalog of operation names taken from this macOS version. A later version may add operations it does not know.
 
 ## Findings for the specification
@@ -141,11 +141,56 @@ These operations are refused with a kill, but no harmless attempt could witness 
 - **`sandbox_check` can kill the process it queries** when that process has a matching kill rule. Query only the probe's own process, without reporting.
 - **Kill-on-refusal makes startup fragile.** Refusals a process normally survives become fatal. The minimal allowances were found by allowing every class and then removing one at a time, never by adding one at a time.
 - **A new executable file costs about 20 ms at its first launch**, because the system assesses it. Copying the program for every run made the system's assessment service fall behind under parallel load, and launches stalled past their budget. Make the CR112 copy once per grade and check it unchanged before each reuse.
-- **The access time is not proof of a read on its own.** Under the home's write grant, `setattrlist`, a rename or replace around the file, and unlink and recreate each moved it with no read. Killing every write to the planted file closes these. A credential file deeper than the home's top level also needs every directory above it protected from unlink and create.
+- **The access time is not proof of a read on its own.** Under the home's write grant, `setattrlist`, a rename or replace around the file, and unlink and recreate each moved it with no read. Killing every write to the planted file closes these. A credential file deeper than the home's top level also needs every directory above it protected from unlink and create, which the profile now does.
 - **Running as root.** The profile grants the privileged host port (`mach-priv-host-port`) unconditionally, and that port is inert only for an ordinary user, so the engine refuses to run as root (CR115).
 - **Exit observation:** registering for a child's exit after it has exited fails with ESRCH. Because the child is not yet reaped, that can only mean it already exited.
 - **The profile is tied to a macOS version.** An operation name one version does not know makes the whole profile unparsable, and the confinement then cannot be applied at all. The engine needs one reviewed profile per supported version, and a check that the version it runs on is one of them.
 - **Some volumes do not record a read's access time.** On the macOS 26 runner's volume a read did not move it. The CR31 calibration then makes the read proof not-measured, which the suite reports as a failure, never as a pass.
+
+## The real subject's run
+
+On 2026-11-23 one real printed Go CLI, chosen by the owner and not named here, was built and run once offline under the subject profile, with the owner's approval. It runs nothing unconfined and reaches no network, key or real store.
+
+- **Build:** from a scratch copy outside the repository, with the module proxy and checksum lookups off, the local toolchain only, and modules from the existing cache. Every module it needs was already there. The subject's own checkout was not touched.
+- **Seed:** a small program in the scratch copy wrote six known rows through the CLI's own store code and marked the store freshly synced. The expected values came from that program's constants, never from the CLI's output.
+- **Runs:** after the self-test passed, each of five scenarios ran three times in its own throwaway home.
+
+| Scenario | Result |
+|---|---|
+| Help | prints its help and exits 0 |
+| A local-only read with explicit dates | returns exactly the seeded dates and programs |
+| The same read against a store that does not exist | prints an empty list and exits 0; judged not-measured, never correct |
+| A live-first read without its offline setting | killed by the confinement |
+| The same read with its offline setting | returns exactly the seeded rows for the chosen program |
+
+**What a real CLI needed that the synthetic programs did not:**
+
+- **A fixed text-encoding variable.** A Go binary that links the system's Security framework, as anything doing TLS does, loads CoreFoundation, which at load reads a text-encoding preference from the user's real home directory. It finds that directory through the user database, not `HOME`, so the profile refused the read and the CLI was killed before `main`, even for help. Setting `__CF_USER_TEXT_ENCODING` in the environment stops the read, but only when the value's prefix is the process's own user id; with any other prefix the framework reads the file and the program is killed. The engine now sets that variable, built from its own user id, for every confined program (QH12). A first version used the value for one fixed user id, which worked only because the spike's machine and the CI runner both run as that user; review caught it, and a test now shows a wrong prefix is killed.
+- **Two system files.** Go's own resolver reads `/private/etc/services` and `/private/etc/protocols` to resolve a service or protocol name. Both profiles now grant reads of exactly those two files.
+
+Each came with a clean program that is killed without it and a test that fails when it is removed. A binary built with cgo, which resolves names through the C library, is still killed, by an operation not yet identified. It is a stated limit.
+
+**What a read writes.** The subject writes inside its throwaway home on every invocation, help included:
+- a journal and an offset file under its state directory;
+- on every read with a seed, its store, through its own learning step;
+- given a store path that does not exist, a new store at its default path.
+
+The store-unchanged probe must therefore expect a declared bookkeeping path for the journal. A subject that writes its store on reads fails that probe, which is what the probe is for. Finding the method also corrected one belief about it: in a profile, a refusal placed before a grant still wins over the grant, so an allowance can't be bisected by re-adding grants after a refusal.
+
+**Unchanged afterwards:** the user's real files for this CLI, its real home's text-encoding preference, and the subject's checkout.
+
+**Two later changes, both from review of the draft specification:**
+- the text-encoding value is built from the user id, as above;
+- a planted file below the home's top level is protected along its whole path, as the nested-file limit above now says.
+
+**The rules are frozen.** The confinement rules were frozen on 2026-11-23, on the spike code of commit `30e7d9e`. Every later commit in that pull request left `spike/` unchanged. The whole suite passed on both supported systems, with 2,227 passing test results and none failing on each:
+
+| System | Where | Time |
+|---|---|---|
+| macOS 27.0.1 (26A434) | GitHub runner `xcode-27`, budget scale 4 ([run](https://github.com/vinnyp/press-quality-lab/actions/runs/45244210014)) | 88 minutes |
+| macOS 27.2 (26B123) | developer machine, run locally on the final head | 6 minutes |
+
+From here on, macOS evidence comes from runs on a machine the owner controls, with the log and the tested commit attached to the pull request. A change to the profile or the harness is a new specification version (QH2 of the draft) and needs its own runs.
 
 ## Owner decisions, 2026-11-23
 

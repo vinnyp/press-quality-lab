@@ -3,8 +3,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 ROOT="$PWD"
 STEP=preflight
-fail() { echo "CHECK FAILED at step: $STEP ($1)" >&2; exit 1; }
-trap 'fail "exit $?"' ERR
+# Never call fail() inside a subshell.
+fail() { trap - EXIT; echo "CHECK FAILED at step: $STEP ($1)" >&2; exit 1; }
+trap 'status=$?; if (( status != 0 )); then echo "CHECK FAILED at step: $STEP (exit $status)" >&2; fi' EXIT
 step() { STEP="$1"; echo "==> [$STEP] $2"; }
 need() { command -v "$1" >/dev/null || fail "$1 not found on PATH"; }
 step gate './gate.sh'
@@ -32,7 +33,17 @@ PY
 )
 step cases 'run published cases'
 need uv
-cd docs/specs/judge-1.0
+(
+ cd docs/specs/judge-1.0
 JUDGE="${ROOT//\'/\'\\\'\'}"
 PYTHONDONTWRITEBYTECODE=1 uv run runner.py --judge "'$JUDGE/bin/pql' judge" --cases cases
+)
+step draft "verify unsealed collection kit"
+(
+ cd docs/specs/conformance-collection-1.0
+ "$ROOT/scripts/draft-guard.sh" .
+ PYTHONDONTWRITEBYTECODE=1 uv run runner.py --draft
+)
+step draft-controls 'verify draft seal refusal and banner'
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-draft.py
 echo 'CHECK PASSED'

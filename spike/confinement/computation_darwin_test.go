@@ -23,7 +23,7 @@ func computationFixture(t *testing.T) fixture {
 	if os.Mkdir(filepath.Join(scratch, "tmp"), 0700) != nil {
 		t.Fatal("create private computation temporary directory")
 	}
-	f.env = []string{"HOME=" + scratch, "TMPDIR=" + filepath.Join(scratch, "tmp"), "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+	f.env = []string{"HOME=" + scratch, "TMPDIR=" + filepath.Join(scratch, "tmp"), "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 	return f
 }
 
