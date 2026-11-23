@@ -680,15 +680,31 @@ def draft(root):
     files = sorted((root / "schema").iterdir())
     if not files:
         raise Error("no schemas")
-    files.append(root.parent / "judge-1.0/schema/judge-input.schema.json")
     for path in files:
         schema = load(read(path))
         jsonschema.Draft202012Validator.check_schema(schema)
         uri = path.resolve().as_uri()
-        schemas[path.name] = (schema, uri)
+        schemas[path.relative_to(root).as_posix()] = (schema, uri)
         resource = Resource.from_contents(schema)
         registry = registry.with_resource(uri, resource)
         registry = registry.with_resource(schema.get("$id", uri), resource)
+
+    supported = set("$schema $id $ref $defs title description type const enum properties additionalProperties required items prefixItems allOf anyOf oneOf propertyNames if then else patternProperties minItems maxItems minLength maxLength minimum maximum pattern uniqueItems minProperties maxProperties".split())
+
+    def check_keywords(node):
+        if not isinstance(node, dict):
+            return
+        unknown = set(node) - supported
+        if unknown:
+            raise Error("unmodeled schema keywords: " + str(sorted(unknown)))
+        for key in ("properties", "$defs", "patternProperties"):
+            for child in node.get(key, {}).values():
+                check_keywords(child)
+        for key in ("additionalProperties", "items", "propertyNames", "if", "then", "else", "not"):
+            check_keywords(node.get(key))
+        for key in ("allOf", "anyOf", "oneOf", "prefixItems"):
+            for child in node.get(key, []):
+                check_keywords(child)
 
     def check_refs(node, resolver):
         if isinstance(node, dict):
@@ -700,7 +716,9 @@ def draft(root):
             for child in node:
                 check_refs(child, resolver)
 
-    for schema, uri in schemas.values():
+    for name, (schema, uri) in schemas.items():
+        if name not in ("schema/judge-input.schema.json", "schema/judge-output.schema.json"):
+            check_keywords(schema)
         check_refs(schema, registry.resolver(uri))
 
     def validator(schema, resolver):
@@ -717,9 +735,17 @@ def draft(root):
             for branch in schema.get(key, []):
                 if key == "allOf" or validator(branch, resolver).is_valid(value):
                     result += parts(branch, resolver, value)
+        if "if" in schema:
+            branch = "then" if validator(schema["if"], resolver).is_valid(value) else "else"
+            if branch in schema:
+                result += parts(schema[branch], resolver, value)
         return result
 
     def locations(value, constraints, path=()):
+        if path and path[-1] in ("judge_input", "judge_output"):
+            for kind in counts:
+                counts[kind]["skipped: judge subtree"] += 1
+            return
         expanded = [part for schema, resolver in constraints for part in parts(schema, resolver, value)]
         yield path, value, expanded, constraints
         children = value.items() if isinstance(value, dict) else enumerate(value) if isinstance(value, list) else []
@@ -730,7 +756,12 @@ def draft(root):
                     continue
                 if isinstance(value, dict):
                     properties = schema.get("properties", {})
-                    selected.append((properties.get(key, schema.get("additionalProperties", True)), resolver))
+                    matches = [v for pattern, v in schema.get("patternProperties", {}).items() if re.search(pattern, key)]
+                    if key in properties:
+                        matches.append(properties[key])
+                    if not matches:
+                        matches.append(schema.get("additionalProperties", True))
+                    selected.extend((v, resolver) for v in matches)
                 else:
                     prefix = schema.get("prefixItems", [])
                     selected.append((prefix[key] if key < len(prefix) else schema.get("items", True), resolver))
@@ -760,47 +791,64 @@ def draft(root):
 
     counts = {kind: Counter() for kind in ("unknown_field", "wrong_type", "missing_required")}
     failures = []
-    examples = sorted((root / "examples").glob("*.json"))
+    examples = sorted((root / "examples").iterdir())
+    seen = set()
     if not examples:
         raise Error("no examples")
     for path in examples:
-        name = "subject-file.schema.json" if path.name == "subject-file.json" else "record.schema.json"
-        schema, uri = schemas[name]
+        if path.name == "subject-file.json":
+            name = "subject-file.schema.json"
+        else:
+            match = re.fullmatch(r"(record|baseline|case)-[0-9]{2}\.json", path.name)
+            if not match:
+                raise Error("unexpected example: " + path.name)
+            name = match[1] + ".schema.json"
+        seen.add(name)
+        schema, uri = schemas["schema/" + name]
         value = load(read(path))
         checks = [(value, schema, uri, path.name)]
         if path.name.startswith("record-"):
-            judge_schema, judge_uri = schemas["judge-input.schema.json"]
+            judge_schema, judge_uri = schemas["schema/judge-input.schema.json"]
             checks.append((value["judge_input"], judge_schema, judge_uri, path.name + "/judge_input"))
         for document, schema, uri, label in checks:
             resolver = registry.resolver(uri)
             check = validator(schema, resolver)
             check.validate(document)
+            if label.endswith("/judge_input"):
+                continue
             for location, original, constraints, raw_constraints in locations(document, [(schema, resolver)]):
-                proposals = {}
+                proposals = []
                 wrong = next((v for v in (None, False, 0, 0.5, "wrong", [], {})
                               if any(not type_allowed(s, v, r) for s, r in raw_constraints)), ...)
                 if wrong is ...:
-                    counts["wrong_type"]["skipped: unconstrained type"] += 1
+                    if all(s is True for s, _ in raw_constraints):
+                        counts["wrong_type"]["skipped: any JSON value"] += 1
+                    else:
+                        failures.append(f"unconstrained type: {label} {location}")
                 else:
-                    proposals["wrong_type"] = wrong
+                    proposals.append(("wrong_type", wrong))
                 if isinstance(original, dict):
                     closed = any(isinstance(s, dict) and s.get("additionalProperties") is False for s, _ in constraints)
                     if closed:
                         unknown = "__draft_unknown__"
                         while unknown in original:
                             unknown += "_"
-                        proposals["unknown_field"] = dict(original, **{unknown: None})
+                        proposals.append(("unknown_field", dict(original, **{unknown: None})))
                     else:
-                        counts["unknown_field"]["skipped: open object/map"] += 1
+                        if any(isinstance(s, dict) and "additionalProperties" in s for s, _ in constraints):
+                            counts["unknown_field"]["skipped: open object/map"] += 1
+                        elif all(s is True for s, _ in constraints):
+                            # An arbitrary literal owns no object schema.
+                            counts["unknown_field"]["skipped: open object/map"] += 1
+                        else:
+                            failures.append(f"missing additionalProperties: {label} {location}")
                     required = sorted({k for s, _ in constraints if isinstance(s, dict) for k in s.get("required", [])})
                     if required:
-                        proposals["missing_required"] = {k: v for k, v in original.items() if k != required[0]}
+                        for missing in required:
+                            proposals.append(("missing_required", {k: v for k, v in original.items() if k != missing}))
                     else:
                         counts["missing_required"]["skipped: no required fields"] += 1
-                else:
-                    for kind in ("unknown_field", "missing_required"):
-                        counts[kind]["skipped: not an object"] += 1
-                for kind, replacement in proposals.items():
+                for kind, replacement in proposals:
                     mutant = copy.deepcopy(document)
                     if location:
                         parent = mutant
@@ -814,6 +862,8 @@ def draft(root):
                         counts[kind]["rejected"] += 1
                     else:
                         failures.append(f"accepted {kind} mutant: {label} {location}")
+    if seen != {"subject-file.schema.json", "record.schema.json", "baseline.schema.json", "case.schema.json"}:
+        raise Error("missing example for a kit schema")
     for kind, count in counts.items():
         print(f"{kind}: made={count['made']} rejected={count['rejected']}; " + "; ".join(f"{why}={n}" for why, n in sorted(count.items()) if why.startswith("skipped:")))
     for failure in failures:

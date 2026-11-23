@@ -3,9 +3,11 @@ package collectionkit
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -30,76 +32,42 @@ func decode(t *testing.T, b []byte, v any) {
 	}
 }
 
-// Carry the property or definition name through compositions to find nested enums.
-func enums(v any, name string, found map[string]map[string]bool) {
+// enumSites retains the complete schema site through compositions.
+func enumSites(v any, path string, found map[string][]any) {
 	switch node := v.(type) {
 	case map[string]any:
 		if values, ok := node["enum"].([]any); ok {
-			category := name
-			if strings.Contains(name, "reason") {
-				category = "reason"
-			}
-			if strings.Contains(name, "tier") {
-				category = "tier"
-			}
-			if category == "reason" || category == "tier" || category == "failure_kind" {
-				if found[category] == nil {
-					found[category] = map[string]bool{}
-				}
-				for _, value := range values {
-					if s, ok := value.(string); ok {
-						found[category][s] = true
-					}
-				}
-			}
+			found[path] = values
 		}
 		for key, child := range node {
-			next := name
-			if key == "properties" || key == "$defs" {
-				if fields, ok := child.(map[string]any); ok {
-					for field, schema := range fields {
-						enums(schema, field, found)
-					}
-					continue
-				}
-			}
-			enums(child, next, found)
+			enumSites(child, path+"/"+key, found)
 		}
 	case []any:
-		for _, child := range node {
-			enums(child, name, found)
+		for i, child := range node {
+			enumSites(child, fmt.Sprintf("%s/%d", path, i), found)
 		}
 	}
 }
 
 func TestOutputSchemaCopy(t *testing.T) {
-	for _, name := range []string{"judge-output.schema.json"} {
+	for _, name := range []string{"judge-input.schema.json", "judge-output.schema.json"} {
 		t.Run(name, func(t *testing.T) {
 			if !bytes.Equal(read(t, filepath.Join(kit, "schema", name)), read(t, filepath.Join(sealed, "schema", name))) {
-				t.Fatal("output schema differs from sealed judge")
+				t.Fatal("schema differs from sealed judge")
 			}
 		})
 	}
 }
 func TestSchemaEnums(t *testing.T) {
-	expected := map[string]map[string]bool{}
+	oracles := map[string]map[string][]any{}
 	for _, name := range []string{"judge-input.schema.json", "judge-output.schema.json"} {
 		var v any
 		decode(t, read(t, filepath.Join(sealed, "schema", name)), &v)
-		sets := map[string]map[string]bool{}
-		enums(v, "", sets)
-		for category, values := range sets {
-			if name == "judge-output.schema.json" && category != "reason" {
-				continue
-			}
-			if expected[category] == nil {
-				expected[category] = map[string]bool{}
-			}
-			for value := range values {
-				expected[category][value] = true
-			}
-		}
+		sites := map[string][]any{}
+		enumSites(v, "", sites)
+		oracles[name] = sites
 	}
+	input, output := oracles["judge-input.schema.json"], oracles["judge-output.schema.json"]
 	files, err := filepath.Glob(filepath.Join(kit, "schema", "*.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -111,21 +79,45 @@ func TestSchemaEnums(t *testing.T) {
 		t.Run(filepath.Base(file), func(t *testing.T) {
 			var v any
 			decode(t, read(t, file), &v)
-			found := map[string]map[string]bool{}
-			enums(v, "", found)
-			for category, values := range found {
-				for value := range values {
-					if !expected[category][value] {
-						t.Errorf("%s enum value %q absent from sealed judge", category, value)
+			sites := map[string][]any{}
+			enumSites(v, "", sites)
+			for site, values := range sites {
+				var expected []any
+				switch {
+				case strings.HasSuffix(site, "/properties/dimension") || site == "/$defs/dimension":
+					expected = input["/properties/required/items/properties/dimension"]
+				case filepath.Base(file) == "record.schema.json" && site == "/properties/next_actions/items/oneOf/0/properties/reason":
+					expected = output["/properties/checks/items/properties/reason"]
+				case filepath.Base(file) == "record.schema.json" && site == "/properties/next_actions/items/oneOf/1/properties/reason":
+					expected = output["/properties/dimensions/items/properties/reason"]
+				case strings.HasSuffix(site, "/properties/failure_kind"), strings.HasSuffix(site, "/properties/tier"), site == "/properties/claimed_tier":
+					expected = input[site]
+					if filepath.Base(file) == "baseline.schema.json" && site == "/properties/baseline/properties/entries/items/properties/tier" {
+						expected = input["/$defs/baseline/properties/entries/items/properties/tier"]
+					}
+					if filepath.Base(file) == "judge-output.schema.json" {
+						switch site {
+						case "/$defs/baseline_entry/properties/tier":
+							expected = input["/$defs/baseline/properties/entries/items/properties/tier"]
+						default:
+							t.Errorf("no input tier oracle for output site %s", site)
+							continue
+						}
+					}
+				default:
+					continue
+				}
+				if len(expected) == 0 {
+					t.Errorf("no oracle for %s", site)
+					continue
+				}
+				for _, value := range values {
+					if !slices.Contains(expected, value) {
+						t.Errorf("%s enum value %v absent from sealed judge site", site, value)
 					}
 				}
 			}
 		})
-	}
-	for _, category := range []string{"reason", "failure_kind", "tier"} {
-		if len(expected[category]) == 0 {
-			t.Fatalf("no sealed %s enum", category)
-		}
 	}
 }
 func TestExampleRecords(t *testing.T) {
@@ -154,13 +146,14 @@ func TestExampleRecords(t *testing.T) {
 				Input    json.RawMessage `json:"judge_input"`
 				Output   any             `json:"judge_output"`
 				ExitCode int             `json:"exit_code"`
+				Rejected bool            `json:"judge_rejected"`
 			}
 			decode(t, read(t, file), &record)
 			output, code := judge.Judge(record.Input)
 			var got map[string]any
 			decode(t, output, &got)
-			if got["outcome"] == "rejected" {
-				t.Fatal("judge rejected example")
+			if record.Rejected != (got["outcome"] == "rejected") {
+				t.Error("judge_rejected differs from judge outcome")
 			}
 			if code != record.ExitCode {
 				t.Errorf("exit code %d, record expects %d", code, record.ExitCode)

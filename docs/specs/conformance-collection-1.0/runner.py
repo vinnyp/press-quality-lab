@@ -22,7 +22,7 @@ def main():
     if args.draft:
         print("UNSEALED", flush=True)
         root = Path(__file__).resolve().parent
-        if (root / "KIT.sha256").exists():
+        if (root / "KIT.sha256").exists() or (root / "KIT.sha256").is_symlink():
             print("refused: draft folder contains KIT.sha256", file=sys.stderr)
             return 2
         try:
