@@ -82,7 +82,8 @@
             "additionalProperties": false,
             "required": [
               "kind",
-              "path"
+              "path",
+              "detail"
             ],
             "properties": {
               "kind": {

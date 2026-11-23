@@ -58,10 +58,10 @@
   A probe check with no command has the parameters `{}`.
 
   **An expected source:**
-  - a literal is `{"literal": v}`;
-  - a computation is `{"computation": {"argv": [...], "budget_seconds": n, "captures": [...], "files": {p: d}}}`, where `files` maps the executable, when it is named by a relative path, and each declared file to its content's SHA-256 in hexadecimal.
+  - a literal is `{"literal": v, "precondition": ...}`;
+  - a computation is `{"computation": {"argv": [...], "budget_seconds": n, "captures": [...], "files": {p: d}}, "precondition": ...}`, where `files` maps the executable, when it is named by a relative path, and each declared file to its content's SHA-256 in hexadecimal.
 
-  A check that asserts emptiness adds `{"precondition": ...}` in the same form to its expected source.
+  Each expected source also has the key `precondition`: for a check that asserts emptiness, its precondition as `{"computation": {...}}` in the same form; otherwise `null`.
 
   **The seed's digest** is the SHA-256 of the RFC 8785 form of a JSON array, encoded as UTF-8. The array holds one entry for each file and directory below the seed directory, sorted by path bytes. Each entry is `[path, kind, digest]`:
   - `path` is relative to the seed directory and uses `/`;

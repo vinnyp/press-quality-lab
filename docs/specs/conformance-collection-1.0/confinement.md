@@ -6,7 +6,7 @@
 
 ## 1. Where the engine may grade
 
-**Frozen.** These rules were frozen on 2026-11-23, when the spike's whole suite passed on both systems QH1 names under the profile below. A change to any rule here is a new specification version.
+**Frozen.** These rules were frozen on 2026-11-23, when the spike's whole suite passed on both systems QH1 names under the profile below. A change to what any rule here requires is a new specification version (QE1); an editorial correction goes in the errata note.
 
 - **QH1. Supported systems.** The engine grades only on a macOS version this specification names as passed: macOS 27.0.1 and macOS 27.2. On any other system, a later 27 release included, every check that runs the subject is not observed with `network_unverifiable` and is never red (QO1). A version is added by a new specification version whose spike record names it as passed.
 - **QH2. One profile per version.** The profile in §3 belongs to the versions QH1 names. A macOS version that does not know an operation the profile names rejects the whole profile, and the confinement then cannot be applied at all (QH6). The engine checks the running version against QH1 before any check runs.

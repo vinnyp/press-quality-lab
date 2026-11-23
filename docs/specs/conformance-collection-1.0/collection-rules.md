@@ -71,7 +71,7 @@
     - with `declared_count` a placeholder, discovery is not observed;
     - with `secret` a placeholder, the planted-secret probe is not observed.
   - A command whose class or `writes` is a placeholder is a candidate of every probe that would run it were the placeholder filled with `safe` and `false`. It enters the required set with its own check of that probe, not observed with `placeholder_unfilled`.
-  - A placeholder enters a check id as the placeholder object exactly as written (QE2).
+  - A placeholder enters a check id as the parsed placeholder object (QE2).
   - In addition, any placeholder in the file makes every required check on an always-applicable dimension that would otherwise be held not observed with `placeholder_unfilled`, so the run cannot exit 0. A check that is not held stays not held. A discovered command that the file does not declare does the same (QD3).
   - The scorecard names each placeholder by its location in the file.
 - **QS6. Commands.** Each declared command gives:
