@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 
+guard_script = Path(__file__).resolve().parent / "draft-guard.sh"
 source = Path(__file__).resolve().parents[1] / "docs/specs/conformance-collection-1.0"
 with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     root = Path(temporary) / "kit"
@@ -22,7 +23,7 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
         result = run()
         if result.returncode != 2 or "refused: draft folder contains KIT.sha256" not in result.stderr:
             raise RuntimeError("wrong draft refusal: " + str(result.returncode) + " " + result.stderr)
-        guard = subprocess.run(["bash", "-c", "[[ ! -e KIT.sha256 && ! -L KIT.sha256 ]]"], cwd=root, timeout=10, check=False)
+        guard = subprocess.run(["bash", str(guard_script), str(root)], cwd=root, timeout=10, check=False)
         if guard.returncode == 0:
             raise RuntimeError("check.sh guard accepted seal")
 
@@ -33,6 +34,9 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     seal.symlink_to("absent-seal")
     refused()
     seal.unlink()
+    guard = subprocess.run(["bash", str(guard_script), str(root)], timeout=10, check=False)
+    if guard.returncode != 0:
+        raise RuntimeError("draft guard refused unsealed tree")
     normal = run()
     if normal.returncode != 0:
         raise RuntimeError(normal.stderr)

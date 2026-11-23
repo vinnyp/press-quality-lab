@@ -32,10 +32,33 @@ func decode(t *testing.T, b []byte, v any) {
 	}
 }
 
-// enumSites retains the complete schema site through compositions.
-func enumSites(v any, path string, found map[string][]any) {
+// enumSites checks references at their use sites as well as definitions.
+func enumSites(t *testing.T, root any, v any, path string, found map[string][]any, refs map[string]bool) {
+	t.Helper()
 	switch node := v.(type) {
 	case map[string]any:
+		if ref, ok := node["$ref"].(string); ok && strings.HasPrefix(ref, "#/") {
+			if refs[ref] {
+				t.Fatalf("cyclic reference %s", ref)
+			}
+			target := root
+			for _, part := range strings.Split(ref[2:], "/") {
+				object, ok := target.(map[string]any)
+				if !ok {
+					t.Fatalf("invalid reference %s", ref)
+				}
+				target, ok = object[strings.ReplaceAll(strings.ReplaceAll(part, "~1", "/"), "~0", "~")]
+				if !ok {
+					t.Fatalf("missing reference %s", ref)
+				}
+			}
+			next := map[string]bool{}
+			for k, v := range refs {
+				next[k] = v
+			}
+			next[ref] = true
+			enumSites(t, root, target, path, found, next)
+		}
 		if values, ok := node["enum"].([]any); ok {
 			found[path] = values
 		}
@@ -43,11 +66,11 @@ func enumSites(v any, path string, found map[string][]any) {
 			found[path] = append(found[path], value)
 		}
 		for key, child := range node {
-			enumSites(child, path+"/"+key, found)
+			enumSites(t, root, child, path+"/"+key, found, refs)
 		}
 	case []any:
 		for i, child := range node {
-			enumSites(child, fmt.Sprintf("%s/%d", path, i), found)
+			enumSites(t, root, child, fmt.Sprintf("%s/%d", path, i), found, refs)
 		}
 	}
 }
@@ -62,85 +85,104 @@ func TestJudgeSchemaCopies(t *testing.T) {
 	}
 }
 func TestSchemaEnums(t *testing.T) {
+	type policy struct{ oracle, site, owned string }
+	policies := map[string]policy{
+		"baseline.schema.json/properties/baseline/properties/entries/items/properties/dimension":                                 {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/dimension"},
+		"baseline.schema.json/properties/baseline/properties/entries/items/properties/kind":                                      {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/kind"},
+		"baseline.schema.json/properties/baseline/properties/entries/items/properties/result":                                    {oracle: "judge-input.schema.json", site: "/properties/baseline/oneOf/1/properties/entries/items/properties/result"},
+		"baseline.schema.json/properties/baseline/properties/entries/items/properties/tier":                                      {oracle: "judge-input.schema.json", site: "/properties/evidence/items/properties/tier"},
+		"baseline.schema.json/properties/baseline_version":                                                                       {owned: "[\"1.0\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/properties/parameters/anyOf/4/properties/kind":           {owned: "[\"credential\",\"seeded_state\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/properties/probe":                                        {owned: "[\"discovery\",\"bare\",\"byte_bound\",\"exit_codes\",\"planted_secret\",\"store_unchanged\",null]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/properties/scheme":                                       {owned: "[\"pql-check-id-1\"]"},
+		"baseline.schema.json/properties/spec_version":                                                                           {owned: "[\"1.0\"]"},
+		"case.schema.json/properties/entry/properties/fixtures/items/properties/kind":                                            {owned: "[\"link\",\"special_file\",\"oversized_output\",\"invalid_bytes\",\"planted_secret\"]"},
+		"case.schema.json/properties/entry/properties/request":                                                                   {oracle: "judge-input.schema.json", site: "/properties/request"},
+		"case.schema.json/properties/entry/properties/scope/items":                                                               {oracle: "judge-output.schema.json", site: "/properties/scope/items"},
+		"case.schema.json/properties/expect/properties/exit_code":                                                                {owned: "[0,1,2,3,4,5,64,70]"},
+		"case.schema.json/properties/kind":                                                                                       {owned: "[\"judge-checked\",\"derivation-only\"]"},
+		"record.schema.json/properties/exit_code":                                                                                {owned: "[0,1,2,3,4,5,64,70]"},
+		"record.schema.json/properties/next_actions/items/oneOf/0/properties/reason":                                             {oracle: "judge-output.schema.json", site: "/properties/checks/items/properties/reason"},
+		"record.schema.json/properties/next_actions/items/oneOf/1/properties/dimension":                                          {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/dimension"},
+		"record.schema.json/properties/next_actions/items/oneOf/1/properties/reason":                                             {oracle: "judge-output.schema.json", site: "/properties/dimensions/items/properties/reason"},
+		"record.schema.json/properties/record_version":                                                                           {owned: "[\"1.0\"]"},
+		"record.schema.json/properties/request":                                                                                  {oracle: "judge-input.schema.json", site: "/properties/request"},
+		"record.schema.json/properties/scope/items":                                                                              {oracle: "judge-output.schema.json", site: "/properties/scope/items"},
+		"record.schema.json/properties/spec_version":                                                                             {owned: "[\"1.0\"]"},
+		"subject-file.schema.json/$defs/check/properties/dimension":                                                              {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/dimension"},
+		"subject-file.schema.json/$defs/check/properties/predicate":                                                              {owned: "[\"exit_code\",\"stdout_equals\",\"stdout_json_equals\",\"stdout_contains\",\"stdout_not_contains\",\"stderr_contains\",\"stdout_bytes_at_most\",\"json_path_equals\",\"row_count\",\"stdout_empty\"]"},
+		"subject-file.schema.json/$defs/command/properties/class/oneOf/0":                                                        {owned: "[\"safe\",\"destructive\"]"},
+		"subject-file.schema.json/$defs/dimension":                                                                               {owned: "[\"availability\",\"execution\",\"graceful-failure\",\"robustness\",\"response-correctness\",\"determinism\",\"provenance-honesty\",\"completeness-signaling\",\"output-conformance\",\"flag-conformance\",\"bounding\",\"discoverability\",\"error-message-quality\",\"token-economy\",\"side-effect-integrity\",\"idempotency\",\"destructive-guard\",\"pii-secret-hygiene\"]"},
+		"subject-file.schema.json/$defs/runbook/properties/steps/items/properties/checks/items/properties/dimension":             {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/dimension"},
+		"subject-file.schema.json/$defs/runbook/properties/steps/items/properties/checks/items/properties/predicate":             {owned: "[\"exit_code\",\"stdout_equals\",\"stdout_json_equals\",\"stdout_contains\",\"stdout_not_contains\",\"stderr_contains\",\"stdout_bytes_at_most\",\"json_path_equals\",\"row_count\",\"stdout_empty\"]"},
+		"subject-file.schema.json/$defs/step/properties/checks/items/properties/dimension":                                       {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/dimension"},
+		"subject-file.schema.json/$defs/step/properties/checks/items/properties/predicate":                                       {owned: "[\"exit_code\",\"stdout_equals\",\"stdout_json_equals\",\"stdout_contains\",\"stdout_not_contains\",\"stderr_contains\",\"stdout_bytes_at_most\",\"json_path_equals\",\"row_count\",\"stdout_empty\"]"},
+		"subject-file.schema.json/properties/commands/items/properties/class/oneOf/0":                                            {owned: "[\"safe\",\"destructive\"]"},
+		"subject-file.schema.json/properties/facts/properties/bounding/oneOf/0":                                                  {oracle: "judge-input.schema.json", site: "/properties/subject_facts/properties/bounding"},
+		"subject-file.schema.json/properties/markers/items/properties/dimension":                                                 {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/dimension"},
+		"subject-file.schema.json/properties/runbooks/items/properties/steps/items/properties/checks/items/properties/dimension": {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/dimension"},
+		"subject-file.schema.json/properties/runbooks/items/properties/steps/items/properties/checks/items/properties/predicate": {owned: "[\"exit_code\",\"stdout_equals\",\"stdout_json_equals\",\"stdout_contains\",\"stdout_not_contains\",\"stderr_contains\",\"stdout_bytes_at_most\",\"json_path_equals\",\"row_count\",\"stdout_empty\"]"},
+		"subject-file.schema.json/properties/secret/oneOf/2/if/properties/kind":                                                  {owned: "[\"seeded_state\"]"},
+		"subject-file.schema.json/properties/secret/oneOf/2/properties/kind":                                                     {owned: "[\"credential\",\"seeded_state\"]"},
+		"subject-file.schema.json/properties/subject_file_version":                                                               {owned: "[\"1.0\"]"},
+	}
 	oracles := map[string]map[string][]any{}
 	for _, name := range []string{"judge-input.schema.json", "judge-output.schema.json"} {
 		var v any
 		decode(t, read(t, filepath.Join(sealed, "schema", name)), &v)
 		sites := map[string][]any{}
-		enumSites(v, "", sites)
+		enumSites(t, v, v, "", sites, nil)
 		oracles[name] = sites
 	}
-	input, output := oracles["judge-input.schema.json"], oracles["judge-output.schema.json"]
-	files, err := filepath.Glob(filepath.Join(kit, "schema", "*.json"))
+	files, err := filepath.Glob(filepath.Join(kit, "schema", "*.schema.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(files) == 0 {
 		t.Fatal("no schemas")
 	}
+	seen := map[string]bool{}
 	for _, file := range files {
-		t.Run(strings.ReplaceAll(filepath.Base(file), ".", "_"), func(t *testing.T) {
-			var v any
-			decode(t, read(t, file), &v)
-			sites := map[string][]any{}
-			enumSites(v, "", sites)
-			for site, values := range sites {
+		var v any
+		decode(t, read(t, file), &v)
+		sites := map[string][]any{}
+		enumSites(t, v, v, "", sites, nil)
+		name := filepath.Base(file)
+		for site, values := range sites {
+			key := name + site
+			seen[key] = true
+			rule, ok := policies[key]
+			if oracles[name] != nil {
+				rule = policy{oracle: name, site: site}
+				ok = true
+			}
+			if !ok {
+				t.Errorf("unmapped enum site %s", key)
+				continue
+			}
+			if rule.owned != "" {
 				var expected []any
-				switch {
-				case oracles[filepath.Base(file)] != nil:
-					expected = oracles[filepath.Base(file)][site]
-				case filepath.Base(file) == "subject-file.schema.json" && (site == "/properties/secret/oneOf/2/properties/kind" || site == "/properties/secret/oneOf/2/if/properties/kind"):
-					expected = []any{"credential", "seeded_state"}
-				case filepath.Base(file) == "case.schema.json" && site == "/properties/kind":
-					expected = []any{"judge-checked", "derivation-only"}
-				case filepath.Base(file) == "case.schema.json" && site == "/properties/entry/properties/fixtures/items/properties/kind":
-					expected = []any{"link", "special_file", "oversized_output", "invalid_bytes", "planted_secret"}
-				case filepath.Base(file) == "baseline.schema.json" && site == "/properties/baseline/properties/entries/items/properties/kind":
-					expected = input["/$defs/baseline/properties/entries/items/properties/kind"]
-				case strings.HasSuffix(site, "/properties/dimension") || site == "/$defs/dimension":
-					expected = input["/properties/required/items/properties/dimension"]
-				case filepath.Base(file) == "record.schema.json" && site == "/properties/next_actions/items/oneOf/0/properties/reason":
-					expected = output["/properties/checks/items/properties/reason"]
-				case filepath.Base(file) == "record.schema.json" && site == "/properties/next_actions/items/oneOf/1/properties/reason":
-					expected = output["/properties/dimensions/items/properties/reason"]
-				case strings.HasSuffix(site, "/properties/failure_kind"), strings.HasSuffix(site, "/properties/tier"), site == "/properties/claimed_tier":
-					expected = input[site]
-					if filepath.Base(file) == "baseline.schema.json" && site == "/properties/baseline/properties/entries/items/properties/tier" {
-						expected = input["/$defs/baseline/properties/entries/items/properties/tier"]
-					}
-					if filepath.Base(file) == "judge-output.schema.json" {
-						switch site {
-						case "/$defs/baseline_entry/properties/tier":
-							expected = input["/$defs/baseline/properties/entries/items/properties/tier"]
-						default:
-							t.Errorf("no input tier oracle for output site %s", site)
-							continue
-						}
-					}
-				default:
-					parts := strings.Split(site, "/")
-					property := ""
-					for i := 0; i+1 < len(parts); i++ {
-						if parts[i] == "properties" || parts[i] == "$defs" {
-							property = parts[i+1]
-						}
-					}
-					if slices.Contains([]string{"reason", "failure_kind", "tier", "claimed_tier", "dimension", "kind", "outcome"}, property) {
-						t.Errorf("unmapped enum site %s", site)
-					}
-					continue
+				decode(t, []byte(rule.owned), &expected)
+				if !reflect.DeepEqual(values, expected) {
+					t.Errorf("%s kit-owned values differ: %v", key, values)
 				}
-				if len(expected) == 0 {
-					t.Errorf("no oracle for %s", site)
-					continue
-				}
-				for _, value := range values {
-					if !slices.ContainsFunc(expected, func(want any) bool { return reflect.DeepEqual(want, value) }) {
-						t.Errorf("%s enum value %v absent from sealed judge site", site, value)
-					}
+				continue
+			}
+			expected := oracles[rule.oracle][rule.site]
+			if len(expected) == 0 {
+				t.Errorf("missing judge oracle %s %s", rule.oracle, rule.site)
+			}
+			for _, value := range values {
+				if !slices.ContainsFunc(expected, func(want any) bool { return reflect.DeepEqual(want, value) }) {
+					t.Errorf("%s enum value %v absent from sealed judge site", key, value)
 				}
 			}
-		})
+		}
+	}
+	for key := range policies {
+		if !seen[key] {
+			t.Errorf("enum policy path no longer resolves: %s", key)
+		}
 	}
 }
 func TestExampleRecords(t *testing.T) {

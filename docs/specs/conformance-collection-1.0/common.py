@@ -681,6 +681,8 @@ def draft(root):
     if not files:
         raise Error("no schemas")
     for path in files:
+        if not path.name.endswith(".schema.json"):
+            raise Error("unexpected schema file: " + path.name)
         schema = load(read(path))
         jsonschema.Draft202012Validator.check_schema(schema)
         uri = path.resolve().as_uri()
@@ -709,7 +711,7 @@ def draft(root):
     open_objects = {
         ("schema/baseline.schema.json", "/properties/preimages"),
         *( ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/" + suffix)
-           for suffix in ("env", "parameters", "expected/oneOf/1") ),
+           for suffix in ("env", "expected/oneOf/1") ),
         ("schema/subject-file.schema.json", "/$defs/offline/properties/env"),
     }
     fragments = {
@@ -717,12 +719,30 @@ def draft(root):
         ("schema/subject-file.schema.json", "/properties/secret/oneOf/2/then"),
     }
 
-    def check_objects(node, name, path=""):
-        arbitrary_values = {
+    arbitrary_values = {
             ("schema/subject-file.schema.json", "/$defs/expected/oneOf/0/properties/literal"),
-            ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/parameters/additionalProperties"),
             ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/expected/oneOf/1/additionalProperties"),
         }
+    def resolve_site(name, pointer):
+        node = schemas[name][0]
+        try:
+            for part in pointer.split("/")[1:]:
+                node = node[int(part)] if isinstance(node, list) else node[part.replace("~1", "/").replace("~0", "~")]
+        except (KeyError, IndexError, TypeError, ValueError) as exc:
+            raise Error(f"allowlist path no longer resolves: {name} {pointer}") from exc
+        return node
+
+    open_objects.add(("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/parameters/anyOf/4/properties/commands/items/properties/env"))
+    for name, pointer in open_objects | fragments | arbitrary_values:
+        resolve_site(name, pointer)
+
+    schema_sites = set()
+    def check_objects(node, name, path=""):
+        if node is None:
+            return
+        schema_sites.add((name, path))
+        if isinstance(node, dict) and not set(node).intersection({"type", "const", "enum", "$ref", "oneOf", "anyOf", "allOf"}):
+            raise Error(f"unconstrained schema: {name} {path}")
         if node is True and (name, path) not in arbitrary_values:
             raise Error(f"unconstrained schema: {name} {path}")
         if isinstance(node, dict):
@@ -831,6 +851,39 @@ def draft(root):
             return any(checker.is_type(candidate, kind) and any(checker.is_type(v, kind) for v in values) for kind in kinds)
         return True
 
+    reached = set()
+    def cover(value, node, name, pointer=""):
+        reached.add((name, pointer))
+        if not isinstance(node, dict):
+            return
+        if "$ref" in node:
+            ref = node["$ref"]
+            if ref.startswith("#/"):
+                target = ref[1:]
+                cover(value, resolve_site(name, target), name, target)
+            # External references delegate to the judge; no kit coverage there.
+        for key in ("allOf", "anyOf", "oneOf"):
+            for index, branch in enumerate(node.get(key, [])):
+                if key == "allOf" or validator(branch, registry.resolver(schemas[name][1])).is_valid(value):
+                    cover(value, branch, name, pointer + f"/{key}/{index}")
+        if "if" in node:
+            cover(value, node["if"], name, pointer + "/if")
+            branch = "then" if validator(node["if"], registry.resolver(schemas[name][1])).is_valid(value) else "else"
+            if branch in node:
+                cover(value, node[branch], name, pointer + "/" + branch)
+        if isinstance(value, dict):
+            for key, child in value.items():
+                escaped = key.replace("~", "~0").replace("/", "~1")
+                if key in node.get("properties", {}):
+                    cover(child, node["properties"][key], name, pointer + "/properties/" + escaped)
+                elif "additionalProperties" in node:
+                    cover(child, node["additionalProperties"], name, pointer + "/additionalProperties")
+                if "propertyNames" in node:
+                    cover(key, node["propertyNames"], name, pointer + "/propertyNames")
+        if isinstance(value, list) and "items" in node:
+            for child in value:
+                cover(child, node["items"], name, pointer + "/items")
+
     counts = {kind: Counter() for kind in ("unknown_field", "wrong_type", "missing_required")}
     failures = []
     examples = sorted((root / "examples").iterdir())
@@ -841,7 +894,7 @@ def draft(root):
         if path.name == "subject-file.json":
             name = "subject-file.schema.json"
         else:
-            match = re.fullmatch(r"(record|baseline|case)-[0-9]{2}\.json", path.name)
+            match = re.fullmatch(r"(subject-file|record|baseline|case)-[0-9]{2}\.json", path.name)
             if not match:
                 raise Error("unexpected example: " + path.name)
             name = match[1] + ".schema.json"
@@ -858,6 +911,7 @@ def draft(root):
             check.validate(document)
             if label.endswith("/judge_input"):
                 continue
+            cover(document, schema, "schema/" + name)
             for location, original, constraints, raw_constraints in locations(document, [(schema, resolver)]):
                 proposals = []
                 wrong = next((v for v in (None, False, 0, 0.5, "wrong", [], {})
@@ -906,9 +960,13 @@ def draft(root):
                         failures.append(f"accepted {kind} mutant: {label} {location}")
     if seen != {Path(name).name for name in schemas if name.endswith(".schema.json") and Path(name).name not in ("judge-input.schema.json", "judge-output.schema.json")}:
         raise Error("missing example for a kit schema")
+    unreached = sorted(schema_sites - reached)
+    for name, pointer in unreached:
+        failures.append(f"unreached subschema: {name} {pointer}")
+    print(f"coverage: reached={len(schema_sites & reached)} total={len(schema_sites)} unreached={len(unreached)}")
     for kind, count in counts.items():
         print(f"{kind}: made={count['made']} rejected={count['rejected']}; " + "; ".join(f"{why}={n}" for why, n in sorted(count.items()) if why.startswith("skipped:")))
     for failure in failures:
         print(failure, file=sys.stderr)
-    print("Limit: a widened type, enum or bound cannot be caught without an outside oracle.")
+    print("Limit: widened types or bounds at kit-owned sites are not detected; judge-mapped enums are checked by the Go test.")
     return int(bool(failures))

@@ -3,6 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 ROOT="$PWD"
 STEP=preflight
+# Never call fail() inside a subshell.
 fail() { trap - EXIT; echo "CHECK FAILED at step: $STEP ($1)" >&2; exit 1; }
 trap 'status=$?; if (( status != 0 )); then echo "CHECK FAILED at step: $STEP (exit $status)" >&2; fi' EXIT
 step() { STEP="$1"; echo "==> [$STEP] $2"; }
@@ -40,7 +41,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run runner.py --judge "'$JUDGE/bin/pql' judge" --ca
 step draft "verify unsealed collection kit"
 (
  cd docs/specs/conformance-collection-1.0
- [[ ! -e KIT.sha256 && ! -L KIT.sha256 ]] || { echo "draft collection kit must not contain KIT.sha256 (seal is a later unit)" >&2; exit 1; }
+ "$ROOT/scripts/draft-guard.sh" .
  PYTHONDONTWRITEBYTECODE=1 uv run runner.py --draft
 )
 step draft-controls 'verify draft seal refusal and banner'
