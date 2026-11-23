@@ -711,7 +711,7 @@ def draft(root):
     open_objects = {
         ("schema/baseline.schema.json", "/properties/preimages"),
         *( ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/" + suffix)
-           for suffix in ("env", "expected/oneOf/1") ),
+           for suffix in ("env", "expected/oneOf/2/properties/computation/properties/files") ),
         ("schema/subject-file.schema.json", "/$defs/offline/properties/env"),
     }
     fragments = {
@@ -721,7 +721,7 @@ def draft(root):
 
     arbitrary_values = {
             ("schema/subject-file.schema.json", "/$defs/expected/oneOf/0/properties/literal"),
-            ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/expected/oneOf/1/additionalProperties"),
+            ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/expected/oneOf/1/properties/literal"),
         }
     def resolve_site(name, pointer):
         node = schemas[name][0]
@@ -741,7 +741,10 @@ def draft(root):
         if node is None:
             return
         schema_sites.add((name, path))
-        if isinstance(node, dict) and not set(node).intersection({"type", "const", "enum", "$ref", "oneOf", "anyOf", "allOf"}):
+        constraining = {"type", "const", "enum", "$ref", "oneOf", "anyOf", "allOf"}
+        if path.rsplit("/", 1)[-1] in {"if", "then", "else"}:
+            constraining.add("properties")
+        if isinstance(node, dict) and not set(node).intersection(constraining):
             raise Error(f"unconstrained schema: {name} {path}")
         if node is True and (name, path) not in arbitrary_values:
             raise Error(f"unconstrained schema: {name} {path}")

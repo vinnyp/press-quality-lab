@@ -220,8 +220,15 @@ func TestExampleRecords(t *testing.T) {
 			if record.Rejected != (got["outcome"] == "rejected") {
 				t.Error("judge_rejected differs from judge outcome")
 			}
-			if code != record.ExitCode {
-				t.Errorf("exit code %d, record expects %d", code, record.ExitCode)
+			expectedCode := record.ExitCode
+			if record.Rejected {
+				expectedCode = 2
+				if record.ExitCode != 70 {
+					t.Errorf("rejected record exit code %d, want 70", record.ExitCode)
+				}
+			}
+			if code != expectedCode {
+				t.Errorf("exit code %d, record expects %d", code, expectedCode)
 			}
 			if !reflect.DeepEqual(got, record.Output) {
 				t.Errorf("judge output differs from record")
