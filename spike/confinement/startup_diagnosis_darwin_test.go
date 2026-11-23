@@ -18,6 +18,25 @@ func TestStartupDiagnosis(t *testing.T) {
 	operations := strings.Fields(string(data))
 	c := newFixture(t)
 	g := buildGoClean(t, c)
+	// Parse each rendered profile line alone, so every line this system
+	// rejects is named with sandbox-exec's own error text.
+	for _, computation := range []bool{false, true} {
+		var defines []string
+		for _, parameter := range c.parameters() {
+			defines = append(defines, "-D", parameter)
+		}
+		for _, line := range strings.Split(profile(computation), "\n") {
+			if !strings.HasPrefix(line, "(") || strings.HasPrefix(line, "(version") {
+				continue
+			}
+			args := append(append([]string{"-p", "(version 1)\n(allow default)\n" + line}, defines...), "/usr/bin/true")
+			r := run("/usr/bin/sandbox-exec", args, c.env, c.root)
+			executed.Add(1)
+			if r.status.Exited() && r.status.ExitStatus() != 0 {
+				t.Logf("startup-diagnosis: profile=%s rejected-line=%q exit=%d error=%q", profileName(computation), line, r.status.ExitStatus(), strings.TrimSpace(r.diagnostic))
+			}
+		}
+	}
 	for _, computation := range []bool{false, true} {
 		for _, program := range []struct {
 			mode, want string
