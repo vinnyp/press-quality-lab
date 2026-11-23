@@ -29,10 +29,15 @@ for name in sorted(expected - actual):
     print(f'missing file: {name}', file=sys.stderr)
 sys.exit(bool(actual ^ expected))
 PY
-)
 step cases 'run published cases'
 need uv
-cd docs/specs/judge-1.0
 JUDGE="${ROOT//\'/\'\\\'\'}"
 PYTHONDONTWRITEBYTECODE=1 uv run runner.py --judge "'$JUDGE/bin/pql' judge" --cases cases
+)
+step draft "verify unsealed collection kit"
+(
+ cd docs/specs/conformance-collection-1.0
+ [[ ! -e KIT.sha256 ]] || fail "draft collection kit must not contain KIT.sha256 (seal is a later unit)"
+ PYTHONDONTWRITEBYTECODE=1 uv run runner.py --draft
+)
 echo 'CHECK PASSED'

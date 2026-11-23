@@ -360,6 +360,7 @@ func TestCheckDocsOnFixtures(t *testing.T) {
 		{name: "duplicate flow", requirementsText: clean + "\n- F5. duplicate", want: []string{requirements + ":1: F5 must appear exactly once (found 2)"}},
 		{name: "changed wording", requirementsText: strings.Replace(clean, "- R5. ", "- R5. changed ", 1), want: []string{digestProblem}},
 		{name: "nested JSON", requirementsText: clean, extra: fstest.MapFS{"docs/specs/x/cases/c/case.json": {Data: []byte("{\n\"citation\": \"R99\"\n}")}}, want: []string{"docs/specs/x/cases/c/case.json:2: R99 is not defined in docs/requirements.md"}},
+		{name: "draft kit JSON", requirementsText: clean, extra: fstest.MapFS{"docs/specs/conformance-collection-1.0/examples/fixture.json": {Data: []byte("{\n\"citation\": \"R99\"\n}")}}, want: []string{"docs/specs/conformance-collection-1.0/examples/fixture.json:2: R99 is not defined in docs/requirements.md"}},
 		{name: "duplicate", requirementsText: clean + "\n- R5. duplicate", want: []string{fmt.Sprintf("%s:%d: R5 is defined twice (lines %d and %d)", requirements, lineAt(clean, len(clean))+1, lineAt(clean, strings.Index(clean, "- R5. ")), lineAt(clean, len(clean))+1), digestProblem}},
 		{name: "gap", requirementsText: strings.Replace(clean, "- R5. ", "- removed5. ", 1), want: func() []string {
 			want := []string{requirements + ":1: R5 is missing from definitions", digestProblem, requirements + ":1: R5 is required in definitions"}
