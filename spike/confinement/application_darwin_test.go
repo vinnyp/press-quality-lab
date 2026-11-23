@@ -180,6 +180,9 @@ func TestConfinementApplication(t *testing.T) {
 							return false
 						}
 					}
+					if form == "without-kill" && !profileApplied(t, probe, p) {
+						return false
+					}
 					return passed == (form == "ordinary") && before == decoySnapshot(f.args[0])
 				})
 			})
@@ -254,6 +257,14 @@ func TestRefusalStructure(t *testing.T) {
 	}
 }
 
+// A mutant that fails the self-test only counts when sandbox-exec applied it:
+// a profile it rejects fails every program and proves nothing about the rule.
+func profileApplied(t *testing.T, f fixture, text string) bool {
+	probe := f
+	probe.args = nil
+	return probe.invokeOn(t, text, "clean", false).marked
+}
+
 func TestSelfTestMutations(t *testing.T) {
 	t.Parallel()
 	for _, computation := range []bool{false, true} {
@@ -317,7 +328,7 @@ func TestSelfTestMutations(t *testing.T) {
 						mode = replacement
 					}
 					if mode == "kills" || mode == "session-group-kill" {
-						return failed
+						return failed && profileApplied(t, f, mutation.text)
 					}
 					held, ran := f.selfTestResults[mode]
 					return failed && ran && !held
