@@ -41,7 +41,15 @@ Test subjects in this repository are synthetic.
 - Work that creates a branch or a commit is done in a dedicated git worktree, not in a checkout another session may be using.
 - Commit subjects follow Conventional Commits (`feat:`, `fix:`, `docs:` …).
 - Hooks and checks are never skipped (`--no-verify` and its equivalents are not used).
-- CI must be green before a merge. A local run is not a substitute for checking the pull request's own checks.
+- CI must be green before a merge. A local run is not a substitute for checking the pull request's own checks, with one exception, for evidence that needs macOS.
+- GitHub Actions run on Linux only. Evidence that needs macOS, such as the confinement suite, comes from a run on a machine the owner controls. The pull request states:
+  - the exact commit tested;
+  - the macOS version and build;
+  - the command;
+  - the run's result, with its log attached or its summary and the log's SHA-256.
+
+  That run counts as the pull request's macOS evidence when the commit tested is the pull request's head, or when every later commit leaves the tested paths unchanged. The reviewer checks which of the two holds. The run never replaces the Linux checks, which must still be green.
+- No workflow targets a macOS runner. A pull request that adds one, even for a single run, needs the owner's approval first.
 - After a solved, verified problem, automatically invoke the `ce-compound` skill with `mode:non-interactive` at the completion checkpoint when the work corrected a wrong belief about how something behaves: an approach that failed, a review finding that exposed a real defect, or an assumption, document, or first diagnosis that turned out wrong. A naming, style, or preference change does not count. Work that went as first planned does not need it. Do not judge whether the lesson deserves a document: `ce-compound` decides whether it qualifies and what holds it (a test, a lint rule, a coding standard, or a learning), and writes nothing when nothing qualifies. Capture at the checkpoint so what it writes can ship in the PR that produced it, and only where the repository treats captured learnings as tracked, committed knowledge.
 - Write every report, summary, or handoff to the user through the `ce-noslop` skill. This applies when you are the top-level agent writing to the user, not when you are a subagent reporting to its caller. Do not apply it to code, config, verbatim quotes, or text the user asked to post as written.
 
@@ -53,7 +61,10 @@ The tests include a check that every R and AE number cited under `docs/` resolve
 `check.sh` runs the gate, builds the binary, verifies the kit digest and file set, and runs the published cases.
 `scan.sh` checks tracked files and an optional commit range for home paths, emails and secrets with gitleaks.
 Only noreply@anthropic.com and addresses at `users.noreply.github.com` are allowed emails.
-The `ci` workflow runs three jobs: `gate`, `cases` and `scan`. The `cases` job stays red until the judge lands.
+The `ci` workflow runs three jobs on Linux: `gate`, `cases` and `scan`.
+The confinement suite under `spike/confinement/` needs macOS and runs only locally, as "How changes land" says:
+
+    GOTOOLCHAIN=local GOPROXY=off go test -v -count=1 -timeout 130m -tags confinementspike ./spike/confinement/...
 
 Install the pinned tools once, then run `go mod download`:
 
