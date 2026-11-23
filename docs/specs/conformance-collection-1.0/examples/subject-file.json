@@ -1,0 +1,48 @@
+{
+  "subject_file_version": "1.0",
+  "binary": "bin/widgets",
+  "facts": {
+    "read_only": true,
+    "has_destructive_ops": false,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "commands": [
+    {
+      "words": [
+        "list"
+      ],
+      "class": "safe",
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 65536
+    }
+  ],
+  "declared_count": 1,
+  "seed": "seed",
+  "store": ".local/share/widgets/data.db",
+  "offline": [
+    {
+      "applies_to": [
+        [
+          "list"
+        ]
+      ],
+      "args": [
+        "--offline"
+      ],
+      "env": {}
+    }
+  ],
+  "bookkeeping": [
+    ".local/state/widgets"
+  ],
+  "secret": null,
+  "runbooks": [],
+  "markers": [],
+  "prompts": {
+    "version": "none"
+  }
+}

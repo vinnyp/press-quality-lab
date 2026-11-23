@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "record.schema.json",
+  "title": "Conformance collection 1.0 stored record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_version",
+    "spec_version",
+    "request",
+    "scope",
+    "host",
+    "subject_file_digest",
+    "binary_digest",
+    "seed_digest",
+    "judge_input",
+    "judge_output",
+    "judge_rejected",
+    "exit_code",
+    "next_actions",
+    "bookkeeping_excluded",
+    "offline_settings"
+  ],
+  "properties": {
+    "record_version": {
+      "const": "1.0"
+    },
+    "spec_version": {
+      "const": "1.0"
+    },
+    "request": {
+      "enum": [
+        "grade",
+        "anchor"
+      ]
+    },
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "enum": [
+          "conformance",
+          "destructive",
+          "steering",
+          "compare"
+        ]
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os_version",
+        "os_build",
+        "arch"
+      ],
+      "properties": {
+        "os_version": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "os_build": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "arch": {
+          "type": "string",
+          "maxLength": 32
+        }
+      }
+    },
+    "subject_file_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "binary_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "seed_digest": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "judge_input": {
+      "type": "object",
+      "description": "The document sent to the judge; it must validate against the judge's input schema."
+    },
+    "judge_output": {
+      "$ref": "judge-output.schema.json"
+    },
+    "judge_rejected": {
+      "type": "boolean"
+    },
+    "exit_code": {
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        64,
+        70
+      ]
+    },
+    "next_actions": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "reason",
+          "action"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "reason": {
+            "enum": [
+              "harness_fault",
+              "could_not_start",
+              "input_missing",
+              "precondition_unmet",
+              "empty_target",
+              "placeholder_unfilled",
+              "computation_failed",
+              "earlier_step_failed",
+              "network_attempted",
+              "network_unverifiable",
+              "live_not_run",
+              "judgement_unverified",
+              "no_evidence",
+              "scope_not_requested"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        }
+      }
+    },
+    "bookkeeping_excluded": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4096
+      }
+    },
+    "offline_settings": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "applies_to",
+          "args",
+          "env_names"
+        ],
+        "properties": {
+          "applies_to": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "env_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

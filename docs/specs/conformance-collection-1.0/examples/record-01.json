@@ -1,0 +1,472 @@
+{
+  "record_version": "1.0",
+  "spec_version": "1.0",
+  "request": "grade",
+  "scope": [
+    "conformance"
+  ],
+  "host": {
+    "os_version": "27.2",
+    "os_build": "26B123",
+    "arch": "arm64"
+  },
+  "subject_file_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "binary_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "seed_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "judge_input": {
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "claimed_tier": "live",
+    "subject_facts": {
+      "read_only": true,
+      "has_destructive_ops": false,
+      "store_backed": true,
+      "has_cli": true,
+      "bounding": "declared"
+    },
+    "required": [
+      {
+        "id": "01a4f915cdc45351714c25d4a6709cca65a2fddd493328b6c04fa12d7a264792",
+        "kind": "plain",
+        "dimension": "discoverability",
+        "record": null,
+        "crediting": true,
+        "empty_satisfiable": false,
+        "asserts_emptiness": false,
+        "precondition": null,
+        "declared_count": null,
+        "condition": null,
+        "condition_a": null
+      },
+      {
+        "id": "87305c66202c82a46c22c44ef952fc2b278c822e9ba3355deebcb834e25c3ba3",
+        "kind": "plain",
+        "dimension": "availability",
+        "record": null,
+        "crediting": true,
+        "empty_satisfiable": false,
+        "asserts_emptiness": false,
+        "precondition": null,
+        "declared_count": null,
+        "condition": null,
+        "condition_a": null
+      },
+      {
+        "id": "963bcaa84af1209df5df547e58d07f3bc33e2cca39ea0daf85515209f669df17",
+        "kind": "plain",
+        "dimension": "execution",
+        "record": null,
+        "crediting": true,
+        "empty_satisfiable": false,
+        "asserts_emptiness": false,
+        "precondition": null,
+        "declared_count": null,
+        "condition": null,
+        "condition_a": null
+      },
+      {
+        "id": "e5dd96c608e705d54efe7cd3cdf35c4ffd6f24c68e9d1b64ae79157f36d93080",
+        "kind": "plain",
+        "dimension": "bounding",
+        "record": null,
+        "crediting": true,
+        "empty_satisfiable": true,
+        "asserts_emptiness": false,
+        "precondition": null,
+        "declared_count": null,
+        "condition": null,
+        "condition_a": null
+      }
+    ],
+    "evidence": [
+      {
+        "check_id": "01a4f915cdc45351714c25d4a6709cca65a2fddd493328b6c04fa12d7a264792",
+        "outcome": "held",
+        "reason": null,
+        "failure_kind": null,
+        "target_size": null,
+        "precondition_observed": null,
+        "tier": "live",
+        "expected": {
+          "commands": [
+            "list"
+          ],
+          "count": 1
+        },
+        "observed": {
+          "commands": [
+            "list"
+          ],
+          "count": 1
+        },
+        "targets": [
+          {
+            "kind": "invocation",
+            "id": "01a4f915cdc45351714c25d4a6709cca65a2fddd493328b6c04fa12d7a264792",
+            "tier": "live"
+          }
+        ],
+        "evaluator": {
+          "kind": "deterministic",
+          "model": null
+        }
+      },
+      {
+        "check_id": "87305c66202c82a46c22c44ef952fc2b278c822e9ba3355deebcb834e25c3ba3",
+        "outcome": "held",
+        "reason": null,
+        "failure_kind": null,
+        "target_size": null,
+        "precondition_observed": null,
+        "tier": "live",
+        "expected": {
+          "exit_codes": [
+            0
+          ]
+        },
+        "observed": {
+          "exit": 0
+        },
+        "targets": [
+          {
+            "kind": "invocation",
+            "id": "87305c66202c82a46c22c44ef952fc2b278c822e9ba3355deebcb834e25c3ba3",
+            "tier": "live"
+          }
+        ],
+        "evaluator": {
+          "kind": "deterministic",
+          "model": null
+        }
+      },
+      {
+        "check_id": "963bcaa84af1209df5df547e58d07f3bc33e2cca39ea0daf85515209f669df17",
+        "outcome": "held",
+        "reason": null,
+        "failure_kind": null,
+        "target_size": null,
+        "precondition_observed": null,
+        "tier": "offline",
+        "expected": {
+          "exit_codes": [
+            0
+          ]
+        },
+        "observed": {
+          "exit": 0
+        },
+        "targets": [
+          {
+            "kind": "invocation",
+            "id": "963bcaa84af1209df5df547e58d07f3bc33e2cca39ea0daf85515209f669df17",
+            "tier": "offline"
+          }
+        ],
+        "evaluator": {
+          "kind": "deterministic",
+          "model": null
+        }
+      },
+      {
+        "check_id": "e5dd96c608e705d54efe7cd3cdf35c4ffd6f24c68e9d1b64ae79157f36d93080",
+        "outcome": "held",
+        "reason": null,
+        "failure_kind": null,
+        "target_size": 812,
+        "precondition_observed": null,
+        "tier": "offline",
+        "expected": {
+          "bound": 65536
+        },
+        "observed": {
+          "bytes": 812
+        },
+        "targets": [
+          {
+            "kind": "invocation",
+            "id": "e5dd96c608e705d54efe7cd3cdf35c4ffd6f24c68e9d1b64ae79157f36d93080",
+            "tier": "offline"
+          }
+        ],
+        "evaluator": {
+          "kind": "deterministic",
+          "model": null
+        }
+      }
+    ],
+    "trials": [],
+    "markers": [],
+    "baseline": null,
+    "retired": [],
+    "accepted_regressions": []
+  },
+  "judge_output": {
+    "anchor": null,
+    "checks": [
+      {
+        "d_hi": null,
+        "d_lo": null,
+        "detail": null,
+        "id": "01a4f915cdc45351714c25d4a6709cca65a2fddd493328b6c04fa12d7a264792",
+        "k": null,
+        "lower": null,
+        "n": null,
+        "reason": null,
+        "result": "held_crediting",
+        "rule": "C7",
+        "to_run": null,
+        "upper": null
+      },
+      {
+        "d_hi": null,
+        "d_lo": null,
+        "detail": null,
+        "id": "87305c66202c82a46c22c44ef952fc2b278c822e9ba3355deebcb834e25c3ba3",
+        "k": null,
+        "lower": null,
+        "n": null,
+        "reason": null,
+        "result": "held_crediting",
+        "rule": "C7",
+        "to_run": null,
+        "upper": null
+      },
+      {
+        "d_hi": null,
+        "d_lo": null,
+        "detail": null,
+        "id": "963bcaa84af1209df5df547e58d07f3bc33e2cca39ea0daf85515209f669df17",
+        "k": null,
+        "lower": null,
+        "n": null,
+        "reason": null,
+        "result": "held_crediting",
+        "rule": "C7",
+        "to_run": null,
+        "upper": null
+      },
+      {
+        "d_hi": null,
+        "d_lo": null,
+        "detail": null,
+        "id": "e5dd96c608e705d54efe7cd3cdf35c4ffd6f24c68e9d1b64ae79157f36d93080",
+        "k": null,
+        "lower": null,
+        "n": null,
+        "reason": null,
+        "result": "held_crediting",
+        "rule": "C7",
+        "to_run": null,
+        "upper": null
+      }
+    ],
+    "comparison": {
+      "entries": [],
+      "new": [],
+      "next_action": null,
+      "result": "none",
+      "rule": "B1"
+    },
+    "counts": {
+      "xfail": 0,
+      "xpass": 0
+    },
+    "dimensions": [
+      {
+        "dimension": "availability",
+        "reason": null,
+        "rule": "D7",
+        "state": "GREEN"
+      },
+      {
+        "dimension": "execution",
+        "reason": null,
+        "rule": "D7",
+        "state": "GREEN"
+      },
+      {
+        "dimension": "graceful-failure",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "robustness",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "response-correctness",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "determinism",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "cli-mcp-parity",
+        "reason": "scope_not_requested",
+        "rule": "D0",
+        "state": "OUT-OF-SCOPE"
+      },
+      {
+        "dimension": "provenance-honesty",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "completeness-signaling",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "output-conformance",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "flag-conformance",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "bounding",
+        "reason": null,
+        "rule": "D7",
+        "state": "GREEN"
+      },
+      {
+        "dimension": "discoverability",
+        "reason": null,
+        "rule": "D7",
+        "state": "GREEN"
+      },
+      {
+        "dimension": "error-message-quality",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "token-economy",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "side-effect-integrity",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "idempotency",
+        "reason": null,
+        "rule": "D2",
+        "state": "N/A"
+      },
+      {
+        "dimension": "destructive-guard",
+        "reason": "scope_not_requested",
+        "rule": "D0",
+        "state": "OUT-OF-SCOPE"
+      },
+      {
+        "dimension": "pii-secret-hygiene",
+        "reason": null,
+        "rule": "D8",
+        "state": "UNCOVERED"
+      },
+      {
+        "dimension": "steering",
+        "reason": "live_not_run",
+        "rule": "D0",
+        "state": "OUT-OF-SCOPE"
+      },
+      {
+        "dimension": "tool-description-efficacy",
+        "reason": "live_not_run",
+        "rule": "D0",
+        "state": "OUT-OF-SCOPE"
+      }
+    ],
+    "earlier_pools": [],
+    "exit_code": 4,
+    "groups": [
+      {
+        "group": "Operability",
+        "rule": "G3",
+        "state": "GAPPED"
+      },
+      {
+        "group": "Correctness",
+        "rule": "G3",
+        "state": "GAPPED"
+      },
+      {
+        "group": "Conformance",
+        "rule": "G3",
+        "state": "GAPPED"
+      },
+      {
+        "group": "Usability",
+        "rule": "G3",
+        "state": "GAPPED"
+      },
+      {
+        "group": "Safety",
+        "rule": "G3",
+        "state": "GAPPED"
+      },
+      {
+        "group": "Steering",
+        "rule": "G1",
+        "state": "OUT-OF-SCOPE"
+      }
+    ],
+    "outcome": "verdict",
+    "own_verdict": null,
+    "rejected_by": null,
+    "rulebook_version": "1.0",
+    "scope": [
+      "conformance"
+    ],
+    "set_aside": [],
+    "stale_markers": [],
+    "verdict": {
+      "plain": "not_measured",
+      "sub_label": "gaps",
+      "token": "PROVISIONAL"
+    }
+  },
+  "judge_rejected": false,
+  "exit_code": 4,
+  "next_actions": [],
+  "bookkeeping_excluded": [
+    ".local/state/widgets"
+  ],
+  "offline_settings": [
+    {
+      "applies_to": [
+        [
+          "list"
+        ]
+      ],
+      "args": [
+        "--offline"
+      ],
+      "env_names": []
+    }
+  ]
+}

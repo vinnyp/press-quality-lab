@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case.schema.json",
+  "title": "Conformance collection 1.0 case (draft; the corpus fills it)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "rules",
+    "kind",
+    "entry",
+    "expect",
+    "twin"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^case-[0-9]{3}$"
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^Q[SHODPAET][0-9]+$"
+      }
+    },
+    "kind": {
+      "enum": [
+        "judge-checked",
+        "derivation-only"
+      ]
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_file",
+        "request",
+        "scope",
+        "form",
+        "baseline",
+        "fixtures"
+      ],
+      "properties": {
+        "subject_file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request": {
+          "enum": [
+            "grade",
+            "anchor"
+          ]
+        },
+        "scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "conformance",
+              "destructive",
+              "steering",
+              "compare"
+            ]
+          }
+        },
+        "form": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fixtures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "path"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "link",
+                  "special_file",
+                  "oversized_output",
+                  "invalid_bytes",
+                  "planted_secret"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "detail": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "expect": {
+      "type": "object",
+      "description": "What the case expects: for judge-checked, the record's judge input and the judge's verdict and exit code; for derivation-only, the engine's exit code and its stated reason."
+    },
+    "twin": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^case-[0-9]{3}$"
+    }
+  }
+}
