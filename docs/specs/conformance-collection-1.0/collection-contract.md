@@ -52,7 +52,7 @@
   | bare | `{"exit_codes": the bare binary's declared codes, or null}` |
   | byte_bound | `{"bound": n}` |
   | exit_codes | `{"exit_codes": [the declared codes, as the file lists them]}` |
-  | planted_secret | `{"path": p, "kind": k, "token": the token's SHA-256 in hexadecimal, "commands": [one object per listed command, in the file's order, with that invocation's `words`, `offline_args`, `env` and `budget_seconds`]}`; with `secret` `null`, `{}`; with `secret` a placeholder, `{"secret": the placeholder object}` |
+  | planted_secret | `{"path": p, "kind": k, "text_sha256": the SHA-256 of the token's text, "commands": [one object per listed command, in the file's order, with that invocation's `words`, `offline_args`, `env` and `budget_seconds`]}`; with `secret` `null`, `{}`; with `secret` a placeholder, `{"secret": the placeholder object}` |
   | store_unchanged | `{}` |
 
   A probe check with no command has the parameters `{}`.

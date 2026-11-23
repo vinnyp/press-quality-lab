@@ -338,7 +338,9 @@
       "args": [
         "--offline"
       ],
-      "env_names": []
+      "env_names": [
+        "WIDGETS_OFFLINE"
+      ]
     }
   ]
 }

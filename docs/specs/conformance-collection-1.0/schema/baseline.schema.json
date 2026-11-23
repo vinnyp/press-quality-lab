@@ -290,25 +290,8 @@
                 ],
                 "properties": {
                   "declared_count": {
-                    "oneOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "required": [
-                          "placeholder"
-                        ],
-                        "properties": {
-                          "placeholder": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        }
-                      }
-                    ]
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "commands": {
                     "type": "array",
@@ -364,7 +347,7 @@
                 "required": [
                   "path",
                   "kind",
-                  "token",
+                  "text_sha256",
                   "commands"
                 ],
                 "properties": {
@@ -377,7 +360,7 @@
                       "seeded_state"
                     ]
                   },
-                  "token": {
+                  "text_sha256": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
                   },
@@ -416,28 +399,6 @@
                           "type": "integer",
                           "minimum": 1
                         }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "secret"
-                ],
-                "properties": {
-                  "secret": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                      "placeholder"
-                    ],
-                    "properties": {
-                      "placeholder": {
-                        "type": "string",
-                        "minLength": 1
                       }
                     }
                   }
@@ -515,21 +476,16 @@
                     }
                   },
                   "precondition": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/source"
-                      }
-                    ]
+                    "type": "null",
+                    "description": "A computed expected value never asserts emptiness (QA9), so it has no precondition."
                   }
                 }
               }
             ]
           }
         }
-      }
+      },
+      "description": "A run with any placeholder cannot be anchored, so no preimage here holds one."
     },
     "created_at": {
       "type": "string",
@@ -566,9 +522,8 @@
             },
             "captures": {
               "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "maxItems": 0,
+              "description": "A precondition reads only the pristine seed, so it captures nothing."
             },
             "files": {
               "type": "object",
