@@ -2,7 +2,7 @@
 
 The spike asks whether macOS can confine a subject CLI and a computation tightly enough for the conformance collection to trust what it observes (CR1 to CR3). It was run on synthetic programs only. This record states what was tested, on which systems, and every limit left open (CR7). The owner decides the gate (CR6).
 
-**Status:** the suite passes on macOS 27.2 and on GitHub's macOS 27.0.1 image. On macOS 26.7.2 it fails closed, because that version rejects the profile. Six questions found by the spike's review change the plan's text and are with the owner (see "Open questions for the owner"). The owner decides the gate.
+**Status:** passed for macOS 27, by the owner's decision on 2026-11-23 (CR6, KTD5). The suite passes on macOS 27.2 and on GitHub's macOS 27.0.1 image. On macOS 26.7.2 it fails closed, because that version rejects the profile, so macOS 26 is unsupported and falls under CR23.
 
 ## Systems tested
 
@@ -51,7 +51,7 @@ Support is per version (KTD5). Only the macOS versions above are tested. Every o
 |---|---|---|
 | CR1. A run with no attempt is verified as such, and one with an attempt, or one that cannot be verified, never is | holds | holds |
 | CR2. Swallowed errors, DNS, child processes, image replacement, local sockets and delegation to system daemons | holds, with the limits below | holds, with the limits below |
-| CR3. File and computation confinement (CR16, CR17, CR35 to CR37, CR62 to CR64, CR67, CR78, CR80 to CR82) and the CR31 read proof | holds, with the limits below; the read proof holds against every forgery tested, and two questions about it are open | holds, with the limits below |
+| CR3. File and computation confinement (CR16, CR17, CR35 to CR37, CR62 to CR64, CR67, CR78, CR80 to CR82) and the CR31 read proof | holds, with the limits below; the read proof holds against every forgery tested | holds, with the limits below |
 
 ### Rules a test caught when broken by hand
 
@@ -110,7 +110,7 @@ These operations are refused with a kill, but no harmless attempt could witness 
 - **Descendants (CR35):** a child that leaves the process group through `posix_spawn` with `SETSID` or `SETPGROUP` outlives the group's end. It stays confined.
 - **Read proof (CR31):**
   - another process reading the planted file during the invocation looks like the subject's read;
-  - a zero-byte read at end of file moved the access time in 25 of 25 runs, on this machine and on the macOS 27 runner. Under CR31 as written, that would count as a read although no content was read. The spike logs it and asserts nothing, and the rule for it is an open question.
+  - a zero-byte read at end of file moved the access time in 25 of 25 runs, on this machine and on the macOS 27 runner. Under CR31 as written, that would count as a read although no content was read. CR31 states this as a limit. The spike logs it and asserts nothing.
 - **Here-documents and here-strings (CR64):** `/bin/sh` creates their temporary files in the system temporary directories, whatever `TMPDIR` says.
 - **Metadata:** global file metadata is visible, so a program can learn that any file exists and its size.
 - **Implicit classes:** some operation classes stay open implicitly, because refusing one kills startup before the launcher's marker:
@@ -145,11 +145,12 @@ These operations are refused with a kill, but no harmless attempt could witness 
 - **The profile is tied to a macOS version.** An operation name one version does not know makes the whole profile unparsable, and the confinement then cannot be applied at all. The engine needs one reviewed profile per supported version, and a check that the version it runs on is one of them.
 - **Some volumes do not record a read's access time.** On the macOS 26 runner's volume a read did not move it. The CR31 calibration then makes the read proof not-measured, which the suite reports as a failure, never as a pass.
 
-## Open questions for the owner
+## Owner decisions, 2026-11-23
 
-1. **Writes to the planted file are killed.** A CLI that rewrites its credential file during the probe run is therefore killed, and the probe is not-measured. The alternative is to allow writes, kill time-setting anywhere in the home, and keep an engine-held link to the original file.
-2. **A zero-byte read at end of file** moves the access time. Should CR31 state this as a limit, or require a read that returns content?
-3. **CR84:** should it state that a leak through the unified log is not seen, and that directory lookups may reach a server?
-4. **CR67:** should it state setuid and setgid exec as a third silent refusal?
-5. **Running as root:** should the engine refuse to run as root? The host port is granted unconditionally.
-6. **Nested credential paths:** should the specification require a refusal of unlink and create on every directory between the home and the planted file?
+1. **Supported systems:** macOS 27 only in version 1.0. A profile for macOS 26 was not built.
+2. **The planted file:** any write to it is refused with a kill, and so is any unlink or create on each directory between the throwaway home and the file (CR31). A CLI that rewrites its credential file during the probe is therefore not observed.
+3. **A zero-byte read at end of file:** CR31 states it as a limit. Such a read moves the access time and counts as a read.
+4. **Further text:**
+   - CR84 states that a leak through the unified log is not seen, and that a directory lookup can reach a server.
+   - CR67 names setuid and setgid exec as a silent refusal.
+   - CR115 makes the engine refuse to run as root.
