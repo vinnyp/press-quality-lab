@@ -1,0 +1,22 @@
+{
+  "id": "case-001",
+  "rules": [
+    "QP3",
+    "QE2"
+  ],
+  "kind": "judge-checked",
+  "entry": {
+    "subject_file": "subject.json",
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "form": "the byte-bound probe on one command prints 15 bytes",
+    "baseline": null,
+    "fixtures": []
+  },
+  "expect": {
+    "exit_code": 4
+  },
+  "twin": null
+}

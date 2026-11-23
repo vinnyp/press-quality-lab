@@ -9,7 +9,9 @@
     "spec_version",
     "rulebook_version",
     "subject_file_digest",
-    "baseline"
+    "baseline",
+    "subject_file_path",
+    "preimages"
   ],
   "properties": {
     "baseline_version": {
@@ -126,6 +128,158 @@
                 "maximum": 9007199254740991
               }
             }
+          }
+        }
+      }
+    },
+    "subject_file_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "preimages": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scheme",
+          "probe",
+          "runbook",
+          "step",
+          "index",
+          "earlier",
+          "dimension",
+          "predicate",
+          "path",
+          "words",
+          "offline_args",
+          "env",
+          "budget_seconds",
+          "seed",
+          "store",
+          "bookkeeping",
+          "parameters",
+          "expected"
+        ],
+        "properties": {
+          "scheme": {
+            "const": "pql-check-id-1"
+          },
+          "probe": {
+            "enum": [
+              "discovery",
+              "bare",
+              "byte_bound",
+              "exit_codes",
+              "planted_secret",
+              "store_unchanged",
+              null
+            ]
+          },
+          "runbook": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "step": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "index": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "earlier": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "predicate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "words": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "offline_args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "budget_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "seed": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "store": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bookkeeping": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "expected": {
+            "type": [
+              "object",
+              "null"
+            ]
           }
         }
       }

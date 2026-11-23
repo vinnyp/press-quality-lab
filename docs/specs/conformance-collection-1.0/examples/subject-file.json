@@ -14,15 +14,17 @@
         "list"
       ],
       "class": "safe",
+      "writes": false,
       "exit_codes": [
         0
       ],
-      "byte_bound": 65536
+      "byte_bound": 65536,
+      "budget_seconds": 30
     }
   ],
   "declared_count": 1,
   "seed": "seed",
-  "store": ".local/share/widgets/data.db",
+  "store": "data.json",
   "offline": [
     {
       "applies_to": [

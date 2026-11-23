@@ -10,9 +10,10 @@
     "os_build": "26B123",
     "arch": "arm64"
   },
+  "subject_file_path": "/opt/widgets/subject.json",
   "subject_file_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "binary_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
-  "seed_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "seed_digest": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
   "judge_input": {
     "request": "grade",
     "scope": [
@@ -28,9 +29,9 @@
     },
     "required": [
       {
-        "id": "01a4f915cdc45351714c25d4a6709cca65a2fddd493328b6c04fa12d7a264792",
+        "id": "381e5314ba0bd5432fe9bdea22600a158f3b325366c262036a201d17e34cd983",
         "kind": "plain",
-        "dimension": "discoverability",
+        "dimension": "side-effect-integrity",
         "record": null,
         "crediting": true,
         "empty_satisfiable": false,
@@ -41,12 +42,12 @@
         "condition_a": null
       },
       {
-        "id": "87305c66202c82a46c22c44ef952fc2b278c822e9ba3355deebcb834e25c3ba3",
+        "id": "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7",
         "kind": "plain",
-        "dimension": "availability",
+        "dimension": "bounding",
         "record": null,
         "crediting": true,
-        "empty_satisfiable": false,
+        "empty_satisfiable": true,
         "asserts_emptiness": false,
         "precondition": null,
         "declared_count": null,
@@ -54,7 +55,7 @@
         "condition_a": null
       },
       {
-        "id": "963bcaa84af1209df5df547e58d07f3bc33e2cca39ea0daf85515209f669df17",
+        "id": "857b2142118c45a4c55883b9cd26cb8c681a05bdcd2357469ac108eb8b066ad0",
         "kind": "plain",
         "dimension": "execution",
         "record": null,
@@ -67,12 +68,38 @@
         "condition_a": null
       },
       {
-        "id": "e5dd96c608e705d54efe7cd3cdf35c4ffd6f24c68e9d1b64ae79157f36d93080",
+        "id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3",
         "kind": "plain",
-        "dimension": "bounding",
+        "dimension": "discoverability",
         "record": null,
         "crediting": true,
-        "empty_satisfiable": true,
+        "empty_satisfiable": false,
+        "asserts_emptiness": false,
+        "precondition": null,
+        "declared_count": null,
+        "condition": null,
+        "condition_a": null
+      },
+      {
+        "id": "9f515966d31505fe9538dfbdc479c455749bd03eaddb2e41e9dbad4b49690ab1",
+        "kind": "plain",
+        "dimension": "pii-secret-hygiene",
+        "record": null,
+        "crediting": true,
+        "empty_satisfiable": false,
+        "asserts_emptiness": false,
+        "precondition": null,
+        "declared_count": null,
+        "condition": null,
+        "condition_a": null
+      },
+      {
+        "id": "bacb79da173d79dd7b736a8f8716b1e7eb9a2cbfa25d1427bb7f9a701036348e",
+        "kind": "plain",
+        "dimension": "availability",
+        "record": null,
+        "crediting": true,
+        "empty_satisfiable": false,
         "asserts_emptiness": false,
         "precondition": null,
         "declared_count": null,
@@ -82,67 +109,7 @@
     ],
     "evidence": [
       {
-        "check_id": "01a4f915cdc45351714c25d4a6709cca65a2fddd493328b6c04fa12d7a264792",
-        "outcome": "held",
-        "reason": null,
-        "failure_kind": null,
-        "target_size": null,
-        "precondition_observed": null,
-        "tier": "live",
-        "expected": {
-          "commands": [
-            "list"
-          ],
-          "count": 1
-        },
-        "observed": {
-          "commands": [
-            "list"
-          ],
-          "count": 1
-        },
-        "targets": [
-          {
-            "kind": "invocation",
-            "id": "01a4f915cdc45351714c25d4a6709cca65a2fddd493328b6c04fa12d7a264792",
-            "tier": "live"
-          }
-        ],
-        "evaluator": {
-          "kind": "deterministic",
-          "model": null
-        }
-      },
-      {
-        "check_id": "87305c66202c82a46c22c44ef952fc2b278c822e9ba3355deebcb834e25c3ba3",
-        "outcome": "held",
-        "reason": null,
-        "failure_kind": null,
-        "target_size": null,
-        "precondition_observed": null,
-        "tier": "live",
-        "expected": {
-          "exit_codes": [
-            0
-          ]
-        },
-        "observed": {
-          "exit": 0
-        },
-        "targets": [
-          {
-            "kind": "invocation",
-            "id": "87305c66202c82a46c22c44ef952fc2b278c822e9ba3355deebcb834e25c3ba3",
-            "tier": "live"
-          }
-        ],
-        "evaluator": {
-          "kind": "deterministic",
-          "model": null
-        }
-      },
-      {
-        "check_id": "963bcaa84af1209df5df547e58d07f3bc33e2cca39ea0daf85515209f669df17",
+        "check_id": "381e5314ba0bd5432fe9bdea22600a158f3b325366c262036a201d17e34cd983",
         "outcome": "held",
         "reason": null,
         "failure_kind": null,
@@ -150,17 +117,20 @@
         "precondition_observed": null,
         "tier": "offline",
         "expected": {
-          "exit_codes": [
-            0
-          ]
+          "changes": []
         },
         "observed": {
-          "exit": 0
+          "changes": []
         },
         "targets": [
           {
             "kind": "invocation",
-            "id": "963bcaa84af1209df5df547e58d07f3bc33e2cca39ea0daf85515209f669df17",
+            "id": "381e5314ba0bd5432fe9bdea22600a158f3b325366c262036a201d17e34cd983",
+            "tier": "offline"
+          },
+          {
+            "kind": "artifact",
+            "id": "data.json",
             "tier": "offline"
           }
         ],
@@ -170,24 +140,150 @@
         }
       },
       {
-        "check_id": "e5dd96c608e705d54efe7cd3cdf35c4ffd6f24c68e9d1b64ae79157f36d93080",
+        "check_id": "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7",
         "outcome": "held",
         "reason": null,
         "failure_kind": null,
-        "target_size": 812,
+        "target_size": 15,
         "precondition_observed": null,
         "tier": "offline",
         "expected": {
           "bound": 65536
         },
         "observed": {
-          "bytes": 812
+          "exit": 0,
+          "stdout": {
+            "bytes": 15,
+            "sha256": "3890b1a054e609ad21a23184fc351862f3aed55501fdf682bc1d2cec95dacff2",
+            "cut": false,
+            "head": "{\"widgets\":[]}\n"
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": ""
+          }
         },
         "targets": [
           {
             "kind": "invocation",
-            "id": "e5dd96c608e705d54efe7cd3cdf35c4ffd6f24c68e9d1b64ae79157f36d93080",
+            "id": "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7",
             "tier": "offline"
+          }
+        ],
+        "evaluator": {
+          "kind": "deterministic",
+          "model": null
+        }
+      },
+      {
+        "check_id": "857b2142118c45a4c55883b9cd26cb8c681a05bdcd2357469ac108eb8b066ad0",
+        "outcome": "held",
+        "reason": null,
+        "failure_kind": null,
+        "target_size": null,
+        "precondition_observed": null,
+        "tier": "offline",
+        "expected": {
+          "exit_codes": [
+            0
+          ]
+        },
+        "observed": {
+          "exit": 0
+        },
+        "targets": [
+          {
+            "kind": "invocation",
+            "id": "857b2142118c45a4c55883b9cd26cb8c681a05bdcd2357469ac108eb8b066ad0",
+            "tier": "offline"
+          }
+        ],
+        "evaluator": {
+          "kind": "deterministic",
+          "model": null
+        }
+      },
+      {
+        "check_id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3",
+        "outcome": "held",
+        "reason": null,
+        "failure_kind": null,
+        "target_size": null,
+        "precondition_observed": null,
+        "tier": "live",
+        "expected": {
+          "declared_count": 1,
+          "commands": [
+            [
+              "list"
+            ]
+          ]
+        },
+        "observed": {
+          "found": [
+            [
+              "list"
+            ]
+          ],
+          "count": 1
+        },
+        "targets": [
+          {
+            "kind": "invocation",
+            "id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3",
+            "tier": "live"
+          }
+        ],
+        "evaluator": {
+          "kind": "deterministic",
+          "model": null
+        }
+      },
+      {
+        "check_id": "9f515966d31505fe9538dfbdc479c455749bd03eaddb2e41e9dbad4b49690ab1",
+        "outcome": "not_observed",
+        "reason": "input_missing",
+        "failure_kind": null,
+        "target_size": null,
+        "precondition_observed": null,
+        "tier": "live",
+        "expected": null,
+        "observed": null,
+        "targets": [
+          {
+            "kind": "invocation",
+            "id": "9f515966d31505fe9538dfbdc479c455749bd03eaddb2e41e9dbad4b49690ab1",
+            "tier": "live"
+          }
+        ],
+        "evaluator": {
+          "kind": "deterministic",
+          "model": null
+        }
+      },
+      {
+        "check_id": "bacb79da173d79dd7b736a8f8716b1e7eb9a2cbfa25d1427bb7f9a701036348e",
+        "outcome": "held",
+        "reason": null,
+        "failure_kind": null,
+        "target_size": null,
+        "precondition_observed": null,
+        "tier": "live",
+        "expected": {
+          "exit_codes": [
+            0
+          ]
+        },
+        "observed": {
+          "exit": 0
+        },
+        "targets": [
+          {
+            "kind": "invocation",
+            "id": "bacb79da173d79dd7b736a8f8716b1e7eb9a2cbfa25d1427bb7f9a701036348e",
+            "tier": "live"
           }
         ],
         "evaluator": {
@@ -209,7 +305,7 @@
         "d_hi": null,
         "d_lo": null,
         "detail": null,
-        "id": "01a4f915cdc45351714c25d4a6709cca65a2fddd493328b6c04fa12d7a264792",
+        "id": "381e5314ba0bd5432fe9bdea22600a158f3b325366c262036a201d17e34cd983",
         "k": null,
         "lower": null,
         "n": null,
@@ -223,7 +319,7 @@
         "d_hi": null,
         "d_lo": null,
         "detail": null,
-        "id": "87305c66202c82a46c22c44ef952fc2b278c822e9ba3355deebcb834e25c3ba3",
+        "id": "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7",
         "k": null,
         "lower": null,
         "n": null,
@@ -237,7 +333,7 @@
         "d_hi": null,
         "d_lo": null,
         "detail": null,
-        "id": "963bcaa84af1209df5df547e58d07f3bc33e2cca39ea0daf85515209f669df17",
+        "id": "857b2142118c45a4c55883b9cd26cb8c681a05bdcd2357469ac108eb8b066ad0",
         "k": null,
         "lower": null,
         "n": null,
@@ -251,7 +347,35 @@
         "d_hi": null,
         "d_lo": null,
         "detail": null,
-        "id": "e5dd96c608e705d54efe7cd3cdf35c4ffd6f24c68e9d1b64ae79157f36d93080",
+        "id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3",
+        "k": null,
+        "lower": null,
+        "n": null,
+        "reason": null,
+        "result": "held_crediting",
+        "rule": "C7",
+        "to_run": null,
+        "upper": null
+      },
+      {
+        "d_hi": null,
+        "d_lo": null,
+        "detail": null,
+        "id": "9f515966d31505fe9538dfbdc479c455749bd03eaddb2e41e9dbad4b49690ab1",
+        "k": null,
+        "lower": null,
+        "n": null,
+        "reason": "input_missing",
+        "result": "unobserved",
+        "rule": "C2",
+        "to_run": null,
+        "upper": null
+      },
+      {
+        "d_hi": null,
+        "d_lo": null,
+        "detail": null,
+        "id": "bacb79da173d79dd7b736a8f8716b1e7eb9a2cbfa25d1427bb7f9a701036348e",
         "k": null,
         "lower": null,
         "n": null,
@@ -367,8 +491,8 @@
       {
         "dimension": "side-effect-integrity",
         "reason": null,
-        "rule": "D8",
-        "state": "UNCOVERED"
+        "rule": "D7",
+        "state": "GREEN"
       },
       {
         "dimension": "idempotency",
@@ -385,8 +509,8 @@
       {
         "dimension": "pii-secret-hygiene",
         "reason": null,
-        "rule": "D8",
-        "state": "UNCOVERED"
+        "rule": "D4",
+        "state": "HARNESS"
       },
       {
         "dimension": "steering",
@@ -452,9 +576,29 @@
   },
   "judge_rejected": false,
   "exit_code": 4,
-  "next_actions": [],
+  "next_actions": [
+    {
+      "check_id": "9f515966d31505fe9538dfbdc479c455749bd03eaddb2e41e9dbad4b49690ab1",
+      "dimension": null,
+      "reason": "input_missing",
+      "action": "For the planted secret: name the file the subject reads its secret from, its token, and a command that reads it, and check that the command reads it."
+    },
+    {
+      "check_id": null,
+      "dimension": "cli-mcp-parity",
+      "reason": "scope_not_requested",
+      "action": "Request a scope that includes the dimension. For `cli-mcp-parity`, no scope includes it in this version."
+    },
+    {
+      "check_id": null,
+      "dimension": "destructive-guard",
+      "reason": "scope_not_requested",
+      "action": "Request a scope that includes the dimension."
+    }
+  ],
   "bookkeeping_excluded": [
-    ".local/state/widgets"
+    ".local/state/widgets",
+    ".pql-tmp"
   ],
   "offline_settings": [
     {

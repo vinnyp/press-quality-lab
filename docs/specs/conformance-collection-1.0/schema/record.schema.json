@@ -19,7 +19,8 @@
     "exit_code",
     "next_actions",
     "bookkeeping_excluded",
-    "offline_settings"
+    "offline_settings",
+    "subject_file_path"
   ],
   "properties": {
     "record_version": {
@@ -75,8 +76,15 @@
       "pattern": "^[0-9a-f]{64}$"
     },
     "binary_digest": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "seed_digest": {
       "oneOf": [
@@ -115,43 +123,106 @@
       "type": "array",
       "maxItems": 100000,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "check_id",
-          "reason",
-          "action"
-        ],
-        "properties": {
-          "check_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "check_id",
+              "dimension",
+              "reason",
+              "action"
+            ],
+            "properties": {
+              "check_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "dimension": {
+                "type": "null"
+              },
+              "reason": {
+                "enum": [
+                  "arms_not_comparable",
+                  "computation_failed",
+                  "could_not_start",
+                  "earlier_step_failed",
+                  "empty_target",
+                  "error_cap",
+                  "harness_fault",
+                  "input_missing",
+                  "interval_undecided",
+                  "judgement_unverified",
+                  "live_not_run",
+                  "network_attempted",
+                  "network_unverifiable",
+                  "no_evidence",
+                  "placeholder_unfilled",
+                  "precondition_unmet",
+                  "trials_short"
+                ]
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              }
+            }
           },
-          "reason": {
-            "enum": [
-              "harness_fault",
-              "could_not_start",
-              "input_missing",
-              "precondition_unmet",
-              "empty_target",
-              "placeholder_unfilled",
-              "computation_failed",
-              "earlier_step_failed",
-              "network_attempted",
-              "network_unverifiable",
-              "live_not_run",
-              "judgement_unverified",
-              "no_evidence",
-              "scope_not_requested"
-            ]
-          },
-          "action": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 4096
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "check_id",
+              "dimension",
+              "reason",
+              "action"
+            ],
+            "properties": {
+              "check_id": {
+                "type": "null"
+              },
+              "dimension": {
+                "enum": [
+                  "availability",
+                  "execution",
+                  "graceful-failure",
+                  "robustness",
+                  "response-correctness",
+                  "determinism",
+                  "cli-mcp-parity",
+                  "provenance-honesty",
+                  "completeness-signaling",
+                  "output-conformance",
+                  "flag-conformance",
+                  "bounding",
+                  "discoverability",
+                  "error-message-quality",
+                  "token-economy",
+                  "side-effect-integrity",
+                  "idempotency",
+                  "destructive-guard",
+                  "pii-secret-hygiene",
+                  "steering",
+                  "tool-description-efficacy"
+                ]
+              },
+              "reason": {
+                "enum": [
+                  "placeholder_unfilled",
+                  "scope_not_requested",
+                  "live_not_run"
+                ]
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              }
+            }
           }
-        }
+        ]
       }
     },
     "bookkeeping_excluded": {
@@ -198,6 +269,11 @@
           }
         }
       }
+    },
+    "subject_file_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
     }
   }
 }
