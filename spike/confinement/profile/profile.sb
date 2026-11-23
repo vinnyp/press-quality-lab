@@ -26,7 +26,7 @@
 (deny darwin-notification-post (with send-signal SIGKILL))
 (deny file-clone (with send-signal SIGKILL))
 (deny file-graft (with send-signal SIGKILL))
-(deny file-link)
+(deny file-link (with send-signal SIGKILL))
 (deny file-lock (with send-signal SIGKILL))
 (deny file-map-executable (with send-signal SIGKILL))
 (deny file-read-xattr (with send-signal SIGKILL))
