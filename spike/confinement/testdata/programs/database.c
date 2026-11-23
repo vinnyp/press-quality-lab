@@ -6,9 +6,15 @@
 
 int main(int argc,char **argv) {
     alarm(4);
+    if (write(2,"operation-ready\n",16)!=16) return 70;
     if (argc!=3) return 64;
     sqlite3 *db=NULL;
     if (sqlite3_open(argv[2],&db)!=SQLITE_OK) return 1;
+    if (!strcmp(argv[1],"read-write")) {
+        if(sqlite3_db_readonly(db,"main")!=0)return 9;
+        if(sqlite3_close(db)!=SQLITE_OK)return 3;
+        puts("read-write open");return 0;
+    }
     if (!strcmp(argv[1],"write")) {
         if (sqlite3_exec(db,"PRAGMA journal_mode=WAL; CREATE TABLE values_table(value); INSERT INTO values_table VALUES(7);",NULL,NULL,NULL)!=SQLITE_OK) return 2;
         if (sqlite3_close(db)!=SQLITE_OK) return 3;

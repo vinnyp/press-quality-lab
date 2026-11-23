@@ -32,7 +32,7 @@
 (deny fs-info (with send-signal SIGKILL))
 (allow fs-info (literal (param "VOLUME")))
 ; database: locks on its own files.
-(allow file-lock (literal (param "HOME")) (subpath (param "HOME")))
+(allow file-lock (subpath (param "HOME")))
 (deny fs-snapshot-mount (with send-signal SIGKILL))
 (deny iokit-get-properties (with send-signal SIGKILL))
 (deny iokit-open-service (with send-signal SIGKILL))
@@ -54,16 +54,27 @@
 (allow process-exec* (literal (param "LAUNCHER")) (literal (param "BIN")))
 ; clean: dynamic loader host setup.
 (allow mach-priv-host-port)
-; go-help: numeric processor and page-size queries.
-(allow sysctl-read)
+; clean and go-ordinary: loader, hostname and CPU-feature queries.
+(allow sysctl-read (sysctl-name "kern.hostname") (sysctl-name "kern.maxfilesperproc") (sysctl-name "kern.osproductversion") (sysctl-name "kern.iossupportversion") (sysctl-name "kern.bootargs") (sysctl-name "hw.ncpu") (sysctl-name "hw.optional.arm.FEAT_SB") (sysctl-name "hw.optional.arm.FEAT_DIT") (sysctl-name "security.mac.lockdown_mode_state") (sysctl-name "kern.osvariant_status") (sysctl-name "hw.pagesize_compat") (sysctl-name "hw.optional.armv8_crc32") (sysctl-name "hw.optional.armv8_1_atomics") (sysctl-name "hw.optional.armv8_2_sha512") (sysctl-name "hw.optional.armv8_2_sha3"))
 ; clean: dynamic loader validates its own code.
 (allow process-codesigning* (target {{PROCESS_TARGET}}))
 ; clean: dynamic loader path resolution; global visibility is an open limit.
 (allow file-read-metadata)
 ; clean: dynamic loader trace-device ioctl.
 (allow file-ioctl (literal (param "TRACE_DEVICE")))
-; clean: executable and working-directory reads.
-(allow file-read-data (literal (param "BIN")) (literal (param "LAUNCHER")) (literal (param "WORKDIR")))
+; clean: macOS needs the private executable directories for startup.
+(allow file-read-data (literal (param "BIN_PARENT")) (literal (param "LAUNCHER_PARENT")))
+; ordinary-devices: null streams, randomness and zero-filled input.
+(allow file-read-data file-write-data (literal (param "NULL_DEVICE")))
+(allow file-read-data (literal (param "RANDOM_DEVICE")) (literal (param "ZERO_DEVICE")))
+; ordinary-streams: reopen the captured stdout and stderr descriptors.
+(allow file-write-data (literal (param "STDOUT_DEVICE")) (literal (param "STDERR_DEVICE")))
+; go-ordinary: load the declared named time zone from the system database.
+(allow file-read-data (literal (param "ZONEFILE")))
+; ordinary-timezone: libc also reads the system POSIX transition rules.
+(allow file-read-data (literal (param "ZONE_RULES")))
+; clean: executable reads.
+(allow file-read-data (literal (param "BIN")) (literal (param "LAUNCHER")))
 ; clean: loader root lookup.
 (allow file-read* (literal (param "ROOT")))
 ; clean: runtime image on the sealed preboot volume.

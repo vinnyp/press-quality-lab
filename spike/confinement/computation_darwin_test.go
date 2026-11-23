@@ -20,11 +20,15 @@ func computationFixture(t *testing.T) fixture {
 		t.Fatal("create scratch")
 	}
 	f.params = []string{"HOME=" + scratch}
-	f.env = []string{"HOME=" + scratch, "TMPDIR=" + scratch, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+	if os.Mkdir(filepath.Join(scratch, "tmp"), 0700) != nil {
+		t.Fatal("create private computation temporary directory")
+	}
+	f.env = []string{"HOME=" + scratch, "TMPDIR=" + filepath.Join(scratch, "tmp"), "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
 	return f
 }
 
 func TestComputationValues(t *testing.T) {
+	t.Parallel()
 	f := computationFixture(t)
 	for _, mode := range []string{"pipeline", "system-value"} {
 		runScenario(t, mode, func(t *testing.T) {
@@ -46,7 +50,9 @@ func TestComputationValues(t *testing.T) {
 	}
 }
 
-func TestComputationFileIsolation(t *testing.T) {
+func TestComputationFileIsolationSmoke(t *testing.T) {
+	t.Log("smoke test: these kills do not isolate the operation rule")
+	t.Parallel()
 	f := computationFixture(t)
 	subject := filepath.Join(f.root, "subject")
 	if r := run("/usr/bin/clang", []string{"-Wall", "-Wextra", "-Werror", "-o", subject, "testdata/programs/subject.c"}, f.env, ""); r.err != nil {
@@ -99,7 +105,7 @@ func TestComputationFileIsolation(t *testing.T) {
 						return r.killed() && unchanged
 					}
 					if form == "without-kill" {
-						return r.marked && !r.timedOut && !r.killed() && unchanged
+						return correct(r, "fallback\n") && unchanged
 					}
 					want := "performed\nfallback\n"
 					if scenario.mode == "execute" {
@@ -108,6 +114,67 @@ func TestComputationFileIsolation(t *testing.T) {
 					return correct(r, want) && unchanged
 				})
 			})
+		}
+	}
+}
+
+func TestSubjectInToolDirectory(t *testing.T) {
+	t.Parallel()
+	f := computationFixture(t)
+	tools := filepath.Join(f.root, "tools")
+	copyDir := filepath.Join(f.root, "subject-image")
+	if os.Mkdir(tools, 0700) != nil || os.Mkdir(copyDir, 0700) != nil {
+		t.Fatal("create subject directories")
+	}
+	subject := filepath.Join(tools, "subject")
+	copied := filepath.Join(copyDir, "image")
+	if r := run("/usr/bin/clang", []string{"-Wall", "-Wextra", "-Werror", "-o", subject, "testdata/programs/subject.c"}, f.env, ""); r.err != nil {
+		t.Fatal("compile subject")
+	}
+	data, err := os.ReadFile(subject)
+	if err != nil || os.WriteFile(copied, data, 0500) != nil {
+		t.Fatal("copy subject")
+	}
+	for _, target := range []struct{ name, path string }{{"original", subject}, {"copy", copied}} {
+		for _, mode := range []string{"file-open", "execute"} {
+			for _, form := range []string{"confined", "twin", "positive", "remove-denial", "remove-kill"} {
+				runScenario(t, target.name+"/"+mode+"/"+form, func(t *testing.T) {
+					repeat(t, func() bool {
+						probe := f
+						probe.params = append(append([]string{}, f.params...), "BIN_DIR="+filepath.Dir(target.path), "SUBJECT="+subject, "SUBJECT_COPY="+copied)
+						good := filepath.Join(f.root, "declared")
+						if mode == "execute" {
+							good = f.probe
+						}
+						probe.args = []string{target.path, good, filepath.Join(f.home(), "unused")}
+						p := profile(true)
+						line := `(deny file-read-data process-exec* (literal (param "SUBJECT")) (literal (param "SUBJECT_COPY")) (with send-signal SIGKILL))`
+						if form == "positive" {
+							p = ""
+						}
+						if form == "remove-denial" {
+							p = strings.Replace(p, line, "", 1)
+						}
+						if form == "remove-kill" {
+							p = strings.Replace(p, line, strings.Replace(line, " (with send-signal SIGKILL)", "", 1), 1)
+						}
+						before := decoySnapshot(target.path)
+						r := probe.invoke(p, mode, form == "twin")
+						unchanged := before == decoySnapshot(target.path)
+						if form == "confined" {
+							return r.killed() && unchanged
+						}
+						if form == "remove-kill" {
+							return correct(r, "fallback\n") && unchanged
+						}
+						want := "performed\nfallback\n"
+						if form == "twin" && mode == "execute" {
+							want = "clean\n"
+						}
+						return correct(r, want) && unchanged
+					})
+				})
+			}
 		}
 	}
 }

@@ -1,4 +1,5 @@
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <sys/xattr.h>
 #include <copyfile.h>
 #include <sys/clonefile.h>
@@ -12,6 +13,7 @@ static int file_operation(int argc, char **argv) {
     if (!strcmp(mode, "inventory") || !strcmp(mode,"catalog")) {
         for (int i = 2; i < argc; i++) {
             /* Only query ourselves; a denial may signal the queried process. */
+            operation_ready();
             int rc = sandbox_check(getpid(), argv[i], SANDBOX_CHECK_NO_REPORT);
             if (rc < 0) { if (!strcmp(mode,"catalog")) continue; return 32; }
             printf("%s=%d\n", argv[i], rc == 0);
@@ -38,12 +40,27 @@ static int file_operation(int argc, char **argv) {
     int twin = !strcmp(argv[argc-1], "twin");
     const char *path = twin ? argv[3] : argv[2];
     const char *destination = argv[4];
+    char discovered[4096];
+    if (!strcmp(mode,"file-ignore-home") && !twin) {
+        /* The working directory, rather than HOME, locates the decoy state. */
+        if (!getcwd(discovered,sizeof(discovered))) return 54;
+        size_t length=strlen(discovered);
+        if(length+sizeof("/../outside/target")>sizeof(discovered))return 64;
+        memcpy(discovered+length,"/../outside/target",sizeof("/../outside/target"));
+        path=discovered;
+    }
+    operation_ready();
     int rc = -1, fd = -1;
     if (!strncmp(mode,"file-secret-",12)) {
-        if(argc!=6 || strlen(argv[5])!=32)return 64;
-        if(!strcmp(mode,"file-secret-stat")){struct stat st;rc=stat(path,&st);if(!rc&&st.st_size!=32)return 38;}
+        if(argc<6 || strlen(argv[5])!=32)return 64;
+        if(!strcmp(mode,"file-secret-stat")){struct stat st;rc=stat(path,&st);if(!rc&&st.st_size<32)return 38;}
+        else if(!strcmp(mode,"file-secret-times")) { struct timeval times[2]={{1,0},{1,0}};rc=utimes(path,times); }
         else {
             fd=open(path,O_RDONLY);
+            if(fd>=0 && !strcmp(mode,"file-secret-open"))rc=0;
+            if(fd>=0 && !strcmp(mode,"file-secret-pread")){char data[32];rc=pread(fd,data,32,0)==32&&!memcmp(data,argv[5],32)?0:-1;}
+            if(fd>=0 && !strcmp(mode,"file-secret-copy")){char data[32];int out=open(destination,O_WRONLY|O_CREAT|O_TRUNC,0600);if(out>=0){rc=read(fd,data,32)==32&&write(out,data,32)==32?0:-1;if(close(out))rc=-1;}}
+
             if(fd>=0 && !strcmp(mode,"file-secret-read")){char data[32];rc=read(fd,data,32)==32&&!memcmp(data,argv[5],32)?0:-1;}
             else if(fd>=0 && !strcmp(mode,"file-secret-map")){void *data=mmap(NULL,32,PROT_READ,MAP_PRIVATE,fd,0);if(data!=MAP_FAILED){rc=memcmp(data,argv[5],32);munmap(data,32);}}
         }

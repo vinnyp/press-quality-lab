@@ -10,14 +10,24 @@
 #include <sys/stat.h>
 
 extern char **environ;
+static int readiness_is_a_file;
+static void operation_ready(void) {
+    if (!readiness_is_a_file && write(2,"operation-ready\n",16) != 16) _exit(70);
+}
 #include "files.h"
 #include "operations.h"
 #include "witnesses.h"
+#include "directory.h"
+#include "ordinary.h"
 
 /* All process targets are children created here, never caller-supplied pids. */
 int main(int argc, char **argv) {
     alarm(4);
-    int answer = witness(argc, argv);
+    int answer = ordinary(argc, argv);
+    if (answer != -1) return answer;
+    answer = directory_operation(argc, argv);
+    if (answer != -1) return answer;
+    answer = witness(argc, argv);
     if (answer != -1) return answer;
     answer = file_operation(argc, argv);
     if (answer != -1) return answer;
@@ -52,12 +62,29 @@ int main(int argc, char **argv) {
         puts("descriptors clean");
         return 0;
     }
+    if (!strcmp(argv[1], "exit-launch-code")) return 71;
     if (!strcmp(argv[1], "clean")) {
         puts("clean");
         return 0;
     }
+    if (!strcmp(argv[1],"direct-session") || !strcmp(argv[1],"direct-group")) {
+        errno=0;
+        operation_ready();
+        int rc=!strcmp(argv[1],"direct-session") ? setsid() : setpgid(0,0);
+        if (rc != -1 || errno != EPERM) return 52;
+        puts("session leader refused"); return 0;
+    }
+    if (!strcmp(argv[1],"spawn")) {
+        pid_t child;
+        char *args[]={argv[0],"clean",NULL};
+        operation_ready();
+        int rc=twin ? -1 : posix_spawn(&child,argv[0],NULL,NULL,args,environ);
+        if (!rc) { int status; if(waitpid(child,&status,0)!=child || status)return 53; puts("performed"); }
+        puts("fallback"); return 0;
+    }
     int escape = !strcmp(argv[1], "session") || !strcmp(argv[1], "group");
     if (!escape && strcmp(argv[1], "child")) return 64;
+    if (!escape) operation_ready();
     pid_t child = !escape && twin ? -2 : fork();
     if (child == -2) {
         puts("fallback");
@@ -71,6 +98,7 @@ int main(int argc, char **argv) {
         alarm(2);
         int rc = 0;
         pid_t original_group = getpgrp();
+        if (escape) operation_ready();
         if (!twin && !strcmp(argv[1], "session")) rc = setsid();
         if (!twin && !strcmp(argv[1], "group")) rc = setpgid(0, 0);
         if (rc < 0) {

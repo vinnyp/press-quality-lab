@@ -16,6 +16,8 @@ int main(int argc, char **argv) {
     }
     if (write(2, "confined\n", 9) != 9) return 70;
     pid_t pid;
-    posix_spawn(&pid, argv[1], &actions, &attributes, argv + 1, environ);
+    if (posix_spawn(&pid, argv[1], &actions, &attributes, argv + 1, environ)) {
+        if (write(2, "launch-failed\n", 14) != 14) return 70;
+    }
     return 71;
 }

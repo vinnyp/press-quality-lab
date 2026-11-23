@@ -11,6 +11,7 @@ import (
 )
 
 func TestSilentRefusals(t *testing.T) {
+	t.Parallel()
 	for _, computation := range []bool{false, true} {
 		f := newFixture(t)
 		for _, op := range []string{"exception-entitlement", "process-exec-update-label"} {
@@ -25,8 +26,9 @@ func TestSilentRefusals(t *testing.T) {
 }
 
 func TestBehaviouralRefusalModifiers(t *testing.T) {
-	f := newFixture(t)
+	t.Parallel()
 	witnesses := []struct{ op, mode string }{
+		{"iokit-get-properties", "properties"}, {"consume-extension", "extension"}, {"mach-task-exception-port-set", "exception-port"}, {"necp-client-open", "necp"},
 		{"file-read-xattr", "xattr"}, {"file-link", "link"}, {"file-clone", "clone"},
 		{"file-lock", "lock"}, {"file-map-executable", "map"}, {"fs-info", "fs"},
 		{"process-iopolicy*", "policy"}, {"socket-option-get", "socket-get"},
@@ -34,13 +36,24 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 	}
 	for _, computation := range []bool{false, true} {
 		for _, w := range witnesses {
-			for _, form := range []string{"confined", "positive", "twin", "without-kill", "without-deny"} {
+			for _, form := range []string{"confined", "positive", "twin", "attribution", "without-kill", "without-deny"} {
 				if form == "without-deny" && w.mode != "xattr" {
 					continue
 				}
 				runScenario(t, profileName(computation)+"/"+w.op+"/"+form, func(t *testing.T) {
+					t.Parallel()
+					f := newFixture(t)
+
 					repeat(t, func() bool {
 						root, err := filepath.EvalSymlinks(t.TempDir())
+						if w.mode == "link" || w.mode == "clone" {
+							// The complete home workspace removes directory and
+							// metadata setup denials from these global rules.
+							root, err = os.MkdirTemp(f.home(), "link-clone-")
+							if err == nil {
+								defer os.RemoveAll(root)
+							}
+						}
 						if err != nil {
 							t.Fatal("canonical decoy root")
 						}
@@ -56,6 +69,18 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 								t.Fatal("prepare xattr decoy")
 							}
 						}
+						extensionTarget := ""
+						if w.mode == "extension" {
+							extensionTarget = source
+							token := filepath.Join(root, "extension-token")
+							issuer := f
+							issuer.args = []string{source, token}
+							if !correct(issuer.invoke("", "extension-token", false), "issued\n") {
+								t.Log("native extension issuance for the decoy failed")
+								return false
+							}
+							source = token
+						}
 						destination := filepath.Join(root, "destination")
 						probe := f
 						probe.args = []string{source, destination}
@@ -63,15 +88,29 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 						p := profile(computation)
 						// Isolate the explicit xattr kill from the default kill: removing
 						// this deny must change observed behaviour, not a text comparison.
-						if w.mode == "xattr" {
-							p = strings.Replace(p, "(deny default (with send-signal SIGKILL))", "(deny default)", 1)
-						}
+						p = strings.Replace(p, "(deny default (with send-signal SIGKILL))", "(deny default)", 1)
 						// Setup grants isolate the operation being tested from content/path denials.
 						p += "\n(allow file-read-data (literal (param \"SOURCE\")))\n(allow file-write* (literal (param \"DESTINATION\")))\n(allow network-outbound)\n"
+						if w.mode == "clone" {
+							// clonefile needs class-level xattr permission in its control;
+							// a source-filtered grant did not suffice.
+							p += "\n(allow file-read-xattr)\n"
+						}
+						if w.mode == "link" {
+							// Subtraction from the operation catalog requires each grant
+							// for the link control. The probe invokes only a link on decoys.
+							p += "\n(allow file-clone file-graft file-map-executable file-read-xattr file-ungraft fs-snapshot-mount)\n"
+						}
 						if w.mode == "fs" {
 							probe.params = append(probe.params, "VOLUME="+filepath.Join(root, "unused-volume"))
 						}
+						if w.mode == "properties" {
+							p += "\n(allow iokit-open-service)\n(allow file-read-data (subpath (param \"SYSTEM_ROOT\")))\n"
+						}
 						line := "(deny " + w.op + " (with send-signal SIGKILL))"
+						if form == "attribution" {
+							p += "\n(allow " + w.op + ")\n"
+						}
 						if form == "without-kill" {
 							p = strings.Replace(p, line, "(deny "+w.op+")", 1)
 						}
@@ -82,13 +121,20 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 							p = ""
 						}
 						before := decoySnapshot(source)
+						targetBefore := ""
+						if extensionTarget != "" {
+							targetBefore = decoySnapshot(extensionTarget)
+						}
 						r := probe.invoke(p, "witness-"+w.mode, form == "twin")
 						unchanged := before == decoySnapshot(source)
+						if extensionTarget != "" {
+							unchanged = unchanged && targetBefore == decoySnapshot(extensionTarget)
+						}
 						if form == "confined" {
 							return r.killed() && unchanged && decoySnapshot(destination) == "absent"
 						}
 						if form == "without-kill" {
-							return r.marked && !r.timedOut && !r.killed() && unchanged
+							return correct(r, "fallback\n") && unchanged && decoySnapshot(destination) == "absent"
 						}
 						if form == "without-deny" {
 							return correct(r, "fallback\n")
@@ -102,22 +148,49 @@ func TestBehaviouralRefusalModifiers(t *testing.T) {
 				})
 			}
 		}
-		covered := map[string]bool{"default": true, "process-info*": true, "syscall-unix": true}
+		covered := map[string]bool{"process-info-codesignature": true, "default": true, "process-info*": true, "syscall-unix": true, "file-write-times": true, "file-write-unlink": true, "file-read-data": true}
+		// Only these operations lack a usable harmless behavioral witness. The list
+		// is closed; an additional unwitnessed operation is a test failure.
+		structuralOnly := map[string]bool{
+			// Own-pid memorystatus getters return EPERM even without confinement.
+			"system-memorystatus-control": true,
+			// Container-path lookup returns no path for even an unconfined victim.
+			"process-info-sandbox-container": true,
+			// The host-special-port read survives this deny and cannot witness it.
+			"mach-task-special-port*": true,
+			// The own-coalition query never succeeds without confinement.
+			"coalition-info":        true,
+			"exception-entitlement": true, "process-exec-update-label": true,
+			// Opening an IOKit user client may invoke hardware or driver behavior;
+			// no harmless service-open control has been established.
+			"iokit-open-service": true,
+			"fs-quota*":          true, "nvram*": true, "asr-parser-enter": true, "darwin-notification-post": true,
+			"file-graft": true, "file-ungraft": true, "fs-snapshot-mount": true,
+			"isp-command-send": true, "mach-bootstrap": true, "mach-cross-domain-lookup": true,
+			"system-necp-client-action": true, "system-privilege": true,
+		}
 		for _, w := range witnesses {
 			covered[w.op] = true
 		}
 		for _, line := range strings.Split(profile(computation), "\n") {
 			if strings.HasPrefix(line, "(deny ") {
 				op := strings.Fields(line)[1]
+				op = strings.TrimSuffix(op, ")")
 				if !covered[op] {
-					t.Logf("structural only: %s", strings.TrimSuffix(op, ")"))
+					if !structuralOnly[op] {
+						t.Errorf("no behavioral witness for %s", op)
+					} else {
+						t.Logf("structural only: %s", op)
+					}
 				}
 			}
 		}
 	}
 }
 
-func TestSystemResolvers(t *testing.T) {
+func TestSystemResolversSmoke(t *testing.T) {
+	t.Log("smoke test: these kills do not isolate the operation rule")
+	t.Parallel()
 	f := newFixture(t)
 	g := buildGoClean(t, f)
 	for _, computation := range []bool{false, true} {
@@ -144,16 +217,39 @@ func TestSystemResolvers(t *testing.T) {
 	}
 }
 
-func TestPrebootListing(t *testing.T) {
+func TestPrebootListingSmoke(t *testing.T) {
+	t.Log("smoke test: these kills do not isolate the operation rule")
+	t.Parallel()
 	f := newFixture(t)
+	tree := filepath.Join(f.root, "runtime-decoy")
+	if os.MkdirAll(filepath.Join(tree, "allowed"), 0700) != nil {
+		t.Fatal("create runtime decoy")
+	}
+	f.params = []string{"RUNTIME_DECOY=" + filepath.Join(tree, "allowed")}
+	f.args = []string{tree}
 	for _, computation := range []bool{false, true} {
-		runScenario(t, profileName(computation), func(t *testing.T) {
-			repeat(t, func() bool { return f.invoke(profile(computation), "preboot", false).killed() })
-		})
+		for _, form := range []string{"confined", "twin", "positive"} {
+			runScenario(t, profileName(computation)+"/"+form, func(t *testing.T) {
+				repeat(t, func() bool {
+					p := profile(computation) + `
+(allow file-read-data (subpath (param "RUNTIME_DECOY")))
+`
+					if form == "positive" {
+						p = ""
+					}
+					r := f.invoke(p, "preboot", form == "twin")
+					if form == "confined" {
+						return r.killed()
+					}
+					return correct(r, "performed\nfallback\n")
+				})
+			})
+		}
 	}
 }
 
 func TestExecutableScriptPipelines(t *testing.T) {
+	t.Parallel()
 	f := computationFixture(t)
 	for _, entry := range []struct{ tool, command, want string }{
 		{"awk", "printf 'b\\na\\n' | awk '{print $1}'", "b\na\n"},
@@ -173,7 +269,9 @@ func TestExecutableScriptPipelines(t *testing.T) {
 	}
 }
 
-func TestSystemToolBoundaries(t *testing.T) {
+func TestSystemToolBoundariesSmoke(t *testing.T) {
+	t.Log("smoke test: these kills do not isolate the operation rule")
+	t.Parallel()
 	f := computationFixture(t)
 	subject := filepath.Join(f.root, "subject")
 	if r := run("/usr/bin/clang", []string{"-Wall", "-Wextra", "-Werror", "-o", subject, "testdata/programs/subject.c"}, f.env, ""); r.err != nil {
@@ -196,7 +294,7 @@ func TestSystemToolBoundaries(t *testing.T) {
 						if scenario == "network" {
 							probe.args = []string{"/usr/bin/nc", "-n", "-z", "-w", "1", "127.0.0.1", port}
 						} else {
-							probe.args = []string{"/usr/bin/curl", "--silent", "--max-time", "1", "http://127.0.0.1:" + port + "/"}
+							probe.args = []string{"/usr/bin/curl", "--disable", "--noproxy", "*", "--silent", "--max-time", "1", "http://127.0.0.1:" + port + "/"}
 						}
 					} else {
 						if strings.HasPrefix(scenario, "subject-") {
@@ -277,7 +375,9 @@ func TestSystemToolBoundaries(t *testing.T) {
 	}
 }
 
-func TestSystemHTTPClient(t *testing.T) {
+func TestSystemHTTPClientSmoke(t *testing.T) {
+	t.Parallel()
+	t.Log("smoke test: a killed HTTP tool does not prove the network rule")
 	f := newFixture(t)
 	for _, computation := range []bool{false, true} {
 		for _, confined := range []bool{false, true} {
@@ -286,13 +386,15 @@ func TestSystemHTTPClient(t *testing.T) {
 					probe, quiet, closeDecoy := networkDecoy(t, f, "tcp")
 					defer closeDecoy()
 					port := probe.args[0]
-					probe.probe = "/usr/bin/curl"
-					probe.args = []string{"--max-time", "1", "http://127.0.0.1:" + port + "/"}
+					probe.params = append(probe.params, "HTTP_TOOL=/usr/bin/curl")
+					probe.args = []string{"/usr/bin/curl", "--disable", "--noproxy", "*", "--silent", "--max-time", "1", "http://127.0.0.1:" + port + "/"}
 					p := ""
 					if confined {
-						p = profile(computation)
+						p = profile(computation) + `
+(allow process-exec* file-read-data (literal (param "HTTP_TOOL")))
+`
 					}
-					r := probe.invoke(p, "--silent", false)
+					r := probe.invoke(p, "replace-tool", false)
 					untouched := quiet()
 					if confined {
 						return r.killed() && untouched
@@ -305,6 +407,7 @@ func TestSystemHTTPClient(t *testing.T) {
 }
 
 func TestComputationTerminalOpen(t *testing.T) {
+	t.Parallel()
 	f := computationFixture(t)
 	runScenario(t, "open-tty", func(t *testing.T) {
 		repeat(t, func() bool { return correct(f.invoke(profile(true), "terminal-open", false), "terminal absent\n") })

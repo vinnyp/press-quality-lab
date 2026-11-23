@@ -11,8 +11,9 @@ import (
 
 // The platform compiler's operation table supplies this reviewed catalog.
 // Firmware, mount, quota, privilege and machine administration are queried only.
-func TestOperationInventory(t *testing.T) {
-	f := newFixture(t)
+func TestOperationInventorySmoke(t *testing.T) {
+	t.Log("smoke test: these kills do not isolate the operation rule")
+	t.Parallel()
 	data, err := os.ReadFile("testdata/programs/operations.txt")
 	if err != nil {
 		t.Fatal("read operation catalog")
@@ -24,6 +25,8 @@ func TestOperationInventory(t *testing.T) {
 	for _, computation := range []bool{false, true} {
 		for _, op := range operations {
 			runScenario(t, profileName(computation)+"/"+op, func(t *testing.T) {
+				t.Parallel()
+				f := newFixture(t)
 				repeat(t, func() bool {
 					probe := f
 					probe.args = []string{op}
@@ -31,7 +34,7 @@ func TestOperationInventory(t *testing.T) {
 					// Each open class is required by startup, metadata lookup or Go's numeric
 					// hardware queries. Unsupported kill modifiers are deliberately excluded.
 					switch op {
-					case "dynamic-code-generation", "system-info", "file-read-metadata", "process-codesigning", "sandbox-check", "syscall-mach", "syscall-mig", "syscall-unix", "file-test-existence", "system-fcntl", "system-mac-syscall", "mach-derive-port", "sysctl-read", "mach-priv-host-port":
+					case "dynamic-code-generation", "system-info", "file-read-metadata", "process-codesigning", "sandbox-check", "syscall-mach", "syscall-mig", "syscall-unix", "file-test-existence", "system-fcntl", "system-mac-syscall", "mach-derive-port", "mach-priv-host-port":
 						want = "1"
 					case "process-fork":
 						if computation {
@@ -47,12 +50,14 @@ func TestOperationInventory(t *testing.T) {
 			})
 		}
 	}
-	t.Log("firmware, mount, quota, privilege and machine administration: queried, not attempted")
+	t.Log("inventory query shows no unfiltered allow; filtered access is checked separately; firmware, mount, quota, privilege and machine administration are not attempted")
 }
 
 // Entitlements must not bypass the file boundary even though the platform
 // rejects a kill modifier on its entitlement operation.
-func TestEntitlementFileBoundary(t *testing.T) {
+func TestEntitlementFileBoundarySmoke(t *testing.T) {
+	t.Log("smoke test: these kills do not isolate the operation rule")
+	t.Parallel()
 	f := selfTestFixture(t)
 	entitlements := filepath.Join(f.root, "entitlements.plist")
 	data := `<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>com.apple.security.temporary-exception.files.absolute-path.read-only</key><array><string>` + filepath.Dir(f.args[0]) + `/</string></array></dict></plist>`
@@ -86,12 +91,12 @@ func TestEntitlementFileBoundary(t *testing.T) {
 						return r.killed()
 					}
 					if form == "without-kill" {
-						return r.marked && !r.timedOut && !r.killed()
+						return correct(r, "fallback\n")
 					}
 					return correct(r, "performed\nfallback\n")
 				})
 			})
 		}
 	}
-	t.Log("open limit: exception-entitlement and process-exec-update-label reject send-signal; both have a plain deny")
+	t.Log("open limit: entitlement effect is untested; exception-entitlement and process-exec-update-label reject send-signal; both have a plain deny")
 }
