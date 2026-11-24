@@ -4,7 +4,7 @@ Each directory under `cases/` is one case in the format QT6 of `collection-contr
 
 Run the judge-checked cases with `uv run runner.py --judge "<command>" --cases cases`. Run Python with `PYTHONDONTWRITEBYTECODE=1`: a stray file makes the runner refuse. The runner checks each record against its verdict; it does not check that a collector would produce that record from the recording, which is what a collector's own tests check.
 
-Two cases, `case-069` and `case-070`, use the real verifier. A collector meets them only in a local run on a macOS version QH1 names.
+Three cases use the real verifier: `case-069` and `case-070` grade the known-good form, and `case-143` anchors it. A collector meets them only in a local run on a macOS version QH1 names.
 
 ## Stated limits
 
