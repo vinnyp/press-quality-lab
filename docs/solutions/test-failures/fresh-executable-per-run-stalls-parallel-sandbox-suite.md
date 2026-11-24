@@ -20,7 +20,7 @@ tags: [testing, confinement, sandbox, macos, syspolicyd, parallel, flaky, spike]
 
 ## Problem
 
-The confinement spike's suite (`spike/confinement/`) runs about 1,900 scenarios 25 times each. Run in parallel, it went flaky and took five times longer per run than before. The cause was the harness writing a fresh copy of the launcher and the program for every run.
+The confinement spike's suite, in `spike/confinement/` until it was removed after the conformance collection specification was sealed, ran about 1,900 scenarios 25 times each. Run in parallel, it went flaky and took five times longer per run than before. The cause was the harness writing a fresh copy of the launcher and the program for every run.
 
 ## Symptoms
 

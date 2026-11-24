@@ -62,9 +62,7 @@ The tests include a check that every R and AE number cited under `docs/` resolve
 `scan.sh` checks tracked files and an optional commit range for home paths, emails and secrets with gitleaks.
 Only noreply@anthropic.com and addresses at `users.noreply.github.com` are allowed emails.
 The `ci` workflow runs three jobs on Linux: `gate`, `cases` and `scan`.
-The confinement suite under `spike/confinement/` needs macOS and runs only locally, as "How changes land" says:
-
-    GOTOOLCHAIN=local GOPROXY=off go test -v -count=1 -timeout 130m -tags confinementspike ./spike/confinement/...
+The confinement spike's suite and its recorder were removed after the conformance collection specification was sealed. Its record is `docs/spikes/2026-11-28-confinement.md`, and its code stays in the history before the pull request that removed it. Until phase 3's verifier exists, no form of the synthetic subject can be recorded again; the sealed recordings are the ones the corpus uses.
 
 Install the pinned tools once, then run `go mod download`:
 
