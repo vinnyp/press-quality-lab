@@ -268,7 +268,7 @@
     - the digest of the form's source, computed over its source directory as QE2 computes a seed's digest;
     - the digests of the rendered subject profile, the rendered computation profile and the launcher's source;
     - the macOS version and build it was recorded on, and the commit.
-  - **An invocation's key.** Each invocation is keyed by an object with these fields: for a subject invocation, `words`, `offline_args`, `env` (the declared environment names that apply, sorted by their bytes), `runbook` and `step` (each `null` for a probe's invocation), and `computation` `null`; for a computation's, `computation` (its argument list as the subject file gives it) and every other field `null` or `[]`. No two invocations of one recording have equal keys.
+  - **An invocation's key.** Each invocation is keyed by an object with these fields: for a subject invocation, `words`, `offline_args`, `env` (the declared environment names that apply, sorted by their bytes), `runbook` and `step` (each `null` for a probe's invocation), and `computation` `null`; for a computation's, `computation` (its argument list as the subject file gives it), `runbook` and `step` (those of the check it serves, because a capture makes its result depend on them), `words` `null`, and `offline_args` and `env` empty. No two invocations of one recording have equal keys.
   - **The runs.** Every invocation has five confined runs. An invocation of a violating form also has one unconfined run first, the positive control that the form's act happens. A non-violating form's invocations have no unconfined run.
   - **One run records:**
     - **the markers:** whether the launcher wrote its marker (QH5), and whether it wrote the could-not-start marker (QH7);
@@ -298,7 +298,7 @@
     | Table | Tag | Rows |
     |---|---|---|
     | `credit-and-routes.md` §2 | `route:<dimension>` | each dimension |
-    | the credit conditions of §2 | `credit:<dimension>:holds`, `credit:<dimension>:fails` | each dimension with a credit condition |
+    | the credit conditions of §2 | `credit:<dimension>:holds`, `credit:<dimension>:fails` | each dimension whose condition is neither "none" nor "never" |
     | `credit-and-routes.md` §4 | `encoding:<name>` | each encoding |
     | `credit-and-routes.md` §5 | `help:<generator>` | `cobra`, `urfave-cli`, `clap` |
     | QA9 | `predicate:<predicate>` | each predicate |
