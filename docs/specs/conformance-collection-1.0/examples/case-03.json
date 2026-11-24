@@ -22,7 +22,12 @@
       {
         "kind": "link",
         "path": "seed/linked-file",
-        "detail": "A link in the seed rejects the subject file before collection."
+        "detail": "missing-target"
+      },
+      {
+        "kind": "special_file",
+        "path": "seed/pipe",
+        "detail": null
       }
     ],
     "verifier": "scripted",
@@ -50,7 +55,7 @@
               "{SEED}/data.json"
             ]
           },
-          "by": "other_process"
+          "by": "engine"
         }
       ]
     }

@@ -760,6 +760,18 @@ def draft(root):
         ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/6/then'),
     })
 
+    fragments.update({
+        ('schema/behaviour.schema.json', '/$defs/key/oneOf/0/allOf/0/oneOf/0'),
+        ('schema/behaviour.schema.json', '/$defs/key/oneOf/0/allOf/0/oneOf/1'),
+        ('schema/behaviour.schema.json', '/$defs/stream/if'),
+        ('schema/behaviour.schema.json', '/$defs/stream/then'),
+        ('schema/behaviour.schema.json', '/$defs/stream/else'),
+        ('schema/case.schema.json', '/properties/input/properties/fixtures/items/allOf/0/if'),
+        ('schema/case.schema.json', '/properties/input/properties/fixtures/items/allOf/0/then'),
+        ('schema/case.schema.json', '/properties/input/properties/fixtures/items/allOf/1/if'),
+        ('schema/case.schema.json', '/properties/input/properties/fixtures/items/allOf/1/then'),
+    })
+
     arbitrary_values = {
             ("schema/behaviour.schema.json", "/$defs/run/properties/printed_value"),
             ("schema/subject-file.schema.json", "/$defs/expected/oneOf/0/properties/literal"),
@@ -799,7 +811,7 @@ def draft(root):
             if node.get("type") == "object" or "properties" in node:
                 if site not in open_objects | fragments and node.get("additionalProperties") is not False:
                     raise Error(f"open object: {name} {path}")
-                optional = {"detail"} if site == ("schema/case.schema.json", "/properties/input/properties/fixtures/items") else set()
+                optional = set()
                 if site in fragments:
                     optional = set(node.get("properties", {}))
                 missing = set(node.get("properties", {})) - set(node.get("required", [])) - optional
@@ -1102,6 +1114,8 @@ def collection_cases(root, cases_root, command, timeout):
         if case["id"] != directory.name or case["id"] in ids:
             raise Error("case id differs from directory or is duplicate: " + case["id"])
         ids.add(case["id"])
+        # Link and named-pipe fixtures are descriptions for assembly, not
+        # files stored in a case directory. Never add their paths to allowed.
         allowed = {"case.json", case["input"]["subject_file"]}
         if case["input"]["baseline"] is not None:
             allowed.add(case["input"]["baseline"])

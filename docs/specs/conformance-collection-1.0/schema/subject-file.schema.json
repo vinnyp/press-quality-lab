@@ -385,38 +385,21 @@
                 "minimum": 0,
                 "maximum": 255
               }
-            },
-            {
-              "$ref": "#/$defs/placeholder"
             }
           ]
         },
         "byte_bound": {
-          "oneOf": [
-            {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "minimum": 1,
-              "maximum": 1073741824
-            },
-            {
-              "$ref": "#/$defs/placeholder"
-            }
-          ]
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 1073741824
         },
         "budget_seconds": {
-          "oneOf": [
-            {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 3600
-            },
-            {
-              "$ref": "#/$defs/placeholder"
-            }
-          ]
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
         }
       }
     },
@@ -518,16 +501,9 @@
           }
         },
         "budget_seconds": {
-          "oneOf": [
-            {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 3600
-            },
-            {
-              "$ref": "#/$defs/placeholder"
-            }
-          ]
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
         },
         "checks": {
           "type": "array",
@@ -611,9 +587,6 @@
                 "minimum": 0,
                 "maximum": 255
               }
-            },
-            {
-              "$ref": "#/$defs/placeholder"
             }
           ]
         }
@@ -663,16 +636,9 @@
           }
         },
         "budget_seconds": {
-          "oneOf": [
-            {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 600
-            },
-            {
-              "$ref": "#/$defs/placeholder"
-            }
-          ]
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600
         },
         "declared_files": {
           "type": "array",

@@ -245,16 +245,9 @@
             }
           },
           "budget_seconds": {
-            "oneOf": [
-              {
-                "type": [
-                  "integer",
-                  "null"
-                ]
-              },
-              {
-                "$ref": "subject-file.schema.json#/$defs/placeholder"
-              }
+            "type": [
+              "integer",
+              "null"
             ]
           },
           "seed": {
@@ -347,9 +340,6 @@
                           "minimum": 0,
                           "maximum": 255
                         }
-                      },
-                      {
-                        "$ref": "subject-file.schema.json#/$defs/placeholder"
                       }
                     ]
                   }
@@ -363,15 +353,8 @@
                 ],
                 "properties": {
                   "bound": {
-                    "oneOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 1
-                      },
-                      {
-                        "$ref": "subject-file.schema.json#/$defs/placeholder"
-                      }
-                    ]
+                    "type": "integer",
+                    "minimum": 1
                   }
                 }
               },
@@ -430,15 +413,8 @@
                           }
                         },
                         "budget_seconds": {
-                          "oneOf": [
-                            {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            {
-                              "$ref": "subject-file.schema.json#/$defs/placeholder"
-                            }
-                          ]
+                          "type": "integer",
+                          "minimum": 1
                         }
                       }
                     }
@@ -510,15 +486,8 @@
                         }
                       },
                       "budget_seconds": {
-                        "oneOf": [
-                          {
-                            "type": "integer",
-                            "minimum": 1
-                          },
-                          {
-                            "$ref": "subject-file.schema.json#/$defs/placeholder"
-                          }
-                        ]
+                        "type": "integer",
+                        "minimum": 1
                       },
                       "captures": {
                         "type": "array",
@@ -642,14 +611,7 @@
                       {
                         "properties": {
                           "exit_codes": {
-                            "oneOf": [
-                              {
-                                "type": "array"
-                              },
-                              {
-                                "$ref": "subject-file.schema.json#/$defs/placeholder"
-                              }
-                            ]
+                            "type": "array"
                           }
                         }
                       }
@@ -750,15 +712,8 @@
               }
             },
             "budget_seconds": {
-              "oneOf": [
-                {
-                  "type": "integer",
-                  "minimum": 1
-                },
-                {
-                  "$ref": "subject-file.schema.json#/$defs/placeholder"
-                }
-              ]
+              "type": "integer",
+              "minimum": 1
             },
             "captures": {
               "type": "array",

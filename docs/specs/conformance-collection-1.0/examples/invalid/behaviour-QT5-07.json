@@ -1,0 +1,802 @@
+{
+  "behaviour_version": "1.0",
+  "form": "quiet",
+  "violating": false,
+  "form_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "subject_profile_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "computation_profile_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "launcher_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "system": {
+    "product_version": "27.2",
+    "build": "26B123"
+  },
+  "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "invocations": [
+    {
+      "key": {
+        "words": [
+          "list"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [
+          "WIDGETS_OFFLINE"
+        ],
+        "runbook": null,
+        "step": null,
+        "computation": null
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "widgets",
+        "step": null,
+        "computation": [
+          "/usr/bin/true",
+          "{SEED}/data.json"
+        ]
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": true
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": true
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": true
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": true
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": true
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "widgets",
+        "step": "list",
+        "computation": [
+          "computations/check",
+          "{SEED}/data.json"
+        ]
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": "widgets",
+        "step": "list",
+        "computation": null
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": true,
+            "head": "",
+            "kept": null
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": true,
+            "head": "",
+            "kept": null
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": true,
+            "head": "",
+            "kept": null
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": true,
+            "head": "",
+            "kept": null
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": true,
+            "head": "",
+            "kept": null
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        }
+      ]
+    }
+  ]
+}

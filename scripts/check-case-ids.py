@@ -99,6 +99,12 @@ def check(cases):
             raise ValueError(case["id"] + ": preimage keys differ from required")
         root = cases.parent
         seed_path = root / "subjects" / case["input"]["form"] / "seed"
+        # These fixtures exist only after assembly. A link or named pipe in
+        # the seed rejects the subject under QS9, even if the canonical seed
+        # directory by itself contains only regular files.
+        for fixture in case["input"]["fixtures"]:
+            if fixture["kind"] in ("link", "special_file") and (fixture["path"] == "seed" or fixture["path"].startswith("seed/")):
+                raise ValueError(case["id"] + ": seed contains a link or special file: " + fixture["path"])
         expected_seed = ids.seed(seed_path) if seed_path.exists() or seed_path.is_symlink() else None
         recording = ids.load(root / "behaviour" / (case["input"]["form"] + ".json"))
         for digest, preimage in preimages.items():

@@ -81,6 +81,23 @@ with tempfile.TemporaryDirectory(prefix="pql-case-controls-") as temporary:
 
     save_case()
     case_run(0)
+    case["input"]["fixtures"] = [
+        {"kind": "link", "path": "seed/missing-link", "detail": "missing-target"},
+        {"kind": "special_file", "path": "seed/pipe", "detail": None},
+    ]
+    save_case()
+    case_run(0)
+    # Assembly creates these; the case directory must not contain them.
+    link = directory / "missing-link"
+    link.symlink_to("missing-target")
+    case_run(2, "unexpected case file")
+    link.unlink()
+    pipe = directory / "pipe"
+    os.mkfifo(pipe)
+    case_run(2, "unexpected case file")
+    pipe.unlink()
+    case["input"]["fixtures"] = []
+    save_case()
     case["expect"]["judge_output"]["checks"][0]["rule"] = "C2"
     save_case()
     case_run(1, "/checks/0/rule")
@@ -134,6 +151,12 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
 
     save_ids()
     cross_run(0, "1 judge-checked")
+    for kind, detail in (("link", "missing-target"), ("special_file", None)):
+        case["input"]["fixtures"] = [{"kind": kind, "path": "seed/fixture", "detail": detail}]
+        save_ids()
+        cross_run(1, "seed contains a link or special file")
+    case["input"]["fixtures"] = []
+    save_ids()
     preimage["parameters"]["bound"] += 1
     save_ids()
     cross_run(1, "preimage id mismatch")

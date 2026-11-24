@@ -11,17 +11,17 @@
   "commands": [
     {
       "words": [],
-      "class": "safe",
-      "writes": false,
-      "exit_codes": {
-        "placeholder": "Supply this value so the check can be measured."
+      "class": {
+        "placeholder": "Supply the command class so its scope can be determined."
       },
-      "byte_bound": {
-        "placeholder": "Supply this value so the check can be measured."
+      "writes": {
+        "placeholder": "State whether this command writes so its probes can be selected."
       },
-      "budget_seconds": {
-        "placeholder": "Supply this value so the check can be measured."
-      }
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 65536,
+      "budget_seconds": 30
     },
     {
       "words": [
@@ -104,9 +104,7 @@
             "add",
             "gear"
           ],
-          "budget_seconds": {
-            "placeholder": "Supply this value so the check can be measured."
-          },
+          "budget_seconds": 30,
           "checks": [
             {
               "dimension": "execution",
@@ -116,9 +114,9 @@
                 "literal": 0
               },
               "precondition": null,
-              "exit_codes": {
-                "placeholder": "Supply this value so the check can be measured."
-              }
+              "exit_codes": [
+                0
+              ]
             }
           ]
         },
@@ -128,9 +126,7 @@
             "list",
             "--json"
           ],
-          "budget_seconds": {
-            "placeholder": "Supply this value so the check can be measured."
-          },
+          "budget_seconds": 30,
           "checks": [
             {
               "dimension": "response-correctness",
@@ -140,9 +136,9 @@
                 "literal": "gear"
               },
               "precondition": null,
-              "exit_codes": {
-                "placeholder": "Supply this value so the check can be measured."
-              }
+              "exit_codes": [
+                0
+              ]
             },
             {
               "dimension": "completeness-signaling",
@@ -156,9 +152,7 @@
                     "{SEED}/data.json",
                     "{CAPTURE:add one}"
                   ],
-                  "budget_seconds": {
-                    "placeholder": "Supply this value so the check can be measured."
-                  },
+                  "budget_seconds": 30,
                   "declared_files": [
                     "oracle/count.py"
                   ],
@@ -168,9 +162,9 @@
                 }
               },
               "precondition": null,
-              "exit_codes": {
-                "placeholder": "Supply this value so the check can be measured."
-              }
+              "exit_codes": [
+                0
+              ]
             }
           ]
         }
@@ -187,9 +181,7 @@
             "--name",
             "none"
           ],
-          "budget_seconds": {
-            "placeholder": "Supply this value so the check can be measured."
-          },
+          "budget_seconds": 30,
           "checks": [
             {
               "dimension": "response-correctness",
@@ -205,18 +197,16 @@
                     "{SUBJECT_DIR}/oracle/has-rows.py",
                     "{SEED}/data.json"
                   ],
-                  "budget_seconds": {
-                    "placeholder": "Supply this value so the check can be measured."
-                  },
+                  "budget_seconds": 30,
                   "declared_files": [
                     "oracle/has-rows.py"
                   ],
                   "captures": []
                 }
               },
-              "exit_codes": {
-                "placeholder": "Supply this value so the check can be measured."
-              }
+              "exit_codes": [
+                0
+              ]
             }
           ]
         }
@@ -230,9 +220,7 @@
           "words": [
             "purge"
           ],
-          "budget_seconds": {
-            "placeholder": "Supply this value so the check can be measured."
-          },
+          "budget_seconds": 30,
           "checks": [
             {
               "dimension": "destructive-guard",
@@ -242,9 +230,9 @@
                 "literal": "--confirm"
               },
               "precondition": null,
-              "exit_codes": {
-                "placeholder": "Supply this value so the check can be measured."
-              }
+              "exit_codes": [
+                0
+              ]
             }
           ]
         }
