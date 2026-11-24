@@ -1,4 +1,5 @@
 """Witness the unsealed runner's refusal and banner in an isolated copy."""
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -126,6 +127,11 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
     (root / "behaviour").mkdir()
     case = json.loads((source / "examples/case-01.json").read_text())
     record = json.loads((source / "examples/record-01.json").read_text())["judge_input"]
+    subject = json.loads((source / "examples/subject-file.json").read_text())
+    (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
+    spec = importlib.util.spec_from_file_location("collection_ids", guard_script.with_name("collection_ids.py"))
+    ids = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ids)
     digest = "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7"
     preimage = json.loads((source / "examples/baseline-01.json").read_text())["preimages"][digest]
     record["required"] = [c for c in record["required"] if c["id"] == digest]
@@ -165,6 +171,31 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
     (form / "data.json").write_bytes(b"changed\n")
     cross_run(1, "seed digest mismatch")
     (form / "data.json").write_bytes(b'{"widgets":[]}\n')
+    canonical_seed = preimage["seed"]
+    canonical_digest = digest
+    for seed in ({"placeholder": "Supply the seed so checks can read its data."}, None):
+        subject["seed"] = seed
+        (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
+        cross_run(1, "seed digest mismatch")
+        preimage["seed"] = seed
+        digest = ids.check_id(preimage)
+        record["required"][0]["id"] = digest
+        record["evidence"][0]["check_id"] = digest
+        for target in record["evidence"][0]["targets"]:
+            if target["kind"] == "invocation":
+                target["id"] = digest
+        save_ids()
+        cross_run(0, "1 judge-checked")
+        preimage["seed"] = canonical_seed
+        digest = canonical_digest
+        record["required"][0]["id"] = digest
+        record["evidence"][0]["check_id"] = digest
+        for target in record["evidence"][0]["targets"]:
+            if target["kind"] == "invocation":
+                target["id"] = digest
+        save_ids()
+    subject["seed"] = "seed"
+    (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
     case["invocations"] = []
     save_ids()
     cross_run(1, "invocation not in case")

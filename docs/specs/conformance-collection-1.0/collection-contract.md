@@ -167,6 +167,7 @@
 
   **Targets.**
   - Each invocation is a target of kind `invocation`. Its id is the check's id, or the check's id followed by `#` and the invocation's position from 1 when the check has more than one invocation. Discovery's help requests are numbered in the order QD2 gives; the planted secret's invocations in the order its commands are listed, counting listed commands only. A control invocation is never a target.
+  - A check that would use no invocation still has one target, because the judge contract requires one: a target of kind `invocation` whose id is the check's id. Such a check is a probe that runs no command (QP1), or the planted-secret probe whose `secret` is `null` or a placeholder.
   - The store-unchanged probe adds the declared store as a target of kind `artifact`. The planted-secret probe adds the planted file the same way. Each artifact's id is its path relative to the home, and its tier is the tier of the invocation that used it.
 
   A check that is not observed has an `outcome` of `not_observed` and carries its reason and the invocation it would have used.

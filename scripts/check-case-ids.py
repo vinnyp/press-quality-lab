@@ -105,7 +105,11 @@ def check(cases):
         for fixture in case["input"]["fixtures"]:
             if fixture["kind"] in ("link", "special_file") and (fixture["path"] == "seed" or fixture["path"].startswith("seed/")):
                 raise ValueError(case["id"] + ": seed contains a link or special file: " + fixture["path"])
-        expected_seed = ids.seed(seed_path) if seed_path.exists() or seed_path.is_symlink() else None
+        subject_seed = ids.load(directory / case["input"]["subject_file"])["seed"]
+        if subject_seed is None or isinstance(subject_seed, dict) and set(subject_seed) == {"placeholder"}:
+            expected_seed = subject_seed
+        else:
+            expected_seed = ids.seed(seed_path) if seed_path.exists() or seed_path.is_symlink() else None
         recording = ids.load(root / "behaviour" / (case["input"]["form"] + ".json"))
         for digest, preimage in preimages.items():
             if ids.check_id(preimage) != digest:
