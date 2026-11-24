@@ -207,7 +207,7 @@ QS5's override of an otherwise held check comes last of all.
 
 - **QP6. What it compares.** The probe runs each declared `safe` command with `writes: false`. Before and after the command, the engine snapshots the throwaway home and compares the two snapshots. The comparison covers names and contents only: which paths exist, their kinds, and the bytes of each regular file. Times, modes and owners are not compared.
 - **QP7. Bookkeeping paths.** The file may declare bookkeeping paths: paths relative to the home that the subject writes as a matter of course, such as a journal.
-  - Changes inside a declared bookkeeping path, or inside `.pql-tmp` (QH12), are left out of the comparison. Every scorecard lists the paths that were left out.
+  - Changes inside a declared bookkeeping path, the creation of a directory on the way to one (a directory the path lies below, inside the home), and changes inside `.pql-tmp` (QH12) are left out of the comparison. Every scorecard lists the paths that were left out.
   - A bookkeeping path at or above the declared store, or at or above any path the seed supplies, rejects the file before collection. A seed is therefore prepared without bookkeeping files.
 - **QP8. Database side files.** Three side files beside the declared store are compared as follows:
   - `<store>-shm` is SQLite's shared-memory index and holds no data. It is left out of the comparison.
