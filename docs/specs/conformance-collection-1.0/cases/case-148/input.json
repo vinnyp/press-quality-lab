@@ -1,0 +1,698 @@
+{
+  "request": "grade",
+  "scope": [
+    "conformance"
+  ],
+  "claimed_tier": "scripted",
+  "subject_facts": {
+    "read_only": false,
+    "has_destructive_ops": true,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "required": [
+    {
+      "id": "12b8d9e1aae3884c7ee7fb38a808ad46b8bf8817ced8ab35fca9efef12f2e0d1",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "1acae298ed634d13069d752673cdd60650f81f8991d01e6e82aeb6b726c73893",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+      "kind": "plain",
+      "dimension": "availability",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "21a653014b611148fbb07675226f4c7d70c9c3550c70b238ed28e0e761de5d7e",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "2a5c6262da669c5b407880486377198780a62dd62508a5bc5addc62b50ab71ae",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "5d6a1d89435804d64e16a06020faa527fb8d83b04b440679113de8667bcea588",
+      "kind": "plain",
+      "dimension": "pii-secret-hygiene",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "6b71095b5a8a494a729c99c8a62d8acd8e8785fd690285e7258adc391be7774b",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "a1a5c8e2c539072c11596648302bcef5b4c78f64408c07da28838daf7645b79f",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "cb5ccfaa1b8602f5f508ce0b1cc47490a7936aea4b396712f351bdf5831047fb",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "d3115e33e8900f096778d7cd1b344533d3d039814e2f0ea8caa792a52a937949",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f6e7d09e595ee661a9a4aa1cb6fc1cb6d640cc563ae3cbee7944eaf0425d98ef",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+      "kind": "plain",
+      "dimension": "discoverability",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    }
+  ],
+  "evidence": [
+    {
+      "check_id": "12b8d9e1aae3884c7ee7fb38a808ad46b8bf8817ced8ab35fca9efef12f2e0d1",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 34,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "12b8d9e1aae3884c7ee7fb38a808ad46b8bf8817ced8ab35fca9efef12f2e0d1",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "1acae298ed634d13069d752673cdd60650f81f8991d01e6e82aeb6b726c73893",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "1acae298ed634d13069d752673cdd60650f81f8991d01e6e82aeb6b726c73893",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "21a653014b611148fbb07675226f4c7d70c9c3550c70b238ed28e0e761de5d7e",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 18,
+          "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2",
+          "cut": false,
+          "head": "gear\nspring\nvalve\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "21a653014b611148fbb07675226f4c7d70c9c3550c70b238ed28e0e761de5d7e",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "2a5c6262da669c5b407880486377198780a62dd62508a5bc5addc62b50ab71ae",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "2a5c6262da669c5b407880486377198780a62dd62508a5bc5addc62b50ab71ae",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 306,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "5d6a1d89435804d64e16a06020faa527fb8d83b04b440679113de8667bcea588",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":42}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "5d6a1d89435804d64e16a06020faa527fb8d83b04b440679113de8667bcea588",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": ".config/widgets/token",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "6b71095b5a8a494a729c99c8a62d8acd8e8785fd690285e7258adc391be7774b",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "6b71095b5a8a494a729c99c8a62d8acd8e8785fd690285e7258adc391be7774b",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "a1a5c8e2c539072c11596648302bcef5b4c78f64408c07da28838daf7645b79f",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 12,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "a1a5c8e2c539072c11596648302bcef5b4c78f64408c07da28838daf7645b79f",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "cb5ccfaa1b8602f5f508ce0b1cc47490a7936aea4b396712f351bdf5831047fb",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 18,
+          "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2",
+          "cut": false,
+          "head": "gear\nspring\nvalve\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "cb5ccfaa1b8602f5f508ce0b1cc47490a7936aea4b396712f351bdf5831047fb",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "d3115e33e8900f096778d7cd1b344533d3d039814e2f0ea8caa792a52a937949",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 18,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 18,
+          "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2",
+          "cut": false,
+          "head": "gear\nspring\nvalve\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "d3115e33e8900f096778d7cd1b344533d3d039814e2f0ea8caa792a52a937949",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f6e7d09e595ee661a9a4aa1cb6fc1cb6d640cc563ae3cbee7944eaf0425d98ef",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f6e7d09e595ee661a9a4aa1cb6fc1cb6d640cc563ae3cbee7944eaf0425d98ef",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "commands_found": 5
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#1",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#2",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#3",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#4",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#5",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#6",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    }
+  ],
+  "trials": [],
+  "markers": [],
+  "baseline": null,
+  "retired": [],
+  "accepted_regressions": []
+}
