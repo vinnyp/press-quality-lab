@@ -1,6 +1,6 @@
 {
   "behaviour_version": "1.0",
-  "commit": "4051d6f0b9496d36b31aa305021919a3b8148314",
+  "commit": "958b25bf5ef67b9df35f9f9d03a54109d2c3565d",
   "computation_profile_sha256": "94d86b3f7e9ea0c7dbbf686ad365023f4b9e062896a321549b2943c69974925d",
   "form": "known-good",
   "form_sha256": "e2fa692774fa939c8e3717a181ff568f30c7fcd09e5875923f3e2644262ce78d",
@@ -8305,6 +8305,710 @@
         "offline_args": [],
         "env": [],
         "runbook": "self agreement",
+        "step": "second",
+        "computation": [
+          "computations/count-capture.sh",
+          "{CAPTURE:first}"
+        ],
+        "home": "scratch"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "count agreement",
+        "step": "first",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "count"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "count agreement",
+        "step": "second",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "count agreement",
         "step": "second",
         "computation": [
           "computations/count-capture.sh",
