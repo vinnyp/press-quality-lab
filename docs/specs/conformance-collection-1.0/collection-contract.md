@@ -159,8 +159,8 @@
   |---|---|
   | `check_id` | the check's id (QE7) |
   | `outcome`, `reason`, `failure_kind` | by §2 of `collection-rules.md` and the check's predicate |
-  | `target_size` | for an empty-satisfiable check whose predicate was evaluated, the number of bytes or items it evaluated; that is, a check that is held, or not held with `failure_kind` `predicate`. Otherwise `null`, a check not held for its exit code or its end included |
-  | `precondition_observed` | for a check that asserts emptiness and was observed, the observed precondition (QA9) |
+  | `target_size` | for an empty-satisfiable check whose predicate was evaluated, the number of bytes or items it evaluated, and for `row_count` `null` when there is no array at `path`; that is, a check that is held, or not held with `failure_kind` `predicate`. Otherwise `null`, a check not held for its exit code or its end included |
+  | `precondition_observed` | for a check that asserts emptiness whose outcome is held or not held, the observed precondition (QA9); otherwise `null` |
   | `expected`, `observed` | bounded as QE10 says |
   | `tier` | as QE9 says |
   | `evaluator` | `{"kind": "deterministic", "model": null}` |
@@ -228,7 +228,7 @@
 ## 7. Records
 
 - **QE17. Where records live.** Run records, baselines and their trials are kept only in the engine's store, never inside a repository. The store is a directory under the user's application-support directory. Directories are created with mode 0700 and files with 0600. The engine holds no other state between runs that can change a verdict (R27).
-- **QE18. Masking.** Every record, a rejected one included, and every scorecard mask the planted canary and each declared environment value, in every encoding `credit-and-routes.md` §4 lists.
+- **QE18. Masking.** Every record, a rejected one included, and every scorecard mask the planted canary and each declared environment value of 8 bytes or more, in every encoding `credit-and-routes.md` §4 lists. The canary becomes `pqlcanary` followed by 32 zeros, in the same encoding, as QT5 says for a recording; a declared value becomes as many `*` as its encoded form has characters. Masking changes only text a record or scorecard shows, never a byte count, a digest or a check's outcome, which are taken from the drained bytes. A shorter declared value is not masked, and the scorecard says so.
 - **QE19. Schemas and conformance.** The subject file, the stored record, the baseline, the case format and recorded behaviour (QT5) each have a JSON Schema in `schema/`. Two collectors conform alike when, for the same subject file, scope, binary and host, their records to the judge agree after both are sorted by check id:
   - the required arrays are equal;
   - each piece of evidence has equal `check_id`, `outcome`, `reason`, `failure_kind`, `target_size`, `precondition_observed` and `tier`;
@@ -277,6 +277,8 @@
     - the digest of the form's source: QE2's seed digest computed over the source files the form's build compiles, as paths relative to the synthetic subject's source root, with an entry for each file and none for a directory. A form that is one file rather than a build, such as one the system cannot execute, names that file's SHA-256 instead;
     - the digests of the subject profile and the computation profile, each as the template renders with its variant's fixed text and before any line the engine adds for one invocation, and of the launcher's source;
     - the macOS version and build it was recorded on, and the commit.
+
+    In `home_changes`, an empty regular file carries the SHA-256 of zero bytes.
 
     These digests, the system and the commit say where a recording came from. A collector reads none of them and rejects no recording on their values.
   - **An invocation's key.** Each invocation is keyed by an object with these fields. `home` names the home it runs in: `seed` for a fresh copy of the seed, `empty` for an empty home (discovery's), `planted` for a fresh copy with the canary planted (the planted-secret probe's), `runbook` for its runbook's shared home, and `scratch` for a computation's scratch directory. The other fields: for a subject invocation, `words`, `offline_args`, `env` (the declared environment names that apply, sorted by their bytes), `runbook` and `step` (both strings for a runbook step, both `null` for a probe's invocation), and `computation` `null`; for a computation's, `computation` (its argument list as the subject file gives it), `runbook` and `step` (those of the check it serves, because a capture makes its result depend on them), `words` `null`, and `offline_args` and `env` empty. No two invocations of one recording have equal keys.

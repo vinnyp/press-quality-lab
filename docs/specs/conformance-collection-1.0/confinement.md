@@ -272,7 +272,7 @@
 
 ## 7. The read proof for the planted secret
 
-- **QH26. Calibration.** Before a planted-secret probe, the self-test plants a decoy, sets its access time a day before its modification time, reads it under the subject's confinement, and checks that the access time moved. When it did not, the volume does not record reads, and every planted-secret probe in the grade is not observed with `input_missing`.
+- **QH26. Calibration.** Before a planted-secret probe, the self-test plants a decoy, sets its access time a day before its modification time, reads it under the subject's confinement, and checks that the access time moved. When it did not, the volume does not record reads, so no invocation of any planted-secret probe in the grade proves a read (QP11): QO7's earlier steps still decide a leak, an invocation QO1 to QO4 decide, or a scan bound, and otherwise the probe is not observed with `input_missing`.
 - **QH27. The two signals.** For the planted file the engine:
   - sets the access time a day before the modification time before each invocation;
   - refuses, with a kill, any write to the planted file and any unlink or create on the throwaway home and on every directory below it on the file's path, so the subject cannot set the access time by writing, renaming or replacing the file;
