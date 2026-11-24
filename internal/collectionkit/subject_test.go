@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -79,6 +80,9 @@ type subjectRecording struct {
 			Stdout struct {
 				Bytes  int
 				SHA256 string
+			}
+			Markers struct {
+				CouldNotStart bool `json:"could_not_start"`
 			}
 			End struct {
 				Kind string
@@ -264,6 +268,22 @@ func TestCollectionSubject(t *testing.T) {
 					continue
 				}
 				args := append(slices.Clone(key.Words), key.OfflineArgs...)
+				if first.Markers.CouldNotStart {
+					ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
+					defer cancel()
+					cmd := exec.CommandContext(ctx, binary, args...)
+					cmd.Env = []string{"HOME=" + home, "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC"}
+					if err := cmd.Start(); err != nil {
+						var pathErr *os.PathError
+						if !errors.As(err, &pathErr) {
+							t.Fatalf("direct invocation %v did not return an operating system exec error: %v", args, err)
+						}
+					} else {
+						waitErr := cmd.Wait()
+						t.Fatalf("direct invocation %v started despite recorded could_not_start (wait: %v)", args, waitErr)
+					}
+					continue
+				}
 				out, _, code := subjectInvoke(t, binary, home, args...)
 				if len(out) != first.Stdout.Bytes || subjectHash(out[:min(len(out), 1<<20)]) != first.Stdout.SHA256 || first.End.Kind != "exit" || code != first.End.Code {
 					t.Errorf("direct invocation %v differs from recording", args)
