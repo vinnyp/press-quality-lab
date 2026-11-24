@@ -59,6 +59,40 @@ func TestCorpusControls(t *testing.T) {
 		name, want string
 		mutate     func(*testing.T, string)
 	}{
+		{"route absent", "tag absent from required: route:availability", func(t *testing.T, root string) {
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) { v["covers"] = []string{"route:availability"} })
+		}},
+		{"credit absent", "tag absent from required: credit:token-economy:fails", func(t *testing.T, root string) {
+			mutateCorpus(t, root, "cases/case-001/input.json", func(v map[string]any) { corpusMap(corpusList(v["required"])[0])["dimension"] = "token-economy" })
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) { v["covers"] = []string{"credit:token-economy:fails"} })
+		}},
+		{"encoding absent", "encoding tag absent from recording", func(t *testing.T, root string) {
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) { v["covers"] = []string{"encoding:base64"} })
+		}},
+		{"help absent", "help tag absent from recording", func(t *testing.T, root string) {
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) { v["covers"] = []string{"help:clap"} })
+		}},
+		{"identical twin", "twin differs in 0 inputs", func(t *testing.T, root string) {
+			var twin map[string]any
+			decode(t, read(t, filepath.Join(root, "cases/case-001/case.json")), &twin)
+			twin["id"], twin["named_check"] = "case-002", nil
+			writeCorpus(t, root, "cases/case-002/case.json", twin)
+			for _, name := range []string{"subject.json", "input.json"} {
+				var value map[string]any
+				decode(t, read(t, filepath.Join(root, "cases/case-001", name)), &value)
+				writeCorpus(t, root, filepath.Join("cases/case-002", name), value)
+			}
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) { v["twin"] = "case-002" })
+		}},
+		{"undefined rule", "undefined rule QS999999", func(t *testing.T, root string) {
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) { v["rules"] = []string{"QS999999"} })
+		}},
+		{"missing form", "missing subject form absent", func(t *testing.T, root string) {
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) { corpusMap(v["input"])["form"] = "absent" })
+		}},
+		{"unknown tag", "unknown covers tag unknown:synthetic", func(t *testing.T, root string) {
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) { v["covers"] = []string{"unknown:synthetic"} })
+		}},
 		{"uncovered row", "uncovered tag route:availability", func(t *testing.T, root string) {
 			if err := os.WriteFile(filepath.Join(root, "CASES.md"), []byte("Corpus: complete\n"), 0600); err != nil {
 				t.Fatal(err)

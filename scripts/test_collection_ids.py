@@ -14,6 +14,17 @@ KIT = Path(__file__).resolve().parents[1] / "docs/specs/conformance-collection-1
 
 
 class CollectionIDs(unittest.TestCase):
+    def test_literals_and_lossless_numbers(self):
+        self.assertEqual(ids.canon([True, False, None]), "[true,false,null]")
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "number.json"
+            for text in ["NaN", "9007199254740993", "0.123456789012345678901"]:
+                path.write_text(text)
+                with self.subTest(text=text), self.assertRaises(ValueError):
+                    ids.canon(ids.load(path))
+        with self.assertRaises(ValueError):
+            ids.canon(9007199254740993)
+
     def test_sorting(self):
         value = {"\u20ac": "Euro Sign", "\r": "Carriage Return", "\ufb33": "Hebrew Letter Dalet With Dagesh", "1": "One", "\U0001f600": "Emoji: Grinning Face", "\u0080": "Control", "\u00f6": "Latin Small Letter O With Diaeresis"}
         self.assertEqual(list(json.loads(ids.canon(value))), ["\r", "1", "\u0080", "\u00f6", "\u20ac", "\U0001f600", "\ufb33"])

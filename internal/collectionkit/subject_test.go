@@ -93,6 +93,27 @@ type subjectRecording struct {
 }
 
 // Reject forbidden content in decoded strings as well as JSON source text.
+func subjectCanaryText(text string) string {
+	decoded := []string{text}
+	// Encodings are searched within surrounding content, including stream heads
+	// and readable home-change strings.
+	for _, token := range regexp.MustCompile(`cHFsY2FuYXJ5[A-Za-z0-9+/_-]{43}={0,1}`).FindAllString(text, -1) {
+		for _, encoding := range []*base64.Encoding{base64.StdEncoding, base64.RawStdEncoding, base64.URLEncoding, base64.RawURLEncoding} {
+			if b, err := encoding.DecodeString(token); err == nil {
+				decoded = append(decoded, string(b))
+			}
+		}
+	}
+	for _, pattern := range []string{`(?i:70716c63616e617279)[0-9a-fA-F]{64}`, `(?i:%70%71%6c%63%61%6e%61%72%79)(?:%[0-9a-fA-F]{2}){32}`} {
+		for _, token := range regexp.MustCompile(pattern).FindAllString(text, -1) {
+			if b, err := hex.DecodeString(strings.ReplaceAll(token, "%", "")); err == nil {
+				decoded = append(decoded, string(b))
+			}
+		}
+	}
+	return strings.Join(decoded, "\n")
+}
+
 func subjectRecordingGuard(b []byte) error {
 	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -109,7 +130,7 @@ func subjectRecordingGuard(b []byte) error {
 			if requirement.MatchString(x) {
 				return fmt.Errorf("recording contains a bare requirement number")
 			}
-			for _, s := range canary.FindAllString(x, -1) {
+			for _, s := range canary.FindAllString(subjectCanaryText(x), -1) {
 				if s != "pqlcanary"+strings.Repeat("0", 32) {
 					return fmt.Errorf("recording contains an unmasked canary")
 				}
@@ -387,6 +408,7 @@ func TestSubjectRecordingGuards(t *testing.T) {
 		name, text string
 		bad        bool
 	}{
+		{"base64 canary", `{"head":"` + base64.StdEncoding.EncodeToString([]byte("pqlcanary"+strings.Repeat("1", 32))) + `"}`, true},
 		{"absolute", `{"computation":["/private/tool"]}`, true},
 		{"embedded", `{"head":"open /private/input: refused"}`, true},
 		{"kept", `{"kept":"` + base64.StdEncoding.EncodeToString([]byte("open /private/input")) + `"}`, true},
@@ -797,4 +819,35 @@ func subjectHelpCommands(text string) []string {
 		}
 	}
 	return commands
+}
+
+func TestSubjectCanaryEncodings(t *testing.T) {
+	canary := "pqlcanary" + strings.Repeat("1", 32)
+	lower := hex.EncodeToString([]byte(canary))
+	percent := ""
+	for _, b := range []byte(canary) {
+		percent += fmt.Sprintf("%%%02x", b)
+	}
+	encodings := []string{canary, base64.StdEncoding.EncodeToString([]byte(canary)), base64.RawStdEncoding.EncodeToString([]byte(canary)), base64.URLEncoding.EncodeToString([]byte(canary)), base64.RawURLEncoding.EncodeToString([]byte(canary)), lower, strings.ToUpper(lower), percent, strings.ToUpper(percent)}
+	for i, encoded := range encodings {
+		for _, field := range []string{"head", "kept", "content"} {
+			t.Run(fmt.Sprintf("%d/%s", i, field), func(t *testing.T) {
+				text := "prefix:" + encoded + ":suffix"
+				if field == "kept" {
+					text = base64.StdEncoding.EncodeToString([]byte(text))
+				}
+				b, err := json.Marshal(map[string]any{field: text})
+				if err != nil {
+					t.Fatal(err)
+				}
+				path := filepath.Join(t.TempDir(), "recording.json")
+				if err := os.WriteFile(path, b, 0600); err != nil {
+					t.Fatal(err)
+				}
+				if err := subjectRecordingGuard(read(t, path)); err == nil {
+					t.Fatal("encoded canary escaped guard")
+				}
+			})
+		}
+	}
 }

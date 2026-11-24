@@ -1,5 +1,6 @@
 """RFC 8785 canonical JSON and QE2 digests; never constructs a required set."""
 import argparse
+from decimal import Decimal
 import hashlib
 import json
 import math
@@ -21,12 +22,21 @@ def load(path):
     def constant(value):
         raise ValueError("nonfinite number: " + value)
 
-    return json.loads(Path(path).read_text(encoding="utf-8"), object_pairs_hook=unique, parse_constant=constant)
+    def numeric(text):
+        value = float(text)
+        if not math.isfinite(value) or Decimal(text) != Decimal(number(value)):
+            raise ValueError("number does not round-trip through binary64: " + text)
+        return int(text) if not any(c in text for c in ".eE") else value
+
+    return json.loads(Path(path).read_text(encoding="utf-8"), object_pairs_hook=unique, parse_constant=constant, parse_int=numeric, parse_float=numeric)
 
 
 def number(value):
     """Serialize a binary64 value using ECMAScript's decimal thresholds."""
+    original = value
     value = float(value)
+    if isinstance(original, int) and original != value:
+        raise ValueError("number does not round-trip through binary64")
     if not math.isfinite(value):
         raise ValueError("nonfinite number")
     if value == 0:

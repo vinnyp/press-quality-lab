@@ -19,13 +19,25 @@ for mutation, message in (
     ("changed byte", "FAILED"),
     ("extra file", "unlisted file: synthetic-extra"),
     ("missing file", "CASES.md"),
+    ("pipe", "unlisted file: schema/pipe"),
+    ("empty directory", "unlisted file: cases/case-999"),
+    ("listed symlink", "not regular: CASES.md"),
     ("incomplete corpus", "missing Corpus: complete"),
 ):
     with tempfile.TemporaryDirectory(prefix="pql-sealed-controls-") as temporary:
         root = Path(temporary) / "kit"
         shutil.copytree(source, root)
         corpus = root / "CASES.md"
-        if mutation == "changed byte":
+        if mutation == "pipe":
+            os.mkfifo(root / "schema/pipe")
+        elif mutation == "empty directory":
+            (root / "cases/case-999").mkdir()
+        elif mutation == "listed symlink":
+            target = Path(temporary) / "content"
+            target.write_bytes(corpus.read_bytes())
+            corpus.unlink()
+            corpus.symlink_to(target)
+        elif mutation == "changed byte":
             data = corpus.read_bytes()
             corpus.write_bytes(bytes([data[0] ^ 1]) + data[1:])
         elif mutation == "extra file":
@@ -51,6 +63,28 @@ for mutation, message in (
         if (result.returncode == 0) != (mutation == "unchanged") or message not in result.stdout + result.stderr:
             raise RuntimeError("sealed control " + mutation + ": " + result.stdout + result.stderr)
         print("sealed control: " + mutation + (" passes" if mutation == "unchanged" else " refused: " + message))
+
+# Exercise the judge kit's own shell block as well as the collection block.
+judge_checks = check_script.split("step kit ", 1)[1].split("step judge-cases ", 1)[0]
+judge_checks = judge_checks[judge_checks.index("(\n") + 2:judge_checks.rindex("\n)")]
+judge_checks = judge_checks.replace(" cd docs/specs/judge-1.0\n", "", 1)
+for mutation, message in (("unchanged", ""), ("pipe", "unlisted file: schema/pipe"), ("empty directory", "unlisted file: cases/case-999"), ("listed symlink", "not regular: CASES.md")):
+    with tempfile.TemporaryDirectory(prefix="pql-judge-sealed-controls-") as temporary:
+        root = Path(temporary) / "kit"
+        shutil.copytree(source.parent / "judge-1.0", root)
+        if mutation == "pipe":
+            os.mkfifo(root / "schema/pipe")
+        elif mutation == "empty directory":
+            (root / "cases/case-999").mkdir()
+        elif mutation == "listed symlink":
+            target = Path(temporary) / "content"
+            target.write_bytes((root / "CASES.md").read_bytes())
+            (root / "CASES.md").unlink()
+            (root / "CASES.md").symlink_to(target)
+        result = subprocess.run(["bash", "-eu", "-o", "pipefail", "-c", judge_checks], cwd=root, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, text=True, timeout=60, check=False)
+        if (result.returncode == 0) != (mutation == "unchanged") or message not in result.stdout + result.stderr:
+            raise RuntimeError("judge sealed control " + mutation + ": " + result.stdout + result.stderr)
+        print("judge sealed control: " + mutation + (" passes" if mutation == "unchanged" else " refused: " + message))
 
 with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     root = Path(temporary) / "kit"
@@ -109,9 +143,9 @@ with tempfile.TemporaryDirectory(prefix="pql-case-controls-") as temporary:
     def save_case():
         (directory / "case.json").write_text(json.dumps(case))
 
-    def case_run(expected, message=""):
+    def case_run(expected, message="", judge=None):
         result = subprocess.run(
-            ["uv", "run", "--offline", "--with", "jsonschema==4.23.0", "python", "-I", str(root / "runner.py"), "--unsealed", "--schema-root", str(root), "--cases", str(cases), "--judge", str(source.parents[2] / "bin/pql") + " judge"],
+            ["uv", "run", "--offline", "--with", "jsonschema==4.23.0", "python", "-I", str(root / "runner.py"), "--unsealed", "--schema-root", str(root), "--cases", str(cases), "--judge", (judge or str(source.parents[2] / "bin/pql") + " judge")],
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, text=True, timeout=60, check=False,
         )
         if result.returncode != expected or message not in result.stdout + result.stderr:
@@ -120,6 +154,16 @@ with tempfile.TemporaryDirectory(prefix="pql-case-controls-") as temporary:
 
     save_case()
     case_run(0)
+    input_path = directory / "input.json"
+    input_data = input_path.read_bytes()
+    input_path.unlink()
+    case_run(2, "missing case file: case-001")
+    input_path.write_bytes(input_data)
+    stub = Path(temporary) / "judge.py"
+    counter = Path(temporary) / "counter"
+    stub.write_text("from pathlib import Path\nimport sys\np = Path(" + repr(str(counter)) + ")\nn = int(p.read_text()) if p.exists() else 0\np.write_text(str(n + 1))\nprint(n)\n")
+    import shlex
+    case_run(1, "non-deterministic judge output or exit code", "python3 -I " + shlex.quote(str(stub)))
     subject_path = directory / case["input"]["subject_file"]
     valid_subject = subject_path.read_bytes()
     invalid_subject = json.loads(valid_subject)
@@ -341,6 +385,12 @@ with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
     scratch_cases = root / "cases"
     directory = scratch_cases / "case-001"
     shutil.copytree(source / "cases/case-001", directory)
+    candidates = sorted((source / "cases").glob("*/case.json"))
+    first_form = json.loads((directory / "case.json").read_text())["input"]["form"]
+    other = next(p for p in candidates if json.loads(p.read_text())["input"]["form"] != first_form)
+    third = next(p for p in candidates if p.parent.name not in ("case-001", other.parent.name))
+    for path in (other, third):
+        shutil.copytree(path.parent, scratch_cases / path.parent.name)
 
     def export_run(*arguments, expected=0, message=""):
         result = subprocess.run(
@@ -364,7 +414,12 @@ with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
 
     if snapshot(first) != snapshot(second) or (root / "first-map.json").read_bytes() != (root / "second-map.json").read_bytes():
         raise RuntimeError("export control: repeated exports differ")
-    print("export control: repeated exports are byte-identical")
+    exported = list((first / "cases").glob("*/case.json"))
+    if len(exported) < 3 or len(list((first / "behaviour").glob("*.json"))) < 2:
+        raise RuntimeError("export control: needs three cases across two forms")
+    if any(set(json.loads(path.read_text())) != {"id", "input"} for path in exported):
+        raise RuntimeError("export control: case must contain only id and input")
+    print("export control: repeated exports of three cases across two forms are byte-identical; no kind")
     export_run("--check", first)
     export_run("--out", first, "--map", root / "unused-map.json", expected=2, message="--out must not exist")
     print("export control: existing output refused")
@@ -377,7 +432,7 @@ with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
     original = subject.read_bytes()
     record = json.loads((directory / "input.json").read_text())
     check_id = record["required"][0]["id"]
-    for label, token, finding in (("rule", "QS12345", "rule id"), ("check", check_id, "check id")):
+    for label, token, finding in (("rule", "QS12345", "rule id"), ("trial-rule", "QT12345", "rule id"), ("check", check_id, "check id")):
         subject.write_bytes(original + token.encode() + b"\n")
         output = root / label
         export_run("--out", output, "--map", root / (label + "-map.json"))
@@ -392,7 +447,34 @@ with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
     export_run("--check", first, expected=1, message="result word in JSON: could_not_start")
     print("export control: result word in recording string value found")
     del recording["export_control"]
-    recording["form"] = json.loads((directory / "case.json").read_text())["input"]["form"]
+    recording["held"] = None
+    recording_path.write_text(json.dumps(recording))
+    export_run("--check", first, expected=1, message="result word in JSON key: held")
+    print("export control: injected result word in object key found")
+    del recording["held"]
+    for word in ("judge-checked", "derivation-only"):
+        recording[word] = None
+        recording_path.write_text(json.dumps(recording))
+        export_run("--check", first, expected=1, message="result word in JSON key: " + word)
+        del recording[word]
+    form = json.loads((directory / "case.json").read_text())["input"]["form"]
+    recording["prefix-" + form + "-suffix"] = None
+    recording_path.write_text(json.dumps(recording))
+    export_run("--check", first, expected=1, message="form name in JSON key")
+    del recording["prefix-" + form + "-suffix"]
+    recording_path.write_text(json.dumps(recording))
+    for directory_name in (False, True):
+        injected = first / "subjects" / ("prefix-" + form + "-suffix")
+        if directory_name:
+            injected.mkdir()
+        else:
+            injected.write_text("synthetic")
+        export_run("--check", first, expected=1, message="form name in name")
+        if directory_name:
+            injected.rmdir()
+        else:
+            injected.unlink()
+    recording["form"] = "prefix-" + form + "-suffix"
     recording_path.write_text(json.dumps(recording))
     export_run("--check", first, expected=1, message="form name in JSON")
     print("export control: original form in recording found")

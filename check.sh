@@ -18,18 +18,33 @@ need shasum
 need python3
 (
  cd docs/specs/judge-1.0
- shasum -a 256 -c --quiet KIT.sha256
- PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+ PYTHONDONTWRITEBYTECODE=1 python3 -I - <<'PY'
 from pathlib import Path
 import sys
 expected = {line.split(None, 1)[1].lstrip('*') for line in Path('KIT.sha256').read_text().splitlines()}
-actual = {str(p) for p in Path('.').rglob('*') if (p.is_file() or p.is_symlink()) and str(p) != 'KIT.sha256'}
+import stat
+actual = set()
+bad = []
+for p in Path('.').rglob('*'):
+    name = str(p)
+    mode = p.lstat().st_mode
+    if stat.S_ISDIR(mode):
+        if not any(p.iterdir()):
+            actual.add(name)
+    else:
+        if name != 'KIT.sha256':
+            actual.add(name)
+        if not stat.S_ISREG(mode):
+            bad.append(name)
+for name in sorted(bad):
+    print(f'not regular: {name}', file=sys.stderr)
 for name in sorted(actual - expected):
     print(f'unlisted file: {name}', file=sys.stderr)
 for name in sorted(expected - actual):
     print(f'missing file: {name}', file=sys.stderr)
-sys.exit(bool(actual ^ expected))
+sys.exit(bool(actual ^ expected or bad))
 PY
+ shasum -a 256 -c --quiet KIT.sha256
 )
 step judge-cases 'run published judge cases'
 need uv
@@ -41,18 +56,33 @@ PYTHONDONTWRITEBYTECODE=1 uv run runner.py --judge "'$JUDGE/bin/pql' judge" --ca
 step collection-kit 'verify sealed collection kit'
 (
  cd docs/specs/conformance-collection-1.0
- shasum -a 256 -c --quiet KIT.sha256
  PYTHONDONTWRITEBYTECODE=1 python3 -I - <<'PY'
 from pathlib import Path
 import sys
 expected = {line.split(None, 1)[1].lstrip('*') for line in Path('KIT.sha256').read_text().splitlines()}
-actual = {str(p) for p in Path('.').rglob('*') if (p.is_file() or p.is_symlink()) and str(p) != 'KIT.sha256'}
+import stat
+actual = set()
+bad = []
+for p in Path('.').rglob('*'):
+    name = str(p)
+    mode = p.lstat().st_mode
+    if stat.S_ISDIR(mode):
+        if not any(p.iterdir()):
+            actual.add(name)
+    else:
+        if name != 'KIT.sha256':
+            actual.add(name)
+        if not stat.S_ISREG(mode):
+            bad.append(name)
+for name in sorted(bad):
+    print(f'not regular: {name}', file=sys.stderr)
 for name in sorted(actual - expected):
     print(f'unlisted file: {name}', file=sys.stderr)
 for name in sorted(expected - actual):
     print(f'missing file: {name}', file=sys.stderr)
-sys.exit(bool(actual ^ expected))
+sys.exit(bool(actual ^ expected or bad))
 PY
+ shasum -a 256 -c --quiet KIT.sha256
  PYTHONDONTWRITEBYTECODE=1 python3 -I - <<'PYCODE'
 from pathlib import Path
 import sys

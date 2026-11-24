@@ -9,7 +9,7 @@ import sys
 
 
 RULE = re.compile(r"\bQ[SHODPAET][0-9]+\b")
-WORDS = "held_crediting held_non_crediting not_held not_observed unobserved failed_expected network_unverifiable harness_fault could_not_start precondition_unmet placeholder_unfilled earlier_step_failed computation_failed input_missing empty_target wrong_exit over_budget crashed PASSED FAILED PROVISIONAL".split()
+WORDS = "held judge-checked derivation-only held_crediting held_non_crediting not_held not_observed unobserved failed_expected network_unverifiable harness_fault could_not_start precondition_unmet placeholder_unfilled earlier_step_failed computation_failed input_missing empty_target wrong_exit over_budget crashed PASSED FAILED PROVISIONAL".split()
 RESULT = re.compile("|".join(map(re.escape, WORDS)))
 
 
@@ -51,27 +51,74 @@ def export(args, corpus):
     for name in ("collection-rules.md", "confinement.md", "collection-contract.md", "credit-and-routes.md"):
         shutil.copyfile(args.kit / name, out / "spec" / name)
     shutil.copytree(args.kit / "schema", out / "spec/schema")
+    all_forms = {path.name for path in (args.kit / "subjects").iterdir() if path.is_dir()}
+    computation_names = {}
+    for form in forms:
+        base = local(args.kit / "subjects", form) / "computations"
+        for path in base.rglob("*"):
+            if path.is_file() and any(name in path.name for name in all_forms):
+                relative = path.relative_to(base).as_posix()
+                computation_names["computations/" + relative] = "computations/c" + hashlib.sha256(relative.encode()).hexdigest()[:16] + path.suffix
+
+    def rename_references(value):
+        if isinstance(value, str):
+            return computation_names.get(value, value)
+        if isinstance(value, list):
+            return [rename_references(item) for item in value]
+        if isinstance(value, dict):
+            return {key: rename_references(item) for key, item in value.items()}
+        return value
+
     mapping = {"forms": {identifier: name for name, identifier in form_ids.items()}, "cases": {}}
     for form, identifier in form_ids.items():
         for name in ("seed", "computations"):
             source = local(args.kit / "subjects", form) / name
             if source.exists():
                 shutil.copytree(source, out / "subjects" / identifier / name)
+        for old, new in computation_names.items():
+            original = out / "subjects" / identifier / old
+            if original.exists():
+                destination = out / "subjects" / identifier / new
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                original.rename(destination)
         recording = load(local(args.kit / "behaviour", form + ".json"))
         recording["form"] = identifier
-        write(out / "behaviour" / (identifier + ".json"), recording)
+        write(out / "behaviour" / (identifier + ".json"), rename_references(recording))
     for number, (index, directory, case) in enumerate(sorted(corpus, key=lambda item: digest(item[2]["id"])), 1):
         identifier = f"k{number:03d}"
         inputs = dict(case["input"], form=form_ids[case["input"]["form"]])
         target = out / "cases" / identifier
-        write(target / "case.json", {"id": identifier, "kind": case["kind"], "input": inputs})
+        write(target / "case.json", {"id": identifier, "input": inputs})
         for name in (inputs["subject_file"], inputs["baseline"]):
             if name is not None:
                 destination = local(target, name)
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(local(directory, name), destination)
+                source = local(directory, name)
+                if computation_names and name == inputs["subject_file"]:
+                    try:
+                        value = load(source)
+                    except ValueError:
+                        shutil.copyfile(source, destination)
+                    else:
+                        renamed = rename_references(value)
+                        if renamed == value:
+                            shutil.copyfile(source, destination)
+                        else:
+                            write(destination, renamed)
+                else:
+                    shutil.copyfile(source, destination)
         mapping["cases"][identifier] = {"id": case["id"], "cases_dir": index}
     write(args.map, mapping)
+
+
+def object_keys(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            yield key
+            yield from object_keys(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from object_keys(item)
 
 
 def strings(value):
@@ -102,6 +149,17 @@ def check(args, corpus):
         baseline = load(path)["input"]["baseline"]
         if baseline is not None:
             baselines.add(local(path.parent, baseline))
+    schema_keys = set()
+    def properties(value):
+        if isinstance(value, dict):
+            schema_keys.update(value.get("properties", {}))
+            for item in value.values():
+                properties(item)
+        elif isinstance(value, list):
+            for item in value:
+                properties(item)
+    for schema in (args.kit / "schema").glob("*.json"):
+        properties(load(schema))
     findings = []
     for section in ("cases", "behaviour", "subjects"):
         for path in sorted((args.check / section).rglob("*")):
@@ -110,18 +168,24 @@ def check(args, corpus):
             if path.is_file():
                 content = path.read_bytes().decode("utf-8", errors="replace")
                 try:
-                    values = sorted(set(strings(json.loads(content))))
+                    parsed = json.loads(content)
+                    values = sorted(set(strings(parsed)))
+                    keys = set(object_keys(parsed))
+
                 except (ValueError, TypeError):
                     texts.append(("content", content))
                 else:
                     texts.extend(("JSON", value) for value in values)
+                    texts.extend(("JSON key", key) for key in sorted(keys))
             for location, text in texts:
                 for form in sorted(forms):
-                    if (form in text if location == "content" else form == text):
+                    if form in text:
                         findings.append(f"{relative}: form name in {location}: {form}")
                 for match in sorted(set(RULE.findall(text))):
                     findings.append(f"{relative}: rule id in {location}: {match}")
-                for match in sorted(set(RESULT.findall(text))):
+                # A baseline is an input by design: its entries' results ("held", "failed") are allowed values there.
+                allowed = (location == "JSON key" and text in schema_keys) or (path in baselines and location == "JSON" and text in ("held", "failed"))
+                for match in sorted(set(RESULT.findall(text))) if not allowed else []:
                     findings.append(f"{relative}: result word in {location}: {match}")
                 if location == "name" or path not in baselines:
                     for identifier in sorted(ids):
