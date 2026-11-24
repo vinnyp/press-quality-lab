@@ -132,3 +132,7 @@ agy (`gemini-4-argon-high`) read freeze 3 with the schemas, `CASES.md` and this 
 | `determinism` credit read per runbook; `idempotency`'s "same command" | Fixed in `credit-and-routes.md` §2: per check, and the same declared command. |
 | QH26 against QO7, and QP9 against QP6 | Fixed: a failed read calibration proves no read but lets a leak or an earlier end decide; QP9's outcomes come first. |
 | Minors: QS6 and QP10's secret commands, QS7's engine-set names, QS5's `writes` placeholder and QP7 skip, QP8's regular side files, links inside left-out paths, the walk stopping at a bound, QS11's depth counting, an empty file's digest in QT5 | Fixed. |
+
+## Blind derivation, round 4
+
+A fresh reader on the same model derived all 224 cases from the export of freeze 4 (`d02d743b…5f1c`, commit 2d77d40), the text the owner is asked to ratify. It agreed on every case: the required set, every field QE19 compares, every invocation list and every id. Its remaining two-way readings (eight) each went the corpus's way and concern which rule a derivation-only case names, already settled in QT6, or readings the text states. No review has an open Blocker or Major.
