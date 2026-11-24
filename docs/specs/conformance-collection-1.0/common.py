@@ -1051,3 +1051,102 @@ def draft(root):
         print(failure, file=sys.stderr)
     print("Limit: widened types or bounds at kit-owned sites are not detected; judge-mapped enums are checked by the Go test.")
     return int(bool(failures))
+
+
+def first_pointer(expected, actual, path=""):
+    """Find the first differing JSON Pointer, keeping numeric values exact."""
+    from decimal import Decimal
+    numeric = (int, float, Decimal)
+    if isinstance(expected, numeric) and not isinstance(expected, bool) and isinstance(actual, numeric) and not isinstance(actual, bool):
+        return None if Decimal(str(expected)) == Decimal(str(actual)) else path
+    if type(expected) is not type(actual):
+        return path
+    if isinstance(expected, dict):
+        for key in sorted(set(expected) | set(actual)):
+            pointer = path + "/" + key.replace("~", "~0").replace("/", "~1")
+            if key not in expected or key not in actual:
+                return pointer
+            difference = first_pointer(expected[key], actual[key], pointer)
+            if difference is not None:
+                return difference
+        return None
+    if isinstance(expected, list):
+        for index, (left, right) in enumerate(zip(expected, actual)):
+            difference = first_pointer(left, right, path + "/" + str(index))
+            if difference is not None:
+                return difference
+        return None if len(expected) == len(actual) else path + "/" + str(min(len(expected), len(actual)))
+    return None if expected == actual else path
+
+
+def collection_cases(root, cases_root, command, timeout):
+    """Validate collection cases and check only their judge-facing contract."""
+    from decimal import Decimal
+    from referencing import Registry, Resource
+    schemas = {path.name: load(read(path)) for path in (root / "schema").glob("*.json")}
+    registry = Registry().with_resources((name, Resource.from_contents(schema)) for name, schema in schemas.items())
+
+    def validate(value, name):
+        try:
+            jsonschema.Draft202012Validator(schemas[name], registry=registry).validate(value)
+        except jsonschema.ValidationError as exc:
+            raise Error(name + ": " + exc.message) from exc
+
+    cases = []
+    ids = set()
+    for directory in sorted(cases_root.iterdir()):
+        if directory.is_symlink() or not directory.is_dir():
+            raise Error("unexpected case file: " + directory.name)
+        case = load(read(directory / "case.json"))
+        validate(case, "case.schema.json")
+        if case["id"] != directory.name or case["id"] in ids:
+            raise Error("case id differs from directory or is duplicate: " + case["id"])
+        ids.add(case["id"])
+        allowed = {"case.json", case["input"]["subject_file"]}
+        if case["input"]["baseline"] is not None:
+            allowed.add(case["input"]["baseline"])
+        if case["kind"] == "judge-checked":
+            allowed.update(("input.json", "preimages.json"))
+        if any(Path(name).name != name for name in allowed):
+            raise Error("case file must be a filename")
+        for path in directory.iterdir():
+            if path.name not in allowed or path.is_symlink() or not path.is_file():
+                raise Error("unexpected case file: " + path.name)
+        if {path.name for path in directory.iterdir()} != allowed:
+            raise Error("missing case file: " + case["id"])
+        if case["kind"] == "judge-checked":
+            validate(load(read(directory / "input.json", INPUT_LIMIT)), "judge-input.schema.json")
+        cases.append((directory, case))
+    checked = failed = unchecked = 0
+    for directory, case in cases:
+        if case["kind"] == "derivation-only":
+            unchecked += 1
+            continue
+        checked += 1
+        data = read(directory / "input.json", INPUT_LIMIT)
+        runs = [execute(command, data, timeout, binary=True) for _ in range(2)]
+        # execute returns bounded raw bytes and status, as in the judge runner.
+        reasons = []
+        if any(runs[0][key] != runs[1][key] for key in ("raw", "exit_code")):
+            reasons.append("non-deterministic judge output or exit code")
+        raw, status, problem = (runs[0][key] for key in ("raw", "exit_code", "problem"))
+        if problem:
+            reasons.append(problem)
+        else:
+            try:
+                output = load(raw)
+                validate(output, "judge-output.schema.json")
+                expected = json.loads(read(directory / "case.json"), parse_float=Decimal, parse_int=Decimal)["expect"]["judge_output"]
+                actual = json.loads(raw, parse_float=Decimal, parse_int=Decimal)
+                pointer = first_pointer(expected, actual)
+                if pointer is not None:
+                    reasons.append("JSON differs at " + (pointer or "/"))
+            except (Error, ValueError) as exc:
+                reasons.append(str(exc))
+            if status != case["expect"]["exit_code"]:
+                reasons.append("exit code differs at /exit_code")
+        if reasons:
+            failed += 1
+            print(case["id"] + ": " + "; ".join(reasons))
+    print(f"{checked} judge-checked: {checked - failed} passed, {failed} failed; {unchecked} derivation-only unchecked; behaviour-to-record unchecked for all {checked + unchecked}")
+    return int(failed > 0 or not cases)

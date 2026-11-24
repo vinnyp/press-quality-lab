@@ -245,9 +245,16 @@
             }
           },
           "budget_seconds": {
-            "type": [
-              "integer",
-              "null"
+            "oneOf": [
+              {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              {
+                "$ref": "subject-file.schema.json#/$defs/placeholder"
+              }
             ]
           },
           "seed": {
@@ -258,13 +265,23 @@
               },
               {
                 "type": "null"
+              },
+              {
+                "$ref": "subject-file.schema.json#/$defs/placeholder"
               }
             ]
           },
           "store": {
-            "type": [
-              "string",
-              "null"
+            "oneOf": [
+              {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              {
+                "$ref": "subject-file.schema.json#/$defs/placeholder"
+              }
             ]
           },
           "bookkeeping": {
@@ -290,8 +307,15 @@
                 ],
                 "properties": {
                   "declared_count": {
-                    "type": "integer",
-                    "minimum": 0
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "$ref": "subject-file.schema.json#/$defs/placeholder"
+                      }
+                    ]
                   },
                   "commands": {
                     "type": "array",
@@ -323,6 +347,9 @@
                           "minimum": 0,
                           "maximum": 255
                         }
+                      },
+                      {
+                        "$ref": "subject-file.schema.json#/$defs/placeholder"
                       }
                     ]
                   }
@@ -336,8 +363,15 @@
                 ],
                 "properties": {
                   "bound": {
-                    "type": "integer",
-                    "minimum": 1
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      {
+                        "$ref": "subject-file.schema.json#/$defs/placeholder"
+                      }
+                    ]
                   }
                 }
               },
@@ -396,8 +430,15 @@
                           }
                         },
                         "budget_seconds": {
-                          "type": "integer",
-                          "minimum": 1
+                          "oneOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            {
+                              "$ref": "subject-file.schema.json#/$defs/placeholder"
+                            }
+                          ]
                         }
                       }
                     }
@@ -469,8 +510,15 @@
                         }
                       },
                       "budget_seconds": {
-                        "type": "integer",
-                        "minimum": 1
+                        "oneOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          {
+                            "$ref": "subject-file.schema.json#/$defs/placeholder"
+                          }
+                        ]
                       },
                       "captures": {
                         "type": "array",
@@ -594,7 +642,14 @@
                       {
                         "properties": {
                           "exit_codes": {
-                            "type": "array"
+                            "oneOf": [
+                              {
+                                "type": "array"
+                              },
+                              {
+                                "$ref": "subject-file.schema.json#/$defs/placeholder"
+                              }
+                            ]
                           }
                         }
                       }
@@ -695,8 +750,15 @@
               }
             },
             "budget_seconds": {
-              "type": "integer",
-              "minimum": 1
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "$ref": "subject-file.schema.json#/$defs/placeholder"
+                }
+              ]
             },
             "captures": {
               "type": "array",

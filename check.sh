@@ -31,7 +31,7 @@ for name in sorted(expected - actual):
 sys.exit(bool(actual ^ expected))
 PY
 )
-step cases 'run published cases'
+step judge-cases 'run published judge cases'
 need uv
 (
  cd docs/specs/judge-1.0
@@ -42,8 +42,22 @@ step draft "verify unsealed collection kit"
 (
  cd docs/specs/conformance-collection-1.0
  "$ROOT/scripts/draft-guard.sh" .
- PYTHONDONTWRITEBYTECODE=1 uv run runner.py --draft
+ PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I runner.py --draft
 )
 step draft-controls 'verify draft seal refusal and banner'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-draft.py
+step ids-tests 'test canonical JSON and collection check ids'
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/test_collection_ids.py
+step ids-cross-check 'cross-check collection case ids and recordings'
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-case-ids.py docs/specs/conformance-collection-1.0/cases
+step cases 'run collection judge-checked cases'
+if [[ -d docs/specs/conformance-collection-1.0/cases ]]; then
+ (
+  cd docs/specs/conformance-collection-1.0
+  JUDGE="${ROOT//\'/\'\\\'\'}"
+  PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I runner.py --unsealed --cases cases --judge "'$JUDGE/bin/pql' judge"
+ )
+else
+ echo 'no cases yet'
+fi
 echo 'CHECK PASSED'

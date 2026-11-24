@@ -385,21 +385,38 @@
                 "minimum": 0,
                 "maximum": 255
               }
+            },
+            {
+              "$ref": "#/$defs/placeholder"
             }
           ]
         },
         "byte_bound": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 1,
-          "maximum": 1073741824
+          "oneOf": [
+            {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 1073741824
+            },
+            {
+              "$ref": "#/$defs/placeholder"
+            }
+          ]
         },
         "budget_seconds": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 3600
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            {
+              "$ref": "#/$defs/placeholder"
+            }
+          ]
         }
       }
     },
@@ -501,9 +518,16 @@
           }
         },
         "budget_seconds": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 3600
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            {
+              "$ref": "#/$defs/placeholder"
+            }
+          ]
         },
         "checks": {
           "type": "array",
@@ -587,6 +611,9 @@
                 "minimum": 0,
                 "maximum": 255
               }
+            },
+            {
+              "$ref": "#/$defs/placeholder"
             }
           ]
         }
@@ -636,9 +663,16 @@
           }
         },
         "budget_seconds": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 600
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 600
+            },
+            {
+              "$ref": "#/$defs/placeholder"
+            }
+          ]
         },
         "declared_files": {
           "type": "array",
