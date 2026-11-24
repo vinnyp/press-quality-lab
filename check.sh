@@ -38,13 +38,41 @@ need uv
 JUDGE="${ROOT//\'/\'\\\'\'}"
 PYTHONDONTWRITEBYTECODE=1 uv run runner.py --judge "'$JUDGE/bin/pql' judge" --cases cases
 )
-step draft "verify unsealed collection kit"
+step collection-kit 'verify sealed collection kit'
 (
  cd docs/specs/conformance-collection-1.0
- "$ROOT/scripts/draft-guard.sh" .
- PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I runner.py --draft
+ shasum -a 256 -c --quiet KIT.sha256
+ PYTHONDONTWRITEBYTECODE=1 python3 -I - <<'PY'
+from pathlib import Path
+import sys
+expected = {line.split(None, 1)[1].lstrip('*') for line in Path('KIT.sha256').read_text().splitlines()}
+actual = {str(p) for p in Path('.').rglob('*') if (p.is_file() or p.is_symlink()) and str(p) != 'KIT.sha256'}
+for name in sorted(actual - expected):
+    print(f'unlisted file: {name}', file=sys.stderr)
+for name in sorted(expected - actual):
+    print(f'missing file: {name}', file=sys.stderr)
+sys.exit(bool(actual ^ expected))
+PY
+ PYTHONDONTWRITEBYTECODE=1 python3 -I - <<'PYCODE'
+from pathlib import Path
+import sys
+if 'Corpus: complete' not in Path('CASES.md').read_text().splitlines():
+    sys.exit('collection corpus is not complete: missing Corpus: complete')
+PYCODE
 )
-step draft-controls 'verify draft seal refusal and banner'
+step collection-schemas 'validate sealed collection schemas and examples'
+(
+ cd docs/specs/conformance-collection-1.0
+ PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I - <<'PYCODE'
+from pathlib import Path
+import sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path.cwd()))
+from common import draft
+sys.exit(draft(Path.cwd()))
+PYCODE
+)
+step collection-controls 'verify sealed collection and scratch runner controls'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-draft.py
 step ids-tests 'test canonical JSON and collection check ids'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/test_collection_ids.py
@@ -59,7 +87,7 @@ if [[ -d docs/specs/conformance-collection-1.0/cases ]]; then
  (
   cd docs/specs/conformance-collection-1.0
   JUDGE="${ROOT//\'/\'\\\'\'}"
-  PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I runner.py --unsealed --cases cases --judge "'$JUDGE/bin/pql' judge"
+  PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I runner.py --cases cases --judge "'$JUDGE/bin/pql' judge"
  )
 else
  echo 'no cases yet'

@@ -1,4 +1,4 @@
-"""Witness the unsealed runner's refusal and banner in an isolated copy."""
+"""Witness sealed checks and runner controls using isolated copies."""
 import importlib.util
 import json
 import os
@@ -7,8 +7,51 @@ import shutil
 import subprocess
 import tempfile
 
-guard_script = Path(__file__).resolve().parent / "draft-guard.sh"
+scripts = Path(__file__).resolve().parent
 source = Path(__file__).resolve().parents[1] / "docs/specs/conformance-collection-1.0"
+check_script = (scripts.parent / "check.sh").read_text()
+sealed_checks = check_script.split("step collection-kit ", 1)[1].split("step collection-schemas ", 1)[0]
+sealed_checks = sealed_checks[sealed_checks.index("(\n") + 2:sealed_checks.rindex("\n)")]
+sealed_checks = sealed_checks.replace(" cd docs/specs/conformance-collection-1.0\n", "", 1)
+
+for mutation, message in (
+    ("unchanged", ""),
+    ("changed byte", "FAILED"),
+    ("extra file", "unlisted file: synthetic-extra"),
+    ("missing file", "CASES.md"),
+    ("incomplete corpus", "missing Corpus: complete"),
+):
+    with tempfile.TemporaryDirectory(prefix="pql-sealed-controls-") as temporary:
+        root = Path(temporary) / "kit"
+        shutil.copytree(source, root)
+        corpus = root / "CASES.md"
+        if mutation == "changed byte":
+            data = corpus.read_bytes()
+            corpus.write_bytes(bytes([data[0] ^ 1]) + data[1:])
+        elif mutation == "extra file":
+            (root / "synthetic-extra").write_text("synthetic witness\n")
+        elif mutation == "missing file":
+            corpus.unlink()
+        elif mutation == "incomplete corpus":
+            corpus.write_text("\n".join(line for line in corpus.read_text().splitlines()
+                                         if line != "Corpus: complete") + "\n")
+            # Refresh only this scratch digest to reach the corpus check.
+            import hashlib
+            seal = root / "KIT.sha256"
+            lines = seal.read_text().splitlines()
+            seal.write_text("\n".join(
+                hashlib.sha256(corpus.read_bytes()).hexdigest() + "  CASES.md"
+                if line.split(None, 1)[1].lstrip("*") == "CASES.md" else line
+                for line in lines) + "\n")
+        result = subprocess.run(
+            ["bash", "-eu", "-o", "pipefail", "-c", sealed_checks], cwd=root,
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+            capture_output=True, text=True, timeout=60, check=False,
+        )
+        if (result.returncode == 0) != (mutation == "unchanged") or message not in result.stdout + result.stderr:
+            raise RuntimeError("sealed control " + mutation + ": " + result.stdout + result.stderr)
+        print("sealed control: " + mutation + (" passes" if mutation == "unchanged" else " refused: " + message))
+
 with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     root = Path(temporary) / "kit"
     shutil.copytree(source, root)
@@ -25,9 +68,6 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
         result = run()
         if result.returncode != 2 or "refused: draft folder contains KIT.sha256" not in result.stderr:
             raise RuntimeError("wrong draft refusal: " + str(result.returncode) + " " + result.stderr)
-        guard = subprocess.run(["bash", str(guard_script), str(root)], cwd=root, timeout=10, check=False)
-        if guard.returncode == 0:
-            raise RuntimeError("check.sh guard accepted seal")
 
     seal = root / "KIT.sha256"
     seal.write_text("synthetic seal\n")
@@ -36,9 +76,6 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     seal.symlink_to("absent-seal")
     refused()
     seal.unlink()
-    guard = subprocess.run(["bash", str(guard_script), str(root)], timeout=10, check=False)
-    if guard.returncode != 0:
-        raise RuntimeError("draft guard refused unsealed tree")
     normal = run()
     if normal.returncode != 0:
         raise RuntimeError(normal.stderr)
@@ -58,6 +95,7 @@ print("draft controls: regular seal refused; dangling seal refused; UNSEALED fir
 with tempfile.TemporaryDirectory(prefix="pql-case-controls-") as temporary:
     root = Path(temporary) / "kit"
     shutil.copytree(source, root)
+    (root / "KIT.sha256").unlink()
     cases = Path(temporary) / "cases"
     directory = cases / "case-001"
     directory.mkdir(parents=True)
@@ -154,7 +192,7 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
     record = json.loads((source / "examples/record-01.json").read_text())["judge_input"]
     subject = json.loads((source / "examples/subject-file.json").read_text())
     (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
-    spec = importlib.util.spec_from_file_location("collection_ids", guard_script.with_name("collection_ids.py"))
+    spec = importlib.util.spec_from_file_location("collection_ids", scripts.joinpath("collection_ids.py"))
     ids = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ids)
     digest = "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7"
@@ -175,7 +213,7 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
         (directory / "preimages.json").write_text(json.dumps({digest: preimage}))
 
     def cross_run(expected, message):
-        result = subprocess.run(["python3", "-I", str(guard_script.with_name("check-case-ids.py")), str(root / "cases")], env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, text=True, timeout=20, check=False)
+        result = subprocess.run(["python3", "-I", str(scripts.joinpath("check-case-ids.py")), str(root / "cases")], env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, text=True, timeout=20, check=False)
         if result.returncode != expected or message not in result.stdout + result.stderr:
             raise RuntimeError("cross-check control: " + result.stdout + result.stderr)
         print("cross-check control: " + message)
@@ -294,7 +332,7 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
 # Blind exports preserve inputs but must reveal injected oracle material.
 with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
     root = Path(temporary)
-    exporter = guard_script.with_name("collection-export.py")
+    exporter = scripts.joinpath("collection-export.py")
     scratch_cases = root / "cases"
     directory = scratch_cases / "case-001"
     shutil.copytree(source / "cases/case-001", directory)
@@ -397,7 +435,7 @@ with tempfile.TemporaryDirectory(prefix="pql-outcome-controls-") as temporary:
             path.write_text(json.dumps(recording))
             expected, message = 1, "case-076 check "
         result = subprocess.run(
-            ["python3", "-I", str(guard_script.with_name("check-case-outcomes.py")), str(root), str(root / "cases")],
+            ["python3", "-I", str(scripts.joinpath("check-case-outcomes.py")), str(root), str(root / "cases")],
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
             capture_output=True, text=True, timeout=60, check=False,
         )
