@@ -59,11 +59,16 @@ def target_keys(preimage, evidence, recording):
         invocations = []
     result = []
     check_id = evidence["check_id"]
+    if not invocations:
+        invocation_targets = [target for target in evidence["targets"] if target["kind"] == "invocation"]
+        if len(invocation_targets) != 1 or invocation_targets[0]["id"] != check_id:
+            raise ValueError("no-invocation check requires one invocation target with the check id: " + check_id)
+        if any(streams(evidence["observed"])):
+            raise ValueError("no-invocation check has an observed stream: " + check_id)
+        return [(check_id, None)]
     for target in evidence["targets"]:
         if target["kind"] != "invocation":
             continue
-        if not invocations:
-            raise ValueError("cannot decide invocation for no-command target " + target["id"])
         names = [check_id] if len(invocations) == 1 else [check_id + "#" + str(index + 1) for index in range(len(invocations))]
         if target["id"] not in names:
             raise ValueError("invalid invocation target numbering: " + target["id"])
@@ -120,6 +125,8 @@ def check(cases):
             targets = target_keys(preimages[evidence["check_id"]], evidence, recording)
             runs = []
             for name, invocation_key in targets:
+                if invocation_key is None:
+                    continue
                 if invocation_key not in case["invocations"]:
                     raise ValueError(case["id"] + ": invocation not in case: " + ids.canon(invocation_key))
                 matches = [entry for entry in recording["invocations"] if entry["key"] == invocation_key]

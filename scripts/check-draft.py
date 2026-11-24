@@ -203,3 +203,35 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
     record["evidence"][0]["observed"]["stdout"]["sha256"] = "0" * 64
     save_ids()
     cross_run(1, "stream differs from recording")
+
+    # No-command probes retain one invocation target but have no recorded run.
+    preimage["words"] = None
+    preimage["budget_seconds"] = None
+    digest = ids.check_id(preimage)
+    record["required"][0]["id"] = digest
+    evidence = record["evidence"][0]
+    evidence["check_id"] = digest
+    evidence["observed"] = None
+    evidence["targets"] = [{"kind": "invocation", "id": digest, "tier": "live"}]
+    case["invocations"] = []
+    save_ids()
+    cross_run(0, "1 judge-checked")
+    evidence["targets"][0]["id"] = digest + "#1"
+    save_ids()
+    cross_run(1, "no-invocation check requires one invocation target with the check id")
+    evidence["targets"] = [{"kind": "invocation", "id": digest, "tier": "live"}] * 2
+    save_ids()
+    cross_run(1, "no-invocation check requires one invocation target with the check id")
+    evidence["targets"] = evidence["targets"][:1]
+    evidence["observed"] = {"nested": [{"stdout": {field: behaviour["invocations"][0]["confined"][0]["stdout"][field] for field in ("bytes", "sha256", "cut", "head")}}]}
+    save_ids()
+    cross_run(1, "no-invocation check has an observed stream")
+    evidence["observed"] = None
+    preimage["probe"] = "planted_secret"
+    preimage["parameters"] = {}
+    digest = ids.check_id(preimage)
+    record["required"][0]["id"] = digest
+    evidence["check_id"] = digest
+    evidence["targets"][0]["id"] = digest
+    save_ids()
+    cross_run(0, "1 judge-checked")
