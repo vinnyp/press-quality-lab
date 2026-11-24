@@ -450,6 +450,14 @@ Flags:
 
 func testDefectSubject(t *testing.T, binary, form string) {
 	t.Helper()
+	switch form {
+	case "tries-network", "live-first", "starts-child", "listens", "ignores-home", "cache-outside-home", "reads-key-file", "signals-process", "reads-process-env", "forges-atime", "links-decoy":
+		// Only the recorder owns these forms' decoys. Direct checks exercise help;
+		// the recorder checks the act and its refusal with disposable targets.
+		testSubjectHelp(t, binary)
+		return
+	}
+
 	home := t.TempDir()
 	subjectCopy(t, filepath.Join(kit, "subjects", form, "seed"), home)
 	args := []string{"list", "--json"}

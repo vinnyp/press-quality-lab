@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -38,6 +39,8 @@ type recordEntry struct {
 	Budget       int       `json:"budget_seconds"`
 	StoreControl bool      `json:"store_control"`
 	Planted      bool      `json:"planted"`
+	Violates     bool      `json:"violates"`
+	PeerPID      bool      `json:"peer_pid"`
 }
 type recordPlan struct {
 	Form        string        `json:"form"`
@@ -187,7 +190,7 @@ func TestRecordSubjectBehaviour(t *testing.T) {
 					} else {
 						home = recordHome(t, subjectDir, entry.Key.Home == "seed" || entry.Key.Home == "planted")
 					}
-					run, out := recordSubjectRun(t, f, entry, subject, subjectDir, home, captures, repetition < 0)
+					run, out := recordSubjectRun(t, f, entry, subject, subjectDir, home, captures, repetition < 0, plan.Form)
 					if entry.Key.Home == "runbook" {
 						captures[*entry.Key.Runbook][*entry.Key.Step] = out
 					}
@@ -282,7 +285,7 @@ func recordHome(t *testing.T, subjectDir string, seed bool) string {
 	return home
 }
 
-func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject recordSubject, subjectDir, home string, captures map[string]map[string][]byte, unconfined bool) (map[string]any, []byte) {
+func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject recordSubject, subjectDir, home string, captures map[string]map[string][]byte, unconfined bool, form string) (map[string]any, []byte) {
 	t.Helper()
 	computation := entry.Key.Computation != nil
 	canary := ""
@@ -307,7 +310,11 @@ func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject record
 		}
 		p = plantedProfile(false, depth)
 	}
-	params := append(slices.Clone(f.params), "HOME="+home, "PLANTED="+planted)
+	protected := planted
+	if !entry.Planted {
+		protected = filepath.Join(home, ".pql-tmp", "no-planted-file")
+	}
+	params := append(slices.Clone(f.params), "HOME="+home, "PLANTED="+protected)
 	if computation {
 		p = plantedProfile(true, 0)
 		argv := slices.Clone(entry.Key.Computation)
@@ -350,6 +357,8 @@ func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject record
 		}
 		p, params = recordGrants(p, params, "DECLARED", declared)
 	}
+	decoys := recordPrepareDecoys(t, form, home, planted, entry.PeerPID)
+	defer decoys.close(t)
 	before := recordSnapshot(t, home, canary)
 	var plantedBefore os.FileInfo
 	var old time.Time
@@ -360,6 +369,9 @@ func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject record
 		recordMust(t, os.Chtimes(planted, old, info.ModTime()))
 		plantedBefore, err = os.Stat(planted)
 		recordMust(t, err)
+		if form == "forges-atime" {
+			decoys.files[0].info = plantedBefore
+		}
 	}
 	env := []string{"HOME=" + home, "TMPDIR=" + filepath.Join(home, ".pql-tmp"), "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", coreFoundationEncoding}
 	if !computation {
@@ -415,6 +427,18 @@ func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject record
 		}
 		proof = map[string]any{"atime_moved": moved, "same_file": same, "control_end": control}
 	}
+	states, touched := decoys.observe(t)
+	if entry.Violates {
+		if unconfined && !touched {
+			t.Fatalf("%s positive control did not show its act", form)
+		}
+		if !unconfined && (end["kind"] != "signal" || end["signal"] != "SIGKILL" || end["by"] != "confinement" || touched) {
+			t.Fatalf("%s act was not refused by confinement with its decoy untouched", form)
+		}
+	}
+	if form == "links-decoy" && touched {
+		t.Fatal("link creation touched private_file")
+	}
 	after := recordSnapshot(t, home, canary)
 	var detected any
 	if entry.StoreControl {
@@ -435,16 +459,12 @@ func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject record
 	stdout := recordMask([]byte(r.output), canary)
 	stderr := recordMask([]byte(diagnostic), canary)
 	var printed any
-	if computation && r.status.Exited() && r.status.ExitStatus() == 0 && len(stdout) <= 1<<20 {
-		decoder := json.NewDecoder(bytes.NewReader(stdout))
-		decoder.UseNumber()
-		var extra any
-		if decoder.Decode(&printed) != nil || decoder.Decode(&extra) != io.EOF || !recordPrintedNumbers(printed) {
-			printed = nil
-		}
+	if computation {
+		printed = recordPrintedValue(result{output: string(stdout), status: r.status})
 	}
+
 	scan := recordLeakScan(t, home, planted, []byte(r.output), []byte(diagnostic), canary)
-	return map[string]any{"markers": map[string]any{"confinement": r.marked, "could_not_start": r.startFailed}, "end": end, "stdout": recordStream(stdout), "stderr": recordStream(stderr), "home_changes": map[string]any{"changes": recordChanges(before, after), "control_detected": detected}, "planted": proof, "leak_scan": scan, "decoys": []any{}, "printed_value": printed}, stdout
+	return map[string]any{"markers": map[string]any{"confinement": r.marked, "could_not_start": r.startFailed}, "end": end, "stdout": recordStream(stdout), "stderr": recordStream(stderr), "home_changes": map[string]any{"changes": recordChanges(before, after), "control_detected": detected}, "planted": proof, "leak_scan": scan, "decoys": states, "printed_value": printed}, stdout
 }
 
 type recordComputationSettings struct {
@@ -885,4 +905,206 @@ func TestSubjectRecorderEdges(t *testing.T) {
 			t.Fatal("printed number limits changed")
 		}
 	})
+}
+
+// Decoys are owned by one invocation. Exclusive creation refuses a stale or
+// foreign root; cleanup removes only the root this invocation created.
+const recordDecoyRoot = "/private/tmp/pql-decoys"
+
+type recordDecoyFile struct {
+	name, path string
+	info       os.FileInfo
+	atime      time.Time
+	content    []byte
+	writesOnly bool
+}
+type recordDecoys struct {
+	root        bool
+	files       []recordDecoyFile
+	listener    *net.TCPListener
+	victim      *exec.Cmd
+	waited      chan error
+	victimEnded bool
+	home, form  string
+}
+
+func recordPrepareDecoys(t *testing.T, form, home, planted string, peer bool) *recordDecoys {
+	t.Helper()
+	d := &recordDecoys{home: home, form: form}
+	switch form {
+	case "tries-network", "live-first", "starts-child", "listens", "ignores-home", "cache-outside-home", "reads-key-file", "signals-process", "reads-process-env", "forges-atime", "links-decoy":
+	default:
+		return d
+	}
+	recordMust(t, os.Mkdir(recordDecoyRoot, 0700))
+	d.root = true
+	// Register failure cleanup before allocating listeners or a process.
+	t.Cleanup(func() { d.close(t) })
+	add := func(name, path string, content []byte, writesOnly bool) {
+		recordMust(t, os.MkdirAll(filepath.Dir(path), 0700))
+		recordMust(t, os.WriteFile(path, content, 0600))
+		info, err := os.Stat(path)
+		recordMust(t, err)
+		old := info.ModTime().Add(-24 * time.Hour)
+		recordMust(t, os.Chtimes(path, old, info.ModTime()))
+		info, err = os.Stat(path)
+		recordMust(t, err)
+		d.files = append(d.files, recordDecoyFile{name, path, info, old, content, writesOnly})
+	}
+	switch form {
+	case "ignores-home":
+		add("home_store", recordDecoyRoot+"/user/data.json", []byte("{\"widgets\":[{\"name\":\"decoy\",\"tag\":\"metal\"}]}\n"), false)
+	case "cache-outside-home":
+		add("outside_cache", recordDecoyRoot+"/cache/widgets.cache", []byte("untouched\n"), false)
+	case "reads-key-file":
+		var random [16]byte
+		_, err := rand.Read(random[:])
+		recordMust(t, err)
+		secret := "pql" + "canary" + hex.EncodeToString(random[:])
+		t.Setenv("WIDGETS_API_KEY", secret)
+		add("key_file", recordDecoyRoot+"/user/.ssh/id_widgets", []byte(secret), false)
+	case "links-decoy":
+		add("private_file", recordDecoyRoot+"/private.txt", []byte("private decoy\n"), false)
+	case "forges-atime":
+		info, err := os.Stat(planted)
+		if os.IsNotExist(err) {
+			break
+		}
+		recordMust(t, err)
+		// Reading the baseline precedes the recorder's planted-read clock reset.
+		content := recordRead(t, planted)
+		d.files = append(d.files, recordDecoyFile{name: "token_file", path: planted, info: info, content: content, writesOnly: true})
+	case "tries-network", "live-first":
+		address, err := net.ResolveTCPAddr("tcp4", "127.0.0.1:47391")
+		recordMust(t, err)
+		d.listener, err = net.ListenTCP("tcp4", address)
+		if err != nil {
+			t.Fatal("decoy loopback port 47391 unavailable")
+		}
+	}
+	if peer {
+		var random [16]byte
+		_, err := rand.Read(random[:])
+		recordMust(t, err)
+		victim := exec.Command("/bin/sleep", "600")
+		victim.Env = []string{"WIDGETS_API_KEY=pql" + "canary" + hex.EncodeToString(random[:])}
+		recordMust(t, victim.Start())
+		d.victim = victim
+		d.waited = make(chan error, 1)
+		go func() { d.waited <- d.victim.Wait() }()
+		recordMust(t, os.WriteFile(filepath.Join(home, "peer.pid"), []byte(strconv.Itoa(d.victim.Process.Pid)+"\n"), 0600))
+	}
+	return d
+}
+func (d *recordDecoys) observe(t *testing.T) ([]any, bool) {
+	t.Helper()
+	states := make([]any, 0)
+	anyTouched := false
+	add := func(name string, touched bool) {
+		states = append(states, map[string]any{"name": name, "touched": touched})
+		anyTouched = anyTouched || touched
+	}
+	for _, f := range d.files {
+		info, err := os.Stat(f.path)
+		recordMust(t, err)
+		at, err := accessTime(f.path)
+		recordMust(t, err)
+		// Inspect access time before reading content, which itself changes it.
+		touched := !os.SameFile(f.info, info) || !f.info.ModTime().Equal(info.ModTime())
+		if f.writesOnly {
+			before := f.info.Sys().(*syscall.Stat_t)
+			after := info.Sys().(*syscall.Stat_t)
+			touched = touched || before.Ctimespec != after.Ctimespec
+		} else {
+			touched = touched || !f.atime.Equal(at)
+		}
+		touched = touched || !bytes.Equal(f.content, recordRead(t, f.path))
+		add(f.name, touched)
+	}
+	if d.listener != nil {
+		recordMust(t, d.listener.SetDeadline(time.Now().Add(50*time.Millisecond)))
+		c, err := d.listener.AcceptTCP()
+		connected := err == nil
+		if connected {
+			recordMust(t, c.Close())
+		} else if e, ok := err.(net.Error); !ok || !e.Timeout() {
+			recordMust(t, err)
+		}
+		add("loopback_connection", connected)
+	}
+	if d.victim != nil {
+		select {
+		case err := <-d.waited:
+			d.victimEnded = true
+			exit, ok := err.(*exec.ExitError)
+			if !ok || !exit.Sys().(syscall.WaitStatus).Signaled() || exit.Sys().(syscall.WaitStatus).Signal() != syscall.SIGTERM {
+				t.Fatal("victim ended without SIGTERM")
+			}
+		case <-time.After(50 * time.Millisecond):
+		}
+		if d.form == "signals-process" {
+			add("peer_process", d.victimEnded)
+		} else {
+			_, err := os.Stat(filepath.Join(d.home, "peer-observed"))
+			add("peer_environment", err == nil)
+		}
+	}
+	for _, item := range []struct{ form, name, path string }{{"starts-child", "child_process", "child-ran"}, {"listens", "loopback_listener", "listener-ran"}} {
+		if d.form == item.form {
+			_, err := os.Stat(filepath.Join(d.home, item.path))
+			add(item.name, err == nil)
+		}
+	}
+	return states, anyTouched
+}
+func (d *recordDecoys) close(t *testing.T) {
+	t.Helper()
+	if d.listener != nil {
+		recordMust(t, d.listener.Close())
+		d.listener = nil
+	}
+	if d.victim != nil {
+		if !d.victimEnded {
+			_ = d.victim.Process.Kill()
+			<-d.waited
+		}
+		d.victim = nil
+	}
+	if d.root {
+		recordMust(t, os.RemoveAll(recordDecoyRoot))
+		d.root = false
+	}
+}
+
+// Exit status does not decide whether a computation printed one JSON value.
+func recordPrintedValue(r result) any {
+	stdout := []byte(r.output)
+	if len(stdout) > 1<<20 {
+		return nil
+	}
+	decoder := json.NewDecoder(bytes.NewReader(stdout))
+	decoder.UseNumber()
+	var value, extra any
+	if decoder.Decode(&value) != nil || decoder.Decode(&extra) != io.EOF || !recordPrintedNumbers(value) {
+		return nil
+	}
+	return value
+}
+func TestRecordPrintedValue(t *testing.T) {
+	for _, row := range []struct{ output, want string }{{"3\n", "3"}, {"true", "true"}, {"3 4", "null"}, {"not json", "null"}, {"", "null"}} {
+		got := string(recordCanonical(t, recordPrintedValue(result{output: row.output})))
+		if got != row.want {
+			t.Errorf("printed %q: got %s, want %s", row.output, got, row.want)
+		}
+	}
+	// This is the computation fixture's actual nonzero exit, without confinement
+	// or a recording run. Its printed value still survives.
+	cmd := exec.Command("/bin/sh", "-c", "printf '3\\n'; exit 1")
+	out, err := cmd.Output()
+	if err == nil {
+		t.Fatal("nonzero fixture exited successfully")
+	}
+	if got := recordPrintedValue(result{output: string(out), status: cmd.ProcessState.Sys().(syscall.WaitStatus)}); got != json.Number("3") {
+		t.Fatalf("nonzero computation printed value = %v", got)
+	}
 }
