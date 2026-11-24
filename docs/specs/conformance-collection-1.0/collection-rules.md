@@ -59,7 +59,7 @@
   - expected-failure markers;
   - a `prompts` object reserved for steering, which this version reads only for its version string.
 - **QS4. Subject facts.** The file states `read_only`, `has_destructive_ops`, `store_backed` and `has_cli`, each true or false, and `bounding`, which is `none` or `declared`. The engine passes them to the judge as given.
-- **QS5. Placeholders.** A value the author has not supplied is a placeholder: an object with exactly one key, `placeholder`, whose value is a sentence saying what belongs there and why the grade needs it.
+- **QS5. Placeholders.** A value the author has not supplied is a placeholder: an object with exactly one key, `placeholder`, whose value is a sentence saying what belongs there and why the grade needs it. A placeholder may stand only for the binary, a subject fact, `declared_count`, the seed, the store, the secret, or a command's class or `writes`; anywhere else it rejects the file.
   - A placeholder is never read as false, `none` or empty.
   - `pql create` writes a placeholder for every value it cannot know, so the file explains itself without comments.
   - The rules of §1 that check a value's content (QS8, QS9) skip a placeholder.
@@ -148,7 +148,7 @@ QS5's override of an otherwise held check comes last of all.
     - the grade's known-fast control kept within its own bound on that host (QH24).
   - Otherwise the check is not observed with `harness_fault`.
 - **QO5. Other ends.** Otherwise the invocation ran to its end under confinement.
-  - A process ended by any other signal crashed: the outcome is `not_held` with `crashed` (R22). A process that exits with a code, a Go program's panic exit included, did not crash.
+  - A process ended by a signal that QO3 and QO4 do not decide crashed: the outcome is `not_held` with `crashed` (R22). This includes a `SIGKILL` that the system reported with a memory or code-signing exit detail. A `SIGKILL` the engine sent outside the time budget is instead not observed with `harness_fault`. A process that exits with a code, a Go program's panic exit included, did not crash.
   - An exit code the check does not accept is `not_held` with `wrong_exit` (R22). The accepted codes are:
     - for an `exit_code` predicate, the check's expected code;
     - for the bare-invocation and declared-exit-code probes, as QP2 and QP4 say;

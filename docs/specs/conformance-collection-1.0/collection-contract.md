@@ -13,6 +13,7 @@
   - **Other version strings.** Three strings are versioned on their own, and each changes only when its own format does:
     - the subject file's `subject_file_version`;
     - the stored record's and baseline's `record_version` and `baseline_version`;
+    - recorded behaviour's `behaviour_version` (QT5);
     - the id scheme of QE2.
 
     A new specification version that only adds a supported macOS version (QH1) keeps the id scheme, so every baseline stays comparable.
@@ -212,7 +213,7 @@
   |---|---|
   | 0 | the judge's grade is PASSED, or the anchor was made |
   | 1 | the judge's grade is FAILED; nothing else exits 1 |
-  | 2 | a well-formed request rejected for its content or scope: a subject file rejected by §1 of `collection-rules.md`, an unreadable subject file, a scripted verifier requested from a released build (QT1), or a pre-check rejection the user caused (QE6) |
+  | 2 | a well-formed request rejected for its content or scope: a subject file rejected by §1 of `collection-rules.md`, an unreadable subject file, a scripted verifier, host or recording requested from a released build, a scripted run missing its host or recording or given one that is unreadable or invalid (QT1), or a pre-check rejection the user caused (QE6) |
   | 3 | the judge's grade is PROVISIONAL, `known-defects` |
   | 4 | the judge's grade is PROVISIONAL, `gaps` |
   | 5 | the judge refused the anchor |
@@ -239,60 +240,67 @@
 
 ## 8. The test entry
 
-- **QT1. A scripted verifier and a scripted host.** Only a build made with the `scripted` build tag contains a scripted network verifier, selected by `--verifier scripted`, and a scripted host, selected by `--host <file>`.
-  - **The released build** parses both flags. It rejects `--verifier scripted` and any `--host` with exit 2. It rejects every other value of `--verifier` as a malformed command line with exit 64.
-  - **A scripted build** rejects `--host` without `--verifier scripted` with exit 2.
+- **QT1. A scripted verifier and a scripted host.** `--verifier` takes `real`, the default, or `scripted`. Only a build made with the `scripted` build tag contains a scripted network verifier, selected by `--verifier scripted`, which reads a recording named by `--behaviour <file>` (QT5) and a scripted host named by `--host <file>` (QT4).
+  - **The released build** parses all three flags. It accepts `--verifier real`. It rejects `--verifier scripted`, any `--host` and any `--behaviour` with exit 2, and every other value of `--verifier` as a malformed command line with exit 64.
+  - **A scripted build** runs a scripted run only with all of `--verifier scripted`, `--host` and `--behaviour`. Any one of them without the other two exits 2, and so does a host or recording file that cannot be read or that its schema rejects.
 - **QT2. A test run is scripted.** A run with the scripted verifier claims the tier `scripted`, and so do its targets and evidence. It cannot be anchored, and the judge refuses an anchor of it. The corpus's baseline cases for it use scripted baselines supplied as files.
 - **QT3. What it is for.** The scripted verifier lets the corpus run without a sandbox. It shows that the rules turn observations into the right record. It shows nothing about a real subject, and a record from it is never evidence that a subject made no network request.
-  - **What a scripted run observes.** It takes each invocation's result from the form's recorded behaviour (QT5), in place of running the subject or a computation. It uses the recording's first confined run, and the unconfined run never.
+  - **What a scripted run observes.** It takes each invocation's result from the recording `--behaviour` names (QT5), in place of running the subject or a computation. It uses the recording's first confined run, and the unconfined run never. An invocation the recording lacks is an engine fault, exit 70.
   - **The engine's own controls.** It takes their raw results from the scripted host (QT4).
 - **QT4. The scripted host.** The host file holds one JSON object, as the `host` subschema of `schema/case.schema.json` defines it. Each field forces the raw result of one control the engine runs, and every field is required:
 
   | Field | Forces | Values |
   |---|---|---|
-  | `confinement` | whether confinement was applied to every invocation (QH6), with `sandbox-exec`'s own exit code when it was not | `{"applied": true, "sandbox_exec_exit": null}` or `{"applied": false, "sandbox_exec_exit": n}` |
+  | `confinement` | whether confinement was applied (QH6). Not applied, with `sandbox-exec`'s own exit code, holds for every invocation, the subject's and each computation's. Applied leaves each invocation's markers and end as recorded | `{"applied": true, "sandbox_exec_exit": null}` or `{"applied": false, "sandbox_exec_exit": n}` |
   | `self_test` | the self-test's result (QH9) | `passed`, `failed` |
   | `known_fast` | the known-fast control (QH24) | `within`, `over` |
   | `read_calibration` | the volume's read calibration (QH26) | `moved`, `not_moved` |
   | `store_control` | the store comparator's control copy (QP9) | `detected`, `not_detected` |
   | `read_control` | the read proof's control invocation (QH27), for every listed command whose control runs | `killed`, `not_killed` |
   | `private_copy` | the check of the private copy before each use (QH8) | `unchanged`, `changed` |
-  | `kill_attribution` | for each invocation it names, how the system reported a recorded `SIGKILL` after the marker | a list of `{"invocation": key, "by": b}`, where `key` is as QT5 defines and `b` is `memory`, `code_signing` or `other_process` |
+  | `kill_attribution` | for each invocation it names, what ended a recorded `SIGKILL` that the recording attributes to the confinement | a list of `{"invocation": key, "by": b}`, where `key` is as QT5 defines and `b` is `memory` or `code_signing` (an exit detail the system reported) or `engine` (a kill the engine sent itself outside the time budget) |
 
+  - **Attributions.** Each entry of `kill_attribution` names an invocation, at most once, whose first confined run ended by `SIGKILL` attributed to `confinement`. Any other entry makes the host file invalid. The entry replaces that attribution, and QH21 and QO5 then decide.
   - **Precedence.** In a scripted run, the scripted host's results replace any result a recording holds for the same control. The recording supplies only what the subject and the computations did.
   - **What stays the same.** The scripted build takes only these raw results from the host. QO1, QO4, QP9, QP11 and QH21 decide from them exactly as the released build decides from the controls it ran. A collector that ignores a failed control therefore gives a wrong record for a case that forces one.
   - **A passing host.** Every control passes when `confinement` is applied, `self_test` is `passed`, `known_fast` is `within`, `read_calibration` is `moved`, `store_control` is `detected`, `read_control` is `killed`, `private_copy` is `unchanged` and `kill_attribution` is empty.
 - **QT5. Recorded behaviour.** Each form of the corpus's synthetic subject has one recording, `behaviour/<form>.json`, whose schema is `schema/behaviour.schema.json`. A recording is what that form did, and the only source of what a scripted run observes.
   - **What the whole recording names:**
+    - its own format version, `behaviour_version`, which is `1.0`;
     - the form's name, and whether it is a violating form, one built to attempt an operation the confinement refuses;
     - the digest of the form's source, computed over its source directory as QE2 computes a seed's digest;
-    - the digests of the rendered subject profile, the rendered computation profile and the launcher's source;
+    - the digests of the subject profile and the computation profile, each as the template renders with its variant's fixed text and before any line the engine adds for one invocation, and of the launcher's source;
     - the macOS version and build it was recorded on, and the commit.
-  - **An invocation's key.** Each invocation is keyed by an object with these fields: for a subject invocation, `words`, `offline_args`, `env` (the declared environment names that apply, sorted by their bytes), `runbook` and `step` (each `null` for a probe's invocation), and `computation` `null`; for a computation's, `computation` (its argument list as the subject file gives it), `runbook` and `step` (those of the check it serves, because a capture makes its result depend on them), `words` `null`, and `offline_args` and `env` empty. No two invocations of one recording have equal keys.
+  - **An invocation's key.** Each invocation is keyed by an object with these fields: for a subject invocation, `words`, `offline_args`, `env` (the declared environment names that apply, sorted by their bytes), `runbook` and `step` (both strings for a runbook step, both `null` for a probe's invocation), and `computation` `null`; for a computation's, `computation` (its argument list as the subject file gives it), `runbook` and `step` (those of the check it serves, because a capture makes its result depend on them), `words` `null`, and `offline_args` and `env` empty. No two invocations of one recording have equal keys.
   - **The runs.** Every invocation has five confined runs. An invocation of a violating form also has one unconfined run first, the positive control that the form's act happens. A non-violating form's invocations have no unconfined run.
   - **One run records:**
     - **the markers:** whether the launcher wrote its marker (QH5), and whether it wrote the could-not-start marker (QH7);
     - **the end:** an exit with its code, or a signal with its name; for `SIGKILL`, what QH21 attributes it to: `confinement`, `budget` (the engine ended the process at its time budget while it still ran), `memory` or `code_signing` (an exit detail), or `before_marker`;
-    - **each stream,** standard output and standard error, as QE10 records it: its byte count, its SHA-256 over the kept bytes, whether it was cut, and its first 64 KiB decoded. For an invocation a predicate reads, it also holds every kept byte, in base64;
-    - **the home's changes,** each as its path relative to the home, its kind (`file`, `directory`, `link` or `special`), whether it was created, modified or removed, and a file's content digest; with whether the store comparator's control copy showed its written change, or `null` where the store-unchanged probe does not run the invocation;
-    - **the planted file,** for an invocation the planted-secret probe makes: whether its access time moved, whether its device and inode were unchanged, and the control invocation's end, or `null` where the control did not run;
+    - **each stream,** standard output and standard error, with the keys QE10 gives (`bytes`, `sha256`, `cut`, `head`) and `kept`: every kept byte, in base64, or `null` when the stream was cut;
+    - **the home's changes,** `home_changes`: every change the run made, before any exclusion QP7 or QP8 applies, each as its path relative to the home, its kind (`file`, `directory`, `link` or `special`), whether it was created, modified or removed, and a file's content digest; with whether the store comparator's control copy showed its written change, or `null` where the store-unchanged probe does not run the invocation;
+    - **the planted file,** for an invocation the planted-secret probe makes: whether its access time moved, whether its device and inode were unchanged, and the control invocation's end, or `null` where the control did not run. For any other invocation it is `null`;
     - **the leak scan:** whether it reached a bound (QP13), and each leak found, as its place (`stdout`, `stderr`, or `home/` followed by a path relative to the home) and its encoding, named as `credit-and-routes.md` §4 names it;
     - **each decoy's state:** for each decoy the run set up, its name and whether it was touched;
     - **for a computation,** the one JSON value it printed, or `null` when it printed anything else.
-  - **What a recording never holds.** No absolute path, except an executable under `/bin` or `/usr/bin` that a computation's argument list names (QA4); and no canary. Before anything is recorded, every occurrence of the run's canary, in every encoding §4 lists, is replaced by the same encoding of `pqlcanary` followed by 32 zeros. Both have 41 characters, so every count and every leak's place survive.
-  - **Agreement.** The five confined runs of an invocation agree on the markers, the end, the leak scan, the planted file, the decoys, the home's change list and every stream's digest. A recording whose runs disagree is invalid.
+  - **What a recording never holds.** No absolute path, except an executable under `/bin` or `/usr/bin` that a computation's argument list names (QA4); and no canary. Before anything is recorded, every occurrence of the run's canary, in every encoding §4 lists, is replaced by the same encoding of `pqlcanary` followed by 32 zeros. The two strings have the same length, so every count and every leak's place survive.
+  - **Agreement.** The five confined runs of an invocation agree on the markers, the end, the leak scan, the planted file, the decoys, the home's change list, a computation's printed value, and every stream's byte count, digest and cut. A recording whose runs disagree is invalid.
 - **QT6. The corpus's cases.** Each case is a directory `cases/<id>/` holding `case.json`, whose schema is `schema/case.schema.json`, its subject file, and the files below.
   - **`input`** holds what a collector is given: the subject file's name, the form, the request and scope, the verifier (`real` or `scripted`), the scripted host (QT4) for a scripted case or `null` for a real one, the baseline file's name or `null`, and the fixture descriptions.
+  - **Fixtures** describe what the repository cannot hold. Each has a `kind`, a `path` and a `detail`:
+    - `link`: assembly creates a symbolic link at `path`, relative to the assembled directory, whose target is the text of `detail`, which may name nothing;
+    - `special_file`: assembly creates a named pipe at `path`, relative to the assembled directory;
+    - `oversized_output`, `invalid_bytes` and `planted_secret` describe what the form or its seed already does, and assembly creates nothing. Their `path` is `stdout`, `stderr`, or a path relative to the home.
   - **A judge-checked case** also holds `input.json`, the judge input the collector must send, and `preimages.json`, which maps each check id in it to that check's preimage (QE2). Its `expect` holds the judge's whole output and the engine's exit code.
   - **A derivation-only case** ends before any record exists. Its `expect` holds the engine's exit code and the id of the rule that decides it.
   - **Assembly.** A case names a form, and the form's canonical directory `subjects/<form>/` holds its seed and its computations. Before applying §1 of `collection-rules.md`, a collector assembles one temporary directory holding:
     - the case's subject file;
     - a copy of the form's seed, at `seed/`;
     - the built form, at `bin/subject`;
-    - the form's computations, under `computations/`.
+    - the form's computations, under `computations/`;
+    - each `link` and `special_file` fixture.
 
     A case's subject file names those fixed paths, so QS8 and QS9 hold. A scripted run never executes `bin/subject`. A real run needs the form built from the source whose digest its recording names.
-  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and repairs it, or `null`; `invocations`, the key (QT5) of every invocation its subject file implies; and `covers`.
+  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and repairs it, or `null`; `invocations`, the keys (QT5), each once, of every invocation the engine could make for the case's request and scope: each probe's, each help request QD2 reaches in the form's recording, the bare binary's, every runbook step's whether or not an earlier failure would stop it, and every computation's, or none for a derivation-only case that ends before collection; and `covers`.
   - **`covers`** names the table rows, credit-condition sides and reason-order pairs the case exercises. Each tag is `<table>:<row>` or `<table>:<row>:<side>`:
 
     | Table | Tag | Rows |

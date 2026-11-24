@@ -29,7 +29,7 @@ The "Route to credit" and "Source" columns describe how a dimension is usually m
 |---|---|---|---|---|
 | `availability` | Bare invocation (QP2); or an authored check that a declared command exits as declared | The file's declared exit code | none | none |
 | `execution` | Declared exit codes (QP4); or an authored exit-code check | The file's declared exit codes | none | none |
-| `graceful-failure` | An authored check that an invalid invocation exits with a declared non-zero code and does not crash | Literal | the check accepts no exit code 0: it is an `exit_code` check whose expected value is a literal other than 0, or it gives its own `exit_codes` and none of them is 0 | none |
+| `graceful-failure` | An authored check that an invalid invocation exits with a declared non-zero code and does not crash | Literal | it is an `exit_code` check whose expected value is a literal other than 0, or it gives its own `exit_codes` and none of them is 0 | none |
 | `robustness` | An authored check that malformed input, such as an unknown flag value or an empty argument, gives a declared result | Literal | none | none |
 | `response-correctness` | An authored check comparing output with an expected value | Literal or computation | none | a subject with no output that can be checked against the seed |
 | `determinism` | An authored runbook that runs the same invocation twice, each time checked against the same expected value | Literal or computation, the same for both | the check's runbook has at least two steps with the same words, each with a check on `determinism` with the same predicate, `path` and expected value | a subject whose output carries a timestamp or random value it cannot be asked to omit |
@@ -92,7 +92,8 @@ The leak scan looks for the canary in each of these forms. The same list governs
 | `base64url-nopad` | base64 in the URL-safe alphabet, without padding |
 | `hex-lower` | hexadecimal in lower case |
 | `hex-upper` | hexadecimal in upper case |
-| `percent` | percent-encoding of every byte |
+| `percent-upper` | percent-encoding of every byte, with upper-case hexadecimal digits |
+| `percent-lower` | percent-encoding of every byte, with lower-case hexadecimal digits |
 
 ## 5. Help formats discovery reads
 
