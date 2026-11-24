@@ -4,4 +4,4 @@ The files in `conformance-collection-1.0/` will be sealed and then not edited. T
 
 Nothing here changes what a collector records or which exit code the engine ends with. Where an entry and a binding rule appear to differ, the rule is right.
 
-The specification is frozen for review and not yet sealed, so this note has no entries yet.
+The specification was sealed on 2026-11-24. This note has no entries yet.
