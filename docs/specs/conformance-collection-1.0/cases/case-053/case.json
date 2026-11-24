@@ -1,0 +1,999 @@
+{
+  "id": "case-053",
+  "kind": "judge-checked",
+  "rules": [
+    "QA6"
+  ],
+  "input": {
+    "subject_file": "subject.json",
+    "form": "known-good",
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "verifier": "scripted",
+    "host": {
+      "confinement": {
+        "applied": true,
+        "sandbox_exec_exit": null
+      },
+      "self_test": "passed",
+      "known_fast": "within",
+      "read_calibration": "moved",
+      "store_control": "detected",
+      "read_control": "killed",
+      "private_copy": "unchanged",
+      "kill_attribution": []
+    },
+    "baseline": null,
+    "fixtures": []
+  },
+  "named_check": null,
+  "twin": "case-050",
+  "invocations": [
+    {
+      "words": [],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "count"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "account",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "add",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "count",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "list",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "remove",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "planted"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list all",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "read",
+      "step": "list all",
+      "computation": [
+        "computations/count.sh",
+        "{SEED}/data.json"
+      ],
+      "home": "scratch"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list all again",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json",
+        "--limit",
+        "2"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list limited",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json",
+        "--tag",
+        "brass"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list by tag",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--bogus"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "errors",
+      "step": "unknown flag",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--limit",
+        "zero"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "errors",
+      "step": "bad limit",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "add",
+        "sprocket",
+        "--tag",
+        "steel"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "add once",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "add",
+        "sprocket",
+        "--tag",
+        "steel"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "add again",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "count after",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "add twice",
+      "step": "count after",
+      "computation": [
+        "computations/count-after-add.sh",
+        "{SEED}/data.json",
+        "sprocket"
+      ],
+      "home": "scratch"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "oracles",
+      "step": "list for oracles",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "oracles",
+      "step": "list for oracles",
+      "computation": [
+        "computations/prints-big.sh"
+      ],
+      "home": "scratch"
+    }
+  ],
+  "covers": [
+    "credit:determinism:holds",
+    "credit:error-message-quality:holds",
+    "credit:graceful-failure:holds",
+    "credit:idempotency:holds",
+    "credit:output-conformance:holds",
+    "credit:token-economy:holds",
+    "help:cobra",
+    "predicate:exit_code",
+    "predicate:json_path_equals",
+    "predicate:row_count",
+    "predicate:stderr_contains",
+    "predicate:stdout_bytes_at_most",
+    "predicate:stdout_json_equals",
+    "route:availability",
+    "route:bounding",
+    "route:completeness-signaling",
+    "route:determinism",
+    "route:discoverability",
+    "route:error-message-quality",
+    "route:execution",
+    "route:flag-conformance",
+    "route:graceful-failure",
+    "route:idempotency",
+    "route:output-conformance",
+    "route:pii-secret-hygiene",
+    "route:provenance-honesty",
+    "route:response-correctness",
+    "route:robustness",
+    "route:side-effect-integrity",
+    "route:token-economy"
+  ],
+  "expect": {
+    "exit_code": 4,
+    "judge_output": {
+      "rulebook_version": "1.0",
+      "outcome": "verdict",
+      "rejected_by": null,
+      "exit_code": 4,
+      "scope": [
+        "conformance"
+      ],
+      "verdict": {
+        "token": "PROVISIONAL",
+        "sub_label": "gaps",
+        "plain": "not_measured"
+      },
+      "own_verdict": null,
+      "counts": {
+        "xfail": 0,
+        "xpass": 0
+      },
+      "stale_markers": [],
+      "checks": [
+        {
+          "id": "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "1fb8e6965810606292e22338f844141fa8097198462963047741ed3c61e54001",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "20059c1619244c1ab00820b1514309e4f14445cac80b473c0f91e1198982f99e",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "24a8af63171cb82d5655c111e8e4480849edbc3d472376dbdad8724b391e91e7",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "270c4c43c84525851e3646a6ec588c632c08e2cd2de87c804ecabb5418d7aa35",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "4a0609975e21fb73503bdeb00702ca308b5df0d2463ff03891644bf182fe0b71",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "computation_failed",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "4b706a089b7a8c7601c0d50d1e1c9c47cd8635faf1334225b0a70b1f3bc81031",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "4c743b75739bb0fdf5d1a7db8f608e8b6878de0610f7aaf44d9886a0a0c6c777",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "4f7aa1fa7be749c66667dedddb8c051838018a2362224df68de89f0f4c3a5f9f",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "71419728f22ff646bbedd2b64e9be4210905fefc8aef50c09e6ef860912718fe",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "8c4cb2919c964946af308a8f2cae75a1d0ff5f0fe606cea95b2f466fe5fbd84b",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "9623eb5a406665080cc0129a9343999df5edb20e0fff534403e6de500e3d522b",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "963c1e2a3a08632079188934de4afbc9c812ea5ffb8e68aa0438ea0146233fca",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "a493349a773343813d0d6cf91bbfc96bb391d1dc432475ff3ca49df5414d9d3d",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "cb3a5f752c37a4168fea870c44c67f3163164ffccbd78de2d98716935f2db707",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "d11ed313b976d3e5e993eb643ef27ed42684e4117d3928ae20187a649ad15fa7",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "d65cc1fe00837294339d19e0cabeeaebd65ce02d0606cf3bb69f4d335606dfc9",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "d6dc3cd95c0be6e70be785de622873725766581e73375324438490c5b3319577",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f219a323acc8fde487fe7ba43951b83bb999ead817dfda45652a0c0180fcd187",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        }
+      ],
+      "dimensions": [
+        {
+          "dimension": "availability",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "execution",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "graceful-failure",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "robustness",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "response-correctness",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "determinism",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "cli-mcp-parity",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "scope_not_requested"
+        },
+        {
+          "dimension": "provenance-honesty",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "completeness-signaling",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "output-conformance",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "flag-conformance",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "bounding",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "discoverability",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "error-message-quality",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "token-economy",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "side-effect-integrity",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "idempotency",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "destructive-guard",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "scope_not_requested"
+        },
+        {
+          "dimension": "pii-secret-hygiene",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "steering",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "live_not_run"
+        },
+        {
+          "dimension": "tool-description-efficacy",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "live_not_run"
+        }
+      ],
+      "groups": [
+        {
+          "group": "Operability",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Correctness",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Conformance",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Usability",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Safety",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Steering",
+          "state": "OUT-OF-SCOPE",
+          "rule": "G1"
+        }
+      ],
+      "comparison": {
+        "result": "none",
+        "rule": "B1",
+        "next_action": null,
+        "entries": [],
+        "new": []
+      },
+      "set_aside": [],
+      "earlier_pools": [],
+      "anchor": null
+    }
+  }
+}

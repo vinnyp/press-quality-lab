@@ -1,0 +1,133 @@
+{
+  "baseline_version": "1.0",
+  "spec_version": "1.0",
+  "rulebook_version": "1.0",
+  "subject_file_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "subject_file_path": "/opt/widgets/subject.json",
+  "created_at": "2026-11-20T09:00:00Z",
+  "baseline": {
+    "entries": [
+      {
+        "check_id": "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3",
+        "kind": "plain",
+        "dimension": "discoverability",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "live",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "bacb79da173d79dd7b736a8f8716b1e7eb9a2cbfa25d1427bb7f9a701036348e",
+        "kind": "plain",
+        "dimension": "availability",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "live",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7",
+        "kind": "plain",
+        "dimension": "bounding",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      }
+    ]
+  },
+  "preimages": {
+    "8d6d60f4ab78969c007363a17c0165fde56eba31845de5e6cbb2b7a01af39ee3": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "env": {},
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "discovery",
+      "dimension": "discoverability",
+      "words": null,
+      "offline_args": [],
+      "budget_seconds": null,
+      "parameters": {
+        "declared_count": 1,
+        "commands": [
+          [
+            "list"
+          ]
+        ]
+      }
+    },
+    "bacb79da173d79dd7b736a8f8716b1e7eb9a2cbfa25d1427bb7f9a701036348e": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "env": {},
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "bare",
+      "dimension": "availability",
+      "words": [],
+      "offline_args": [],
+      "budget_seconds": 10,
+      "parameters": {
+        "exit_codes": null
+      }
+    },
+    "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "env": {},
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "byte_bound",
+      "dimension": "bounding",
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "budget_seconds": 30,
+      "parameters": {
+        "declared_count": 1,
+        "commands": [
+          [
+            "list"
+          ]
+        ]
+      }
+    }
+  }
+}

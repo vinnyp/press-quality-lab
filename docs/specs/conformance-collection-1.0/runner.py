@@ -8,13 +8,16 @@ import argparse
 import sys
 from pathlib import Path
 sys.dont_write_bytecode = True
-from common import Error, evaluate, load, manifest, read, validate_expect, INPUT_LIMIT
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from common import Error, collection_cases, manifest
 
 
 def main():
     """Parse command arguments and return the command exit status."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--draft", action="store_true")
+    parser.add_argument("--unsealed", action="store_true")
+    parser.add_argument("--schema-root", type=Path, default=Path(__file__).resolve().parent)
     parser.add_argument("--judge")
     parser.add_argument("--cases", type=Path)
     parser.add_argument("--timeout", type=float, default=10)
@@ -34,36 +37,17 @@ def main():
     if not args.judge or not args.cases:
         parser.error("--judge and --cases are required without --draft")
     try:
+        root = args.schema_root.resolve()
+        if args.unsealed:
+            print("UNSEALED", flush=True)
+            if (root / "KIT.sha256").exists() or (root / "KIT.sha256").is_symlink():
+                raise Error("--unsealed beside KIT.sha256")
+        else:
+            manifest(root, "KIT.sha256")
         if not math.isfinite(args.timeout) or args.timeout <= 0:
             raise Error("timeout must be positive and finite")
-        root = args.cases.resolve().parent
-        manifest(root, "KIT.sha256")
-        schema = load(read(root / "schema/judge-output.schema.json"))
-        cases = []
-        for directory in sorted(args.cases.iterdir()):
-            if not directory.is_dir():
-                raise Error("unexpected case file")
-            case = load(read(directory / "case.json"))
-            if not isinstance(case, dict) or not isinstance(case.get("id"), str):
-                raise Error("invalid case")
-            validate_expect(case["expect"])
-            cases.append((case, directory / "input.json"))
-        ids = [case["id"] for case, _ in cases]
-        if len(ids) != len(set(ids)):
-            raise Error("duplicate case id")
-        failures = 0
-        for case, data in cases:
-            if data.stat().st_size > INPUT_LIMIT:
-                raise Error("input size limit")
-            with data.open("rb") as stream:
-                result = evaluate(args.judge, stream, case["expect"], schema, args.timeout)
-            if not result["pass"]:
-                failures += 1
-                print(case["id"] + ": " + "; ".join(result["reasons"]))
-        print(
-            f"{len(cases)} cases ran; {len(cases) - failures} passed; {failures} failed"
-        )
-        return int(failures > 0 or not cases)
+        return collection_cases(root, args.cases, args.judge, args.timeout)
+
     except (Error, OSError, ValueError, KeyError, TypeError) as exc:
         print("refused: " + str(exc), file=sys.stderr)
         return 2

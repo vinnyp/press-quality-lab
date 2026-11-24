@@ -1,18 +1,17 @@
 # Collection contract
 
-**Draft.** This folder is a draft of the conformance collection specification, version 1.0. It is not sealed, and it holds no `KIT.sha256`.
-
 **What this file covers.** How the engine turns its observations into the judge's input, what it does with the judge's output, which exit code it ends with, and how it keeps and cleans up what it ran. The rules are families QE and QT. How to read the rules, and what binds, is as `collection-rules.md` says. The judge decides every verdict; nothing here decides one.
 
 ## 1. Versions
 
 - **QE1. Version and change.** This specification's version string is `1.0`.
-  - **When the string changes.** It changes when, and only when, some subject file, scope and subject behaviour can lead to a different record for the judge or a different engine exit code. Every other change is editorial and goes in the dated errata note `docs/specs/conformance-collection-1.0-errata.md`, outside the sealed folder.
+  - **When the string changes.** It changes when any binding rule changes what a conforming engine must do, whether or not the record or the exit code changes. An erratum may only correct text whose intended reading the corpus or a worked example already fixes; it goes in the dated errata note `docs/specs/conformance-collection-1.0-errata.md`, outside the sealed folder. Version 1.x draws no line between a major and a minor change: every change of string is a new specification that the owner ratifies.
   - **Ratification.** The owner ratifies each version.
   - **Reading older files.** A later specification version states which subject-file versions it reads. Version strings take the form `<major>.<minor>`.
-  - **Other version strings.** Three strings are versioned on their own, and each changes only when its own format does:
+  - **Other version strings.** These strings are versioned on their own, and each changes only when its own format does:
     - the subject file's `subject_file_version`;
     - the stored record's and baseline's `record_version` and `baseline_version`;
+    - recorded behaviour's `behaviour_version` (QT5);
     - the id scheme of QE2.
 
     A new specification version that only adds a supported macOS version (QH1) keeps the id scheme, so every baseline stays comparable.
@@ -80,10 +79,46 @@
   ```
 
   Its id is `46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7`. The declared-exit-code check on the same command differs in `probe`, `dimension` and `parameters`, so the two probes on one command get two ids.
+
+  **Three more worked ids.** They share a second seed, which holds four entries:
+  - `data.json`, whose thirty bytes are `{"widgets":[{"name":"gear"}]}` followed by a line feed, with the content digest `3a8faa48b8f9b4a4ee9325929bebc6d41692a782586147918ae4b995fba81b8b`;
+  - `.config/widgets/token`, whose nineteen bytes are `PLANTED-TOKEN-0001` followed by a line feed, with the content digest `b7a2426b2cad538728ed95180a5323b463b166d48bd1d3270ba46e72fd958d7f`;
+  - the directories `.config` and `.config/widgets`.
+
+  The seed's digest is `c7456dbd3a1fad65c51397e7f49302cba427ae628dd816e9f3b289439c01ff4a`. Every invocation has the offline argument `--offline` and the declared environment name `WIDGETS_OFFLINE` with the value `1`, whose digest is `6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b`. The store and the bookkeeping path are as above.
+
+  - **An authored check with a literal.** The runbook `widgets` has a first step `list` that runs `list --json` with a 30-second budget. Its one check, on `output-conformance`, uses `stdout_json_equals` with the literal `{"widgets":[{"name":"gear"}]}`. Its preimage is:
+
+    ```
+    {"bookkeeping":[".local/state/widgets"],"budget_seconds":30,"dimension":"output-conformance","earlier":[],"env":{"WIDGETS_OFFLINE":"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"},"expected":{"literal":{"widgets":[{"name":"gear"}]},"precondition":null},"index":0,"offline_args":["--offline"],"parameters":{"exit_codes":null},"path":null,"predicate":"stdout_json_equals","probe":null,"runbook":"widgets","scheme":"pql-check-id-1","seed":"c7456dbd3a1fad65c51397e7f49302cba427ae628dd816e9f3b289439c01ff4a","step":"list","store":"data.json","words":["list","--json"]}
+    ```
+
+    Its id is `c7823c4ab628d3eac5e2b51de1d41e12293d3e017f60df678eaf92532e7832f7`.
+  - **A check with a computed precondition.** The runbook's second step `filter` runs `list --tag none` with a 30-second budget. Its one check, on `response-correctness`, uses `stdout_empty`, so it asserts emptiness and has a precondition. The precondition runs `computations/has-widgets.sh` with the argument `{SEED}/data.json`, a 5-second budget and no captures. That script's eighty-four bytes are these two lines, each ending in a line feed, and its content digest is `a1b660c0d3bd81e132520531ee7d97c5467d5c9f3575fda91abd60daf573dbc8`:
+
+    ```
+    #!/bin/sh
+    if grep -q '"name"' "$1"; then printf 'true\n'; else printf 'false\n'; fi
+    ```
+
+    The check's `earlier` holds the first step's id. Its preimage is:
+
+    ```
+    {"bookkeeping":[".local/state/widgets"],"budget_seconds":30,"dimension":"response-correctness","earlier":["c7823c4ab628d3eac5e2b51de1d41e12293d3e017f60df678eaf92532e7832f7"],"env":{"WIDGETS_OFFLINE":"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"},"expected":{"literal":null,"precondition":{"computation":{"argv":["computations/has-widgets.sh","{SEED}/data.json"],"budget_seconds":5,"captures":[],"files":{"computations/has-widgets.sh":"a1b660c0d3bd81e132520531ee7d97c5467d5c9f3575fda91abd60daf573dbc8"}}}},"index":0,"offline_args":["--offline"],"parameters":{"exit_codes":null},"path":null,"predicate":"stdout_empty","probe":null,"runbook":"widgets","scheme":"pql-check-id-1","seed":"c7456dbd3a1fad65c51397e7f49302cba427ae628dd816e9f3b289439c01ff4a","step":"filter","store":"data.json","words":["list","--tag","none"]}
+    ```
+
+    Its id is `40b08dbef70438992c53f14fee9f5e1297277bc94bb35cb5e2b435758df22993`.
+  - **A planted secret.** The secret is the `credential` at `.config/widgets/token` with the token `PLANTED-TOKEN-0001`, whose text digest is `d2ea444a8905d8d4d040c5770edcd4a576b858fe4b357ff9e277241dea36261b`, read by the command `account` with a 30-second budget. Its preimage is:
+
+    ```
+    {"bookkeeping":[".local/state/widgets"],"budget_seconds":null,"dimension":"pii-secret-hygiene","earlier":[],"env":{},"expected":null,"index":null,"offline_args":[],"parameters":{"commands":[{"budget_seconds":30,"env":{"WIDGETS_OFFLINE":"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"},"offline_args":["--offline"],"words":["account"]}],"kind":"credential","path":".config/widgets/token","text_sha256":"d2ea444a8905d8d4d040c5770edcd4a576b858fe4b357ff9e277241dea36261b"},"path":null,"predicate":null,"probe":"planted_secret","runbook":null,"scheme":"pql-check-id-1","seed":"c7456dbd3a1fad65c51397e7f49302cba427ae628dd816e9f3b289439c01ff4a","step":null,"store":"data.json","words":null}
+    ```
+
+    Its id is `181431d07ae5e61a4a5fde89d6a606708476067a3dcdfad263b473f33adb98ba`.
 - **QE3. A fixed set.** The engine fixes the required set from the subject file, the judge's rulebook and the requested scope before discovery or any other check runs (R21). It holds every generated check QP1 places, and every authored check whose dimension is in the requested scope and whose runbook may run in it (QA7). Evidence never adds to it or removes from it.
 - **QE4. Baselines and missing ids.**
   - **What a baseline holds.** It stores each check's preimage beside its entry.
-  - **Which baseline a grade uses.** The baseline the user names. Without one, it uses the baseline with the latest `created_at` stored for the subject file's canonical path.
+  - **Which baseline a grade uses.** The baseline the user names. Without one, it uses the baseline with the latest `created_at` stored for the subject file's canonical path, and among baselines with the same `created_at`, the one whose file's SHA-256 is greatest.
   - **Missing ids.** When the baseline holds ids the new required set lacks, the engine lists each one. It names the cause from the stored preimage: the command, step or runbook that is gone, or the preimage keys whose values changed. It writes the list as a JSON array of the missing ids, sorted. That file is the form `pql anchor` accepts as its retired list. The engine retires none by itself.
 
 ## 3. Before collection
@@ -112,6 +147,7 @@
   |---|---|
   | `id` | as QE2 says |
   | `kind` | `plain` |
+  | `dimension` | the dimension the check feeds: a probe's from `credit-and-routes.md` §1, an authored check's own `dimension` |
   | `record` | the runbook that holds the check, or `null` for a probe |
   | `crediting` | from QA3, and from the probe table of `credit-and-routes.md` §1 for a probe |
   | `empty_satisfiable` | as QA9 says for an authored check; `true` for byte bound; otherwise `false` |
@@ -121,26 +157,30 @@
 
   | Field | Value |
   |---|---|
+  | `check_id` | the check's id (QE7) |
   | `outcome`, `reason`, `failure_kind` | by §2 of `collection-rules.md` and the check's predicate |
-  | `target_size` | for an empty-satisfiable check that was observed, the number of bytes or items its predicate evaluated |
-  | `precondition_observed` | for a check that asserts emptiness and was observed, the observed precondition (QA9) |
+  | `target_size` | for an empty-satisfiable check whose predicate was evaluated, the number of bytes or items it evaluated, and for `row_count` `null` when there is no array at `path`; that is, a check that is held, or not held with `failure_kind` `predicate`. Otherwise `null`, a check not held for its exit code or its end included |
+  | `precondition_observed` | for a check that asserts emptiness whose outcome is held or not held, the observed precondition (QA9); otherwise `null` |
   | `expected`, `observed` | bounded as QE10 says |
   | `tier` | as QE9 says |
   | `evaluator` | `{"kind": "deterministic", "model": null}` |
+  | `targets` | as below |
 
   **Targets.**
   - Each invocation is a target of kind `invocation`. Its id is the check's id, or the check's id followed by `#` and the invocation's position from 1 when the check has more than one invocation. Discovery's help requests are numbered in the order QD2 gives; the planted secret's invocations in the order its commands are listed, counting listed commands only. A control invocation is never a target.
-  - The store-unchanged probe adds the declared store as a target of kind `artifact`. The planted-secret probe adds the planted file the same way. Each artifact's id is its path relative to the home, and its tier is the tier of the invocation that used it.
+  - A check that would use no invocation still has one target, because the judge contract requires one: a target of kind `invocation` whose id is the check's id. Such a check is a probe that runs no command (QP1), or the planted-secret probe whose `secret` is `null` or a placeholder.
+  - **Discovery's targets** are the help requests its walk made, in QD2's order. A help request that did not run, or whose binary could not start, printed nothing and lists no command, so the walk goes no further below it. The first request counts as made even when it did not run, so discovery has at least one target: with `binary` a placeholder (QS5), when QO1 holds, or when the private copy changed (QH8), it has exactly one.
+  - When the declared store is a path, the store-unchanged probe adds it as a target of kind `artifact`. When `secret` is an object, the planted-secret probe adds the planted file the same way. Each artifact's id is its path relative to the home. The store's tier is the tier of the invocation that used it; the planted file's is `offline` when every listed command's invocation is `offline`, and `live` otherwise.
 
   A check that is not observed has an `outcome` of `not_observed` and carries its reason and the invocation it would have used.
-- **QE9. Tiers.** A normal run claims `live`. Each target that ran with an offline setting carries the tier `offline`, and every other target carries `live`. A piece of evidence carries `offline` when every one of its targets does, and `live` otherwise.
+- **QE9. Tiers.** A normal run claims `live`. Each invocation target whose invocation applies an offline setting (QS7) carries the tier `offline`, whether or not it ran, and every other invocation target carries `live`. A piece of evidence carries `offline` when every one of its targets does, and `live` otherwise.
 - **QE10. Bounds.**
   - **Draining.** Captured output is drained as it is produced, so the subject is never blocked by a full pipe. The engine counts every drained byte and keeps the first 1 MiB of each stream for predicates and the leak scan. Past that point it records that the stream was cut and keeps draining.
-  - **What a record carries.** In `expected` and `observed`, a stream appears as an object holding:
-    - the stream's byte count;
-    - its SHA-256 over the kept bytes;
-    - whether it was cut;
-    - its first 64 KiB decoded as UTF-8, with each ill-formed byte replaced by U+FFFD.
+  - **What a record carries.** In `expected` and `observed`, a stream appears as an object with exactly these keys:
+    - `bytes`, the stream's byte count;
+    - `sha256`, its SHA-256 over the kept bytes;
+    - `cut`, whether it was cut;
+    - `head`, its first 64 KiB decoded as UTF-8, with each ill-formed byte replaced by U+FFFD.
   - **The whole record.** The `expected` and `observed` values of all evidence together are held to 4 MiB, measured on the serialized JSON the engine sends. The cap is applied in the order of check ids. Past it, a value is replaced by an object holding only its byte count and SHA-256.
   - **The subject file.** A literal is bounded at 64 KiB and at a nesting depth of 48 (QS11).
   - **Why this fits.** QS11 allows at most 3,587 required checks: 2,048 authored, three probes with one check per command for at most 512 commands each, and three more. Without its values, each check costs at most about 2 KiB across `required`, its evidence and its baseline entry, names included, which is under 8 MiB in all. Markers add at most 1,024 small objects. With the 4 MiB of values, a record stays under 13 MiB, inside the judge contract's 16 MiB.
@@ -176,7 +216,7 @@
   |---|---|
   | 0 | the judge's grade is PASSED, or the anchor was made |
   | 1 | the judge's grade is FAILED; nothing else exits 1 |
-  | 2 | a well-formed request rejected for its content or scope: a subject file rejected by §1 of `collection-rules.md`, an unreadable subject file, a scripted verifier requested from a released build (QT1), or a pre-check rejection the user caused (QE6) |
+  | 2 | a well-formed request rejected for its content or scope: a subject file rejected by §1 of `collection-rules.md`, an unreadable subject file, a scripted verifier, host or recording requested from a released build, a scripted run missing its host or recording or given one that is unreadable or invalid (QT1), or a pre-check rejection the user caused (QE6) |
   | 3 | the judge's grade is PROVISIONAL, `known-defects` |
   | 4 | the judge's grade is PROVISIONAL, `gaps` |
   | 5 | the judge refused the anchor |
@@ -188,13 +228,15 @@
 ## 7. Records
 
 - **QE17. Where records live.** Run records, baselines and their trials are kept only in the engine's store, never inside a repository. The store is a directory under the user's application-support directory. Directories are created with mode 0700 and files with 0600. The engine holds no other state between runs that can change a verdict (R27).
-- **QE18. Masking.** Every record, a rejected one included, and every scorecard mask the planted canary and each declared environment value, in every encoding `credit-and-routes.md` §4 lists.
-- **QE19. Schemas and conformance.** The subject file, the stored record, the baseline and the case format each have a JSON Schema in `schema/`. Two collectors conform alike when, for the same subject file, scope, binary and host, their records to the judge agree after both are sorted by check id:
+- **QE18. Masking.** Every record, a rejected one included, and every scorecard mask the planted canary and each declared environment value of 8 bytes or more, in every encoding `credit-and-routes.md` §4 lists. The canary becomes `pqlcanary` followed by 32 zeros, in the same encoding, as QT5 says for a recording; a declared value becomes as many `*` as its encoded form has characters. Masking changes only text a record or scorecard shows, never a byte count, a digest or a check's outcome, which are taken from the drained bytes. A shorter declared value is not masked, and the scorecard says so.
+- **QE19. Schemas and conformance.** The subject file, the stored record, the baseline, the case format and recorded behaviour (QT5) each have a JSON Schema in `schema/`. Two collectors conform alike when, for the same subject file, scope, binary and host, their records to the judge agree after both are sorted by check id:
   - the required arrays are equal;
   - each piece of evidence has equal `check_id`, `outcome`, `reason`, `failure_kind`, `target_size`, `precondition_observed` and `tier`;
   - each piece of evidence has the same set of target kinds, ids and tiers.
 
-  `expected` and `observed` are left out of the comparison.
+  `expected` and `observed` are left out of the comparison; their content is the collector's choice within QE10's bounds.
+
+  **A conforming collector.** A collector conforms to this specification when, for every judge-checked case of the corpus, its record agrees with the case's `input.json` under the comparison above and it exits with the case's `expect.exit_code`, and for every derivation-only case it exits with the case's `expect.exit_code` before collection. A case with the real verifier counts only on a system QH1 names.
 - **QE20. Cleanup.**
   - **When.** Throwaway homes, scratch directories and private copies are removed on every exit, a check killed by the confinement included.
   - **Where they live.** Each is created under one engine-owned directory per run. That directory holds a file naming the engine's process id and that process's start time.
@@ -203,9 +245,87 @@
 
 ## 8. The test entry
 
-- **QT1. A scripted verifier.** Only a build made with the `scripted` build tag contains a scripted network verifier, selected by `--verifier scripted`. The released build parses `--verifier`. It rejects the value `scripted` with exit 2, and every other value as a malformed command line with exit 64.
+- **QT1. A scripted verifier and a scripted host.** `--verifier` takes `real`, the default, or `scripted`. Only a build made with the `scripted` build tag contains a scripted network verifier, selected by `--verifier scripted`, which reads a recording named by `--behaviour <file>` (QT5) and a scripted host named by `--host <file>` (QT4).
+  - **The released build** parses all three flags. It accepts `--verifier real`. It rejects `--verifier scripted`, any `--host` and any `--behaviour` with exit 2, and every other value of `--verifier` as a malformed command line with exit 64.
+  - **A scripted build** runs a scripted run only with all of `--verifier scripted`, `--host` and `--behaviour`. Given any of them without all three, it exits 2, and so does a host or recording file that cannot be read, that the judge contract's §3 would refuse as JSON, that its schema rejects, or that breaks a rule of QT4 or QT5.
 - **QT2. A test run is scripted.** A run with the scripted verifier claims the tier `scripted`, and so do its targets and evidence. It cannot be anchored, and the judge refuses an anchor of it. The corpus's baseline cases for it use scripted baselines supplied as files.
 - **QT3. What it is for.** The scripted verifier lets the corpus run without a sandbox. It shows that the rules turn observations into the right record. It shows nothing about a real subject, and a record from it is never evidence that a subject made no network request.
+  - **What a scripted run observes.** It takes each invocation's result from the recording `--behaviour` names (QT5), in place of running the subject or a computation. It uses the recording's first confined run, and the unconfined run never. An invocation the recording lacks is an engine fault, exit 70.
+  - **The engine's own controls.** It takes their raw results from the scripted host (QT4).
+  - **The system.** A scripted run checks no system version (QH1, QH2): whether confinement was applied comes from the host's `confinement` field alone. QH3 applies to every run.
+- **QT4. The scripted host.** The host file holds one JSON object, as the `host` subschema of `schema/case.schema.json` defines it. Each field forces the raw result of one control the engine runs, and every field is required:
+
+  | Field | Forces | Values |
+  |---|---|---|
+  | `confinement` | whether confinement was applied (QH6). Not applied, with `sandbox-exec`'s own exit code, holds for every invocation, the subject's and each computation's. Applied leaves each invocation's markers and end as recorded | `{"applied": true, "sandbox_exec_exit": null}` or `{"applied": false, "sandbox_exec_exit": n}` |
+  | `self_test` | the self-test's result (QH9) | `passed`, `failed` |
+  | `known_fast` | the known-fast control (QH24) | `within`, `over` |
+  | `read_calibration` | the volume's read calibration (QH26) | `moved`, `not_moved` |
+  | `store_control` | the store comparator's control copy (QP9) | `detected`, `not_detected` |
+  | `read_control` | the read proof's control invocation (QH27), for every listed command whose control runs | `killed`, `not_killed` |
+  | `private_copy` | the check of the private copy before each use (QH8) | `unchanged`, `changed` |
+  | `kill_attribution` | for each invocation it names, what ended a recorded `SIGKILL` that the recording attributes to the confinement | a list of `{"invocation": key, "by": b}`, where `key` is as QT5 defines and `b` is `memory` or `code_signing` (an exit detail the system reported) or `engine` (a kill the engine sent itself outside the time budget) |
+
+  - **Attributions.** Each entry of `kill_attribution` names an invocation, at most once, whose first confined run ended by `SIGKILL` attributed to `confinement`. Any other entry makes the host file invalid. The entry replaces that attribution, and QH21 and QO5 then decide.
+  - **Precedence.** In a scripted run, the scripted host's results replace any result a recording holds for the same control. The recording supplies only what the subject and the computations did.
+  - **What stays the same.** The scripted build takes only these raw results from the host. QO1, QO4, QP9, QP11 and QH21 decide from them exactly as the released build decides from the controls it ran. A collector that ignores a failed control therefore gives a wrong record for a case that forces one.
+  - **A passing host.** Every control passes when `confinement` is applied, `self_test` is `passed`, `known_fast` is `within`, `read_calibration` is `moved`, `store_control` is `detected`, `read_control` is `killed`, `private_copy` is `unchanged` and `kill_attribution` is empty.
+- **QT5. Recorded behaviour.** Each form of the corpus's synthetic subject has one recording, `behaviour/<form>.json`, whose schema is `schema/behaviour.schema.json`. A recording is what that form did, and the only source of what a scripted run observes.
+  - **What the whole recording names:**
+    - its own format version, `behaviour_version`, which is `1.0`;
+    - the form's name, and whether it is a violating form, one built to attempt an operation the confinement refuses;
+    - the digest of the form's source: QE2's seed digest computed over the source files the form's build compiles, as paths relative to the synthetic subject's source root, with an entry for each file and none for a directory. A form that is one file rather than a build, such as one the system cannot execute, names that file's SHA-256 instead;
+    - the digests of the subject profile and the computation profile, each as the template renders with its variant's fixed text and before any line the engine adds for one invocation, and of the launcher's source;
+    - the macOS version and build it was recorded on, and the commit.
+
+    In `home_changes`, an empty regular file carries the SHA-256 of zero bytes.
+
+    These digests, the system and the commit say where a recording came from. A collector reads none of them and rejects no recording on their values.
+  - **An invocation's key.** Each invocation is keyed by an object with these fields. `home` names the home it runs in: `seed` for a fresh copy of the seed, `empty` for an empty home (discovery's), `planted` for a fresh copy with the canary planted (the planted-secret probe's), `runbook` for its runbook's shared home, and `scratch` for a computation's scratch directory. The other fields: for a subject invocation, `words`, `offline_args`, `env` (the declared environment names that apply, sorted by their bytes), `runbook` and `step` (both strings for a runbook step, both `null` for a probe's invocation), and `computation` `null`; for a computation's, `computation` (its argument list as the subject file gives it), `runbook` and `step` (those of the check it serves, because a capture makes its result depend on them), `words` `null`, and `offline_args` and `env` empty. No two invocations of one recording have equal keys.
+  - **The runs.** Every invocation has five confined runs. An invocation of a violating form also has one unconfined run first, the positive control that the form's act happens. A non-violating form's invocations have no unconfined run.
+  - **Decoys.** A violating form's runs happen beside decoys the recorder prepares, so that its positive control has something to act on: files under `/private/tmp/pql-decoys/`, outside every home; a loopback listener for a connection; and, for a form that signals or reads another process, a decoy process whose id the recorder writes to `peer.pid` in the home before the run. Such a run's home is the seed's copy plus that file, and its `home_changes` are taken after the file is written. A collector reads none of this, only the runs; reproducing such a recording needs the same decoys.
+  - **One run records:**
+    - **the markers:** whether the launcher wrote its marker (QH5), and whether it wrote the could-not-start marker (QH7);
+    - **the end:** an exit with its code, or a signal with its name; for `SIGKILL`, what QH21 attributes it to: `confinement`, `budget` (the engine ended the process at its time budget while it still ran), `memory` or `code_signing` (an exit detail), or `before_marker`;
+    - **each stream,** standard output and standard error without the launcher's markers, with the keys QE10 gives (`bytes`, `sha256`, `cut`, `head`) and `kept`: every kept byte, in base64, or `null` when the stream was cut;
+    - **the home's changes,** `home_changes`: every change the run made, before any exclusion QP7 or QP8 applies, each as its path relative to the home, its kind (`file`, `directory`, `link` or `special`), whether it was created, modified or removed, and a file's content digest; with whether the store comparator's control copy showed its written change, or `null` where the store-unchanged probe does not run the invocation;
+    - **the planted file,** for an invocation the planted-secret probe makes: whether its access time moved, whether its device and inode were unchanged, and the control invocation's end, or `null` where the control did not run. For any other invocation it is `null`;
+    - **the leak scan:** whether it reached a bound (QP13), and each leak found, as its place (`stdout`, `stderr`, or `home/` followed by a path relative to the home) and its encoding, named as `credit-and-routes.md` §4 names it;
+    - **each decoy's state:** for each decoy the run set up, its name and whether it was touched;
+    - **for a computation,** `{"value": v}`, where `v` is the one JSON value it printed and the judge contract's §3 accepts inside a record, or `null` when it printed anything else. A computation that printed the JSON value `null` is therefore `{"value": null}`.
+  - **What a recording never holds.** No absolute path, except an executable under `/bin` or `/usr/bin` that a computation's argument list names (QA4); and no canary. Before anything is recorded, every occurrence of the run's canary, in every encoding §4 lists, is replaced by the same encoding of `pqlcanary` followed by 32 zeros. The two strings have the same length, and every count, digest and head in a recording is taken after the replacement, so every count and every leak's place survive.
+  - **Agreement.** The five confined runs of an invocation agree on the markers, the end, the leak scan, the planted file, the decoys, the home's change list, a computation's printed value, and every stream's byte count, digest and cut. A recording whose runs disagree is invalid.
+- **QT6. The corpus's cases.** Each case is a directory `cases/<id>/` holding `case.json`, whose schema is `schema/case.schema.json`, its subject file, and the files below.
+  - **`input`** holds what a collector is given: the subject file's name, the form, the request and scope, the verifier (`real` or `scripted`), the scripted host (QT4) for a scripted case or `null` for a real one, the baseline file's name or `null`, and the fixture descriptions.
+  - **Fixtures** describe what the repository cannot hold. Each has a `kind`, a `path` and a `detail`:
+    - `link`: assembly creates a symbolic link at `path`, relative to the assembled directory, whose target is the text of `detail`, which may name nothing;
+    - `special_file`: assembly creates a named pipe at `path`, relative to the assembled directory;
+    - `oversized_output`, `invalid_bytes` and `planted_secret` describe what the form or its seed already does, and assembly creates nothing. Their `path` is `stdout`, `stderr`, or a path relative to the home.
+  - **A judge-checked case** also holds `input.json`, the judge input the collector must send, up to QE19's comparison, and `preimages.json`, which maps each check id in it to that check's preimage (QE2). Its `expect` holds the judge's whole output and the engine's exit code.
+  - **A derivation-only case** ends before any record exists. Its `expect` holds the engine's exit code and the id of the rule that decides it: the rule whose condition the file breaks, even when the file's schema also rejects it (QS2 says only that the file is validated), or QE6 for a rejection the judge returns at the pre-check.
+  - **Assembly.** A case names a form, and the form's canonical directory `subjects/<form>/` holds its seed and its computations. Before applying §1 of `collection-rules.md`, a collector assembles one temporary directory holding:
+    - the case's subject file;
+    - a copy of the form's seed, at `seed/`;
+    - the built form, at `bin/subject`;
+    - the form's computations, under `computations/`;
+    - each `link` and `special_file` fixture.
+
+    A case's subject file names those fixed paths, so QS8 and QS9 hold. A scripted run never executes `bin/subject`, which there may be any regular file whose content differs from every other assembled file. A real run needs the form built from the source whose digest its recording names.
+  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and removes one reason a check was not measured, or `null`, where following `twin` from a case reaches a case in which each such check is held, and crediting unless its required entry says it never credits (QA3). One input is one field of `input`, the subject file's content, or the form. A check's counterpart in a twin is the check whose preimage has the same `probe`, `runbook`, `step`, `index`, `dimension` and `words`; its id may differ, because the input the twin changes can enter the id; `invocations`, the keys (QT5), each once, of every invocation the case's record names or implies: each invocation a piece of evidence names as a target, a check that is not observed naming the invocation it would have used (QE8); each help request discovery's walk makes; every step of each runbook in the required set, whether or not an earlier failure would stop it; and every computation of those runbooks' required checks, except one whose capture is a stream the engine cut, which never runs (QA4). A derivation-only case that ends before collection has none; and `covers`.
+  - **`covers`** names the table rows, credit-condition sides and reason-order pairs the case exercises. Each tag is `<table>:<row>` or `<table>:<row>:<side>`:
+
+    | Table | Tag | Rows |
+    |---|---|---|
+    | `credit-and-routes.md` §2 | `route:<dimension>` | each dimension |
+    | the credit conditions of §2 | `credit:<dimension>:holds`, `credit:<dimension>:fails` | each dimension whose condition is neither "none" nor "never" |
+    | `credit-and-routes.md` §4 | `encoding:<name>` | each encoding |
+    | `credit-and-routes.md` §5 | `help:<generator>` | `cobra`, `urfave-cli`, `clap` |
+    | QA9 | `predicate:<predicate>` | each predicate |
+    | the reason order of `collection-rules.md` §2 | `order:<earlier>><later>` | each pair of reasons that can apply to one check together in a scripted run, the earlier deciding: `QO1>QS5`, `QO1>QA7`, `QS5>QD4`, `QS5>QA7`, `QA7>QH8`, `QH8>QA6` |
+
+    A tag that names no row rejects the case.
+
+- **An informative note on phase 3.** This note binds no collector. The engine's plan assigns phase 3's real verifier to local macOS runs on a machine the owner controls, each stated in its pull request as the repository's contributor guide requires. The scripted verifier runs in continuous integration on Linux, which stays required on the main branch.
 
 ## 9. Readings of the requirements
 
@@ -214,3 +334,5 @@
 | A malformed command line and a rejected request could share a code | 64 for the command line, 2 for the request, keeping both existing contracts | QE16 |
 | A test run's verifier is scripted, so nothing showed it was offline | The whole run is scripted, at every level | QT2 |
 | A baseline must survive a new supported system | The id carries its own scheme string, not the specification's version | QE1, QE2 |
+| A scripted host could score logic other than the released build's | Only each control's raw result is scripted; the released decision logic reads it | QT4 |
+| A recording could carry the canary it leaked | Every occurrence is replaced by a fixed string of the same length before recording | QT5 |

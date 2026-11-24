@@ -1,0 +1,660 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "behaviour_version",
+    "form",
+    "violating",
+    "form_sha256",
+    "subject_profile_sha256",
+    "computation_profile_sha256",
+    "launcher_sha256",
+    "system",
+    "commit",
+    "invocations"
+  ],
+  "properties": {
+    "behaviour_version": {
+      "const": "1.0"
+    },
+    "form": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "violating": {
+      "type": "boolean"
+    },
+    "form_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "subject_profile_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "computation_profile_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "launcher_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "system": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_version",
+        "build"
+      ],
+      "properties": {
+        "product_version": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)*$"
+        },
+        "build": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z]+$"
+        }
+      }
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "invocations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "unconfined",
+          "confined"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "#/$defs/key"
+          },
+          "unconfined": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/run"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confined": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/run"
+            },
+            "minItems": 5,
+            "maxItems": 5
+          }
+        }
+      },
+      "minItems": 1
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "behaviour.schema.json",
+  "title": "Conformance collection 1.0 recorded behaviour",
+  "$defs": {
+    "key": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "words",
+            "offline_args",
+            "env",
+            "runbook",
+            "step",
+            "computation",
+            "home"
+          ],
+          "properties": {
+            "words": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "offline_args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "env": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "uniqueItems": true
+            },
+            "runbook": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "step": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "computation": {
+              "type": "null"
+            },
+            "home": {
+              "type": "string",
+              "pattern": "^(seed|empty|planted|runbook)$"
+            }
+          },
+          "allOf": [
+            {
+              "oneOf": [
+                {
+                  "properties": {
+                    "runbook": {
+                      "type": "string"
+                    },
+                    "step": {
+                      "type": "string"
+                    },
+                    "home": {
+                      "type": "string",
+                      "pattern": "^runbook$"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "runbook": {
+                      "type": "null"
+                    },
+                    "step": {
+                      "type": "null"
+                    },
+                    "home": {
+                      "type": "string",
+                      "pattern": "^(seed|empty|planted)$"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "computation",
+            "runbook",
+            "step",
+            "words",
+            "offline_args",
+            "env",
+            "home"
+          ],
+          "properties": {
+            "computation": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "prefixItems": [
+                {
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/relative_path"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^/(usr/)?bin/[^/]+$"
+                    }
+                  ]
+                }
+              ]
+            },
+            "runbook": {
+              "type": "string"
+            },
+            "step": {
+              "type": "string"
+            },
+            "words": {
+              "type": "null"
+            },
+            "offline_args": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "env": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "home": {
+              "type": "string",
+              "pattern": "^scratch$"
+            }
+          }
+        }
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "markers",
+        "end",
+        "stdout",
+        "stderr",
+        "home_changes",
+        "planted",
+        "leak_scan",
+        "decoys",
+        "printed_value"
+      ],
+      "properties": {
+        "markers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "confinement",
+            "could_not_start"
+          ],
+          "properties": {
+            "confinement": {
+              "type": "boolean"
+            },
+            "could_not_start": {
+              "type": "boolean"
+            }
+          }
+        },
+        "end": {
+          "$ref": "#/$defs/end"
+        },
+        "stdout": {
+          "$ref": "#/$defs/stream"
+        },
+        "stderr": {
+          "$ref": "#/$defs/stream"
+        },
+        "home_changes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "changes",
+            "control_detected"
+          ],
+          "properties": {
+            "changes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "kind",
+                  "change",
+                  "sha256"
+                ],
+                "properties": {
+                  "path": {
+                    "$ref": "#/$defs/relative_path"
+                  },
+                  "kind": {
+                    "enum": [
+                      "file",
+                      "directory",
+                      "link",
+                      "special"
+                    ]
+                  },
+                  "change": {
+                    "enum": [
+                      "created",
+                      "modified",
+                      "removed"
+                    ]
+                  },
+                  "sha256": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "file"
+                    },
+                    "change": {
+                      "enum": [
+                        "created",
+                        "modified"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "sha256": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            },
+            "control_detected": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          }
+        },
+        "planted": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "atime_moved",
+                "same_file",
+                "control_end"
+              ],
+              "properties": {
+                "atime_moved": {
+                  "type": "boolean"
+                },
+                "same_file": {
+                  "type": "boolean"
+                },
+                "control_end": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/end"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "leak_scan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bound_reached",
+            "leaks"
+          ],
+          "properties": {
+            "bound_reached": {
+              "type": "boolean"
+            },
+            "leaks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "place",
+                  "encoding"
+                ],
+                "properties": {
+                  "place": {
+                    "type": "string",
+                    "pattern": "^(?:stdout|stderr|home/(?!\\.{1,2}(?:/|$))[^/]+(?:/(?!\\.{1,2}(?:/|$))[^/]+)*)$"
+                  },
+                  "encoding": {
+                    "enum": [
+                      "plain",
+                      "base64",
+                      "base64-nopad",
+                      "base64url",
+                      "base64url-nopad",
+                      "hex-lower",
+                      "hex-upper",
+                      "percent-upper",
+                      "percent-lower"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "decoys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "touched"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "touched": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "printed_value": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "value"
+              ],
+              "properties": {
+                "value": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    "end": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "code"
+          ],
+          "properties": {
+            "kind": {
+              "const": "exit"
+            },
+            "code": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "signal",
+            "by"
+          ],
+          "properties": {
+            "kind": {
+              "const": "signal"
+            },
+            "signal": {
+              "type": "string",
+              "pattern": "^SIG[A-Z0-9]+$"
+            },
+            "by": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "if": {
+            "properties": {
+              "signal": {
+                "const": "SIGKILL"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "by": {
+                "enum": [
+                  "confinement",
+                  "budget",
+                  "memory",
+                  "code_signing",
+                  "before_marker"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "by": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bytes",
+        "sha256",
+        "cut",
+        "head",
+        "kept"
+      ],
+      "properties": {
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "cut": {
+          "type": "boolean"
+        },
+        "head": {
+          "type": "string"
+        },
+        "kept": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+        }
+      },
+      "if": {
+        "properties": {
+          "cut": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "kept": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "kept": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^(?!/)(?!\\.{1,2}(?:/|$))[^/]+(?:/(?!\\.{1,2}(?:/|$))[^/]+)*$"
+    }
+  },
+  "if": {
+    "properties": {
+      "violating": {
+        "const": true
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "invocations": {
+        "items": {
+          "properties": {
+            "unconfined": {
+              "$ref": "#/$defs/run"
+            }
+          }
+        }
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "invocations": {
+        "items": {
+          "properties": {
+            "unconfined": {
+              "type": "null"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1049 @@
+{
+  "13d900803e908b7b1c9b89815052276f2c1c650f61bcd99fa822738b55dc472f": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "flag-conformance",
+    "earlier": [
+      "e72c0a528d43155bbea7fe5064bd0a332aeb044d3d58635d6647dac1d6268c53",
+      "f1daa239b00d2bd7d9f6b82488ccba9b15c2243daed527fd4ad4c50aff5c6d91",
+      "e0742c35b39469e48bc86077813b860bf59d1f9800fe2a36c27f1100a3541043",
+      "99188a18c221654f4f5951f345ece7c0e66f1bef040965ab89dd92a2f87ebb7c",
+      "531c63996db623088153072815305fd19f64c6119a0242c9c65507198b803b43",
+      "260c448878f58f512856af2df7d2f2e203fe53cfa47b47519a17421f67970f14",
+      "3cfdb5856ffde78084e3fdeb19e56041c5557a62f78cb66d6154b76e20100076"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 1,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "list by tag",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json",
+      "--tag",
+      "brass"
+    ]
+  },
+  "260c448878f58f512856af2df7d2f2e203fe53cfa47b47519a17421f67970f14": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "determinism",
+    "earlier": [
+      "e72c0a528d43155bbea7fe5064bd0a332aeb044d3d58635d6647dac1d6268c53",
+      "f1daa239b00d2bd7d9f6b82488ccba9b15c2243daed527fd4ad4c50aff5c6d91",
+      "e0742c35b39469e48bc86077813b860bf59d1f9800fe2a36c27f1100a3541043",
+      "99188a18c221654f4f5951f345ece7c0e66f1bef040965ab89dd92a2f87ebb7c",
+      "531c63996db623088153072815305fd19f64c6119a0242c9c65507198b803b43"
+    ],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "list all again",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "27bea49a41cc55b9d000e66657bce04aef669b6bc825f06d4871094794d1d47c": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "graceful-failure",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 2,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "unknown flag",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--bogus"
+    ]
+  },
+  "2c6e4fd5b1c0640d3593e446d28874e1f629f7dcedc7c3a2fb6342df17881fa6": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "count"
+    ]
+  },
+  "3b901206902d83b629d4a67b06ec2c91d058a1138a6b8ff752906f769f276bd1": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "account"
+    ]
+  },
+  "3cfdb5856ffde78084e3fdeb19e56041c5557a62f78cb66d6154b76e20100076": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "completeness-signaling",
+    "earlier": [
+      "e72c0a528d43155bbea7fe5064bd0a332aeb044d3d58635d6647dac1d6268c53",
+      "f1daa239b00d2bd7d9f6b82488ccba9b15c2243daed527fd4ad4c50aff5c6d91",
+      "e0742c35b39469e48bc86077813b860bf59d1f9800fe2a36c27f1100a3541043",
+      "99188a18c221654f4f5951f345ece7c0e66f1bef040965ab89dd92a2f87ebb7c",
+      "531c63996db623088153072815305fd19f64c6119a0242c9c65507198b803b43",
+      "260c448878f58f512856af2df7d2f2e203fe53cfa47b47519a17421f67970f14"
+    ],
+    "env": {},
+    "expected": {
+      "literal": true,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/truncated",
+    "predicate": "json_path_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "list limited",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json",
+      "--limit",
+      "2"
+    ]
+  },
+  "4372921ac3098452cf9b1e0572bd3be292d2fa634d1c8fbc790237429f1e0fec": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [
+      "736ce754667c74b84629c197da421b33cb20e5bbd60641c2af2cd83ae9786133"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 0,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "add again",
+    "store": "data.json",
+    "words": [
+      "add",
+      "sprocket",
+      "--tag",
+      "steel"
+    ]
+  },
+  "45bff309fc9b81203fcd9c6b6993f70fa009a3e1c9d3a79fe82d673f0b90433e": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "count"
+    ]
+  },
+  "4bdaea866806fd48d92062799dd891488d826bd0b768c170ce6107156a15dedb": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "robustness",
+    "earlier": [
+      "27bea49a41cc55b9d000e66657bce04aef669b6bc825f06d4871094794d1d47c",
+      "8c07a3ebea935067f7723a34609dced8867320764f6f9ea4d46b7874a3656de4"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 2,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "bad limit",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--limit",
+      "zero"
+    ]
+  },
+  "531c63996db623088153072815305fd19f64c6119a0242c9c65507198b803b43": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "token-economy",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 4096,
+      "precondition": null
+    },
+    "index": 4,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_bytes_at_most",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "61a434d65f841fea96d5e180c86fd79cd7d5cc5b84f8b6f1dec2629e7a552bc1": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "list"
+    ]
+  },
+  "736ce754667c74b84629c197da421b33cb20e5bbd60641c2af2cd83ae9786133": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 0,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "add once",
+    "store": "data.json",
+    "words": [
+      "add",
+      "sprocket",
+      "--tag",
+      "steel"
+    ]
+  },
+  "8a2074e467b16d4f8032aece4de53d89036f1fa7213e37cf1866ca72d57adc5a": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": null,
+    "dimension": "pii-secret-hygiene",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "commands": [
+        {
+          "budget_seconds": 30,
+          "env": {},
+          "offline_args": [
+            "--offline"
+          ],
+          "words": [
+            "account"
+          ]
+        }
+      ],
+      "kind": "credential",
+      "path": ".config/widgets/token",
+      "text_sha256": "d2ea444a8905d8d4d040c5770edcd4a576b858fe4b357ff9e277241dea36261b"
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "planted_secret",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": null
+  },
+  "8c07a3ebea935067f7723a34609dced8867320764f6f9ea4d46b7874a3656de4": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "error-message-quality",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": "--bogus",
+      "precondition": null
+    },
+    "index": 1,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        2
+      ]
+    },
+    "path": null,
+    "predicate": "stderr_contains",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "unknown flag",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--bogus"
+    ]
+  },
+  "8daed34dae6d5798cab57a84c3138e4722106ecbb6f65f83815a034e6db6b24f": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": null,
+    "dimension": "discoverability",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "commands": [
+        [
+          "account"
+        ],
+        [
+          "add"
+        ],
+        [
+          "count"
+        ],
+        [
+          "list"
+        ],
+        [
+          "remove"
+        ]
+      ],
+      "declared_count": 5
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "discovery",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": null
+  },
+  "99188a18c221654f4f5951f345ece7c0e66f1bef040965ab89dd92a2f87ebb7c": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "provenance-honesty",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": "local",
+      "precondition": null
+    },
+    "index": 3,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/source",
+    "predicate": "json_path_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "a6eff42097921fbd70214702964be17df15f07c668c854f347324bc87435148a": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": []
+  },
+  "ac4d4a8c2a9dd7a6cb92eda8d73fee9660908ed56a9c22e7970a8ccd05b0bf86": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "account"
+    ]
+  },
+  "aed52502f9b7ed8ac5e942235c5b3119b9d3c2b1ac365ffdf6d04b5d9035f936": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "count"
+    ]
+  },
+  "b0257ea3fad91d687755e8257443beabe3ca75f1975e7b51f78fdc1b15d24d4f": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "list"
+    ]
+  },
+  "b6990e6a1de7d4b89ddd2951c99da61f5d9a6be03b4240d711d55d728ab83e62": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": []
+  },
+  "ce02f2c5b9e12e5d61e0efde1f12e3809b7d366136b90314c9896595839a77de": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 65536
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "list"
+    ]
+  },
+  "ce7e308d7108de53d46fe9c52a481951f807e9e38faf2b9e1963897c1847df40": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "account"
+    ]
+  },
+  "d4c3035292f6e11e866f623673fd34aa909b054e2105a9c26bf51a158b24a3d1": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": []
+  },
+  "e0742c35b39469e48bc86077813b860bf59d1f9800fe2a36c27f1100a3541043": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "response-correctness",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "computation": {
+        "argv": [
+          "computations/count.sh",
+          "{SEED}/data.json"
+        ],
+        "budget_seconds": 10,
+        "captures": [],
+        "files": {
+          "computations/count.sh": "163f715d8a0aa56d5eb5eb64655df138e12ae4d9b1cf559d4aeae73484e2a394"
+        }
+      },
+      "precondition": null
+    },
+    "index": 2,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "e72c0a528d43155bbea7fe5064bd0a332aeb044d3d58635d6647dac1d6268c53": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "output-conformance",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "f1daa239b00d2bd7d9f6b82488ccba9b15c2243daed527fd4ad4c50aff5c6d91": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "determinism",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 1,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "f78ffb6191362cd981f9be840d61d24c9a69d0d21ab1905aae4cddd310cf880b": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "idempotency",
+    "earlier": [
+      "736ce754667c74b84629c197da421b33cb20e5bbd60641c2af2cd83ae9786133",
+      "4372921ac3098452cf9b1e0572bd3be292d2fa634d1c8fbc790237429f1e0fec"
+    ],
+    "env": {},
+    "expected": {
+      "computation": {
+        "argv": [
+          "computations/count-after-add.sh",
+          "{SEED}/data.json",
+          "sprocket"
+        ],
+        "budget_seconds": 10,
+        "captures": [],
+        "files": {
+          "computations/count-after-add.sh": "ddccb3eda4207ffed75ae5b29cff3fd3e63dd9168e007560da9b0abf19767e67"
+        }
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": "count after",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "fd75cd13cc07003dc858278859e703bc671bd2effc4088f01ec0ac31b031dfa8": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "availability",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "bare",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": {
+      "placeholder": "Supply this value so the grade can measure the check."
+    },
+    "step": null,
+    "store": "data.json",
+    "words": []
+  }
+}

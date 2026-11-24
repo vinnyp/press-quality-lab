@@ -51,6 +51,8 @@ And for steering:
 
 These are two **collection specifications**, one for conformance (phase 2) and one for steering (phase 5). They are the largest risk in the plan (§7).
 
+The conformance items are now specified in `docs/specs/conformance-collection-1.0/`, ratified and sealed on 2026-11-24 (`docs/specs/conformance-collection-1.0-seal.md`). It also specifies what the list above left out: how the subject and each computation are confined on macOS and how a refusal is told from the subject's own end; the self-test and the other controls the engine runs on itself; the order in which reasons a check is not measured are decided; masking and cleanup; and a scripted test entry (its QT1 to QT6) so the corpus runs without a sandbox.
+
 ## 4. Shape of the engine
 
 One Go module, `github.com/vinnyp/press-quality-lab`, and one binary. The command is `pql`.
@@ -67,7 +69,7 @@ One Go module, `github.com/vinnyp/press-quality-lab`, and one binary. The comman
 
 Three rules hold the shape together:
 
-1. **The grade command calls the judge through the same bytes-in, bytes-out function the `judge` subcommand exposes.** The exit code, the scorecard and the stored record are all read from that one output document. There is no second place where a verdict is decided.
+1. **The grade command calls the judge through the same bytes-in, bytes-out function the `judge` subcommand exposes.** For every record the judge decides, the exit code, the scorecard and the stored record are all read from that one output document. The engine's own exit codes, for a run that ends before a record reaches the judge or a record the judge rejects, are those of the collection specification's closed table (its QE14 and QE16). There is no second place where a verdict is decided.
 2. **The judge owns its own JSON reading and writing.** Go's standard decoder does not report repeated keys, does not keep a number's written form, and has no depth limit of the kind the contract sets. The judge has a small strict reader for the contract's input rules and a writer for its exact output form. Number comparison is exact decimal, as the rulebook requires, with no floating-point step.
 3. **Every closed list in the rulebook is a Go type with named constants,** so the `exhaustive` check in the gate flags a `switch` that misses one.
 
@@ -103,13 +105,13 @@ Items in each phase are numbered and cited as "phase.item": 0.2 is the second it
 
 ### Phase 2: the conformance collection specification
 
-1. A short spike first, in week 1: can the engine verify, on macOS and on Linux, that a child process made no network request? The requirements say a check is not measured when this cannot be verified, so without a mechanism every offline grade would be not-measured.
+1. A short spike first, in week 1: can the engine verify, on macOS and on Linux, that a child process made no network request? Answered in `docs/spikes/2026-11-28-confinement.md`: on macOS, with `sandbox-exec`; version 1.0 supports macOS only, and Linux is stated as unsupported. The requirements say a check is not measured when this cannot be verified, so without a mechanism every offline grade would be not-measured.
 2. The specification of the conformance items in §3, written by the plan's author with the owner's decisions, in the same form as the judge specification: stable rule ids, closed lists, worked cases.
 3. A synthetic subject: a small CLI kept in this repository's test data, in a known-good form and in forms each carrying one seeded defect.
 4. A collection corpus built on it, two-sided as the requirements demand: every not-measured case has a repaired twin that grades green, the known-good subject grades green, and each seeded defect grades red on the named check.
 5. Reviewed by a standards reviewer and by a different model, then ratified by the owner and sealed as `docs/specs/conformance-collection-1.0/`.
 
-**Done when:** the network spike is answered, the specification is sealed, and the synthetic subject and its corpus exist and are reviewed.
+**Done when:** the network spike is answered, the specification is sealed, and the synthetic subject and its corpus exist and are reviewed. The specification was sealed on 2026-11-24; phase 2 ends when the spike's harness is removed from the repository, in the pull request after the seal.
 
 ### Phase 3: the grade command
 
@@ -124,7 +126,9 @@ Built in slices. Each slice lands with its corpus cases passing through the real
 | e | The store; saving, comparing and re-anchoring a baseline | AE16 to AE19, AE31, AE33 |
 | f | The scorecard, and agreement of exit code, scorecard and stored record | AE21 |
 
-**Done when:** every collection-corpus case passes through `grade`, and the known-good synthetic subject is green and exits zero.
+Its test entry is the specification's scripted verifier and host (QT1 to QT6): continuous integration on Linux runs every scripted corpus case through `grade` against the recorded behaviour. The real verifier is proved by local runs on a macOS version the specification names, each stated in its pull request as `AGENTS.md` requires; the corpus's real-verifier cases run there. Phase 3 also repeats the spike's demonstration that each self-test mode is necessary: granting only that mode's operation makes it fail.
+
+**Done when:** every collection-corpus case passes through `grade` (the scripted cases in continuous integration, the real-verifier cases on a local macOS run), and the known-good synthetic subject is green and exits zero.
 
 ### Phase 4: the first real conformance grade
 
@@ -193,6 +197,7 @@ These are estimates. The trial showed that a build takes hours and a specificati
 | The collection specification is wrong in ways only a real CLI shows | Phase 4 turns into specification work | Phase 4 has two weeks. The real subject is looked at during phase 2, read-only, to find surprises early. |
 | A real subject exposes a gap in judge 1.0 | A version 1.1, a re-seal, and every case re-derived where it changes | Version policy already written. Settle with the owner the same day; do not work around it in the engine. |
 | The collection build is weaker than the judge build, because its corpus is new | Wrong evidence that the judge then grades faithfully | The corpus and synthetic subject are finished and reviewed before any collection code is written. |
+| `sandbox-exec` is deprecated | A later macOS may drop it or reject the profile, and every grade there is not measured | Version 1.0 names the versions that passed, macOS 27.0.1 and 27.2; macOS 26.7.2 already rejects the profile. A version is added only by a new specification, after the self-test passes on it. |
 | Private cases leak into builds through repeated feedback | The private half stops being an independent check | Feedback names a rule id only. New private cases are added from review findings, so the set grows. |
 | Live steering costs more than expected | The owner declines the run, or the cap stops it short and the dimension is not-measured | The rulebook's minimum trial count and the number of prompts fix the cost in advance. It is put to the owner in phase 5, before anything is built around it. |
 | A harness failure is scored as the agent's failure, or the reverse | A steering verdict that is wrong in either direction | The distinction is specified in phase 5 with cases for each, and a sample of live trials is read by hand in phase 7. |
@@ -205,9 +210,9 @@ Settled on 2026-11-21: the repository, its licence, where specifications live, t
 
 Still to come, each put with a recommendation at the phase named:
 
-1. Phase 2: which real CLI is the subject of phases 4 and 7.
-2. Phase 2: the subject file's format.
-3. Phase 2: how a computed expected value is supplied, and with it whether the engine must be a single binary with no other runtime.
+1. Phase 2: which real CLI is the subject of phases 4 and 7. Settled on 2026-11-21; it is kept out of this repository.
+2. Phase 2: the subject file's format. Settled: strict JSON, one file.
+3. Phase 2: how a computed expected value is supplied, and with it whether the engine must be a single binary with no other runtime. Settled: any executable, run under its own confinement, and `pql` stays one binary.
 4. Phase 5: the harness that drives the agent under test, the model, and who supplies credentials.
 5. Phase 5: the unit cost is stated in, and the budget for the first live run.
 6. After the milestone: whether the engine also ships as a Claude Code plugin.

@@ -1,0 +1,67 @@
+{
+  "id": "case-003",
+  "rules": [
+    "QS9",
+    "QT4"
+  ],
+  "kind": "derivation-only",
+  "expect": {
+    "exit_code": 2,
+    "rule": "QS9"
+  },
+  "twin": "case-001",
+  "input": {
+    "subject_file": "subject.json",
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "form": "seed-link",
+    "baseline": null,
+    "fixtures": [
+      {
+        "kind": "link",
+        "path": "seed/linked-file",
+        "detail": "missing-target"
+      },
+      {
+        "kind": "special_file",
+        "path": "seed/pipe",
+        "detail": null
+      }
+    ],
+    "verifier": "scripted",
+    "host": {
+      "confinement": {
+        "applied": false,
+        "sandbox_exec_exit": 1
+      },
+      "self_test": "passed",
+      "known_fast": "within",
+      "read_calibration": "moved",
+      "store_control": "detected",
+      "read_control": "killed",
+      "private_copy": "unchanged",
+      "kill_attribution": [
+        {
+          "invocation": {
+            "words": null,
+            "offline_args": [],
+            "env": [],
+            "runbook": "widgets",
+            "step": "list",
+            "computation": [
+              "/usr/bin/true",
+              "{SEED}/data.json"
+            ],
+            "home": "scratch"
+          },
+          "by": "other_process"
+        }
+      ]
+    }
+  },
+  "named_check": null,
+  "invocations": [],
+  "covers": []
+}

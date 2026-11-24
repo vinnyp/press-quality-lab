@@ -1,7 +1,5 @@
 # Confinement
 
-**Draft.** This folder is a draft of the conformance collection specification, version 1.0. It is not sealed, and it holds no `KIT.sha256`.
-
 **What this file covers.** How the engine confines the subject and each computation on macOS, how it tells a refusal from the subject's own result, and which limits remain. The rules are family QH. They rest on the confinement spike recorded in `docs/spikes/2026-11-28-confinement.md`, which tested these rules on synthetic programs and on one real printed CLI. The refusals that no harmless attempt could witness are named in §8. Nothing here depends on the spike's code: the template below is complete, and its comments say what each line is for. How to read the rules, and what binds, is as `collection-rules.md` says.
 
 ## 1. Where the engine may grade
@@ -16,7 +14,7 @@
 
 - **QH4. A trusted launcher.** Every confined program, the subject's binary and each computation's executable alike, is started by `sandbox-exec` running the engine's own trusted launcher, which then replaces itself with the program, keeping one process id.
 - **QH5. The launcher's marker.** Before it replaces itself, the launcher writes a marker line to standard error: a fixed prefix followed by a random value the engine chose for that invocation. Only a first line of standard error that equals the expected marker counts as the marker, and the engine strips exactly that line before any check reads the stream. A subject that prints the prefix itself cannot know the random value.
-- **QH6. Confinement not applied.** The confinement was not applied when no marker was written and `sandbox-exec` itself exited: for example, exit 65 when it rejects the profile, or exit 71 when the engine already runs inside a sandbox that forbids nesting. The engine then never runs the program by another route, and every check that needed it is not observed with `network_unverifiable` (QO1).
+- **QH6. Confinement not applied.** The confinement was not applied when no marker was written and either `sandbox-exec` itself exited, or the launcher was ended by `SIGKILL` before writing its marker. Examples of the first: exit 65 when it rejects the profile, or exit 71 when the engine already runs inside a sandbox that forbids nesting. The engine then never runs the program by another route, and every check that needed it is not observed with `network_unverifiable` (QO1).
 - **QH7. Could not start.** When the launcher cannot replace itself with the program, it writes a second, distinct marker and exits. The engine reads that as the binary not starting (QO2), never as the program's own exit, even when the program would have exited with the same code.
 - **QH8. The private copy.** The subject's binary, and each computation's executable, runs from a byte-identical copy in a throwaway directory that holds nothing else, because macOS starts no program unless it may read the directory that holds it.
   - The engine makes the copy once per grade and checks it unchanged before each use: the directory's entries, and the copy's inode, mode, size, modification time, change time and digest. A copy that changed fails the grade's invocations that would use it with `harness_fault`. It is never silently remade.
@@ -27,7 +25,7 @@
 
 - **QH9. Before any check.** Before any check runs the subject, the grade runs self-test programs under the grade's own confinement, each taking the subject's place in the profile. The computation's confinement is self-tested the same way, and neither is ever bypassed.
   - Each kind of refused operation has a program that attempts it and must be killed: a TCP connect, a Unix-socket connect and a UDP send to loopback decoys; a bind and a listen; a read, a mapping, a write and a create outside the home; a refused service lookup; a read of a refused system value; and each route to another process: its arguments, its environment, its process record, a signal, its code signature, its scheduling priority and its resource use. For the subject, a child start must be killed. For a computation, a child must run, and `setsid` and `setpgid` must be killed.
-  - Each of these programs is necessary: a profile that grants exactly one of these operations fails the self-test. The specification's own test suite shows this for every program; a grade runs the programs but does not repeat that demonstration.
+  - Each of these programs is necessary: a profile that grants exactly one of these operations fails the self-test. The confinement spike's record, `docs/spikes/2026-11-28-confinement.md`, showed this once for every program, on the spike code that the main branch holds from commit `5aa554a`, on which the confinement rules froze. A grade runs the programs but does not repeat that demonstration.
   - A clean program must finish with its known output.
   - The self-test also shows that the volume records a read's access time (QH26).
   - When any self-test program does not behave as stated, every check that runs the subject is not observed with `network_unverifiable` (QO1).
@@ -274,7 +272,7 @@
 
 ## 7. The read proof for the planted secret
 
-- **QH26. Calibration.** Before a planted-secret probe, the self-test plants a decoy, sets its access time a day before its modification time, reads it under the subject's confinement, and checks that the access time moved. When it did not, the volume does not record reads, and every planted-secret probe in the grade is not observed with `input_missing`.
+- **QH26. Calibration.** Before a planted-secret probe, the self-test plants a decoy, sets its access time a day before its modification time, reads it under the subject's confinement, and checks that the access time moved. When it did not, the volume does not record reads, so no invocation of any planted-secret probe in the grade proves a read (QP11): QO7's earlier steps still decide a leak, an invocation QO1 to QO4 decide, or a scan bound, and otherwise the probe is not observed with `input_missing`.
 - **QH27. The two signals.** For the planted file the engine:
   - sets the access time a day before the modification time before each invocation;
   - refuses, with a kill, any write to the planted file and any unlink or create on the throwaway home and on every directory below it on the file's path, so the subject cannot set the access time by writing, renaming or replacing the file;

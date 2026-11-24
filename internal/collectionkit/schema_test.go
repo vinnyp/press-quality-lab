@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -43,13 +44,21 @@ func enumSites(t *testing.T, root any, v any, path string, found map[string][]an
 			}
 			target := root
 			for _, part := range strings.Split(ref[2:], "/") {
-				object, ok := target.(map[string]any)
-				if !ok {
+				switch node := target.(type) {
+				case map[string]any:
+					var ok bool
+					target, ok = node[strings.ReplaceAll(strings.ReplaceAll(part, "~1", "/"), "~0", "~")]
+					if !ok {
+						t.Fatalf("missing reference %s", ref)
+					}
+				case []any:
+					index, err := strconv.Atoi(part)
+					if err != nil || index < 0 || index >= len(node) {
+						t.Fatalf("invalid reference %s", ref)
+					}
+					target = node[index]
+				default:
 					t.Fatalf("invalid reference %s", ref)
-				}
-				target, ok = object[strings.ReplaceAll(strings.ReplaceAll(part, "~1", "/"), "~0", "~")]
-				if !ok {
-					t.Fatalf("missing reference %s", ref)
 				}
 			}
 			next := map[string]bool{}
@@ -87,6 +96,120 @@ func TestJudgeSchemaCopies(t *testing.T) {
 func TestSchemaEnums(t *testing.T) {
 	type policy struct{ oracle, site, owned string }
 	policies := map[string]policy{
+		"behaviour.schema.json/$defs/stream/if/properties/cut":                                                                                                                    {owned: "[true]"},
+		"behaviour.schema.json/$defs/run/properties/stdout/if/properties/cut":                                                                                                     {owned: "[true]"},
+		"behaviour.schema.json/$defs/run/properties/stderr/if/properties/cut":                                                                                                     {owned: "[true]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/stdout/if/properties/cut":                                                    {owned: "[true]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/stderr/if/properties/cut":                                                    {owned: "[true]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/stdout/if/properties/cut":                                                        {owned: "[true]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/stderr/if/properties/cut":                                                        {owned: "[true]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/stdout/if/properties/cut":                                                       {owned: "[true]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/stderr/if/properties/cut":                                                       {owned: "[true]"},
+		"case.schema.json/properties/input/properties/fixtures/items/allOf/0/if/properties/kind":                                                                                  {owned: "[\"link\"]"},
+		"case.schema.json/properties/input/properties/fixtures/items/allOf/1/if/properties/kind":                                                                                  {owned: "[\"special_file\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/allOf/0/if/properties/probe":                                                                              {owned: "[\"discovery\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/allOf/1/if/properties/probe":                                                                              {owned: "[\"bare\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/allOf/2/if/properties/probe":                                                                              {owned: "[\"byte_bound\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/allOf/3/if/properties/probe":                                                                              {owned: "[\"exit_codes\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/allOf/4/if/properties/probe":                                                                              {owned: "[\"planted_secret\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/allOf/4/then/properties/parameters/anyOf/1/properties/kind":                                               {owned: "[\"credential\",\"seeded_state\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/allOf/5/if/properties/probe":                                                                              {owned: "[\"store_unchanged\"]"},
+		"baseline.schema.json/properties/preimages/additionalProperties/allOf/6/if/properties/probe":                                                                              {owned: "[null]"},
+		"behaviour.schema.json/properties/behaviour_version":                                                                                                                      {owned: "[\"1.0\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/end/oneOf/0/properties/kind":                                                 {owned: "[\"exit\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/end/oneOf/1/properties/kind":                                                 {owned: "[\"signal\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/end/oneOf/1/if/properties/signal":                                            {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/end/oneOf/1/then/properties/by":                                              {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/home_changes/properties/changes/items/properties/kind":                       {owned: "[\"file\",\"directory\",\"link\",\"special\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/home_changes/properties/changes/items/properties/change":                     {owned: "[\"created\",\"modified\",\"removed\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/home_changes/properties/changes/items/if/properties/kind":                    {owned: "[\"file\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/home_changes/properties/changes/items/if/properties/change":                  {owned: "[\"created\",\"modified\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/0/properties/kind":      {owned: "[\"exit\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/properties/kind":      {owned: "[\"signal\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/if/properties/signal": {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/then/properties/by":   {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/unconfined/oneOf/0/properties/leak_scan/properties/leaks/items/properties/encoding":                        {owned: "[\"plain\",\"base64\",\"base64-nopad\",\"base64url\",\"base64url-nopad\",\"hex-lower\",\"hex-upper\",\"percent-upper\",\"percent-lower\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/end/oneOf/0/properties/kind":                                                     {owned: "[\"exit\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/end/oneOf/1/properties/kind":                                                     {owned: "[\"signal\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/end/oneOf/1/if/properties/signal":                                                {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/end/oneOf/1/then/properties/by":                                                  {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/home_changes/properties/changes/items/properties/kind":                           {owned: "[\"file\",\"directory\",\"link\",\"special\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/home_changes/properties/changes/items/properties/change":                         {owned: "[\"created\",\"modified\",\"removed\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/home_changes/properties/changes/items/if/properties/kind":                        {owned: "[\"file\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/home_changes/properties/changes/items/if/properties/change":                      {owned: "[\"created\",\"modified\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/0/properties/kind":          {owned: "[\"exit\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/properties/kind":          {owned: "[\"signal\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/if/properties/signal":     {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/then/properties/by":       {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/properties/invocations/items/properties/confined/items/properties/leak_scan/properties/leaks/items/properties/encoding":                            {owned: "[\"plain\",\"base64\",\"base64-nopad\",\"base64url\",\"base64url-nopad\",\"hex-lower\",\"hex-upper\",\"percent-upper\",\"percent-lower\"]"},
+		"behaviour.schema.json/$defs/run/properties/end/oneOf/0/properties/kind":                                                                                                  {owned: "[\"exit\"]"},
+		"behaviour.schema.json/$defs/run/properties/end/oneOf/1/properties/kind":                                                                                                  {owned: "[\"signal\"]"},
+		"behaviour.schema.json/$defs/run/properties/end/oneOf/1/if/properties/signal":                                                                                             {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/$defs/run/properties/end/oneOf/1/then/properties/by":                                                                                               {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/$defs/run/properties/home_changes/properties/changes/items/properties/kind":                                                                        {owned: "[\"file\",\"directory\",\"link\",\"special\"]"},
+		"behaviour.schema.json/$defs/run/properties/home_changes/properties/changes/items/properties/change":                                                                      {owned: "[\"created\",\"modified\",\"removed\"]"},
+		"behaviour.schema.json/$defs/run/properties/home_changes/properties/changes/items/if/properties/kind":                                                                     {owned: "[\"file\"]"},
+		"behaviour.schema.json/$defs/run/properties/home_changes/properties/changes/items/if/properties/change":                                                                   {owned: "[\"created\",\"modified\"]"},
+		"behaviour.schema.json/$defs/run/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/0/properties/kind":                                                       {owned: "[\"exit\"]"},
+		"behaviour.schema.json/$defs/run/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/properties/kind":                                                       {owned: "[\"signal\"]"},
+		"behaviour.schema.json/$defs/run/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/if/properties/signal":                                                  {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/$defs/run/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/then/properties/by":                                                    {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/$defs/run/properties/leak_scan/properties/leaks/items/properties/encoding":                                                                         {owned: "[\"plain\",\"base64\",\"base64-nopad\",\"base64url\",\"base64url-nopad\",\"hex-lower\",\"hex-upper\",\"percent-upper\",\"percent-lower\"]"},
+		"behaviour.schema.json/$defs/end/oneOf/0/properties/kind":                                                                                                                 {owned: "[\"exit\"]"},
+		"behaviour.schema.json/$defs/end/oneOf/1/properties/kind":                                                                                                                 {owned: "[\"signal\"]"},
+		"behaviour.schema.json/$defs/end/oneOf/1/if/properties/signal":                                                                                                            {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/$defs/end/oneOf/1/then/properties/by":                                                                                                              {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/if/properties/violating":                                                                                                                           {owned: "[true]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/end/oneOf/0/properties/kind":                                                    {owned: "[\"exit\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/end/oneOf/1/properties/kind":                                                    {owned: "[\"signal\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/end/oneOf/1/if/properties/signal":                                               {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/end/oneOf/1/then/properties/by":                                                 {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/home_changes/properties/changes/items/properties/kind":                          {owned: "[\"file\",\"directory\",\"link\",\"special\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/home_changes/properties/changes/items/properties/change":                        {owned: "[\"created\",\"modified\",\"removed\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/home_changes/properties/changes/items/if/properties/kind":                       {owned: "[\"file\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/home_changes/properties/changes/items/if/properties/change":                     {owned: "[\"created\",\"modified\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/0/properties/kind":         {owned: "[\"exit\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/properties/kind":         {owned: "[\"signal\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/if/properties/signal":    {owned: "[\"SIGKILL\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/planted/oneOf/1/properties/control_end/oneOf/0/oneOf/1/then/properties/by":      {owned: "[\"confinement\",\"budget\",\"memory\",\"code_signing\",\"before_marker\"]"},
+		"behaviour.schema.json/then/properties/invocations/items/properties/unconfined/properties/leak_scan/properties/leaks/items/properties/encoding":                           {owned: "[\"plain\",\"base64\",\"base64-nopad\",\"base64url\",\"base64url-nopad\",\"hex-lower\",\"hex-upper\",\"percent-upper\",\"percent-lower\"]"},
+		"case.schema.json/properties/expect/oneOf/0/properties/exit_code":                                                                                                         {owned: "[0,1,2,3,4,5,64,70]"},
+		"case.schema.json/properties/expect/oneOf/1/properties/exit_code":                                                                                                         {owned: "[0,1,2,3,4,5,64,70]"},
+		"case.schema.json/properties/input/properties/verifier":                                                                                                                   {owned: "[\"real\",\"scripted\"]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/confinement/oneOf/0/properties/applied":                                                             {owned: "[true]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/confinement/oneOf/1/properties/applied":                                                             {owned: "[false]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/self_test":                                                                                          {owned: "[\"passed\",\"failed\"]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/known_fast":                                                                                         {owned: "[\"within\",\"over\"]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/read_calibration":                                                                                   {owned: "[\"moved\",\"not_moved\"]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/store_control":                                                                                      {owned: "[\"detected\",\"not_detected\"]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/read_control":                                                                                       {owned: "[\"killed\",\"not_killed\"]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/private_copy":                                                                                       {owned: "[\"unchanged\",\"changed\"]"},
+		"case.schema.json/properties/input/properties/host/oneOf/0/properties/kill_attribution/items/properties/by":                                                               {owned: "[\"memory\",\"code_signing\",\"engine\"]"},
+		"case.schema.json/properties/input/if/properties/verifier":                                                                                                                {owned: "[\"scripted\"]"},
+		"case.schema.json/properties/input/then/properties/host/properties/confinement/oneOf/0/properties/applied":                                                                {owned: "[true]"},
+		"case.schema.json/properties/input/then/properties/host/properties/confinement/oneOf/1/properties/applied":                                                                {owned: "[false]"},
+		"case.schema.json/properties/input/then/properties/host/properties/self_test":                                                                                             {owned: "[\"passed\",\"failed\"]"},
+		"case.schema.json/properties/input/then/properties/host/properties/known_fast":                                                                                            {owned: "[\"within\",\"over\"]"},
+		"case.schema.json/properties/input/then/properties/host/properties/read_calibration":                                                                                      {owned: "[\"moved\",\"not_moved\"]"},
+		"case.schema.json/properties/input/then/properties/host/properties/store_control":                                                                                         {owned: "[\"detected\",\"not_detected\"]"},
+		"case.schema.json/properties/input/then/properties/host/properties/read_control":                                                                                          {owned: "[\"killed\",\"not_killed\"]"},
+		"case.schema.json/properties/input/then/properties/host/properties/private_copy":                                                                                          {owned: "[\"unchanged\",\"changed\"]"},
+		"case.schema.json/properties/input/then/properties/host/properties/kill_attribution/items/properties/by":                                                                  {owned: "[\"memory\",\"code_signing\",\"engine\"]"},
+		"case.schema.json/$defs/host/properties/confinement/oneOf/0/properties/applied":                                                                                           {owned: "[true]"},
+		"case.schema.json/$defs/host/properties/confinement/oneOf/1/properties/applied":                                                                                           {owned: "[false]"},
+		"case.schema.json/$defs/host/properties/self_test":                                                                                                                        {owned: "[\"passed\",\"failed\"]"},
+		"case.schema.json/$defs/host/properties/known_fast":                                                                                                                       {owned: "[\"within\",\"over\"]"},
+		"case.schema.json/$defs/host/properties/read_calibration":                                                                                                                 {owned: "[\"moved\",\"not_moved\"]"},
+		"case.schema.json/$defs/host/properties/store_control":                                                                                                                    {owned: "[\"detected\",\"not_detected\"]"},
+		"case.schema.json/$defs/host/properties/read_control":                                                                                                                     {owned: "[\"killed\",\"not_killed\"]"},
+		"case.schema.json/$defs/host/properties/private_copy":                                                                                                                     {owned: "[\"unchanged\",\"changed\"]"},
+		"case.schema.json/$defs/host/properties/kill_attribution/items/properties/by":                                                                                             {owned: "[\"memory\",\"code_signing\",\"engine\"]"},
+		"case.schema.json/$defs/judge_expect/properties/exit_code":                                                                                                                {owned: "[0,1,2,3,4,5,64,70]"},
+		"case.schema.json/$defs/derivation_expect/properties/exit_code":                                                                                                           {owned: "[0,1,2,3,4,5,64,70]"},
+		"case.schema.json/if/properties/kind":                          {owned: "[\"judge-checked\"]"},
+		"case.schema.json/then/properties/expect/properties/exit_code": {owned: "[0,1,2,3,4,5,64,70]"},
+		"case.schema.json/else/properties/expect/properties/exit_code": {owned: "[0,1,2,3,4,5,64,70]"},
+
 		"baseline.schema.json/properties/baseline/properties/entries/items/properties/dimension":                                 {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/dimension"},
 		"baseline.schema.json/properties/baseline/properties/entries/items/properties/kind":                                      {oracle: "judge-input.schema.json", site: "/properties/required/items/properties/kind"},
 		"baseline.schema.json/properties/baseline/properties/entries/items/properties/result":                                    {oracle: "judge-input.schema.json", site: "/properties/baseline/oneOf/1/properties/entries/items/properties/result"},
@@ -96,10 +219,9 @@ func TestSchemaEnums(t *testing.T) {
 		"baseline.schema.json/properties/preimages/additionalProperties/properties/probe":                                        {owned: "[\"discovery\",\"bare\",\"byte_bound\",\"exit_codes\",\"planted_secret\",\"store_unchanged\",null]"},
 		"baseline.schema.json/properties/preimages/additionalProperties/properties/scheme":                                       {owned: "[\"pql-check-id-1\"]"},
 		"baseline.schema.json/properties/spec_version":                                                                           {owned: "[\"1.0\"]"},
-		"case.schema.json/properties/entry/properties/fixtures/items/properties/kind":                                            {owned: "[\"link\",\"special_file\",\"oversized_output\",\"invalid_bytes\",\"planted_secret\"]"},
-		"case.schema.json/properties/entry/properties/request":                                                                   {oracle: "judge-input.schema.json", site: "/properties/request"},
-		"case.schema.json/properties/entry/properties/scope/items":                                                               {oracle: "judge-output.schema.json", site: "/properties/scope/items"},
-		"case.schema.json/properties/expect/properties/exit_code":                                                                {owned: "[0,1,2,3,4,5,64,70]"},
+		"case.schema.json/properties/input/properties/fixtures/items/properties/kind":                                            {owned: "[\"link\",\"special_file\",\"oversized_output\",\"invalid_bytes\",\"planted_secret\"]"},
+		"case.schema.json/properties/input/properties/request":                                                                   {oracle: "judge-input.schema.json", site: "/properties/request"},
+		"case.schema.json/properties/input/properties/scope/items":                                                               {oracle: "judge-output.schema.json", site: "/properties/scope/items"},
 		"case.schema.json/properties/kind":                                                                                       {owned: "[\"judge-checked\",\"derivation-only\"]"},
 		"record.schema.json/properties/exit_code":                                                                                {owned: "[0,1,2,3,4,5,64,70]"},
 		"record.schema.json/properties/next_actions/items/oneOf/0/properties/reason":                                             {oracle: "judge-output.schema.json", site: "/properties/checks/items/properties/reason"},

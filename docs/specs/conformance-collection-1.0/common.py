@@ -720,7 +720,60 @@ def draft(root):
         ("schema/subject-file.schema.json", "/properties/secret/oneOf/2/then"),
     }
 
+    # Conditional fragments refine objects closed and required at their owning site.
+    fragments.update({
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home_changes/properties/changes/items/if'),
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home_changes/properties/changes/items/then'),
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home_changes/properties/changes/items/else'),
+        ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/if'),
+        ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/then'),
+        ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/else'),
+        ('schema/behaviour.schema.json', '/if'),
+        ('schema/behaviour.schema.json', '/then'),
+        ('schema/behaviour.schema.json', '/then/properties/invocations/items'),
+        ('schema/behaviour.schema.json', '/else'),
+        ('schema/behaviour.schema.json', '/else/properties/invocations/items'),
+        ('schema/case.schema.json', '/properties/input/if'),
+        ('schema/case.schema.json', '/properties/input/then'),
+        ('schema/case.schema.json', '/properties/input/else'),
+        ('schema/case.schema.json', '/if'),
+        ('schema/case.schema.json', '/then'),
+        ('schema/case.schema.json', '/else'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/0/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/0/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/1/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/1/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/2/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/2/then/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/2/then/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/2/then/else'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/then/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/then/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/then/else'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/then/else/properties/parameters/allOf/1'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/4/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/4/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/5/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/5/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/6/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/6/then'),
+    })
+
+    fragments.update({
+        ('schema/behaviour.schema.json', '/$defs/key/oneOf/0/allOf/0/oneOf/0'),
+        ('schema/behaviour.schema.json', '/$defs/key/oneOf/0/allOf/0/oneOf/1'),
+        ('schema/behaviour.schema.json', '/$defs/stream/if'),
+        ('schema/behaviour.schema.json', '/$defs/stream/then'),
+        ('schema/behaviour.schema.json', '/$defs/stream/else'),
+        ('schema/case.schema.json', '/properties/input/properties/fixtures/items/allOf/0/if'),
+        ('schema/case.schema.json', '/properties/input/properties/fixtures/items/allOf/0/then'),
+        ('schema/case.schema.json', '/properties/input/properties/fixtures/items/allOf/1/if'),
+        ('schema/case.schema.json', '/properties/input/properties/fixtures/items/allOf/1/then'),
+    })
+
     arbitrary_values = {
+            ("schema/behaviour.schema.json", "/$defs/run/properties/printed_value/oneOf/1/properties/value"),
             ("schema/subject-file.schema.json", "/$defs/expected/oneOf/0/properties/literal"),
             ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/expected/oneOf/1/properties/literal"),
         }
@@ -758,9 +811,9 @@ def draft(root):
             if node.get("type") == "object" or "properties" in node:
                 if site not in open_objects | fragments and node.get("additionalProperties") is not False:
                     raise Error(f"open object: {name} {path}")
-                optional = {"detail"} if site == ("schema/case.schema.json", "/properties/entry/properties/fixtures/items") else set()
+                optional = set()
                 if site in fragments:
-                    optional = {"kind"} if path.endswith("/if") else {"reason"}
+                    optional = set(node.get("properties", {}))
                 missing = set(node.get("properties", {})) - set(node.get("required", [])) - optional
                 if missing:
                     raise Error(f"properties not required: {name} {path}: {sorted(missing)}")
@@ -909,11 +962,26 @@ def draft(root):
     seen = set()
     if not examples:
         raise Error("no examples")
+    invalid_rejected = 0
     for path in examples:
+        if path.name == "invalid":
+            if not path.is_dir():
+                raise Error("invalid examples is not a directory")
+            for invalid in sorted(path.iterdir()):
+                match = re.fullmatch(r"(subject-file|record|baseline|case|behaviour)-(Q[SHODPAET][0-9]+)-[0-9]{2}\.json", invalid.name)
+                if not match or not invalid.is_file():
+                    raise Error("unexpected invalid example: " + invalid.name)
+                schema, uri = schemas["schema/" + match[1] + ".schema.json"]
+                document = load(read(invalid))
+                if validator(schema, registry.resolver(uri)).is_valid(document):
+                    failures.append("accepted invalid example: " + invalid.name)
+                else:
+                    invalid_rejected += 1
+            continue
         if path.name == "subject-file.json":
             name = "subject-file.schema.json"
         else:
-            match = re.fullmatch(r"(subject-file|record|baseline|case)-[0-9]{2}\.json", path.name)
+            match = re.fullmatch(r"(subject-file|record|baseline|case|behaviour)-[0-9]{2}\.json", path.name)
             if not match:
                 raise Error("unexpected example: " + path.name)
             name = match[1] + ".schema.json"
@@ -987,6 +1055,7 @@ def draft(root):
     unreached = sorted(schema_sites - reached)
     for name, pointer in unreached:
         failures.append(f"unreached subschema: {name} {pointer}")
+    print(f"invalid examples: rejected={invalid_rejected}")
     print(f"coverage: reached={len(schema_sites & reached)} total={len(schema_sites)} unreached={len(unreached)}")
     for kind, count in counts.items():
         print(f"{kind}: made={count['made']} rejected={count['rejected']}; " + "; ".join(f"{why}={n}" for why, n in sorted(count.items()) if why.startswith("skipped:")))
@@ -994,3 +1063,110 @@ def draft(root):
         print(failure, file=sys.stderr)
     print("Limit: widened types or bounds at kit-owned sites are not detected; judge-mapped enums are checked by the Go test.")
     return int(bool(failures))
+
+
+def first_pointer(expected, actual, path=""):
+    """Find the first differing JSON Pointer, keeping numeric values exact."""
+    from decimal import Decimal
+    numeric = (int, float, Decimal)
+    if isinstance(expected, numeric) and not isinstance(expected, bool) and isinstance(actual, numeric) and not isinstance(actual, bool):
+        return None if Decimal(str(expected)) == Decimal(str(actual)) else path
+    if type(expected) is not type(actual):
+        return path
+    if isinstance(expected, dict):
+        for key in sorted(set(expected) | set(actual)):
+            pointer = path + "/" + key.replace("~", "~0").replace("/", "~1")
+            if key not in expected or key not in actual:
+                return pointer
+            difference = first_pointer(expected[key], actual[key], pointer)
+            if difference is not None:
+                return difference
+        return None
+    if isinstance(expected, list):
+        for index, (left, right) in enumerate(zip(expected, actual)):
+            difference = first_pointer(left, right, path + "/" + str(index))
+            if difference is not None:
+                return difference
+        return None if len(expected) == len(actual) else path + "/" + str(min(len(expected), len(actual)))
+    return None if expected == actual else path
+
+
+def collection_cases(root, cases_root, command, timeout):
+    """Validate collection cases and check only their judge-facing contract."""
+    from decimal import Decimal
+    from referencing import Registry, Resource
+    schemas = {path.name: load(read(path)) for path in (root / "schema").glob("*.json")}
+    registry = Registry().with_resources((name, Resource.from_contents(schema)) for name, schema in schemas.items())
+
+    def validate(value, name, case_id=None):
+        try:
+            jsonschema.Draft202012Validator(schemas[name], registry=registry).validate(value)
+        except jsonschema.ValidationError as exc:
+            if case_id is not None:
+                pointer = "".join("/" + str(part).replace("~", "~0").replace("/", "~1")
+                                  for part in exc.absolute_path)
+                raise Error(f"{case_id}: {name} at {pointer}: {exc.message}") from exc
+            raise Error(name + ": " + exc.message) from exc
+
+    cases = []
+    ids = set()
+    for directory in sorted(cases_root.iterdir()):
+        if directory.is_symlink() or not directory.is_dir():
+            raise Error("unexpected case file: " + directory.name)
+        case = load(read(directory / "case.json"))
+        validate(case, "case.schema.json")
+        if case["id"] != directory.name or case["id"] in ids:
+            raise Error("case id differs from directory or is duplicate: " + case["id"])
+        ids.add(case["id"])
+        # Link and named-pipe fixtures are descriptions for assembly, not
+        # files stored in a case directory. Never add their paths to allowed.
+        allowed = {"case.json", case["input"]["subject_file"]}
+        if case["input"]["baseline"] is not None:
+            allowed.add(case["input"]["baseline"])
+        if case["kind"] == "judge-checked":
+            allowed.update(("input.json", "preimages.json"))
+        if any(Path(name).name != name for name in allowed):
+            raise Error("case file must be a filename")
+        for path in directory.iterdir():
+            if path.name not in allowed or path.is_symlink() or not path.is_file():
+                raise Error("unexpected case file: " + path.name)
+        if {path.name for path in directory.iterdir()} != allowed:
+            raise Error("missing case file: " + case["id"])
+        if case["kind"] == "judge-checked":
+            validate(load(read(directory / case["input"]["subject_file"])),
+                     "subject-file.schema.json", case["id"])
+            validate(load(read(directory / "input.json", INPUT_LIMIT)), "judge-input.schema.json")
+        cases.append((directory, case))
+    checked = failed = unchecked = 0
+    for directory, case in cases:
+        if case["kind"] == "derivation-only":
+            unchecked += 1
+            continue
+        checked += 1
+        data = read(directory / "input.json", INPUT_LIMIT)
+        runs = [execute(command, data, timeout, binary=True) for _ in range(2)]
+        # execute returns bounded raw bytes and status, as in the judge runner.
+        reasons = []
+        if any(runs[0][key] != runs[1][key] for key in ("raw", "exit_code")):
+            reasons.append("non-deterministic judge output or exit code")
+        raw, status, problem = (runs[0][key] for key in ("raw", "exit_code", "problem"))
+        if problem:
+            reasons.append(problem)
+        else:
+            try:
+                output = load(raw)
+                validate(output, "judge-output.schema.json")
+                expected = json.loads(read(directory / "case.json"), parse_float=Decimal, parse_int=Decimal)["expect"]["judge_output"]
+                actual = json.loads(raw, parse_float=Decimal, parse_int=Decimal)
+                pointer = first_pointer(expected, actual)
+                if pointer is not None:
+                    reasons.append("JSON differs at " + (pointer or "/"))
+            except (Error, ValueError) as exc:
+                reasons.append(str(exc))
+            if status != case["expect"]["exit_code"]:
+                reasons.append("exit code differs at /exit_code")
+        if reasons:
+            failed += 1
+            print(case["id"] + ": " + "; ".join(reasons))
+    print(f"{checked} judge-checked: {checked - failed} passed, {failed} failed; {unchecked} derivation-only unchecked; behaviour-to-record unchecked for all {checked + unchecked}")
+    return int(failed > 0 or not cases)

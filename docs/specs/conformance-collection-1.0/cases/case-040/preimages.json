@@ -1,0 +1,1020 @@
+{
+  "05a65d85555ffc3ce8f1afce7f50fff7f49656159e268204c679810fd8300de0": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "count"
+    ]
+  },
+  "06e0754586a7f487cf3c1e973b6f1da9dc96d2c5040989a6d569a0d78d38c703": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "idempotency",
+    "earlier": [
+      "f47d9dc5fb7cd74224e3847a0655298cc8aef05a246296832670096e132adde0",
+      "d548084912a02a4643057d6a052fec02000f73299f350cb8579af11b273dc033"
+    ],
+    "env": {},
+    "expected": {
+      "computation": {
+        "argv": [
+          "computations/count-after-add.sh",
+          "{SEED}/data.json",
+          "sprocket"
+        ],
+        "budget_seconds": 10,
+        "captures": [],
+        "files": {
+          "computations/count-after-add.sh": "ddccb3eda4207ffed75ae5b29cff3fd3e63dd9168e007560da9b0abf19767e67"
+        }
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "count after",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "12a85248502eee3d20c5c930a6b5d522db48e5eec40ba8eb1b6b51d3e5c63d8f": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "count"
+    ]
+  },
+  "1dc20fde77f2c0e271e2996f7f79266b591109539bf3abee4603533c99dcefc5": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "account"
+    ]
+  },
+  "1f19d6257462fde875567f7d1016732a01d9d22f7edd4edd73f172581066f3e8": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "availability",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "bare",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": []
+  },
+  "223567788e79629a7a1d7453e7aba0c9782684497e6787cc8631a85fbaf2000a": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "list"
+    ]
+  },
+  "2a9ac439f7a11e7d026dea60c7fb12382b09b0f15a908aae054f7a5018689ece": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "determinism",
+    "earlier": [
+      "34150221ef04b3a80db4a590c95fc9b8859657a61aa2e501104ada8b2e8fa0bf",
+      "e98b3e3e7296e25b8e568d308361512c2c34b24af82a2cc107f1136775ff5e2b",
+      "aa1aa6b16704abd40ab666538a05441f030ccb5397bf572ab3ad02f47ba84948",
+      "faa1439718430795813cbc0bcd187474657d855c84ff3a81fcd855de5a25f45f",
+      "c59331c4468900cecb1142199e2c4351e749d5f324e0cc7b616b375f21d2fb22"
+    ],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all again",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "339777ff3ed0582c9c65b1622435cbe077fa1ff8b39a2e6646a5f6b2e24b0cbf": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 65536
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "list"
+    ]
+  },
+  "34150221ef04b3a80db4a590c95fc9b8859657a61aa2e501104ada8b2e8fa0bf": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "output-conformance",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "3d4f82cef6f007ef5a14ac41b2cf3da798728eb4426a23345239215b3f2a3413": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": []
+  },
+  "4435ef9b865093e3f4531cf4b9baafe1a148146257bcdfa11c89ccd8646e2c07": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "account"
+    ]
+  },
+  "46b2e5cce19bb8623393c243aa185196e84b4b4d4b18c81bb096897ff6012047": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": []
+  },
+  "498dd01f332a996cfd4dd305ca6ec2f4e4e4f14626ecfe3c29165be47105cdae": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "graceful-failure",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 2,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "unknown flag",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--bogus"
+    ]
+  },
+  "5296c85f3ca33d5afcd86abaa0138fc1651347e3a96e61d9d9a4b6f28c3e4db0": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "count"
+    ]
+  },
+  "78b60be5e301b1e5a7f7ead15b075050d9398e6e72237146f88037239f6e11f2": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "account"
+    ]
+  },
+  "791f57a4dced6fa5a02029f74a52dc02964a92d27f1458a1f13e22d6a3ae267c": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": [
+      "list"
+    ]
+  },
+  "8830f326c881e93fce9cfbbba57385adaf47827aa0845af511b437d39377c625": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "flag-conformance",
+    "earlier": [
+      "34150221ef04b3a80db4a590c95fc9b8859657a61aa2e501104ada8b2e8fa0bf",
+      "e98b3e3e7296e25b8e568d308361512c2c34b24af82a2cc107f1136775ff5e2b",
+      "aa1aa6b16704abd40ab666538a05441f030ccb5397bf572ab3ad02f47ba84948",
+      "faa1439718430795813cbc0bcd187474657d855c84ff3a81fcd855de5a25f45f",
+      "c59331c4468900cecb1142199e2c4351e749d5f324e0cc7b616b375f21d2fb22",
+      "2a9ac439f7a11e7d026dea60c7fb12382b09b0f15a908aae054f7a5018689ece",
+      "d09d2ed41b6f31f3bcfd8616861edaa9da2aec83d9e4bc31e0627bc9dafa1214"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 1,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list by tag",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json",
+      "--tag",
+      "brass"
+    ]
+  },
+  "aa1aa6b16704abd40ab666538a05441f030ccb5397bf572ab3ad02f47ba84948": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "response-correctness",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "computation": {
+        "argv": [
+          "computations/count.sh",
+          "{SEED}/data.json"
+        ],
+        "budget_seconds": 10,
+        "captures": [],
+        "files": {
+          "computations/count.sh": "163f715d8a0aa56d5eb5eb64655df138e12ae4d9b1cf559d4aeae73484e2a394"
+        }
+      },
+      "precondition": null
+    },
+    "index": 2,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "b554d0a59a69c40d4bd92f827cb0fe5e709981cca7a6476a16cdb6bec155b605": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "error-message-quality",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": "--bogus",
+      "precondition": null
+    },
+    "index": 1,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        2
+      ]
+    },
+    "path": null,
+    "predicate": "stderr_contains",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "unknown flag",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--bogus"
+    ]
+  },
+  "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": null,
+    "dimension": "discoverability",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "commands": [
+        [
+          "account"
+        ],
+        [
+          "add"
+        ],
+        [
+          "count"
+        ],
+        [
+          "list"
+        ],
+        [
+          "remove"
+        ]
+      ],
+      "declared_count": 5
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "discovery",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": null
+  },
+  "b7b9ef95b37cb3ff3e67017639242b9bf4cc66295bc92f1f2f22f28fa95fd7c2": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": []
+  },
+  "c59331c4468900cecb1142199e2c4351e749d5f324e0cc7b616b375f21d2fb22": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "token-economy",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 4096,
+      "precondition": null
+    },
+    "index": 4,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_bytes_at_most",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "d09d2ed41b6f31f3bcfd8616861edaa9da2aec83d9e4bc31e0627bc9dafa1214": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "completeness-signaling",
+    "earlier": [
+      "34150221ef04b3a80db4a590c95fc9b8859657a61aa2e501104ada8b2e8fa0bf",
+      "e98b3e3e7296e25b8e568d308361512c2c34b24af82a2cc107f1136775ff5e2b",
+      "aa1aa6b16704abd40ab666538a05441f030ccb5397bf572ab3ad02f47ba84948",
+      "faa1439718430795813cbc0bcd187474657d855c84ff3a81fcd855de5a25f45f",
+      "c59331c4468900cecb1142199e2c4351e749d5f324e0cc7b616b375f21d2fb22",
+      "2a9ac439f7a11e7d026dea60c7fb12382b09b0f15a908aae054f7a5018689ece"
+    ],
+    "env": {},
+    "expected": {
+      "literal": true,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/truncated",
+    "predicate": "json_path_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list limited",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json",
+      "--limit",
+      "2"
+    ]
+  },
+  "d548084912a02a4643057d6a052fec02000f73299f350cb8579af11b273dc033": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [
+      "f47d9dc5fb7cd74224e3847a0655298cc8aef05a246296832670096e132adde0"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 0,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "add again",
+    "store": "data.json",
+    "words": [
+      "add",
+      "sprocket",
+      "--tag",
+      "steel"
+    ]
+  },
+  "e98b3e3e7296e25b8e568d308361512c2c34b24af82a2cc107f1136775ff5e2b": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "determinism",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 1,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "f47d9dc5fb7cd74224e3847a0655298cc8aef05a246296832670096e132adde0": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 0,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "add once",
+    "store": "data.json",
+    "words": [
+      "add",
+      "sprocket",
+      "--tag",
+      "steel"
+    ]
+  },
+  "f48f8775ae1eb588cdbcd47f0fa9292dfcb8df350fbb4c5e7d6371fb48eab455": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "robustness",
+    "earlier": [
+      "498dd01f332a996cfd4dd305ca6ec2f4e4e4f14626ecfe3c29165be47105cdae",
+      "b554d0a59a69c40d4bd92f827cb0fe5e709981cca7a6476a16cdb6bec155b605"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 2,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "bad limit",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--limit",
+      "zero"
+    ]
+  },
+  "f4e55fb3368c0f67acf6032123378b41ce33aab0c05c253ebd3fde9b6a39e9b2": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": null,
+    "dimension": "pii-secret-hygiene",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "commands": [
+        {
+          "budget_seconds": 30,
+          "env": {},
+          "offline_args": [
+            "--offline"
+          ],
+          "words": [
+            "account"
+          ]
+        }
+      ],
+      "kind": "credential",
+      "path": ".config/widgets/token",
+      "text_sha256": "d2ea444a8905d8d4d040c5770edcd4a576b858fe4b357ff9e277241dea36261b"
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "planted_secret",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": "data.json",
+    "words": null
+  },
+  "faa1439718430795813cbc0bcd187474657d855c84ff3a81fcd855de5a25f45f": {
+    "bookkeeping": [
+      ".cache/widgets",
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "provenance-honesty",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": "local",
+      "precondition": null
+    },
+    "index": 3,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/source",
+    "predicate": "json_path_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
+    ]
+  }
+}

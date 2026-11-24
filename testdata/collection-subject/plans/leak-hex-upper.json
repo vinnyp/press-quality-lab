@@ -1,0 +1,427 @@
+{
+  "form": "leak-hex-upper",
+  "violating": false,
+  "invocations": [
+    {
+      "key": {
+        "words": [],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 10,
+      "store_control": true,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "account"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "count"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "account",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "add",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "count",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "remove",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "account"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "planted"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": true
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "read",
+        "step": "list all",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "read",
+        "step": "list all",
+        "computation": [
+          "computations/count.sh",
+          "{SEED}/data.json"
+        ],
+        "home": "scratch"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "read",
+        "step": "list all again",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json",
+          "--limit",
+          "2"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "read",
+        "step": "list limited",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json",
+          "--tag",
+          "brass"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "read",
+        "step": "list by tag",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--bogus"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "errors",
+        "step": "unknown flag",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--limit",
+          "zero"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "errors",
+        "step": "bad limit",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "add",
+          "sprocket",
+          "--tag",
+          "steel"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "add twice",
+        "step": "add once",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "add",
+          "sprocket",
+          "--tag",
+          "steel"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "add twice",
+        "step": "add again",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "add twice",
+        "step": "count after",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "add twice",
+        "step": "count after",
+        "computation": [
+          "computations/count-after-add.sh",
+          "{SEED}/data.json",
+          "sprocket"
+        ],
+        "home": "scratch"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "remove",
+          "gear"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "remove guard",
+        "step": "remove without confirm",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    }
+  ]
+}

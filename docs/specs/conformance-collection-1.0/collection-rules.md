@@ -1,8 +1,8 @@
 # Collection rules
 
-**Draft.** This folder is a draft of the conformance collection specification, version 1.0. It is not sealed, and it holds no `KIT.sha256`.
-
 **Specification version:** `1.0`. A collector reports this string with every record it writes. Check ids carry a separate id-scheme string (QE2), so a new specification version keeps every check's id unless it changes what an id is made of.
+
+**The judge it feeds.** Every reference to the judge's rulebook or contract, and to its rules (X1 to X12, C3 and the others), is to judge specification 1.0 (`docs/specs/judge-1.0/`). A later judge version is used only by a new version of this specification.
 
 **What this file covers.** How an engine turns one subject file and one requested scope into observations:
 - §1: what the subject file holds;
@@ -35,7 +35,7 @@
 - **The bare binary.** The bare binary is a command of every subject, whether or not the file declares it. An entry with `words: []` sets every field QS6 lists, as for any command, except that its class cannot be `destructive`: such an entry rejects the file. Without an entry, the bare binary is `safe`, succeeds only by exiting 0, has no bound, has a budget of 10 seconds, and is not run by the store-unchanged probe. Discovery never lists it, never counts it in `declared_count`, and never reports it missing.
 - **An invocation's command.** It is the command whose words are the longest prefix of the invocation's words. The bare binary's empty word list is a prefix of every invocation.
 
-**What binds.** These opening paragraphs and §1 to §5 bind a collector. The files in `examples/` are informative; where one disagrees with a rule, the rule is right. §6 records how requirements were read and only explains. Where it disagrees with a rule, the rule is right. In `confinement.md` and `collection-contract.md`, every numbered section binds except the readings tables. A comment line in the profile template is part of the template's text, though it grants nothing.
+**What binds.** These opening paragraphs and §1 to §5 bind a collector. The files in `examples/` are informative; where one disagrees with a rule, the rule is right. Each file in `examples/invalid/` is named `<schema>-<rule>-NN.json` and breaks exactly one rule its schema can detect, so the schema must reject it. The corpus under `subjects/`, `behaviour/` and `cases/` is informative in the same way: a case shows a rule and never replaces it. §6 records how requirements were read and only explains. Where it disagrees with a rule, the rule is right. In `confinement.md` and `collection-contract.md`, every numbered section binds except the readings tables. A comment line in the profile template is part of the template's text, though it grants nothing.
 
 ## 1. The subject file
 
@@ -59,20 +59,20 @@
   - expected-failure markers;
   - a `prompts` object reserved for steering, which this version reads only for its version string.
 - **QS4. Subject facts.** The file states `read_only`, `has_destructive_ops`, `store_backed` and `has_cli`, each true or false, and `bounding`, which is `none` or `declared`. The engine passes them to the judge as given.
-- **QS5. Placeholders.** A value the author has not supplied is a placeholder: an object with exactly one key, `placeholder`, whose value is a sentence saying what belongs there and why the grade needs it.
+- **QS5. Placeholders.** A value the author has not supplied is a placeholder: an object with exactly one key, `placeholder`, whose value is a sentence saying what belongs there and why the grade needs it. A placeholder may stand only for the binary, a subject fact, `declared_count`, the seed, the store, the secret, or a command's class or `writes`; anywhere else it rejects the file.
   - A placeholder is never read as false, `none` or empty.
   - `pql create` writes a placeholder for every value it cannot know, so the file explains itself without comments.
-  - The rules of §1 that check a value's content (QS8, QS9) skip a placeholder.
+  - The rules that check a value's content skip a placeholder: QS8, QS9, QS12 and QP7 skip a placeholder binary, seed or store, and QP10's checks against the seed and the store, and its rule that a listed command is `safe`, skip a placeholder seed, store or class.
   - A subject fact left as a placeholder reaches the judge as unstated.
   - Nothing that depends on a placeholder runs, and the check that needed it is not observed with `placeholder_unfilled`:
     - with `binary` a placeholder, nothing runs;
     - with `seed` or `store` a placeholder, nothing runs except discovery, whose home is empty anyway;
     - a command whose safety class or `writes` is a placeholder is never invoked, except for its help during discovery;
     - with `declared_count` a placeholder, discovery is not observed;
-    - with `secret` a placeholder, the planted-secret probe is not observed.
+    - with `secret` a placeholder, or with a listed command's class or `writes` a placeholder, the planted-secret probe is not observed.
   - A command whose class or `writes` is a placeholder is a candidate of every probe that would run it were the placeholder filled with `safe` and `false`. It enters the required set with its own check of that probe, not observed with `placeholder_unfilled`.
   - A placeholder enters a check id as the parsed placeholder object (QE2).
-  - In addition, any placeholder in the file makes every required check on an always-applicable dimension that would otherwise be held not observed with `placeholder_unfilled`, so the run cannot exit 0. A check that is not held stays not held. A discovered command that the file does not declare does the same (QD3).
+  - In addition, any placeholder in the file makes every required check on an always-applicable dimension that would otherwise be held, whatever its observed precondition, not observed with `placeholder_unfilled`, so the run cannot exit 0. A check that is not held stays not held. A discovered command that the file does not declare does the same (QD3), but only when every declared command was found; when one was not, QD4 decides instead.
   - The scorecard names each placeholder by its location in the file.
 - **QS6. Commands.** Each declared command gives:
   - `words`: the list of words naming it from the binary. The empty list declares the bare binary.
@@ -93,7 +93,8 @@
   - Rejecting conditions:
     - a setting that lists words no command has, the bare binary's empty list being always allowed;
     - two settings that apply to one command and set the same environment name;
-    - an argument equal to `--help`, `-h`, `help`, `--version`, `-v` or `version`.
+    - an argument equal to `--help`, `-h`, `help`, `--version`, `-v` or `version`;
+    - an environment name the engine sets itself (QH12).
   - A declared environment value is a literal string. The engine adds it to the allow-listed environment of QH12 and masks it in every record and scorecard (QE18). It enters check ids only as its digest (QE2).
   - Every scorecard shows each offline setting and the commands it applied to.
 - **QS8. Files the file names.** A file the subject file names is the binary, an executable a computation names by a relative path (QA4), or a declared file (QA4). Each is named by a path relative to the directory that holds the subject file. After every link is resolved, each must be a regular file inside that directory. That directory is neither the user's home directory nor a directory above it. A path that leaves it, a directory, a link left unresolved, or a special file rejects the file.
@@ -108,7 +109,7 @@
 - **QS11. Bounds on size and number.** Each of these rejects the file before collection:
   - runbooks that hold more than 2,048 checks in all;
   - more than 512 declared commands, or more than 1,024 markers;
-  - a literal longer than 64 KiB in its canonical form, or nested deeper than 48;
+  - a literal longer than 64 KiB in its canonical form, or nested deeper than 48, counting the literal's outermost array or object as level 1, as the judge contract's §3 counts;
   - a number in a literal whose nearest IEEE-754 double is infinite, or whose nearest double, written by RFC 8785 and read back as a decimal, has a different value from the number. `0.1` and `0.10` are accepted and both enter a check id as `0.1`; `9007199254740993` and `1e400` are rejected; `-0` is accepted and enters a check id as `0`;
   - a runbook or step name holding a character below U+0020.
 - **QS12. Content-equal files.** A declared file, an executable a computation names, or a seed file whose content digest equals the binary's rejects the file, because a computation could otherwise run the subject from it (QH17).
@@ -148,7 +149,7 @@ QS5's override of an otherwise held check comes last of all.
     - the grade's known-fast control kept within its own bound on that host (QH24).
   - Otherwise the check is not observed with `harness_fault`.
 - **QO5. Other ends.** Otherwise the invocation ran to its end under confinement.
-  - A process ended by any other signal crashed: the outcome is `not_held` with `crashed` (R22). A process that exits with a code, a Go program's panic exit included, did not crash.
+  - A process ended by a signal that QO3 and QO4 do not decide crashed: the outcome is `not_held` with `crashed` (R22). This includes a `SIGKILL` that the system reported with a memory or code-signing exit detail. A `SIGKILL` the engine sent outside the time budget is instead not observed with `harness_fault`. A process that exits with a code, a Go program's panic exit included, did not crash.
   - An exit code the check does not accept is `not_held` with `wrong_exit` (R22). The accepted codes are:
     - for an `exit_code` predicate, the check's expected code;
     - for the bare-invocation and declared-exit-code probes, as QP2 and QP4 say;
@@ -156,7 +157,7 @@ QS5's override of an otherwise held check comes last of all.
     - for every other check, the codes of a successful run of the invocation's command (QS6).
   - Every other result is judged by the check's own predicate, and a predicate that does not hold gives `predicate`.
 - **QO6. A computation's own run.** A computation's run (QA4) changes only its check:
-  - When the confinement was not applied to it, it was killed by its confinement, it could not start, or it ran past its budget, the check is not observed with `computation_failed`.
+  - When the confinement was not applied to it, it could not start, or it ended by any signal, a kill by its confinement, by the engine at its budget or outside it, and one with a memory or code-signing exit detail included, the check is not observed with `computation_failed`.
   - When QO1 holds for the grade, the check is not observed with `network_unverifiable` like every other check.
 - **QO7. A check with several invocations.**
   - **Discovery.** Discovery makes every help request QD2 reaches, whatever an earlier one's end, and whatever `declared_count` holds. For each help request, QO1 to QO4 decide as for any invocation, and every other end is QD5. When QO1 to QO4 decide any help request, the first such request in QD2's order decides discovery.
@@ -176,15 +177,15 @@ QS5's override of an otherwise held check comes last of all.
 - **QD2. How help is asked.**
   - **The request.** Discovery asks the binary for help with exactly one form, `<command words> --help`, starting from the bare binary and descending into each command it lists.
   - **Its run.** Each request runs under the subject's full confinement, in a throwaway home that starts empty whatever the seed, with no offline setting and no other argument (QS7). Each has a budget of 10 seconds.
-  - **What is read.** Help output is read from standard output, and from standard error when standard output is empty. How a command list is read is as §5 of `credit-and-routes.md` says.
+  - **What is read.** Help output is read from standard output, and from standard error when standard output is empty. How a command list is read is as §5 of `credit-and-routes.md` says. A help request that ran lists the commands its output names whatever its exit code, so the walk descends below it (QO7); only a request that did not run or could not start lists none (QE8).
   - **A leaf.** A help that exits 0 and lists no command section belongs to a leaf command.
   - **What is counted.** Every listed command at every level counts, a command that has commands of its own included. The commands `help` and `completion`, and any command the help marks as hidden, are left out.
   - **Order.** Help requests are made, and numbered as targets (QE8), depth first, each command's children in the order its help lists them. A command left out of the count is never asked for help.
-  - **Bounds.** Discovery makes at most 4,096 help requests and descends at most 64 words deep. A walk that would pass either bound is not observed with `precondition_unmet`, and the scorecard names the bound.
+  - **Bounds.** Discovery makes at most 4,096 help requests and descends at most 64 words deep. A walk whose next request would pass either bound stops there and makes no further request; it is not observed with `precondition_unmet`, and the scorecard names the bound.
 - **QD3. What discovery compares.** Discovery compares names as well as the count. It holds when every declared command was found and the number found equals `declared_count`. With every declared command found:
   - a different count is `not_held` with `predicate`;
   - each command found but not declared is named on the scorecard and has no safety class, so QS5 applies.
-- **QD4. A command discovery did not find.** When a declared command was not found, discovery and every other generated check are not observed with `precondition_unmet`. None of them is red (R42). The scorecard shows both counts and the missing names.
+- **QD4. A command discovery did not find.** When discovery read every help it requested and a declared command was not found, discovery and every other generated check are not observed with `precondition_unmet`. When QD5 or a bound of QD2 decides discovery, this sentence governs even when the walk also missed a declared command: discovery alone is not observed, and every other generated check stands on its own invocations. None of them is red (R42). The scorecard shows both counts and the missing names.
 - **QD5. Help that cannot be read.** Discovery is not observed with `precondition_unmet` in either of these cases:
   - a help request ends in any way other than exiting 0 with output;
   - the bare binary's help lists no command section while commands other than the bare binary are declared.
@@ -207,16 +208,17 @@ QS5's override of an otherwise held check comes last of all.
 
 - **QP6. What it compares.** The probe runs each declared `safe` command with `writes: false`. Before and after the command, the engine snapshots the throwaway home and compares the two snapshots. The comparison covers names and contents only: which paths exist, their kinds, and the bytes of each regular file. Times, modes and owners are not compared.
 - **QP7. Bookkeeping paths.** The file may declare bookkeeping paths: paths relative to the home that the subject writes as a matter of course, such as a journal.
-  - Changes inside a declared bookkeeping path, or inside `.pql-tmp` (QH12), are left out of the comparison. Every scorecard lists the paths that were left out.
+  - Changes inside a declared bookkeeping path, the creation of a directory on the way to one (a directory the path lies below, inside the home), and changes inside `.pql-tmp` (QH12) are left out of the comparison. Every scorecard lists the paths that were left out.
   - A bookkeeping path at or above the declared store, or at or above any path the seed supplies, rejects the file before collection. A seed is therefore prepared without bookkeeping files.
-- **QP8. Database side files.** Three side files beside the declared store are compared as follows:
+- **QP8. Database side files.** Three regular side files beside the declared store are compared as follows:
   - `<store>-shm` is SQLite's shared-memory index and holds no data. It is left out of the comparison.
   - `<store>-wal` and `<store>-journal` are a change only when they exist with one byte or more after the command.
   - A store whose bytes changed is a change whatever the side files say.
 - **QP9. When it credits.** The probe credits only after the engine has shown, on a separate control copy of the same seed, that its comparison detects a change. The engine appends one byte to the control copy's declared store and confirms the comparison reports it.
-  - Without that control the probe is not observed with `harness_fault`.
   - When the file declares no store, or when, after the exclusions, the pristine seed holds no regular file of one byte or more, the probe is not observed with `empty_target`.
-  - A link or a special file the subject created anywhere in the home is a change. The engine never follows or opens one (QH25).
+  - Otherwise, without that control the probe is not observed with `harness_fault`.
+  - Both come before QP6's comparison: a probe either of them decides is not observed whatever the comparison shows.
+  - A link or a special file the subject created anywhere in the home, inside a path QP7 leaves out included, is a change. The engine never follows or opens one (QH25).
 
 ### The planted-secret probe
 
@@ -224,7 +226,7 @@ QS5's override of an otherwise held check comes last of all.
   - `path`: one file the seed supplies, relative to the home, which is where a real secret would be read;
   - `kind`: `credential` for a credential file the subject reads, or `seeded_state` for another file. A `seeded_state` secret carries a `reason` saying why reading that file proves the secret was read;
   - `token`: a string of 8 to 256 characters that appears exactly once in the seed's copy of that file;
-  - `commands`: the words of one or more declared commands that read the file. A command listed here that is not `safe` rejects the file.
+  - `commands`: the words of one or more declared commands that read the file, each equal to a declared command's `words` (QS6). A command listed here that is not `safe` rejects the file.
 
   Each of these rejects the file:
   - a `path` the seed does not supply;
@@ -285,7 +287,7 @@ QS5's override of an otherwise held check comes last of all.
     - its invocation's time budget is the step's `budget_seconds`, and QO4 decides a step that times out;
     - its checks all judge that one invocation.
   - **Shared state.** All steps share one throwaway home holding one copy of the seed.
-  - **After a failure.** A step is not held when any of its checks is not held or not observed. Every check of every later step is not observed with `earlier_step_failed` (R33).
+  - **After a failure.** A step is not held when any of its checks is not held or not observed. Every check of every later step is not observed with `earlier_step_failed` (R33). QS5's last override of an otherwise held check comes after every runbook has run, so it stops no runbook.
 - **QA8. The destructive-refusal check.** The check that a destructive command refuses without its confirmation is authored, and runs only in a scope that includes `destructive` (R12).
 - **QA9. Predicates.** An authored check uses one of these predicates on its step's invocation. Every predicate reads the invocation's drained bytes, never the text decoded for the record (QE10).
 
@@ -302,7 +304,7 @@ QS5's override of an otherwise held check comes last of all.
   | `row_count` | the array at `path` has the expected number of items | when the expected value comes from a computation | when the expected value is the literal 0 |
   | `stdout_empty` | standard output is empty | no | yes |
 
-  - **`path`** is a JSON Pointer (RFC 6901) for `json_path_equals` and `row_count`, and `null` for every other predicate. A `path` that names nothing, or output that is not one JSON value, makes either predicate not hold.
+  - **`path`** is a JSON Pointer (RFC 6901) for `json_path_equals` and `row_count`, and `null` for every other predicate. A `path` that names nothing, or standard output that is not one JSON value under the judge contract's §3, makes either predicate not hold, as such output makes `stdout_json_equals` not hold.
   - **Matching types.** The expected value of `exit_code`, `stdout_bytes_at_most` and `row_count` is a whole number, and of `stdout_equals`, `stdout_contains`, `stdout_not_contains` and `stderr_contains` a string. `stdout_empty` takes the literal `null`. A check that breaks this or the rule for `path` rejects the file.
   - **Its own exit codes.** A check may give `exit_codes`, the codes it accepts (QO5); with `null`, it accepts the codes of a successful run of its command. An `exit_code` check that also gives `exit_codes` rejects the file.
   - **Whole numbers and equal values.** A whole number is an integer as the judge contract's §3 spells one. A computation that supplies the expected value of a predicate needing a whole number and prints anything else is `computation_failed`. Two JSON values are equal when they have the same type and: numbers are equal in value; strings have the same code points, with no normalisation; arrays have equal items in the same order; objects have the same keys with equal values, in any order.

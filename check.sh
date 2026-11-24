@@ -18,32 +18,116 @@ need shasum
 need python3
 (
  cd docs/specs/judge-1.0
- shasum -a 256 -c --quiet KIT.sha256
- PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+ PYTHONDONTWRITEBYTECODE=1 python3 -I - <<'PY'
 from pathlib import Path
 import sys
 expected = {line.split(None, 1)[1].lstrip('*') for line in Path('KIT.sha256').read_text().splitlines()}
-actual = {str(p) for p in Path('.').rglob('*') if (p.is_file() or p.is_symlink()) and str(p) != 'KIT.sha256'}
+import stat
+actual = set()
+bad = []
+for p in Path('.').rglob('*'):
+    name = str(p)
+    mode = p.lstat().st_mode
+    if stat.S_ISDIR(mode):
+        if not any(p.iterdir()):
+            actual.add(name)
+    else:
+        if name != 'KIT.sha256':
+            actual.add(name)
+        if not stat.S_ISREG(mode):
+            bad.append(name)
+for name in sorted(bad):
+    print(f'not regular: {name}', file=sys.stderr)
 for name in sorted(actual - expected):
     print(f'unlisted file: {name}', file=sys.stderr)
 for name in sorted(expected - actual):
     print(f'missing file: {name}', file=sys.stderr)
-sys.exit(bool(actual ^ expected))
+sys.exit(bool(actual ^ expected or bad))
 PY
+ shasum -a 256 -c --quiet KIT.sha256
 )
-step cases 'run published cases'
+step judge-cases 'run published judge cases'
 need uv
 (
  cd docs/specs/judge-1.0
 JUDGE="${ROOT//\'/\'\\\'\'}"
 PYTHONDONTWRITEBYTECODE=1 uv run runner.py --judge "'$JUDGE/bin/pql' judge" --cases cases
 )
-step draft "verify unsealed collection kit"
+step collection-kit 'verify sealed collection kit'
 (
  cd docs/specs/conformance-collection-1.0
- "$ROOT/scripts/draft-guard.sh" .
- PYTHONDONTWRITEBYTECODE=1 uv run runner.py --draft
+ PYTHONDONTWRITEBYTECODE=1 python3 -I - <<'PY'
+from pathlib import Path
+import sys
+expected = {line.split(None, 1)[1].lstrip('*') for line in Path('KIT.sha256').read_text().splitlines()}
+import stat
+actual = set()
+bad = []
+for p in Path('.').rglob('*'):
+    name = str(p)
+    mode = p.lstat().st_mode
+    if stat.S_ISDIR(mode):
+        if not any(p.iterdir()):
+            actual.add(name)
+    else:
+        if name != 'KIT.sha256':
+            actual.add(name)
+        if not stat.S_ISREG(mode):
+            bad.append(name)
+for name in sorted(bad):
+    print(f'not regular: {name}', file=sys.stderr)
+for name in sorted(actual - expected):
+    print(f'unlisted file: {name}', file=sys.stderr)
+for name in sorted(expected - actual):
+    print(f'missing file: {name}', file=sys.stderr)
+sys.exit(bool(actual ^ expected or bad))
+PY
+ shasum -a 256 -c --quiet KIT.sha256
+ PYTHONDONTWRITEBYTECODE=1 python3 -I - <<'PYCODE'
+from pathlib import Path
+import sys
+if 'Corpus: complete' not in Path('CASES.md').read_text().splitlines():
+    sys.exit('collection corpus is not complete: missing Corpus: complete')
+PYCODE
 )
-step draft-controls 'verify draft seal refusal and banner'
+step collection-schemas 'validate sealed collection schemas and examples'
+(
+ cd docs/specs/conformance-collection-1.0
+ PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I - <<'PYCODE'
+from pathlib import Path
+import sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path.cwd()))
+from common import draft
+sys.exit(draft(Path.cwd()))
+PYCODE
+)
+step collection-controls 'verify sealed collection and scratch runner controls'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-draft.py
+step ids-tests 'test canonical JSON and collection check ids'
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/test_collection_ids.py
+step behaviour 'validate behaviour schemas and agreement'
+PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I scripts/check-behaviour.py docs/specs/conformance-collection-1.0
+step ids-cross-check 'cross-check collection case ids and recordings'
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-case-ids.py docs/specs/conformance-collection-1.0/cases
+step outcomes 'cross-check collection case outcomes against recordings'
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-case-outcomes.py docs/specs/conformance-collection-1.0 docs/specs/conformance-collection-1.0/cases
+step cases 'run collection judge-checked cases'
+if [[ -d docs/specs/conformance-collection-1.0/cases ]]; then
+ (
+  cd docs/specs/conformance-collection-1.0
+  JUDGE="${ROOT//\'/\'\\\'\'}"
+  PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I runner.py --cases cases --judge "'$JUDGE/bin/pql' judge"
+ )
+else
+ echo 'no cases yet'
+fi
+step export 'export blind collection inputs and check for leaks'
+(
+ export_tmp=$(mktemp -d "${TMPDIR:-/tmp}/pql-export.XXXXXX")
+ trap 'rm -rf "$export_tmp"' EXIT
+ kit=docs/specs/conformance-collection-1.0
+ PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/collection-export.py --kit "$kit" --cases "$kit/cases" --out "$export_tmp/out" --map "$export_tmp/map.json"
+ PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/collection-export.py --check "$export_tmp/out" --cases "$kit/cases" --kit "$kit"
+)
 echo 'CHECK PASSED'

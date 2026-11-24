@@ -1,0 +1,861 @@
+{
+  "behaviour_version": "1.0",
+  "form": "network-attempt",
+  "violating": true,
+  "form_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "subject_profile_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "computation_profile_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "launcher_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "system": {
+    "product_version": "27.2",
+    "build": "26B123"
+  },
+  "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "invocations": [
+    {
+      "key": {
+        "words": [
+          "list"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [
+          "WIDGETS_OFFLINE"
+        ],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "planted"
+      },
+      "unconfined": {
+        "markers": {
+          "confinement": true,
+          "could_not_start": false
+        },
+        "end": {
+          "kind": "exit",
+          "code": 0
+        },
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": "",
+          "kept": ""
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": "",
+          "kept": ""
+        },
+        "home_changes": {
+          "changes": [],
+          "control_detected": null
+        },
+        "planted": null,
+        "leak_scan": {
+          "bound_reached": false,
+          "leaks": []
+        },
+        "decoys": [],
+        "printed_value": null
+      },
+      "confined": [
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "signal",
+            "signal": "SIGKILL",
+            "by": "confinement"
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": true,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "path": "data.json",
+                "kind": "file",
+                "change": "modified",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "path": "old.json",
+                "kind": "file",
+                "change": "removed",
+                "sha256": null
+              },
+              {
+                "path": "directory",
+                "kind": "directory",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "link",
+                "kind": "link",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "special",
+                "kind": "special",
+                "change": "created",
+                "sha256": null
+              }
+            ],
+            "control_detected": true
+          },
+          "planted": {
+            "atime_moved": true,
+            "same_file": true,
+            "control_end": {
+              "kind": "signal",
+              "signal": "SIGTERM",
+              "by": null
+            }
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": [
+              {
+                "place": "stdout",
+                "encoding": "plain"
+              },
+              {
+                "place": "stderr",
+                "encoding": "base64"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-lower"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-upper"
+              },
+              {
+                "place": "home/log",
+                "encoding": "percent-upper"
+              }
+            ]
+          },
+          "decoys": [
+            {
+              "name": "decoy_file",
+              "touched": false
+            }
+          ],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "signal",
+            "signal": "SIGKILL",
+            "by": "confinement"
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "path": "data.json",
+                "kind": "file",
+                "change": "modified",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "path": "old.json",
+                "kind": "file",
+                "change": "removed",
+                "sha256": null
+              },
+              {
+                "path": "directory",
+                "kind": "directory",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "link",
+                "kind": "link",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "special",
+                "kind": "special",
+                "change": "created",
+                "sha256": null
+              }
+            ],
+            "control_detected": true
+          },
+          "planted": {
+            "atime_moved": true,
+            "same_file": true,
+            "control_end": {
+              "kind": "signal",
+              "signal": "SIGTERM",
+              "by": null
+            }
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": [
+              {
+                "place": "stdout",
+                "encoding": "plain"
+              },
+              {
+                "place": "stderr",
+                "encoding": "base64"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-lower"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-upper"
+              },
+              {
+                "place": "home/log",
+                "encoding": "percent-upper"
+              }
+            ]
+          },
+          "decoys": [
+            {
+              "name": "decoy_file",
+              "touched": false
+            }
+          ],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "signal",
+            "signal": "SIGKILL",
+            "by": "confinement"
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "path": "data.json",
+                "kind": "file",
+                "change": "modified",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "path": "old.json",
+                "kind": "file",
+                "change": "removed",
+                "sha256": null
+              },
+              {
+                "path": "directory",
+                "kind": "directory",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "link",
+                "kind": "link",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "special",
+                "kind": "special",
+                "change": "created",
+                "sha256": null
+              }
+            ],
+            "control_detected": true
+          },
+          "planted": {
+            "atime_moved": true,
+            "same_file": true,
+            "control_end": {
+              "kind": "signal",
+              "signal": "SIGTERM",
+              "by": null
+            }
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": [
+              {
+                "place": "stdout",
+                "encoding": "plain"
+              },
+              {
+                "place": "stderr",
+                "encoding": "base64"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-lower"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-upper"
+              },
+              {
+                "place": "home/log",
+                "encoding": "percent-upper"
+              }
+            ]
+          },
+          "decoys": [
+            {
+              "name": "decoy_file",
+              "touched": false
+            }
+          ],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "signal",
+            "signal": "SIGKILL",
+            "by": "confinement"
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "path": "data.json",
+                "kind": "file",
+                "change": "modified",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "path": "old.json",
+                "kind": "file",
+                "change": "removed",
+                "sha256": null
+              },
+              {
+                "path": "directory",
+                "kind": "directory",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "link",
+                "kind": "link",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "special",
+                "kind": "special",
+                "change": "created",
+                "sha256": null
+              }
+            ],
+            "control_detected": true
+          },
+          "planted": {
+            "atime_moved": true,
+            "same_file": true,
+            "control_end": {
+              "kind": "signal",
+              "signal": "SIGTERM",
+              "by": null
+            }
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": [
+              {
+                "place": "stdout",
+                "encoding": "plain"
+              },
+              {
+                "place": "stderr",
+                "encoding": "base64"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-lower"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-upper"
+              },
+              {
+                "place": "home/log",
+                "encoding": "percent-upper"
+              }
+            ]
+          },
+          "decoys": [
+            {
+              "name": "decoy_file",
+              "touched": false
+            }
+          ],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "signal",
+            "signal": "SIGKILL",
+            "by": "confinement"
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "path": "data.json",
+                "kind": "file",
+                "change": "modified",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "path": "old.json",
+                "kind": "file",
+                "change": "removed",
+                "sha256": null
+              },
+              {
+                "path": "directory",
+                "kind": "directory",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "link",
+                "kind": "link",
+                "change": "created",
+                "sha256": null
+              },
+              {
+                "path": "special",
+                "kind": "special",
+                "change": "created",
+                "sha256": null
+              }
+            ],
+            "control_detected": true
+          },
+          "planted": {
+            "atime_moved": true,
+            "same_file": true,
+            "control_end": {
+              "kind": "signal",
+              "signal": "SIGTERM",
+              "by": null
+            }
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": [
+              {
+                "place": "stdout",
+                "encoding": "plain"
+              },
+              {
+                "place": "stderr",
+                "encoding": "base64"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url"
+              },
+              {
+                "place": "home/log",
+                "encoding": "base64url-nopad"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-lower"
+              },
+              {
+                "place": "home/log",
+                "encoding": "hex-upper"
+              },
+              {
+                "place": "home/log",
+                "encoding": "percent-upper"
+              }
+            ]
+          },
+          "decoys": [
+            {
+              "name": "decoy_file",
+              "touched": false
+            }
+          ],
+          "printed_value": null
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "widgets",
+        "step": "list",
+        "computation": [
+          "/usr/bin/true",
+          "{SEED}/data.json"
+        ],
+        "home": "scratch"
+      },
+      "unconfined": {
+        "markers": {
+          "confinement": true,
+          "could_not_start": false
+        },
+        "end": {
+          "kind": "exit",
+          "code": 0
+        },
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": "",
+          "kept": ""
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": "",
+          "kept": ""
+        },
+        "home_changes": {
+          "changes": [],
+          "control_detected": null
+        },
+        "planted": null,
+        "leak_scan": {
+          "bound_reached": false,
+          "leaks": []
+        },
+        "decoys": [],
+        "printed_value": null
+      },
+      "confined": [
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        },
+        {
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "end": {
+            "kind": "exit",
+            "code": 0
+          },
+          "stdout": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cut": false,
+            "head": "",
+            "kept": ""
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "planted": null,
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "decoys": [],
+          "printed_value": null
+        }
+      ]
+    }
+  ]
+}

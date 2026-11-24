@@ -1,0 +1,698 @@
+{
+  "request": "grade",
+  "scope": [
+    "conformance"
+  ],
+  "claimed_tier": "scripted",
+  "subject_facts": {
+    "read_only": false,
+    "has_destructive_ops": true,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "required": [
+    {
+      "id": "155032b8ff5ed593631a7b03c0c55b94b5afd670ce48c68723d8e9835ee9bdb4",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+      "kind": "plain",
+      "dimension": "availability",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "2966e4b4b91aa1f7c0041095e6fd8427f12b308569ffc9c99cbfbd0888ac6522",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "2d052efe60427ca17b722cf18f53e21da211b38387f2b0ae94f1876a532b19ae",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "a33b97f959229186e2b2fc64fa72d0f44233f82073ce1a62abf86cd0874cbd51",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "a52027bf40aeff3ee203d331939f4c523346c0655cda73f69a687f1107f423ce",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "aad96c85c9ac7ca1e4abc56f9b8f0417589add0e8d59ef6ecdb5ee8a780596ea",
+      "kind": "plain",
+      "dimension": "pii-secret-hygiene",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "b83f53d29896c13a727906c62a9af459992bec0430bea94b1e9e4aa5f9bdd1cb",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "c6fd015a44c2127e052f614af2929eb8cd692cacb055212811b376416c3dcb67",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "dd6ec35467a24acd0b8fac70b370ab49200f10cc2d48e03225eea9fd9e42e19b",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+      "kind": "plain",
+      "dimension": "discoverability",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f7824182901fb214c72c4f481c90e2b82d12a82d2aa2bd4e58107a401d081cf6",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    }
+  ],
+  "evidence": [
+    {
+      "check_id": "155032b8ff5ed593631a7b03c0c55b94b5afd670ce48c68723d8e9835ee9bdb4",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "155032b8ff5ed593631a7b03c0c55b94b5afd670ce48c68723d8e9835ee9bdb4",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "2966e4b4b91aa1f7c0041095e6fd8427f12b308569ffc9c99cbfbd0888ac6522",
+      "outcome": "not_observed",
+      "reason": "network_unverifiable",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "2966e4b4b91aa1f7c0041095e6fd8427f12b308569ffc9c99cbfbd0888ac6522",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "2d052efe60427ca17b722cf18f53e21da211b38387f2b0ae94f1876a532b19ae",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 12,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "2d052efe60427ca17b722cf18f53e21da211b38387f2b0ae94f1876a532b19ae",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 306,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "a33b97f959229186e2b2fc64fa72d0f44233f82073ce1a62abf86cd0874cbd51",
+      "outcome": "not_observed",
+      "reason": "network_unverifiable",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "a33b97f959229186e2b2fc64fa72d0f44233f82073ce1a62abf86cd0874cbd51",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "a52027bf40aeff3ee203d331939f4c523346c0655cda73f69a687f1107f423ce",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "a52027bf40aeff3ee203d331939f4c523346c0655cda73f69a687f1107f423ce",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "aad96c85c9ac7ca1e4abc56f9b8f0417589add0e8d59ef6ecdb5ee8a780596ea",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":42}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "aad96c85c9ac7ca1e4abc56f9b8f0417589add0e8d59ef6ecdb5ee8a780596ea",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": ".config/widgets/token",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "b83f53d29896c13a727906c62a9af459992bec0430bea94b1e9e4aa5f9bdd1cb",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 34,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "b83f53d29896c13a727906c62a9af459992bec0430bea94b1e9e4aa5f9bdd1cb",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "c6fd015a44c2127e052f614af2929eb8cd692cacb055212811b376416c3dcb67",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "c6fd015a44c2127e052f614af2929eb8cd692cacb055212811b376416c3dcb67",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "dd6ec35467a24acd0b8fac70b370ab49200f10cc2d48e03225eea9fd9e42e19b",
+      "outcome": "not_observed",
+      "reason": "network_unverifiable",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "dd6ec35467a24acd0b8fac70b370ab49200f10cc2d48e03225eea9fd9e42e19b",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "commands_found": 5
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#1",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#2",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#3",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#4",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#5",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#6",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f7824182901fb214c72c4f481c90e2b82d12a82d2aa2bd4e58107a401d081cf6",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f7824182901fb214c72c4f481c90e2b82d12a82d2aa2bd4e58107a401d081cf6",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    }
+  ],
+  "trials": [],
+  "markers": [],
+  "baseline": null,
+  "retired": [],
+  "accepted_regressions": []
+}

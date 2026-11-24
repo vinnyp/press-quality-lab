@@ -61,6 +61,50 @@
         "condition": null,
         "k": null,
         "n": null
+      },
+      {
+        "check_id": "e21d996deb299c452df29d33a78141317b6bbb3ad8a3bbc80a970f13f02f7502",
+        "kind": "plain",
+        "dimension": "bounding",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "1e3a92518efc7a614034e12fa1521fa34f2ba7df001fed110324c5c4bcf0c455",
+        "kind": "plain",
+        "dimension": "execution",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "9f515966d31505fe9538dfbdc479c455749bd03eaddb2e41e9dbad4b49690ab1",
+        "kind": "plain",
+        "dimension": "pii-secret-hygiene",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "a11f609635f8132843c65bd61de715efaf877dcb6ba030b4f95798218da60d8b",
+        "kind": "plain",
+        "dimension": "pii-secret-hygiene",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
       }
     ]
   },
@@ -239,6 +283,98 @@
       "budget_seconds": 30,
       "parameters": {
         "exit_codes": null
+      }
+    },
+    "e21d996deb299c452df29d33a78141317b6bbb3ad8a3bbc80a970f13f02f7502": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "byte_bound",
+      "dimension": "bounding",
+      "words": null,
+      "offline_args": [],
+      "env": {},
+      "budget_seconds": null,
+      "parameters": {}
+    },
+    "1e3a92518efc7a614034e12fa1521fa34f2ba7df001fed110324c5c4bcf0c455": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "exit_codes",
+      "dimension": "execution",
+      "words": null,
+      "offline_args": [],
+      "env": {},
+      "budget_seconds": null,
+      "parameters": {}
+    },
+    "9f515966d31505fe9538dfbdc479c455749bd03eaddb2e41e9dbad4b49690ab1": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "planted_secret",
+      "dimension": "pii-secret-hygiene",
+      "words": null,
+      "offline_args": [],
+      "env": {},
+      "budget_seconds": null,
+      "parameters": {}
+    },
+    "a11f609635f8132843c65bd61de715efaf877dcb6ba030b4f95798218da60d8b": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "planted_secret",
+      "dimension": "pii-secret-hygiene",
+      "words": null,
+      "offline_args": [],
+      "env": {},
+      "budget_seconds": null,
+      "parameters": {
+        "secret": {
+          "placeholder": "Name the seeded secret file."
+        }
       }
     }
   }

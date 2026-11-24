@@ -1,0 +1,566 @@
+{
+  "id": "case-098",
+  "kind": "judge-checked",
+  "rules": [
+    "QO3",
+    "QS7"
+  ],
+  "input": {
+    "subject_file": "subject.json",
+    "form": "live-first",
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "verifier": "scripted",
+    "host": {
+      "confinement": {
+        "applied": true,
+        "sandbox_exec_exit": null
+      },
+      "self_test": "passed",
+      "known_fast": "within",
+      "read_calibration": "moved",
+      "store_control": "detected",
+      "read_control": "killed",
+      "private_copy": "unchanged",
+      "kill_attribution": []
+    },
+    "baseline": null,
+    "fixtures": []
+  },
+  "named_check": null,
+  "twin": "case-099",
+  "invocations": [
+    {
+      "words": [],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "count"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "list"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "account",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "add",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "count",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "list",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "remove",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "planted"
+    }
+  ],
+  "covers": [],
+  "expect": {
+    "exit_code": 4,
+    "judge_output": {
+      "rulebook_version": "1.0",
+      "outcome": "verdict",
+      "rejected_by": null,
+      "exit_code": 4,
+      "scope": [
+        "conformance"
+      ],
+      "verdict": {
+        "token": "PROVISIONAL",
+        "sub_label": "gaps",
+        "plain": "not_measured"
+      },
+      "own_verdict": null,
+      "counts": {
+        "xfail": 0,
+        "xpass": 0
+      },
+      "stale_markers": [],
+      "checks": [
+        {
+          "id": "155032b8ff5ed593631a7b03c0c55b94b5afd670ce48c68723d8e9835ee9bdb4",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "2966e4b4b91aa1f7c0041095e6fd8427f12b308569ffc9c99cbfbd0888ac6522",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "network_unverifiable",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "2d052efe60427ca17b722cf18f53e21da211b38387f2b0ae94f1876a532b19ae",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "a33b97f959229186e2b2fc64fa72d0f44233f82073ce1a62abf86cd0874cbd51",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "network_unverifiable",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "a52027bf40aeff3ee203d331939f4c523346c0655cda73f69a687f1107f423ce",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "aad96c85c9ac7ca1e4abc56f9b8f0417589add0e8d59ef6ecdb5ee8a780596ea",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "b83f53d29896c13a727906c62a9af459992bec0430bea94b1e9e4aa5f9bdd1cb",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "c6fd015a44c2127e052f614af2929eb8cd692cacb055212811b376416c3dcb67",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "dd6ec35467a24acd0b8fac70b370ab49200f10cc2d48e03225eea9fd9e42e19b",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "network_unverifiable",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f7824182901fb214c72c4f481c90e2b82d12a82d2aa2bd4e58107a401d081cf6",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        }
+      ],
+      "dimensions": [
+        {
+          "dimension": "availability",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "execution",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "graceful-failure",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "robustness",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "response-correctness",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "determinism",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "cli-mcp-parity",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "scope_not_requested"
+        },
+        {
+          "dimension": "provenance-honesty",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "completeness-signaling",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "output-conformance",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "flag-conformance",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "bounding",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "discoverability",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "error-message-quality",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "token-economy",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "side-effect-integrity",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "idempotency",
+          "state": "UNCOVERED",
+          "rule": "D8",
+          "reason": null
+        },
+        {
+          "dimension": "destructive-guard",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "scope_not_requested"
+        },
+        {
+          "dimension": "pii-secret-hygiene",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "steering",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "live_not_run"
+        },
+        {
+          "dimension": "tool-description-efficacy",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "live_not_run"
+        }
+      ],
+      "groups": [
+        {
+          "group": "Operability",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Correctness",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Conformance",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Usability",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Safety",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Steering",
+          "state": "OUT-OF-SCOPE",
+          "rule": "G1"
+        }
+      ],
+      "comparison": {
+        "result": "none",
+        "rule": "B1",
+        "next_action": null,
+        "entries": [],
+        "new": []
+      },
+      "set_aside": [],
+      "earlier_pools": [],
+      "anchor": null
+    }
+  }
+}

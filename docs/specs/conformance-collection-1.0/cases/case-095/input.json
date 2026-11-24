@@ -1,0 +1,673 @@
+{
+  "request": "grade",
+  "scope": [
+    "conformance"
+  ],
+  "claimed_tier": "scripted",
+  "subject_facts": {
+    "read_only": false,
+    "has_destructive_ops": true,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "required": [
+    {
+      "id": "20059c1619244c1ab00820b1514309e4f14445cac80b473c0f91e1198982f99e",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+      "kind": "plain",
+      "dimension": "availability",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "270c4c43c84525851e3646a6ec588c632c08e2cd2de87c804ecabb5418d7aa35",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "4f7aa1fa7be749c66667dedddb8c051838018a2362224df68de89f0f4c3a5f9f",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "71419728f22ff646bbedd2b64e9be4210905fefc8aef50c09e6ef860912718fe",
+      "kind": "plain",
+      "dimension": "pii-secret-hygiene",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "8c4cb2919c964946af308a8f2cae75a1d0ff5f0fe606cea95b2f466fe5fbd84b",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "a493349a773343813d0d6cf91bbfc96bb391d1dc432475ff3ca49df5414d9d3d",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "d65cc1fe00837294339d19e0cabeeaebd65ce02d0606cf3bb69f4d335606dfc9",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f219a323acc8fde487fe7ba43951b83bb999ead817dfda45652a0c0180fcd187",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+      "kind": "plain",
+      "dimension": "discoverability",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    }
+  ],
+  "evidence": [
+    {
+      "check_id": "20059c1619244c1ab00820b1514309e4f14445cac80b473c0f91e1198982f99e",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "20059c1619244c1ab00820b1514309e4f14445cac80b473c0f91e1198982f99e",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "270c4c43c84525851e3646a6ec588c632c08e2cd2de87c804ecabb5418d7aa35",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "270c4c43c84525851e3646a6ec588c632c08e2cd2de87c804ecabb5418d7aa35",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "4f7aa1fa7be749c66667dedddb8c051838018a2362224df68de89f0f4c3a5f9f",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "4f7aa1fa7be749c66667dedddb8c051838018a2362224df68de89f0f4c3a5f9f",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "71419728f22ff646bbedd2b64e9be4210905fefc8aef50c09e6ef860912718fe",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "71419728f22ff646bbedd2b64e9be4210905fefc8aef50c09e6ef860912718fe",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": ".config/widgets/token",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "8c4cb2919c964946af308a8f2cae75a1d0ff5f0fe606cea95b2f466fe5fbd84b",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "8c4cb2919c964946af308a8f2cae75a1d0ff5f0fe606cea95b2f466fe5fbd84b",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "a493349a773343813d0d6cf91bbfc96bb391d1dc432475ff3ca49df5414d9d3d",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "a493349a773343813d0d6cf91bbfc96bb391d1dc432475ff3ca49df5414d9d3d",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "d65cc1fe00837294339d19e0cabeeaebd65ce02d0606cf3bb69f4d335606dfc9",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "d65cc1fe00837294339d19e0cabeeaebd65ce02d0606cf3bb69f4d335606dfc9",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f219a323acc8fde487fe7ba43951b83bb999ead817dfda45652a0c0180fcd187",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f219a323acc8fde487fe7ba43951b83bb999ead817dfda45652a0c0180fcd187",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+      "outcome": "not_observed",
+      "reason": "could_not_start",
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "commands_found": 5
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    }
+  ],
+  "trials": [],
+  "markers": [],
+  "baseline": null,
+  "retired": [],
+  "accepted_regressions": []
+}

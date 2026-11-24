@@ -1,0 +1,393 @@
+{
+  "baseline_version": "1.0",
+  "spec_version": "1.0",
+  "rulebook_version": "1.0",
+  "subject_file_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "subject_file_path": "/opt/widgets/subject-02.json",
+  "created_at": "2026-11-22T09:00:00Z",
+  "baseline": {
+    "entries": [
+      {
+        "check_id": "bbc56ff596aba4d4218d4aa6af3fd77e49a01a75e8911089d3ebb9c9cad42705",
+        "kind": "plain",
+        "dimension": "discoverability",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "70dcccfaa638ded0ef8c3d80c3e5ca4eb14925664f396091c3535dbb7a5525df",
+        "kind": "plain",
+        "dimension": "discoverability",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "1c10fe92a0948295cc8b4a22d29094389bc4474d1425b5d0868c5de31d2e5438",
+        "kind": "plain",
+        "dimension": "availability",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "b53ba5089e205263593ba33568ed744b60f75159f122a6c71629fd8ddce5e736",
+        "kind": "plain",
+        "dimension": "execution",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7",
+        "kind": "plain",
+        "dimension": "bounding",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "06b4f3e0189e4312c17c09e7f115c96e2ee86c377eaebfcbe96e7f8fac8bdcb0",
+        "kind": "plain",
+        "dimension": "pii-secret-hygiene",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "158dbab9a47311d52c3bdd2812b4eccc38c351d19c1b68c4000ff30c7a14db55",
+        "kind": "plain",
+        "dimension": "completeness-signaling",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      },
+      {
+        "check_id": "d8c39a87c144ff5f0b6073e723892a81c1ce133d2a9660a70b1fe53bf6bf3f66",
+        "kind": "plain",
+        "dimension": "response-correctness",
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "offline",
+        "condition": null,
+        "k": null,
+        "n": null
+      }
+    ]
+  },
+  "preimages": {
+    "bbc56ff596aba4d4218d4aa6af3fd77e49a01a75e8911089d3ebb9c9cad42705": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "env": {},
+      "seed": {
+        "placeholder": "Supply this value so the check can be measured."
+      },
+      "store": {
+        "placeholder": "Supply this value so the check can be measured."
+      },
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "discovery",
+      "dimension": "discoverability",
+      "words": null,
+      "offline_args": [],
+      "budget_seconds": {
+        "placeholder": "Supply the value required to measure this check."
+      },
+      "parameters": {
+        "declared_count": 1,
+        "commands": [
+          [
+            "list"
+          ]
+        ]
+      }
+    },
+    "70dcccfaa638ded0ef8c3d80c3e5ca4eb14925664f396091c3535dbb7a5525df": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "env": {},
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "discovery",
+      "dimension": "discoverability",
+      "words": null,
+      "offline_args": [],
+      "budget_seconds": null,
+      "parameters": {
+        "declared_count": {
+          "placeholder": "Supply this value so the check can be measured."
+        },
+        "commands": [
+          [
+            "list"
+          ]
+        ]
+      }
+    },
+    "1c10fe92a0948295cc8b4a22d29094389bc4474d1425b5d0868c5de31d2e5438": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "env": {},
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "bare",
+      "dimension": "availability",
+      "words": [],
+      "offline_args": [],
+      "budget_seconds": 10,
+      "parameters": {
+        "exit_codes": [
+          0
+        ]
+      }
+    },
+    "b53ba5089e205263593ba33568ed744b60f75159f122a6c71629fd8ddce5e736": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "exit_codes",
+      "dimension": "execution",
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      "budget_seconds": 30,
+      "parameters": {
+        "exit_codes": [
+          0
+        ]
+      }
+    },
+    "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "env": {},
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "byte_bound",
+      "dimension": "bounding",
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "budget_seconds": 30,
+      "parameters": {
+        "bound": 65536
+      }
+    },
+    "06b4f3e0189e4312c17c09e7f115c96e2ee86c377eaebfcbe96e7f8fac8bdcb0": {
+      "scheme": "pql-check-id-1",
+      "runbook": null,
+      "step": null,
+      "index": null,
+      "earlier": [],
+      "predicate": null,
+      "path": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": null,
+      "probe": "planted_secret",
+      "dimension": "pii-secret-hygiene",
+      "words": null,
+      "offline_args": [],
+      "env": {},
+      "budget_seconds": null,
+      "parameters": {
+        "path": ".config/widgets/token",
+        "kind": "seeded_state",
+        "text_sha256": "11bdf71a9d8c85d6aca52d6513c23b4765858dae71e7bf67363acf8012c93332",
+        "commands": [
+          {
+            "words": [
+              "list"
+            ],
+            "offline_args": [
+              "--offline"
+            ],
+            "env": {
+              "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+            },
+            "budget_seconds": 30
+          }
+        ]
+      }
+    },
+    "158dbab9a47311d52c3bdd2812b4eccc38c351d19c1b68c4000ff30c7a14db55": {
+      "scheme": "pql-check-id-1",
+      "probe": null,
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      "runbook": "add then list",
+      "step": "list after add",
+      "index": 1,
+      "earlier": [
+        "ced2e6f3f2379132e5ed26ed5b24f94f8bc2edce945f6bf42e0e8f411f9dd0d9"
+      ],
+      "dimension": "completeness-signaling",
+      "predicate": "row_count",
+      "path": "/widgets",
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "budget_seconds": 30,
+      "parameters": {
+        "exit_codes": null
+      },
+      "expected": {
+        "computation": {
+          "argv": [
+            "/usr/bin/python3",
+            "{SUBJECT_DIR}/oracle/count.py",
+            "{SEED}/data.json",
+            "{CAPTURE:add one}"
+          ],
+          "budget_seconds": 30,
+          "captures": [
+            "add one"
+          ],
+          "files": {
+            "oracle/count.py": "6910bddc39538fb92cc5f56ce6d92b0682dbae6e052b32d9000a8725013238cb"
+          }
+        },
+        "precondition": null
+      }
+    },
+    "d8c39a87c144ff5f0b6073e723892a81c1ce133d2a9660a70b1fe53bf6bf3f66": {
+      "scheme": "pql-check-id-1",
+      "runbook": "empty filter",
+      "step": "filter none",
+      "index": 0,
+      "earlier": [],
+      "predicate": "row_count",
+      "path": "/widgets",
+      "seed": "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee",
+      "store": "data.json",
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "expected": {
+        "literal": 0,
+        "precondition": {
+          "computation": {
+            "argv": [
+              "/usr/bin/python3",
+              "{SUBJECT_DIR}/oracle/has-rows.py",
+              "{SEED}/data.json"
+            ],
+            "budget_seconds": 30,
+            "captures": [],
+            "files": {
+              "oracle/has-rows.py": "6910bddc39538fb92cc5f56ce6d92b0682dbae6e052b32d9000a8725013238cb"
+            }
+          }
+        }
+      },
+      "probe": null,
+      "dimension": "response-correctness",
+      "words": [
+        "list",
+        "--json",
+        "--name",
+        "none"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      "budget_seconds": 30,
+      "parameters": {
+        "exit_codes": null
+      }
+    }
+  }
+}

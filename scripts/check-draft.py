@@ -1,12 +1,91 @@
-"""Witness the unsealed runner's refusal and banner in an isolated copy."""
+"""Witness sealed checks and runner controls using isolated copies."""
+import importlib.util
+import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 
-guard_script = Path(__file__).resolve().parent / "draft-guard.sh"
+scripts = Path(__file__).resolve().parent
 source = Path(__file__).resolve().parents[1] / "docs/specs/conformance-collection-1.0"
+check_script = (scripts.parent / "check.sh").read_text()
+sealed_checks = check_script.split("step collection-kit ", 1)[1].split("step collection-schemas ", 1)[0]
+sealed_checks = sealed_checks[sealed_checks.index("(\n") + 2:sealed_checks.rindex("\n)")]
+sealed_checks = sealed_checks.replace(" cd docs/specs/conformance-collection-1.0\n", "", 1)
+
+for mutation, message in (
+    ("unchanged", ""),
+    ("changed byte", "FAILED"),
+    ("extra file", "unlisted file: synthetic-extra"),
+    ("missing file", "CASES.md"),
+    ("pipe", "unlisted file: schema/pipe"),
+    ("empty directory", "unlisted file: cases/case-999"),
+    ("listed symlink", "not regular: CASES.md"),
+    ("incomplete corpus", "missing Corpus: complete"),
+):
+    with tempfile.TemporaryDirectory(prefix="pql-sealed-controls-") as temporary:
+        root = Path(temporary) / "kit"
+        shutil.copytree(source, root)
+        corpus = root / "CASES.md"
+        if mutation == "pipe":
+            os.mkfifo(root / "schema/pipe")
+        elif mutation == "empty directory":
+            (root / "cases/case-999").mkdir()
+        elif mutation == "listed symlink":
+            target = Path(temporary) / "content"
+            target.write_bytes(corpus.read_bytes())
+            corpus.unlink()
+            corpus.symlink_to(target)
+        elif mutation == "changed byte":
+            data = corpus.read_bytes()
+            corpus.write_bytes(bytes([data[0] ^ 1]) + data[1:])
+        elif mutation == "extra file":
+            (root / "synthetic-extra").write_text("synthetic witness\n")
+        elif mutation == "missing file":
+            corpus.unlink()
+        elif mutation == "incomplete corpus":
+            corpus.write_text("\n".join(line for line in corpus.read_text().splitlines()
+                                         if line != "Corpus: complete") + "\n")
+            # Refresh only this scratch digest to reach the corpus check.
+            import hashlib
+            seal = root / "KIT.sha256"
+            lines = seal.read_text().splitlines()
+            seal.write_text("\n".join(
+                hashlib.sha256(corpus.read_bytes()).hexdigest() + "  CASES.md"
+                if line.split(None, 1)[1].lstrip("*") == "CASES.md" else line
+                for line in lines) + "\n")
+        result = subprocess.run(
+            ["bash", "-eu", "-o", "pipefail", "-c", sealed_checks], cwd=root,
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+            capture_output=True, text=True, timeout=60, check=False,
+        )
+        if (result.returncode == 0) != (mutation == "unchanged") or message not in result.stdout + result.stderr:
+            raise RuntimeError("sealed control " + mutation + ": " + result.stdout + result.stderr)
+        print("sealed control: " + mutation + (" passes" if mutation == "unchanged" else " refused: " + message))
+
+# Exercise the judge kit's own shell block as well as the collection block.
+judge_checks = check_script.split("step kit ", 1)[1].split("step judge-cases ", 1)[0]
+judge_checks = judge_checks[judge_checks.index("(\n") + 2:judge_checks.rindex("\n)")]
+judge_checks = judge_checks.replace(" cd docs/specs/judge-1.0\n", "", 1)
+for mutation, message in (("unchanged", ""), ("pipe", "unlisted file: schema/pipe"), ("empty directory", "unlisted file: cases/case-999"), ("listed symlink", "not regular: CASES.md")):
+    with tempfile.TemporaryDirectory(prefix="pql-judge-sealed-controls-") as temporary:
+        root = Path(temporary) / "kit"
+        shutil.copytree(source.parent / "judge-1.0", root)
+        if mutation == "pipe":
+            os.mkfifo(root / "schema/pipe")
+        elif mutation == "empty directory":
+            (root / "cases/case-999").mkdir()
+        elif mutation == "listed symlink":
+            target = Path(temporary) / "content"
+            target.write_bytes((root / "CASES.md").read_bytes())
+            (root / "CASES.md").unlink()
+            (root / "CASES.md").symlink_to(target)
+        result = subprocess.run(["bash", "-eu", "-o", "pipefail", "-c", judge_checks], cwd=root, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, text=True, timeout=60, check=False)
+        if (result.returncode == 0) != (mutation == "unchanged") or message not in result.stdout + result.stderr:
+            raise RuntimeError("judge sealed control " + mutation + ": " + result.stdout + result.stderr)
+        print("judge sealed control: " + mutation + (" passes" if mutation == "unchanged" else " refused: " + message))
+
 with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     root = Path(temporary) / "kit"
     shutil.copytree(source, root)
@@ -14,7 +93,7 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     # The earlier draft step fills the uv cache used by --offline here.
     def run():
         return subprocess.run(
-            ["uv", "run", "--offline", "runner.py", "--draft"], cwd=root,
+            ["uv", "run", "--offline", "--with", "jsonschema==4.23.0", "python", "-I", "runner.py", "--draft"], cwd=root,
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
             capture_output=True, text=True, timeout=60, check=False,
         )
@@ -23,9 +102,6 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
         result = run()
         if result.returncode != 2 or "refused: draft folder contains KIT.sha256" not in result.stderr:
             raise RuntimeError("wrong draft refusal: " + str(result.returncode) + " " + result.stderr)
-        guard = subprocess.run(["bash", str(guard_script), str(root)], cwd=root, timeout=10, check=False)
-        if guard.returncode == 0:
-            raise RuntimeError("check.sh guard accepted seal")
 
     seal = root / "KIT.sha256"
     seal.write_text("synthetic seal\n")
@@ -34,12 +110,693 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
     seal.symlink_to("absent-seal")
     refused()
     seal.unlink()
-    guard = subprocess.run(["bash", str(guard_script), str(root)], timeout=10, check=False)
-    if guard.returncode != 0:
-        raise RuntimeError("draft guard refused unsealed tree")
     normal = run()
     if normal.returncode != 0:
         raise RuntimeError(normal.stderr)
     if not normal.stdout.startswith("UNSEALED\n"):
         raise RuntimeError("missing first-line banner")
+    invalid = root / "examples/invalid/subject-file-QP10-01.json"
+    repaired = json.loads(invalid.read_text())
+    repaired["secret"]["reason"] = "Reading the seeded token proves the file was read."
+    invalid.write_text(json.dumps(repaired) + "\n")
+    accepted = run()
+    if accepted.returncode != 1 or "accepted invalid example: subject-file-QP10-01.json" not in accepted.stderr:
+        raise RuntimeError("draft accepted a valid negative fixture: " + str(accepted.returncode) + " " + accepted.stderr)
+print("draft controls: repaired invalid example refused")
 print("draft controls: regular seal refused; dangling seal refused; UNSEALED first")
+
+# Case controls use the informative examples, not a second judge oracle.
+with tempfile.TemporaryDirectory(prefix="pql-case-controls-") as temporary:
+    root = Path(temporary) / "kit"
+    shutil.copytree(source, root)
+    (root / "KIT.sha256").unlink()
+    cases = Path(temporary) / "cases"
+    directory = cases / "case-001"
+    directory.mkdir(parents=True)
+    case = json.loads((root / "examples/case-01.json").read_text())
+    record = json.loads((root / "examples/record-01.json").read_text())
+    baseline = json.loads((root / "examples/baseline-01.json").read_text())
+    (directory / "subject.json").write_bytes((root / "examples/subject-file.json").read_bytes())
+    (directory / "input.json").write_text(json.dumps(record["judge_input"]))
+    (directory / "preimages.json").write_text(json.dumps(baseline["preimages"]))
+
+    def save_case():
+        (directory / "case.json").write_text(json.dumps(case))
+
+    def case_run(expected, message="", judge=None):
+        result = subprocess.run(
+            ["uv", "run", "--offline", "--with", "jsonschema==4.23.0", "python", "-I", str(root / "runner.py"), "--unsealed", "--schema-root", str(root), "--cases", str(cases), "--judge", (judge or str(source.parents[2] / "bin/pql") + " judge")],
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, text=True, timeout=60, check=False,
+        )
+        if result.returncode != expected or message not in result.stdout + result.stderr:
+            raise RuntimeError("case control: " + result.stdout + result.stderr)
+        print("case control: " + (message or "unchanged case passes"))
+
+    save_case()
+    case_run(0)
+    input_path = directory / "input.json"
+    input_data = input_path.read_bytes()
+    input_path.unlink()
+    case_run(2, "missing case file: case-001")
+    input_path.write_bytes(input_data)
+    stub = Path(temporary) / "judge.py"
+    counter = Path(temporary) / "counter"
+    stub.write_text("from pathlib import Path\nimport sys\np = Path(" + repr(str(counter)) + ")\nn = int(p.read_text()) if p.exists() else 0\np.write_text(str(n + 1))\nprint(n)\n")
+    import shlex
+    case_run(1, "non-deterministic judge output or exit code", "python3 -I " + shlex.quote(str(stub)))
+    subject_path = directory / case["input"]["subject_file"]
+    valid_subject = subject_path.read_bytes()
+    invalid_subject = json.loads(valid_subject)
+    runbook = json.loads((root / "examples/subject-file-02.json").read_text())["runbooks"][0]
+    invalid_subject["runbooks"] = [runbook]
+    invalid_subject["runbooks"][0]["steps"][0]["checks"] = []
+    subject_path.write_text(json.dumps(invalid_subject))
+    case_run(2, "case-001: subject-file.schema.json at /runbooks/0/steps/0/checks")
+    subject_path.write_text('{"runbooks": [], "runbooks": []}')
+    case_run(2, "duplicate object key: runbooks")
+    subject_path.write_bytes(valid_subject)
+    case_run(0, "1 judge-checked: 1 passed")
+    subject_path.write_text(json.dumps(invalid_subject))
+    case["kind"] = "derivation-only"
+    case["expect"] = {"exit_code": 2, "rule": "QS1"}
+    save_case()
+    input_bytes = (directory / "input.json").read_bytes()
+    preimage_bytes = (directory / "preimages.json").read_bytes()
+    (directory / "input.json").unlink()
+    (directory / "preimages.json").unlink()
+    case_run(0, "1 derivation-only unchecked")
+    subject_path.write_bytes(valid_subject)
+    (directory / "input.json").write_bytes(input_bytes)
+    (directory / "preimages.json").write_bytes(preimage_bytes)
+    case = json.loads((root / "examples/case-01.json").read_text())
+    case["input"]["fixtures"] = [
+        {"kind": "link", "path": "seed/missing-link", "detail": "missing-target"},
+        {"kind": "special_file", "path": "seed/pipe", "detail": None},
+    ]
+    save_case()
+    case_run(0)
+    # Assembly creates these; the case directory must not contain them.
+    link = directory / "missing-link"
+    link.symlink_to("missing-target")
+    case_run(2, "unexpected case file")
+    link.unlink()
+    pipe = directory / "pipe"
+    os.mkfifo(pipe)
+    case_run(2, "unexpected case file")
+    pipe.unlink()
+    case["input"]["fixtures"] = []
+    save_case()
+    case["expect"]["judge_output"]["checks"][0]["rule"] = "C2"
+    save_case()
+    case_run(1, "/checks/0/rule")
+    case["expect"] = json.loads((root / "examples/case-01.json").read_text())["expect"]
+    case["expect"]["exit_code"] = 1
+    save_case()
+    case_run(1, "/exit_code")
+    case["expect"]["exit_code"] = 4
+    save_case()
+    (root / "KIT.sha256").write_text("synthetic seal\n")
+    case_run(2, "refused: --unsealed beside KIT.sha256")
+    (root / "KIT.sha256").unlink()
+    (root / "KIT.sha256").symlink_to("absent-seal")
+    case_run(2, "refused: --unsealed beside KIT.sha256")
+    (root / "KIT.sha256").unlink()
+    (directory / "stray").write_text("synthetic stray\n")
+    case_run(2, "unexpected case file")
+
+with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
+    root = Path(temporary)
+    directory = root / "cases/case-001"
+    directory.mkdir(parents=True)
+    form = root / "subjects/byte-bound/seed"
+    form.mkdir(parents=True)
+    (form / "data.json").write_bytes(b'{"widgets":[]}\n')
+    (root / "behaviour").mkdir()
+    case = json.loads((source / "examples/case-01.json").read_text())
+    record = json.loads((source / "examples/record-01.json").read_text())["judge_input"]
+    subject = json.loads((source / "examples/subject-file.json").read_text())
+    (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
+    spec = importlib.util.spec_from_file_location("collection_ids", scripts.joinpath("collection_ids.py"))
+    ids = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ids)
+    digest = "46c4884c4195f646969ad14aca889bb614643f7c5e7e88bdec87d1032c0344d7"
+    preimage = json.loads((source / "examples/baseline-01.json").read_text())["preimages"][digest]
+    record["required"] = [c for c in record["required"] if c["id"] == digest]
+    record["evidence"] = [e for e in record["evidence"] if e["check_id"] == digest]
+    case["invocations"] = case["invocations"][:1]
+    case["invocations"][0]["env"] = []
+    behaviour = json.loads((source / "examples/behaviour-01.json").read_text())
+    behaviour["invocations"][0]["key"] = case["invocations"][0]
+    for stream in ("stdout", "stderr"):
+        behaviour["invocations"][0]["confined"][0][stream].update(record["evidence"][0]["observed"][stream])
+    (root / "behaviour/byte-bound.json").write_text(json.dumps(behaviour))
+
+    def save_ids():
+        (directory / "case.json").write_text(json.dumps(case))
+        (directory / "input.json").write_text(json.dumps(record))
+        (directory / "preimages.json").write_text(json.dumps({digest: preimage}))
+
+    def cross_run(expected, message):
+        result = subprocess.run(["python3", "-I", str(scripts.joinpath("check-case-ids.py")), str(root / "cases")], env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, text=True, timeout=20, check=False)
+        if result.returncode != expected or message not in result.stdout + result.stderr:
+            raise RuntimeError("cross-check control: " + result.stdout + result.stderr)
+        print("cross-check control: " + message)
+
+    save_ids()
+    cross_run(0, "1 judge-checked")
+    for kind, detail in (("link", "missing-target"), ("special_file", None)):
+        case["input"]["fixtures"] = [{"kind": kind, "path": "seed/fixture", "detail": detail}]
+        save_ids()
+        cross_run(1, "seed contains a link or special file")
+    case["input"]["fixtures"] = []
+    save_ids()
+    preimage["parameters"]["bound"] += 1
+    save_ids()
+    cross_run(1, "preimage id mismatch")
+    preimage["parameters"]["bound"] -= 1
+    save_ids()
+    (form / "data.json").write_bytes(b"changed\n")
+    cross_run(1, "seed digest mismatch")
+    (form / "data.json").write_bytes(b'{"widgets":[]}\n')
+    canonical_seed = preimage["seed"]
+    canonical_digest = digest
+    for seed in ({"placeholder": "Supply the seed so checks can read its data."}, None):
+        subject["seed"] = seed
+        (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
+        cross_run(1, "seed digest mismatch")
+        preimage["seed"] = seed
+        digest = ids.check_id(preimage)
+        record["required"][0]["id"] = digest
+        record["evidence"][0]["check_id"] = digest
+        for target in record["evidence"][0]["targets"]:
+            if target["kind"] == "invocation":
+                target["id"] = digest
+        save_ids()
+        cross_run(0, "1 judge-checked")
+        preimage["seed"] = canonical_seed
+        digest = canonical_digest
+        record["required"][0]["id"] = digest
+        record["evidence"][0]["check_id"] = digest
+        for target in record["evidence"][0]["targets"]:
+            if target["kind"] == "invocation":
+                target["id"] = digest
+        save_ids()
+    subject["seed"] = "seed"
+    (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
+    case["invocations"] = []
+    save_ids()
+    cross_run(1, "invocation not in case")
+    case["invocations"] = [behaviour["invocations"][0]["key"]]
+    record["evidence"][0]["observed"]["stdout"]["sha256"] = "0" * 64
+    save_ids()
+    cross_run(1, "stream differs from recording")
+
+    # No-command probes retain one invocation target but have no recorded run.
+    preimage["words"] = None
+    preimage["budget_seconds"] = None
+    digest = ids.check_id(preimage)
+    record["required"][0]["id"] = digest
+    evidence = record["evidence"][0]
+    evidence["check_id"] = digest
+    evidence["observed"] = None
+    evidence["tier"] = "live"
+    evidence["targets"] = [{"kind": "invocation", "id": digest, "tier": "live"}]
+    case["invocations"] = []
+    save_ids()
+    cross_run(0, "1 judge-checked")
+    evidence["targets"][0]["id"] = digest + "#1"
+    save_ids()
+    cross_run(1, "no-invocation check requires one invocation target with the check id")
+    evidence["targets"] = [{"kind": "invocation", "id": digest, "tier": "live"}] * 2
+    save_ids()
+    cross_run(1, "no-invocation check requires one invocation target with the check id")
+    evidence["targets"] = evidence["targets"][:1]
+    evidence["observed"] = {"nested": [{"stdout": {field: behaviour["invocations"][0]["confined"][0]["stdout"][field] for field in ("bytes", "sha256", "cut", "head")}}]}
+    save_ids()
+    cross_run(1, "no-invocation check has an observed stream")
+    evidence["observed"] = None
+    subject["secret"] = None
+    (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
+    preimage["probe"] = "planted_secret"
+    preimage["parameters"] = {}
+    digest = ids.check_id(preimage)
+    record["required"][0]["id"] = digest
+    evidence["check_id"] = digest
+    evidence["targets"][0]["id"] = digest
+    save_ids()
+    cross_run(0, "1 judge-checked")
+
+
+    # A blocked discovery makes only the first help request, despite recorded help.
+    preimage["probe"] = "discovery"
+    digest = ids.check_id(preimage)
+    record["required"][0]["id"] = digest
+    evidence["check_id"] = digest
+    case["input"]["host"] = {"confinement": {"applied": False}}
+    help_keys = [dict(words=words + ["--help"], offline_args=[], env=[], runbook=None,
+                      step=None, computation=None, home="empty")
+                 for words in ([], ["one"], ["two"], ["three"], ["four"], ["five"])]
+    case["invocations"] = help_keys
+    template = behaviour["invocations"][0]
+    behaviour["invocations"] = []
+    for index, help_key in enumerate(help_keys):
+        entry = json.loads(json.dumps(template))
+        entry["key"] = help_key
+        text = "COMMANDS:\n  one\n  two\n  three\n  four\n  five\n" if index == 0 else ""
+        entry["confined"][0]["stdout"]["head"] = text
+        entry["confined"][0]["stdout"]["bytes"] = len(text.encode("utf-8"))
+        entry["confined"][0]["stdout"]["cut"] = False
+        import base64
+        entry["confined"][0]["stdout"]["kept"] = base64.b64encode(text.encode()).decode()
+        behaviour["invocations"].append(entry)
+    (root / "behaviour/byte-bound.json").write_text(json.dumps(behaviour))
+    evidence["targets"] = [{"kind": "invocation", "id": digest + "#" + str(index), "tier": "live"}
+                           for index in range(1, 7)]
+    save_ids()
+    cross_run(1, "invalid invocation target numbering")
+    evidence["targets"] = [{"kind": "invocation", "id": digest, "tier": "live"}]
+    save_ids()
+    cross_run(0, "1 judge-checked")
+
+# Blind exports preserve inputs but must reveal injected oracle material.
+with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
+    root = Path(temporary)
+    exporter = scripts.joinpath("collection-export.py")
+    scratch_cases = root / "cases"
+    directory = scratch_cases / "case-001"
+    shutil.copytree(source / "cases/case-001", directory)
+    candidates = sorted((source / "cases").glob("*/case.json"))
+    first_form = json.loads((directory / "case.json").read_text())["input"]["form"]
+    other = next(p for p in candidates if json.loads(p.read_text())["input"]["form"] != first_form)
+    third = next(p for p in candidates if p.parent.name not in ("case-001", other.parent.name))
+    for path in (other, third):
+        shutil.copytree(path.parent, scratch_cases / path.parent.name)
+
+    def export_run(*arguments, expected=0, message="", kit=source):
+        result = subprocess.run(
+            ["python3", "-I", str(exporter), "--kit", str(kit),
+             "--cases", str(scratch_cases), *map(str, arguments)],
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+            capture_output=True, text=True, timeout=60, check=False,
+        )
+        if result.returncode != expected or message not in result.stdout + result.stderr:
+            raise RuntimeError("export control: " + result.stdout + result.stderr)
+        return result
+
+    first = root / "first"
+    second = root / "second"
+    export_run("--out", first, "--map", root / "first-map.json")
+    export_run("--out", second, "--map", root / "second-map.json")
+
+    def snapshot(path):
+        return {str(p.relative_to(path)): p.read_bytes() if p.is_file() else None
+                for p in path.rglob("*")}
+
+    if snapshot(first) != snapshot(second) or (root / "first-map.json").read_bytes() != (root / "second-map.json").read_bytes():
+        raise RuntimeError("export control: repeated exports differ")
+    exported = list((first / "cases").glob("*/case.json"))
+    if len(exported) < 3 or len(list((first / "behaviour").glob("*.json"))) < 2:
+        raise RuntimeError("export control: needs three cases across two forms")
+    if any(set(json.loads(path.read_text())) != {"id", "input"} for path in exported):
+        raise RuntimeError("export control: case must contain only id and input")
+    print("export control: repeated exports of three cases across two forms are byte-identical; no kind")
+    export_run("--check", first)
+    export_run("--out", first, "--map", root / "unused-map.json", expected=2, message="--out must not exist")
+    print("export control: existing output refused")
+    export_run("--out", root / "inside", "--map", root / "inside/map.json", expected=2, message="--map must not lie inside --out")
+    if (root / "inside").exists():
+        raise RuntimeError("export control: refused map created output")
+    print("export control: map inside output refused")
+
+    subject = directory / "subject.json"
+    original = subject.read_bytes()
+    record = json.loads((directory / "input.json").read_text())
+    check_id = record["required"][0]["id"]
+    for label, token, finding in (("rule", "QS12345", "rule id"), ("trial-rule", "QT12345", "rule id"), ("check", check_id, "check id")):
+        subject.write_bytes(original + token.encode() + b"\n")
+        output = root / label
+        export_run("--out", output, "--map", root / (label + "-map.json"))
+        export_run("--check", output, expected=1, message=finding)
+        subject.write_bytes(original)
+        print("export control: injected " + finding + " found in copied subject")
+
+    recording_path = next((first / "behaviour").glob("*.json"))
+    recording = json.loads(recording_path.read_text())
+    recording["export_control"] = "could_not_start"
+    recording_path.write_text(json.dumps(recording))
+    export_run("--check", first, expected=1, message="result word in JSON: could_not_start")
+    print("export control: result word in recording string value found")
+    del recording["export_control"]
+    recording["held"] = None
+    recording_path.write_text(json.dumps(recording))
+    export_run("--check", first, expected=1, message="result word in JSON key: held")
+    print("export control: injected result word in object key found")
+    del recording["held"]
+    for word in ("judge-checked", "derivation-only"):
+        recording[word] = None
+        recording_path.write_text(json.dumps(recording))
+        export_run("--check", first, expected=1, message="result word in JSON key: " + word)
+        del recording[word]
+    form = json.loads((directory / "case.json").read_text())["input"]["form"]
+    recording["prefix-" + form + "-suffix"] = None
+    recording_path.write_text(json.dumps(recording))
+    export_run("--check", first, expected=1, message="form name in JSON key")
+    del recording["prefix-" + form + "-suffix"]
+    recording_path.write_text(json.dumps(recording))
+    for directory_name in (False, True):
+        injected = first / "subjects" / ("prefix-" + form + "-suffix")
+        if directory_name:
+            injected.mkdir()
+        else:
+            injected.write_text("synthetic")
+        export_run("--check", first, expected=1, message="form name in name")
+        if directory_name:
+            injected.rmdir()
+        else:
+            injected.unlink()
+    # Only behaviour-schema keys inside behaviour files get the exemption.
+    scratch_kit = root / 'schema-kit'
+    shutil.copytree(source, scratch_kit)
+    schema_path = scratch_kit / 'schema/subject-file.schema.json'
+    schema = json.loads(schema_path.read_text())
+    schema['properties']['held'] = {}
+    schema_path.write_text(json.dumps(schema))
+    recording['held'] = None
+    recording_path.write_text(json.dumps(recording))
+    export_run('--check', first, kit=scratch_kit, expected=1, message='result word in JSON key: held')
+    del recording['held']
+    recording_path.write_text(json.dumps(recording))
+    injected = first / 'subjects/schema-key.json'
+    injected.write_text(json.dumps({'could_not_start': False}))
+    export_run('--check', first, expected=1, message='result word in JSON key: could_not_start')
+    injected.unlink()
+    print('export control: foreign schema key in behaviour and behaviour schema key in subject rejected')
+    recording["form"] = "prefix-" + form + "-suffix"
+    recording_path.write_text(json.dumps(recording))
+    export_run("--check", first, expected=1, message="form name in JSON")
+    print("export control: original form in recording found")
+
+# Each mutation starts with a fresh copy; production recordings stay untouched.
+with tempfile.TemporaryDirectory(prefix="pql-outcome-controls-") as temporary:
+    for label in ("unchanged", "store", "failure-kind", "signal"):
+        root = Path(temporary) / label
+        shutil.copytree(source, root)
+        expected = 0
+        message = "0 outcome disagreements"
+        if label == "store":
+            path = root / "behaviour/writes-store.json"
+            recording = json.loads(path.read_text())
+            changed = 0
+            for entry in recording["invocations"]:
+                if entry["key"]["home"] == "seed" and entry["key"]["words"] and entry["key"]["words"][0] == "list":
+                    for run in entry["confined"]:
+                        changes = run["home_changes"]["changes"]
+                        kept_changes = [change for change in changes if change["path"] != "data.json"]
+                        changed += len(changes) - len(kept_changes)
+                        run["home_changes"]["changes"] = kept_changes
+            if not changed:
+                raise RuntimeError("outcome control: store mutation changed nothing")
+            path.write_text(json.dumps(recording))
+            expected, message = 1, "case-012 check "
+        elif label == "failure-kind":
+            path = root / "cases/case-057/input.json"
+            record = json.loads(path.read_text())
+            evidence = next(e for e in record["evidence"] if e["failure_kind"] == "wrong_exit")
+            evidence["failure_kind"] = "predicate"
+            path.write_text(json.dumps(record))
+            expected, message = 1, "case-057 check "
+        elif label == "signal":
+            path = root / "behaviour/crashes.json"
+            recording = json.loads(path.read_text())
+            changed = 0
+            for entry in recording["invocations"]:
+                end = entry["confined"][0]["end"]
+                if end.get("signal") == "SIGABRT":
+                    end.update(signal="SIGKILL", by="confinement")
+                    changed += 1
+            if not changed:
+                raise RuntimeError("outcome control: signal mutation changed nothing")
+            path.write_text(json.dumps(recording))
+            expected, message = 1, "case-076 check "
+        result = subprocess.run(
+            ["python3", "-I", str(scripts.joinpath("check-case-outcomes.py")), str(root), str(root / "cases")],
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+            capture_output=True, text=True, timeout=60, check=False,
+        )
+        if result.returncode != expected or message not in result.stdout + result.stderr:
+            raise RuntimeError("outcome control: " + label + ": " + result.stdout + result.stderr)
+        print("outcome control: " + label + ": " + message)
+
+
+# Every witness mutates a fresh scratch kit and checks the diagnostic it earns.
+with tempfile.TemporaryDirectory(prefix="pql-evidence-controls-") as temporary:
+    witnesses = [
+        *[(label, '001', 'discovery', tool, 'evidence check ids must pair one-to-one')
+          for tool in ('ids', 'outcomes')
+          for label in ('last evidence dropped', 'evidence duplicated', 'required dropped')],
+        ('target tier flipped', '069', 'discovery', 'ids', 'target kinds, ids or tiers differ'),
+        ('target size changed', '001', 'byte_bound', 'outcomes', 'target_size '),
+        ('precondition flipped', '093', None, 'outcomes', 'precondition_observed differs'),
+        ('artifact renamed', '001', 'store_unchanged', 'ids', 'artifact targets differ from subject'),
+        ('artifact dropped', '001', 'store_unchanged', 'ids', 'artifact targets differ from subject'),
+        ('evidence tier flipped', '001', 'byte_bound', 'ids', 'evidence tier differs'),
+        ('discovery sixth dropped', '001', 'discovery', 'ids', 'invalid invocation target numbering'),
+        ('discovery first duplicated', '001', 'discovery', 'ids', 'invalid invocation target numbering'),
+        ('discovery held changed', '001', 'discovery', 'outcomes', "recording says ('held', None, None)"),
+        ('byte bound held changed', '001', 'byte_bound', 'outcomes', "recording says ('held', None, None)"),
+        ('store failure hidden', '012', 'store_unchanged', 'outcomes', "recording says ('not_held', None, 'predicate')"),
+        ('crash hidden', '076', None, 'outcomes', "recording says ('not_held', None, 'crashed')"),
+        ('missing read held', '018', 'planted_secret', 'outcomes', "recording says ('not_observed', 'input_missing', None)"),
+        ('scan bound held', '040', 'planted_secret', 'outcomes', "recording says ('not_observed', 'harness_fault', None)"),
+        ('private copy held', '005', 'store_unchanged', 'outcomes', "recording says ('not_observed', 'harness_fault', None)"),
+        ('confinement failure held', '003', 'byte_bound', 'outcomes', "recording says ('not_observed', 'network_unverifiable', None)"),
+        ('stream byte count changed', '001', 'byte_bound', 'ids', 'stream differs from recording'),
+        ('cut recorded help', '001', 'discovery', 'ids', 'cannot decide discovery order from truncated help'),
+        ('empty cases', None, None, 'ids', 'no judge-checked cases checked'),
+        ('empty outcomes', None, None, 'outcomes', 'no judge-checked cases checked'),
+    ]
+    for index, (label, number, probe, tool, diagnostic) in enumerate(witnesses):
+        root = Path(temporary) / str(index)
+        shutil.copytree(source, root)
+        cases = root / 'cases'
+        if number is None:
+            shutil.rmtree(cases)
+            cases.mkdir()
+        else:
+            directory = cases / ('case-' + number)
+            path = directory / 'input.json'
+            record = json.loads(path.read_text())
+            preimages = json.loads((directory / 'preimages.json').read_text())
+            candidates = [e for e in record['evidence'] if preimages[e['check_id']]['probe'] == probe]
+            if label == 'store failure hidden':
+                candidates = [e for e in candidates if e['outcome'] == 'not_held']
+            if label == 'crash hidden':
+                candidates = [e for e in record['evidence'] if e['failure_kind'] == 'crashed']
+            if label in ('byte bound held changed', 'confinement failure held'):
+                candidates = [e for e in candidates if preimages[e['check_id']]['words'] is not None]
+            if label == 'precondition flipped':
+                candidates = [e for e in candidates if e['precondition_observed'] is not None]
+            if label == 'target size changed':
+                candidates = [e for e in candidates if e['target_size'] is not None]
+            evidence = candidates[0]
+            if label == 'last evidence dropped':
+                record['evidence'].pop()
+            elif label == 'evidence duplicated':
+                record['evidence'].append(dict(evidence))
+            elif label == 'required dropped':
+                record['required'] = [e for e in record['required'] if e['id'] != evidence['check_id']]
+            elif label == 'target tier flipped':
+                target = evidence['targets'][0]
+                target['tier'] = 'live' if target['tier'] != 'live' else 'offline'
+            elif label == 'target size changed':
+                evidence['target_size'] += 1
+            elif label == 'precondition flipped':
+                evidence['precondition_observed'] = not evidence['precondition_observed']
+            elif label == 'artifact renamed':
+                next(t for t in evidence['targets'] if t['kind'] == 'artifact')['id'] += '-renamed'
+            elif label == 'artifact dropped':
+                evidence['targets'] = [t for t in evidence['targets'] if t['kind'] != 'artifact']
+            elif label == 'evidence tier flipped':
+                evidence['tier'] = 'live'
+            elif label == 'discovery sixth dropped':
+                evidence['targets'] = [t for t in evidence['targets'] if not t['id'].endswith('#6')]
+            elif label == 'discovery first duplicated':
+                evidence['targets'].append(dict(evidence['targets'][0]))
+            elif label == 'discovery held changed':
+                evidence.update(outcome='not_held', reason=None, failure_kind='predicate')
+            elif label in ('byte bound held changed', 'store failure hidden'):
+                evidence.update(outcome='not_observed', reason='harness_fault', failure_kind=None, target_size=None)
+            elif label == 'crash hidden':
+                evidence.update(outcome='not_observed', reason='network_unverifiable', failure_kind=None)
+            elif label in ('missing read held', 'scan bound held', 'private copy held', 'confinement failure held'):
+                evidence.update(outcome='held', reason=None, failure_kind=None)
+                if label == 'confinement failure held':
+                    pre = preimages[evidence['check_id']]
+                    spec = importlib.util.spec_from_file_location('witness_outcomes', scripts / 'check-case-outcomes.py')
+                    checker = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(checker)
+                    case = json.loads((directory / 'case.json').read_text())
+                    recording = json.loads((root / 'behaviour' / (case['input']['form'] + '.json')).read_text())
+                    run = checker.find(recording, checker.key(pre))
+                    evidence['target_size'] = run['stdout']['bytes'] + run['stderr']['bytes']
+            elif label == 'stream byte count changed':
+                evidence['observed']['stdout']['bytes'] += 1
+            elif label == 'cut recorded help':
+                case = json.loads((directory / 'case.json').read_text())
+                recording_path = root / 'behaviour' / (case['input']['form'] + '.json')
+                recording = json.loads(recording_path.read_text())
+                entry = next(e for e in recording['invocations'] if e['key']['words'] == ['--help'])
+                entry['confined'][0]['stdout']['cut'] = True
+                recording_path.write_text(json.dumps(recording))
+            path.write_text(json.dumps(record))
+        arguments = [str(cases)] if tool == 'ids' else [str(root), str(cases)]
+        result = subprocess.run(
+            ['python3', '-I', str(scripts / ('check-case-' + tool + '.py')), *arguments],
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'), capture_output=True,
+            text=True, timeout=60, check=False,
+        )
+        if result.returncode != 1 or diagnostic not in result.stdout + result.stderr:
+            raise RuntimeError('evidence control: ' + label + ': ' + result.stdout + result.stderr)
+        print('evidence control: ' + label + ': rejected: ' + diagnostic)
+
+
+# A depth bound ends the whole walk, including siblings above that depth.
+with tempfile.TemporaryDirectory(prefix="pql-discovery-bound-control-") as temporary:
+    root = Path(temporary) / 'kit'
+    shutil.copytree(source, root)
+    for other in (root / 'cases').iterdir():
+        if other.name != 'case-001':
+            shutil.rmtree(other)
+    directory = root / 'cases/case-001'
+    case = json.loads((directory / 'case.json').read_text())
+    record = json.loads((directory / 'input.json').read_text())
+    preimages = json.loads((directory / 'preimages.json').read_text())
+    evidence = next(e for e in record['evidence'] if preimages[e['check_id']]['probe'] == 'discovery')
+    record['evidence'] = [evidence]
+    record['required'] = [e for e in record['required'] if e['id'] == evidence['check_id']]
+    preimages = {evidence['check_id']: preimages[evidence['check_id']]}
+    (directory / 'preimages.json').write_text(json.dumps(preimages))
+    evidence['targets'] = [dict(kind='invocation', id=evidence['check_id'] + '#' + str(i + 1), tier='scripted') for i in range(65)]
+    recording_path = root / 'behaviour' / (case['input']['form'] + '.json')
+    recording = json.loads(recording_path.read_text())
+    template = recording['invocations'][0]
+    recording['invocations'] = []
+    case['invocations'] = []
+    import base64
+    import hashlib
+    for depth in range(65):
+        entry = json.loads(json.dumps(template))
+        entry['key'] = dict(words=['down'] * depth + ['--help'], offline_args=[], env=[], runbook=None, step=None, computation=None, home='empty')
+        text = 'COMMANDS:\n  down\n' + ('  sibling\n' if depth == 0 else '')
+        raw = text.encode()
+        entry['confined'][0]['stdout'].update(bytes=len(raw), cut=False, head=text, kept=base64.b64encode(raw).decode(), sha256=hashlib.sha256(raw).hexdigest())
+        recording['invocations'].append(entry)
+        case['invocations'].append(entry['key'])
+    recording_path.write_text(json.dumps(recording))
+    (directory / 'case.json').write_text(json.dumps(case))
+    (directory / 'input.json').write_text(json.dumps(record))
+    result = subprocess.run(
+        ['python3', '-I', str(scripts / 'check-case-ids.py'), str(root / 'cases')],
+        env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'), capture_output=True,
+        text=True, timeout=60, check=False,
+    )
+    if result.returncode or '1 judge-checked cases cross-checked' not in result.stdout:
+        raise RuntimeError('discovery bound control: ' + result.stdout + result.stderr)
+    print('discovery bound control: stops before a sibling above the depth bound')
+
+# Branch witnesses use scratch forms and recordings, never the sealed kit.
+with tempfile.TemporaryDirectory(prefix="pql-branch-controls-") as temporary:
+    for label in ('request bound', 'empty seed', 'help crash', 'numeric precondition'):
+        root = Path(temporary) / label
+        shutil.copytree(source, root)
+        number = '093' if label == 'numeric precondition' else '001'
+        for other in (root / 'cases').iterdir():
+            if other.name != 'case-' + number:
+                shutil.rmtree(other)
+        directory = root / 'cases' / ('case-' + number)
+        case = json.loads((directory / 'case.json').read_text())
+        record = json.loads((directory / 'input.json').read_text())
+        preimages = json.loads((directory / 'preimages.json').read_text())
+        subject_path = directory / case['input']['subject_file']
+        subject = json.loads(subject_path.read_text())
+        recording = json.loads((root / 'behaviour' / (case['input']['form'] + '.json')).read_text())
+        case['input']['form'] = 'synthetic-witness'
+        recording['form'] = 'synthetic-witness'
+        seed = root / 'subjects/synthetic-witness/seed'
+        seed.mkdir(parents=True)
+        if label != 'empty seed':
+            original_case = json.loads((source / 'cases' / ('case-' + number) / 'case.json').read_text())
+            shutil.copytree(source / 'subjects' / original_case['input']['form'] / 'seed', seed, dirs_exist_ok=True)
+        probe = 'store_unchanged' if label == 'empty seed' else 'discovery'
+        if label == 'numeric precondition':
+            evidence = next(e for e in record['evidence'] if e['precondition_observed'] is not None)
+            pre = preimages[evidence['check_id']]
+            argv = pre['expected']['precondition']['computation']['argv']
+            entry = next(e for e in recording['invocations'] if e['key']['computation'] == argv
+                         and e['key']['runbook'] == pre['runbook'] and e['key']['step'] == pre['step'])
+            for run in entry['confined']:
+                run['printed_value'] = {'value': 1}
+                raw = b'1\n'
+                run['stdout'].update(bytes=len(raw), cut=False, head=raw.decode(),
+                                     kept=base64.b64encode(raw).decode(), sha256=hashlib.sha256(raw).hexdigest())
+            evidence['precondition_observed'] = False
+            diagnostic = 'precondition_observed differs: expected False'
+        else:
+            evidence = next(e for e in record['evidence'] if preimages[e['check_id']]['probe'] == probe
+                            and (probe != 'store_unchanged' or preimages[e['check_id']]['words'] is not None))
+            record['evidence'] = [evidence]
+            record['required'] = [e for e in record['required'] if e['id'] == evidence['check_id']]
+            preimages = {evidence['check_id']: preimages[evidence['check_id']]}
+            reason = 'empty_target' if label == 'empty seed' else 'precondition_unmet'
+            evidence.update(outcome='not_observed', reason=reason, failure_kind=None,
+                            target_size=None, precondition_observed=None)
+            diagnostic = "recording says ('not_observed', '" + reason + "', None)"
+            if label == 'empty seed':
+                if not isinstance(subject['store'], str) or any(seed.iterdir()):
+                    raise RuntimeError('empty seed control needs a store path and empty seed')
+            elif label == 'help crash':
+                entry = next(e for e in recording['invocations'] if e['key']['words'] == ['--help'])
+                for run in entry['confined']:
+                    run['end'] = dict(kind='signal', signal='SIGABRT', by=None)
+            else:
+                template = recording['invocations'][0]
+                recording['invocations'] = []
+                for index in range(4097):
+                    entry = json.loads(json.dumps(template))
+                    words = [] if index == 0 else ['command' + str(index)]
+                    entry['key'] = dict(words=words + ['--help'], offline_args=[], env=[],
+                                        runbook=None, step=None, computation=None, home='empty')
+                    text = 'COMMANDS:\n' + ''.join('  command' + str(i) + '\n' for i in range(1, 4097)) if index == 0 else 'Usage\n'
+                    raw = text.encode()
+                    for run in entry['confined']:
+                        run['stdout'].update(bytes=len(raw), cut=False, head=text,
+                                             kept=base64.b64encode(raw).decode(), sha256=hashlib.sha256(raw).hexdigest())
+                    recording['invocations'].append(entry)
+                spec = importlib.util.spec_from_file_location('bound_case_ids', scripts / 'check-case-ids.py')
+                checker = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(checker)
+                status = {}
+                keys = checker.discovery_keys(recording, status=status)
+                if len(keys) != 4096 or not status.get('bounded'):
+                    raise RuntimeError('request bound control did not stop after 4096 requests')
+                case['invocations'] = keys
+                evidence['targets'] = [dict(kind='invocation', id=evidence['check_id'] + '#' + str(i + 1), tier='scripted') for i in range(4096)]
+        (directory / 'case.json').write_text(json.dumps(case))
+        subject_path.write_text(json.dumps(subject))
+        (directory / 'preimages.json').write_text(json.dumps(preimages))
+        (root / 'behaviour/synthetic-witness.json').write_text(json.dumps(recording))
+        for wrong in (False, True):
+            if wrong:
+                if label == 'numeric precondition':
+                    evidence['precondition_observed'] = True
+                else:
+                    evidence.update(outcome='held', reason=None, failure_kind=None)
+            (directory / 'input.json').write_text(json.dumps(record))
+            result = subprocess.run(
+                ['python3', '-I', str(scripts / 'check-case-outcomes.py'), str(root), str(root / 'cases')],
+                env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'), capture_output=True,
+                text=True, timeout=60, check=False,
+            )
+            if result.returncode != int(wrong) or (wrong and diagnostic not in result.stdout + result.stderr):
+                raise RuntimeError('branch control: ' + label + ': ' + result.stdout + result.stderr)
+        print('branch control: ' + label + ': expected result passes; wrong result rejected: ' + diagnostic)

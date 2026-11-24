@@ -1,0 +1,481 @@
+{
+  "subject_file_version": "1.0",
+  "binary": "bin/subject",
+  "facts": {
+    "read_only": false,
+    "has_destructive_ops": true,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "commands": [
+    {
+      "words": [],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 4096,
+      "budget_seconds": 10
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 4096,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "add"
+      ],
+      "class": "safe",
+      "writes": true,
+      "exit_codes": null,
+      "byte_bound": null,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "count"
+      ],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 4096,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "list"
+      ],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 65536,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "remove"
+      ],
+      "class": "destructive",
+      "writes": true,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": null,
+      "budget_seconds": 30
+    }
+  ],
+  "declared_count": 5,
+  "declared_count": 5,
+  "seed": "seed",
+  "store": "data.json",
+  "offline": [
+    {
+      "applies_to": [
+        [
+          "account"
+        ],
+        [
+          "add"
+        ],
+        [
+          "count"
+        ],
+        [
+          "list"
+        ],
+        [
+          "remove"
+        ]
+      ],
+      "args": [
+        "--offline"
+      ],
+      "env": {}
+    }
+  ],
+  "bookkeeping": [
+    ".local/state/widgets"
+  ],
+  "secret": {
+    "path": ".config/widgets/token",
+    "kind": "credential",
+    "reason": null,
+    "token": "PLANTED-TOKEN-0001",
+    "commands": [
+      [
+        "account"
+      ]
+    ]
+  },
+  "runbooks": [
+    {
+      "name": "read",
+      "steps": [
+        {
+          "name": "list all",
+          "words": [
+            "list",
+            "--json"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "output-conformance",
+              "predicate": "stdout_json_equals",
+              "path": null,
+              "expected": {
+                "literal": {
+                  "source": "local",
+                  "truncated": false,
+                  "widgets": [
+                    {
+                      "name": "gear",
+                      "tag": "metal"
+                    },
+                    {
+                      "name": "spring",
+                      "tag": "metal"
+                    },
+                    {
+                      "name": "valve",
+                      "tag": "brass"
+                    }
+                  ]
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "determinism",
+              "predicate": "stdout_json_equals",
+              "path": null,
+              "expected": {
+                "literal": {
+                  "source": "local",
+                  "truncated": false,
+                  "widgets": [
+                    {
+                      "name": "gear",
+                      "tag": "metal"
+                    },
+                    {
+                      "name": "spring",
+                      "tag": "metal"
+                    },
+                    {
+                      "name": "valve",
+                      "tag": "brass"
+                    }
+                  ]
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/count.sh",
+                    "{SEED}/data.json"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "provenance-honesty",
+              "predicate": "json_path_equals",
+              "path": "/source",
+              "expected": {
+                "literal": "local"
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "token-economy",
+              "predicate": "stdout_bytes_at_most",
+              "path": null,
+              "expected": {
+                "literal": 4096
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        },
+        {
+          "name": "list all again",
+          "words": [
+            "list",
+            "--json"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "determinism",
+              "predicate": "stdout_json_equals",
+              "path": null,
+              "expected": {
+                "literal": {
+                  "source": "local",
+                  "truncated": false,
+                  "widgets": [
+                    {
+                      "name": "gear",
+                      "tag": "metal"
+                    },
+                    {
+                      "name": "spring",
+                      "tag": "metal"
+                    },
+                    {
+                      "name": "valve",
+                      "tag": "brass"
+                    }
+                  ]
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        },
+        {
+          "name": "list limited",
+          "words": [
+            "list",
+            "--json",
+            "--limit",
+            "2"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "completeness-signaling",
+              "predicate": "json_path_equals",
+              "path": "/truncated",
+              "expected": {
+                "literal": true
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        },
+        {
+          "name": "list by tag",
+          "words": [
+            "list",
+            "--json",
+            "--tag",
+            "brass"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "flag-conformance",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "literal": 1
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "errors",
+      "steps": [
+        {
+          "name": "unknown flag",
+          "words": [
+            "list",
+            "--bogus"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "graceful-failure",
+              "predicate": "exit_code",
+              "path": null,
+              "expected": {
+                "literal": 2
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "error-message-quality",
+              "predicate": "stderr_contains",
+              "path": null,
+              "expected": {
+                "literal": "--bogus"
+              },
+              "precondition": null,
+              "exit_codes": [
+                2
+              ]
+            }
+          ]
+        },
+        {
+          "name": "bad limit",
+          "words": [
+            "list",
+            "--limit",
+            "zero"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "robustness",
+              "predicate": "exit_code",
+              "path": null,
+              "expected": {
+                "literal": 2
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "add twice",
+      "steps": [
+        {
+          "name": "add once",
+          "words": [
+            "add",
+            "sprocket",
+            "--tag",
+            "steel"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "execution",
+              "predicate": "exit_code",
+              "path": null,
+              "expected": {
+                "literal": 0
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        },
+        {
+          "name": "add again",
+          "words": [
+            "add",
+            "sprocket",
+            "--tag",
+            "steel"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "execution",
+              "predicate": "exit_code",
+              "path": null,
+              "expected": {
+                "literal": 0
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        },
+        {
+          "name": "count after",
+          "words": [
+            "list",
+            "--json"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "idempotency",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/count-after-add.sh",
+                    "{SEED}/data.json",
+                    "sprocket"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "remove guard",
+      "steps": [
+        {
+          "name": "remove without confirm",
+          "words": [
+            "remove",
+            "gear"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "destructive-guard",
+              "predicate": "stderr_contains",
+              "path": null,
+              "expected": {
+                "literal": "--confirm"
+              },
+              "precondition": null,
+              "exit_codes": [
+                3
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [],
+  "prompts": {
+    "version": "none"
+  }
+}

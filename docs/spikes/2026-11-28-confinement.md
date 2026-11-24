@@ -183,7 +183,7 @@ The store-unchanged probe must therefore expect a declared bookkeeping path for 
 - the text-encoding value is built from the user id, as above;
 - a planted file below the home's top level is protected along its whole path, as the nested-file limit above now says.
 
-**The rules are frozen.** The confinement rules were frozen on 2026-11-23, on the spike code of commit `30e7d9e`. Every later commit in that pull request left `spike/` unchanged. The whole suite passed on both supported systems, with 2,227 passing test results and none failing on each:
+**The rules are frozen.** The confinement rules were frozen on 2026-11-23, on the spike code of commit `30e7d9e`, which reached the main branch unchanged in the squash commit `5aa554a`. Every later commit in that pull request left `spike/` unchanged. The whole suite passed on both supported systems, with 2,227 passing test results and none failing on each:
 
 | System | Where | Time |
 |---|---|---|

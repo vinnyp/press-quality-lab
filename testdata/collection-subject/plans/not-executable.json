@@ -1,0 +1,108 @@
+{
+  "form": "not-executable",
+  "violating": false,
+  "invocations": [
+    {
+      "key": {
+        "words": [],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 10,
+      "store_control": true,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "account"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "count"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "budget_seconds": 10,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "account"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "planted"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": true
+    }
+  ]
+}

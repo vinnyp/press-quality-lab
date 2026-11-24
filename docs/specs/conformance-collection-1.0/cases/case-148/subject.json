@@ -1,0 +1,143 @@
+{
+  "subject_file_version": "1.0",
+  "binary": "bin/subject",
+  "facts": {
+    "read_only": false,
+    "has_destructive_ops": true,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "commands": [
+    {
+      "words": [],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 4096,
+      "budget_seconds": 10
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 4096,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "add"
+      ],
+      "class": "safe",
+      "writes": true,
+      "exit_codes": null,
+      "byte_bound": null,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "count"
+      ],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 4096,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "list"
+      ],
+      "class": "safe",
+      "writes": false,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": 65536,
+      "budget_seconds": 30
+    },
+    {
+      "words": [
+        "remove"
+      ],
+      "class": "destructive",
+      "writes": true,
+      "exit_codes": [
+        0
+      ],
+      "byte_bound": null,
+      "budget_seconds": 30
+    }
+  ],
+  "declared_count": 5,
+  "seed": "seed",
+  "store": "data.json",
+  "offline": [
+    {
+      "applies_to": [
+        [
+          "account"
+        ],
+        [
+          "count"
+        ]
+      ],
+      "args": [],
+      "env": {
+        "WIDGETS_OFFLINE": "1"
+      }
+    },
+    {
+      "applies_to": [
+        [
+          "list"
+        ]
+      ],
+      "args": [
+        "--offline"
+      ],
+      "env": {}
+    },
+    {
+      "applies_to": [
+        [
+          "list"
+        ]
+      ],
+      "args": [
+        "--quiet"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "1"
+      }
+    }
+  ],
+  "bookkeeping": [
+    ".local/state/widgets"
+  ],
+  "secret": {
+    "path": ".config/widgets/token",
+    "kind": "credential",
+    "reason": null,
+    "token": "PLANTED-TOKEN-0001",
+    "commands": [
+      [
+        "account"
+      ]
+    ]
+  },
+  "runbooks": [],
+  "markers": [],
+  "prompts": {
+    "version": "none"
+  }
+}

@@ -258,13 +258,23 @@
               },
               {
                 "type": "null"
+              },
+              {
+                "$ref": "subject-file.schema.json#/$defs/placeholder"
               }
             ]
           },
           "store": {
-            "type": [
-              "string",
-              "null"
+            "oneOf": [
+              {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              {
+                "$ref": "subject-file.schema.json#/$defs/placeholder"
+              }
             ]
           },
           "bookkeeping": {
@@ -290,8 +300,15 @@
                 ],
                 "properties": {
                   "declared_count": {
-                    "type": "integer",
-                    "minimum": 0
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "$ref": "subject-file.schema.json#/$defs/placeholder"
+                      }
+                    ]
                   },
                   "commands": {
                     "type": "array",
@@ -403,6 +420,18 @@
                     }
                   }
                 }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "secret"
+                ],
+                "properties": {
+                  "secret": {
+                    "$ref": "subject-file.schema.json#/$defs/placeholder"
+                  }
+                }
               }
             ]
           },
@@ -483,9 +512,175 @@
               }
             ]
           }
-        }
-      },
-      "description": "A run with any placeholder cannot be anchored, so no preimage here holds one."
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "probe": {
+                  "const": "discovery"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "parameters": {
+                  "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/1"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "probe": {
+                  "const": "bare"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "parameters": {
+                  "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/2"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "probe": {
+                  "const": "byte_bound"
+                }
+              }
+            },
+            "then": {
+              "if": {
+                "properties": {
+                  "words": {
+                    "type": "null"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "parameters": {
+                    "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/0"
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "parameters": {
+                    "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/3"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "probe": {
+                  "const": "exit_codes"
+                }
+              }
+            },
+            "then": {
+              "if": {
+                "properties": {
+                  "words": {
+                    "type": "null"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "parameters": {
+                    "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/0"
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "parameters": {
+                    "allOf": [
+                      {
+                        "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/2"
+                      },
+                      {
+                        "properties": {
+                          "exit_codes": {
+                            "type": "array"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "probe": {
+                  "const": "planted_secret"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "parameters": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/0"
+                    },
+                    {
+                      "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/4"
+                    },
+                    {
+                      "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/5"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "probe": {
+                  "const": "store_unchanged"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "parameters": {
+                  "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/0"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "probe": {
+                  "const": null
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "parameters": {
+                  "$ref": "#/properties/preimages/additionalProperties/properties/parameters/anyOf/2"
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     "created_at": {
       "type": "string",
