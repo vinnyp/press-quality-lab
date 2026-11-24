@@ -13,7 +13,7 @@ corrections and notes go in the errata note.
 `conformance-collection-1.0/` is version 1.0 of the conformance collection specification: how the
 engine turns a subject file and a requested scope into the record the judge decides, and how it
 confines the subject on macOS.
-It is a draft: it is not sealed, it holds no `KIT.sha256`, and its runner prints `UNSEALED`.
+Its text is frozen for review, but it is not sealed: it holds no `KIT.sha256`, and its runner prints `UNSEALED`.
 `conformance-collection-1.0-errata.md` is its errata note.
 
 ## Running the cases against a judge
