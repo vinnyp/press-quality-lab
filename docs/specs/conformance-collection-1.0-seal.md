@@ -19,3 +19,14 @@ A build is scored on QE19's fields. A build that disagrees with a private case m
 - Every judge-checked case agrees with judge 1.0, cross-checks against its form's recording, and passes the outcome checker; `check.sh` runs all three.
 - A reader on a different model derived every public and private case from an export of the text alone. The last round, on the ratified text, agreed on every case. The review log `docs/agent-reviews/2026-11-24-pr3-build-peer-reviews.md` records every round and review.
 - Every recording was made on macOS 27.2 (26B123), as the pull request states.
+
+## Where the provenance commits are
+
+The recordings and the spike record name commits made on pull-request branches that were later squashed into one commit on `main`. Each stays reachable through its pull request. On `main`, what each produced (the frozen code, the recordings) is in the squash commit:
+
+| Named commit | Where it is named | On `main` |
+|---|---|---|
+| `30e7d9e` | the spike record's freeze | `5aa554a`, the squash of #9 |
+| `35e488e`, `0746fbc` | the recordings' `commit` field | `32c5cb7`, the squash of #12 |
+
+The spike's code, whose launcher and profile the recordings' digests name, is on `main` until commit 490d650 and was removed in the next pull request.

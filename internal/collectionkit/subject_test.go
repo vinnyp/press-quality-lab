@@ -233,7 +233,7 @@ func TestCollectionSubject(t *testing.T) {
 			recordingFile := filepath.Join(root, "docs/specs/conformance-collection-1.0/behaviour", form+".json")
 			b, err := os.ReadFile(recordingFile)
 			if os.IsNotExist(err) {
-				t.Fatalf("missing recording behaviour/%s.json; record on macOS before committing", form)
+				t.Fatalf("missing recording behaviour/%s.json; no recorder exists until phase 3's verifier (AGENTS.md, Checks)", form)
 			}
 			if err != nil {
 				t.Fatal(err)
@@ -284,7 +284,7 @@ func TestCollectionSubject(t *testing.T) {
 					subjectCopy(t, filepath.Join(root, "docs/specs/conformance-collection-1.0/subjects", form, "seed"), home)
 				}
 				first := entry.Confined[0]
-				// Signal and budget endings are checked by the macOS recorder.
+				// Signal and budget endings were checked by the macOS recorder when these recordings were made.
 				if first.End.Kind != "exit" {
 					continue
 				}
@@ -530,8 +530,8 @@ func testDefectSubject(t *testing.T, binary, form string) {
 	t.Helper()
 	switch form {
 	case "tries-network", "live-first", "starts-child", "listens", "ignores-home", "cache-outside-home", "reads-key-file", "signals-process", "reads-process-env", "forges-atime", "links-decoy":
-		// Only the recorder owns these forms' decoys. Direct checks exercise help;
-		// the recorder checks the act and its refusal with disposable targets.
+		// Only the recorder, removed after the seal, set up these forms' decoys. Direct checks
+		// exercise help; the recorder checked the act and its refusal with disposable targets.
 		testSubjectHelp(t, binary)
 		return
 	}
@@ -580,7 +580,7 @@ func testDefectSubject(t *testing.T, binary, form string) {
 		}
 		return
 	case "overruns":
-		return // The recorder checks the budget ending.
+		return // The recorder checked the budget ending when it recorded this form.
 	default:
 
 		if strings.HasPrefix(form, "leak-") {

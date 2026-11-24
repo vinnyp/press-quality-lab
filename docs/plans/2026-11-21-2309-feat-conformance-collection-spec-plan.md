@@ -25,8 +25,9 @@ The prefix is needed because the citation test reads every bare R or AE number u
 - **Execution profile:** Deep. Four pull requests: the spike, the draft specification, the corpus and seal, then the spike's removal. The main session writes the specification and a coding agent writes the code (KTD16).
 - **Who finishes:** The executing session opens each pull request and stops. The owner merges and ratifies.
 - **Product authority:** The owner, who ratifies and seals the specification. This plan covers phase 2 only. The grade command, the first real grade and steering are not active scope.
-- **Open blockers:** None for planning. PR1 and PR2 are merged (#8, #9). The spike passed for macOS 27.0.1 and 27.2 (CR6), the real subject ran offline and confined (CR4), the confinement rules froze on 2026-11-23, and the draft specification is on `main`.
-- **Dates:** Spike answered by 2026-11-28, specification draft by 2026-12-05, corpus by 2026-12-12, seal by 2026-12-19. A late checkpoint moves the date and cuts nothing (CR106).
+- **Status:** complete on 2026-11-24. All four pull requests are merged: the spike (#8), the draft specification (#9), the corpus and seal (#12), and the spike's removal (#14). The owner ratified the specification and it is sealed as `docs/specs/conformance-collection-1.0/`.
+- **Open blockers:** None.
+- **Dates:** Spike answered by 2026-11-28, specification draft by 2026-12-05, corpus by 2026-12-12, seal by 2026-12-19. A late checkpoint moves the date and cuts nothing (CR106). Every checkpoint was met early: the seal and the end of phase 2 came on 2026-11-24.
 
 ---
 

@@ -20,7 +20,7 @@ tags: [testing, confinement, sandbox, macos, syspolicyd, parallel, flaky, spike]
 
 ## Problem
 
-The confinement spike's suite (`spike/confinement/`) runs about 1,900 scenarios 25 times each. Run in parallel, it went flaky and took five times longer per run than before. The cause was the harness writing a fresh copy of the launcher and the program for every run.
+The confinement spike's suite, in `spike/confinement/` until it was removed after the conformance collection specification was sealed, ran about 1,900 scenarios 25 times each. Run in parallel, it went flaky and took five times longer per run than before. The cause was the harness writing a fresh copy of the launcher and the program for every run.
 
 ## Symptoms
 
@@ -42,7 +42,7 @@ Make each scenario's private copy once and reuse it across that scenario's runs.
 - the inode, mode, size, modification time and change time;
 - the SHA-256 of the bytes.
 
-On any difference the run fails and names the change. The set is never silently remade, because a run that changed its own image is a finding. See `prepareImages` and its cache in `spike/confinement/confinement_darwin_test.go`.
+On any difference the run fails and names the change. The set is never silently remade, because a run that changed its own image is a finding. `prepareImages` and its cache were in `spike/confinement/confinement_darwin_test.go`, which is in the history at commit 490d650, the last commit on `main` that holds the spike.
 
 After the fix the full suite ran in about 4 to 5 minutes on 18 cores and under 8 minutes with `GOMAXPROCS=3`, with every scenario 25 of 25.
 

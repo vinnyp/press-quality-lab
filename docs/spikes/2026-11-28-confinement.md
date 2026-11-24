@@ -2,6 +2,8 @@
 
 The spike asks whether macOS can confine a subject CLI and a computation tightly enough for the conformance collection to trust what it observes (CR1 to CR3). It was run on synthetic programs, and once, offline, on one real printed CLI. This record states what was tested, on which systems, and every limit left open (CR7). The owner decides the gate (CR6).
 
+**The code is gone.** The spike's harness, suite and recorder in `spike/confinement/` were removed after the conformance collection specification 1.0 was sealed; they stay in the repository's history, and commit 490d650 is the last commit on `main` that holds them. The paths this record names are those of that code.
+
 **Status:** passed for macOS 27.0.1 and 27.2, by the owner's decision on 2026-11-23 (CR6, KTD5). The suite passes on macOS 27.2 and on GitHub's macOS 27.0.1 image. On macOS 26.7.2 it fails closed, because that version rejects the profile, so macOS 26 is unsupported and falls under CR23.
 
 ## Systems tested
