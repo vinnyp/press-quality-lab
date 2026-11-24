@@ -9,14 +9,14 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 - `docs/requirements.md`: the requirements (R1 to R42) and acceptance examples (AE1 to AE36) that the specifications cite. Their numbers and wording do not change, and actors A1 to A4 and flows F1 to F5 keep their ids.
 - The engine's command is `pql`, under `cmd/pql`; the plan's §4 gives the intended package layout.
 - `docs/solutions/`: documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`).
+- `CODING_STANDARDS.md`: the rules code here follows. Read it before writing or reviewing code, and update it when a change adds or retires a rule.
+- `REVIEW.md`: how review works here, severities and the evidence a finding needs. Read it before reviewing a change, and update it when the team's review practice changes.
 
 ## Specifications are the authority
 
-- Build from the specification's text, for every input its schemas allow. The cases are examples of the rules, not the rules.
 - A sealed specification folder is never edited. Its digest file lists every file in it. A rule that needs changing gets a new version in a new folder, ratified by the owner.
 - Editorial corrections and notes on a sealed specification go in its dated errata note beside the folder (`docs/specs/judge-1.0-errata.md` for version 1.0), never in the folder.
 - If the rulebook, the contract and the schemas disagree on some input, or the text can honestly be read two ways, stop and report the input and both readings. Do not pick one quietly and do not work around it in the engine.
-- The judge decides every verdict. Code that collects evidence reports what it saw for one check or one trial and nothing above that: no requiredness, no rollups, no comparison, no verdict.
 
 ## Nothing is ported
 
@@ -80,13 +80,12 @@ Run Python there with `PYTHONDONTWRITEBYTECODE=1`; a stray file makes the case r
 
 ## Tests
 
-- Test the rules, not only the given cases. A test must fail when the rule it guards is broken; check that by breaking the rule.
-- A check that could not evaluate its subject never reports a pass.
+- The rules tests must meet are in `CODING_STANDARDS.md`.
 - Cobra (`github.com/spf13/cobra`) is the approved command framework, used under `cmd/` only. The import-guard test enforces this. Any other dependency beyond the standard library is a deliberate, reviewed addition. The gate runs with the network off.
 
 ## Review
 
-A non-trivial change is reviewed before it merges by someone, or some agent, that did not write it. Specifications and each phase of the plan also get one review by a different model. Treat a reviewer's finding as a claim to verify against the text and the code before acting on it.
+A non-trivial change is reviewed before it merges by someone, or some agent, that did not write it. Specifications and each phase of the plan also get one review by a different model. `REVIEW.md` says how a finding is weighed and verified.
 
 ## Spending
 
