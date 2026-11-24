@@ -589,14 +589,20 @@ func checkCorpus(root string) ([]string, []string) {
 					}
 				}
 				result := ""
+				neverCredits := false
 				for _, check := range candidate.Expect.Output.Checks {
 					counterpart, exists := candidate.preimages[check.ID]
 					if present && exists && corpusEqual(selector, counterpart) {
 						result = check.Result
+						for _, required := range candidate.required {
+							if required.ID == check.ID && !required.Crediting {
+								neverCredits = true
+							}
+						}
 						break
 					}
 				}
-				if result == "held_crediting" {
+				if result == "held_crediting" || (result == "held_non_crediting" && neverCredits) {
 					held = true
 					break
 				}
@@ -717,11 +723,13 @@ func TestCorpusTwinChains(t *testing.T) {
 	for _, test := range []struct {
 		name, last, want string
 		cycle            bool
+		neverCredits     bool
 	}{
-		{"repaired", "held_crediting", "", false},
-		{"non crediting", "held_non_crediting", "case-001: twin counterpart a must be held and crediting", false},
-		{"ended", "unobserved", "case-003: twin counterpart c must be held and crediting", false},
-		{"cycle", "unobserved", "case-001: twin chain cycles at case-001", true},
+		{"repaired", "held_crediting", "", false, false},
+		{"non crediting", "held_non_crediting", "case-001: twin counterpart a must be held and crediting", false, false},
+		{"never credits", "held_non_crediting", "", false, true},
+		{"ended", "unobserved", "case-003: twin counterpart c must be held and crediting", false, false},
+		{"cycle", "unobserved", "case-001: twin chain cycles at case-001", true, false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			root := scratchCorpus(t)
@@ -755,6 +763,7 @@ func TestCorpusTwinChains(t *testing.T) {
 						writeCorpus(t, root, "cases/"+id+"/"+name, v)
 					}
 				}
+				writeCorpus(t, root, "cases/"+id+"/input.json", map[string]any{"required": []any{map[string]any{"id": check, "dimension": "bounding", "crediting": !(test.neverCredits && i == count)}}})
 				writeCorpus(t, root, "cases/"+id+"/preimages.json", map[string]any{check: map[string]any{"probe": "byte_bound", "dimension": "bounding", "words": []string{"list"}}})
 			}
 			failures, _ := checkCorpus(root)

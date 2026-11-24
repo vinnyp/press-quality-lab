@@ -604,7 +604,7 @@
       "outcome": "held",
       "reason": null,
       "failure_kind": null,
-      "target_size": 0,
+      "target_size": 299,
       "precondition_observed": null,
       "tier": "scripted",
       "expected": null,

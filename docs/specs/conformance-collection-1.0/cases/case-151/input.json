@@ -468,18 +468,16 @@
       "precondition_observed": null,
       "tier": "scripted",
       "expected": null,
-      "observed": {
-        "stdout": {
-          "bytes": 12,
-          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
-          "cut": false,
-          "head": "{\"count\":3}\n"
-        }
-      },
+      "observed": null,
       "targets": [
         {
           "kind": "invocation",
-          "id": "b435730f2b17433209a358f83ab8cf819b3fdf4f2af00c2b4bd4b2ada1296eab",
+          "id": "b435730f2b17433209a358f83ab8cf819b3fdf4f2af00c2b4bd4b2ada1296eab#1",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "b435730f2b17433209a358f83ab8cf819b3fdf4f2af00c2b4bd4b2ada1296eab#2",
           "tier": "scripted"
         },
         {

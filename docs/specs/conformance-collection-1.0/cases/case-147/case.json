@@ -357,19 +357,19 @@
     "route:token-economy"
   ],
   "expect": {
-    "exit_code": 4,
+    "exit_code": 0,
     "judge_output": {
       "rulebook_version": "1.0",
       "outcome": "verdict",
       "rejected_by": null,
-      "exit_code": 4,
+      "exit_code": 0,
       "scope": [
         "conformance"
       ],
       "verdict": {
-        "token": "PROVISIONAL",
-        "sub_label": "gaps",
-        "plain": "not_measured"
+        "token": "PASSED",
+        "sub_label": null,
+        "plain": "green"
       },
       "own_verdict": null,
       "counts": {
@@ -478,9 +478,9 @@
         },
         {
           "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
-          "result": "unobserved",
-          "rule": "C3",
-          "reason": "empty_target",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
           "detail": null,
           "k": null,
           "n": null,
@@ -854,8 +854,8 @@
         },
         {
           "dimension": "bounding",
-          "state": "HARNESS",
-          "rule": "D4",
+          "state": "GREEN",
+          "rule": "D7",
           "reason": null
         },
         {
@@ -926,8 +926,8 @@
         },
         {
           "group": "Conformance",
-          "state": "GAPPED",
-          "rule": "G3"
+          "state": "GREEN",
+          "rule": "G5"
         },
         {
           "group": "Usability",

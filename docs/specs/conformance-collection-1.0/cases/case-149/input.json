@@ -840,18 +840,16 @@
       "precondition_observed": null,
       "tier": "scripted",
       "expected": null,
-      "observed": {
-        "stdout": {
-          "bytes": 34,
-          "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f",
-          "cut": false,
-          "head": "{\"account\":\"ok\",\"token_bytes\":42}\n"
-        }
-      },
+      "observed": null,
       "targets": [
         {
           "kind": "invocation",
-          "id": "83bb41092f30590edb2c9fd07198dc9f54dc9659d67181c4f25e5174e16ac154",
+          "id": "83bb41092f30590edb2c9fd07198dc9f54dc9659d67181c4f25e5174e16ac154#1",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "83bb41092f30590edb2c9fd07198dc9f54dc9659d67181c4f25e5174e16ac154#2",
           "tier": "scripted"
         },
         {
