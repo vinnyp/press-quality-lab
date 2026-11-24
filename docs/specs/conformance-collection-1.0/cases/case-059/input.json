@@ -14,10 +14,36 @@
   },
   "required": [
     {
+      "id": "040fd7d30e044eedcb8ce84ae9a38435de7ffab161b9691ce8d01b9ecf5457f2",
+      "kind": "plain",
+      "dimension": "destructive-guard",
+      "record": "read",
+      "crediting": false,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
       "id": "0b577d54b06b30cd4f259d54b6d941b32152c3ba80552b29b5e420f07d0654b8",
       "kind": "plain",
       "dimension": "destructive-guard",
       "record": "remove guard",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "0c6cce0ba7734324026aea9870bdc27df34d77bdffa5bb9bc6a668511f2e3c29",
+      "kind": "plain",
+      "dimension": "completeness-signaling",
+      "record": "read",
       "crediting": true,
       "empty_satisfiable": false,
       "asserts_emptiness": false,
@@ -92,6 +118,19 @@
       "condition_a": null
     },
     {
+      "id": "29473ca417d026736e87d0b56cc28b918ee761f70d552bb59020f9dc3c5dc77b",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
       "id": "3073814a5b13a99f7e7af7cdc3c12e0692644ac089501f1d4036755a548fd2f5",
       "kind": "plain",
       "dimension": "graceful-failure",
@@ -109,19 +148,6 @@
       "kind": "plain",
       "dimension": "side-effect-integrity",
       "record": null,
-      "crediting": true,
-      "empty_satisfiable": false,
-      "asserts_emptiness": false,
-      "precondition": null,
-      "declared_count": null,
-      "condition": null,
-      "condition_a": null
-    },
-    {
-      "id": "3a5f9f6dd4f659c533bd05e9113a41b31f802bb8bceec9cf290281fd52bf4786",
-      "kind": "plain",
-      "dimension": "flag-conformance",
-      "record": "read",
       "crediting": true,
       "empty_satisfiable": false,
       "asserts_emptiness": false,
@@ -222,19 +248,6 @@
       "condition_a": null
     },
     {
-      "id": "741f5db52e9780980a3955294dde6e27cb64b3428851881fb611ec9a66bd3d31",
-      "kind": "plain",
-      "dimension": "completeness-signaling",
-      "record": "read",
-      "crediting": true,
-      "empty_satisfiable": false,
-      "asserts_emptiness": false,
-      "precondition": null,
-      "declared_count": null,
-      "condition": null,
-      "condition_a": null
-    },
-    {
       "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
       "kind": "plain",
       "dimension": "execution",
@@ -287,10 +300,10 @@
       "condition_a": null
     },
     {
-      "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+      "id": "ba98f323c794d5baeab2796c5ff4d3906071179c2cbac05992f22246d63f496e",
       "kind": "plain",
-      "dimension": "side-effect-integrity",
-      "record": null,
+      "dimension": "flag-conformance",
+      "record": "read",
       "crediting": true,
       "empty_satisfiable": false,
       "asserts_emptiness": false,
@@ -300,11 +313,11 @@
       "condition_a": null
     },
     {
-      "id": "c1c89eabdb5ddec98f09df85f159c218787754880db30c0375c66eb9e591f1d8",
+      "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
       "kind": "plain",
-      "dimension": "destructive-guard",
-      "record": "read",
-      "crediting": false,
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
       "empty_satisfiable": false,
       "asserts_emptiness": false,
       "precondition": null,
@@ -406,6 +419,35 @@
   ],
   "evidence": [
     {
+      "check_id": "040fd7d30e044eedcb8ce84ae9a38435de7ffab161b9691ce8d01b9ecf5457f2",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 110,
+          "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "040fd7d30e044eedcb8ce84ae9a38435de7ffab161b9691ce8d01b9ecf5457f2",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
       "check_id": "0b577d54b06b30cd4f259d54b6d941b32152c3ba80552b29b5e420f07d0654b8",
       "outcome": "held",
       "reason": null,
@@ -426,6 +468,35 @@
         {
           "kind": "invocation",
           "id": "0b577d54b06b30cd4f259d54b6d941b32152c3ba80552b29b5e420f07d0654b8",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "0c6cce0ba7734324026aea9870bdc27df34d77bdffa5bb9bc6a668511f2e3c29",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 110,
+          "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "0c6cce0ba7734324026aea9870bdc27df34d77bdffa5bb9bc6a668511f2e3c29",
           "tier": "scripted"
         }
       ],
@@ -580,6 +651,35 @@
       }
     },
     {
+      "check_id": "29473ca417d026736e87d0b56cc28b918ee761f70d552bb59020f9dc3c5dc77b",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 142,
+          "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "29473ca417d026736e87d0b56cc28b918ee761f70d552bb59020f9dc3c5dc77b",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
       "check_id": "3073814a5b13a99f7e7af7cdc3c12e0692644ac089501f1d4036755a548fd2f5",
       "outcome": "held",
       "reason": null,
@@ -634,35 +734,6 @@
         {
           "kind": "artifact",
           "id": "data.json",
-          "tier": "scripted"
-        }
-      ],
-      "evaluator": {
-        "kind": "deterministic",
-        "model": null
-      }
-    },
-    {
-      "check_id": "3a5f9f6dd4f659c533bd05e9113a41b31f802bb8bceec9cf290281fd52bf4786",
-      "outcome": "held",
-      "reason": null,
-      "failure_kind": null,
-      "target_size": null,
-      "precondition_observed": null,
-      "tier": "scripted",
-      "expected": null,
-      "observed": {
-        "stdout": {
-          "bytes": 80,
-          "sha256": "f4fba878ff6740de6953ff888c25f538f1242f2bda95fedab405b6f63a776e76",
-          "cut": false,
-          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
-        }
-      },
-      "targets": [
-        {
-          "kind": "invocation",
-          "id": "3a5f9f6dd4f659c533bd05e9113a41b31f802bb8bceec9cf290281fd52bf4786",
           "tier": "scripted"
         }
       ],
@@ -880,35 +951,6 @@
       }
     },
     {
-      "check_id": "741f5db52e9780980a3955294dde6e27cb64b3428851881fb611ec9a66bd3d31",
-      "outcome": "held",
-      "reason": null,
-      "failure_kind": null,
-      "target_size": null,
-      "precondition_observed": null,
-      "tier": "scripted",
-      "expected": null,
-      "observed": {
-        "stdout": {
-          "bytes": 110,
-          "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335",
-          "cut": false,
-          "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n"
-        }
-      },
-      "targets": [
-        {
-          "kind": "invocation",
-          "id": "741f5db52e9780980a3955294dde6e27cb64b3428851881fb611ec9a66bd3d31",
-          "tier": "scripted"
-        }
-      ],
-      "evaluator": {
-        "kind": "deterministic",
-        "model": null
-      }
-    },
-    {
       "check_id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
       "outcome": "held",
       "reason": null,
@@ -1035,6 +1077,35 @@
       }
     },
     {
+      "check_id": "ba98f323c794d5baeab2796c5ff4d3906071179c2cbac05992f22246d63f496e",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 80,
+          "sha256": "f4fba878ff6740de6953ff888c25f538f1242f2bda95fedab405b6f63a776e76",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "ba98f323c794d5baeab2796c5ff4d3906071179c2cbac05992f22246d63f496e",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
       "check_id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
       "outcome": "held",
       "reason": null,
@@ -1060,35 +1131,6 @@
         {
           "kind": "artifact",
           "id": "data.json",
-          "tier": "scripted"
-        }
-      ],
-      "evaluator": {
-        "kind": "deterministic",
-        "model": null
-      }
-    },
-    {
-      "check_id": "c1c89eabdb5ddec98f09df85f159c218787754880db30c0375c66eb9e591f1d8",
-      "outcome": "held",
-      "reason": null,
-      "failure_kind": null,
-      "target_size": null,
-      "precondition_observed": null,
-      "tier": "scripted",
-      "expected": null,
-      "observed": {
-        "stdout": {
-          "bytes": 110,
-          "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335",
-          "cut": false,
-          "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n"
-        }
-      },
-      "targets": [
-        {
-          "kind": "invocation",
-          "id": "c1c89eabdb5ddec98f09df85f159c218787754880db30c0375c66eb9e591f1d8",
           "tier": "scripted"
         }
       ],

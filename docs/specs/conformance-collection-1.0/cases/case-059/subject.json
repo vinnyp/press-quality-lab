@@ -191,7 +191,18 @@
             "--json"
           ],
           "budget_seconds": 30,
-          "checks": []
+          "checks": [
+            {
+              "dimension": "execution",
+              "predicate": "exit_code",
+              "path": null,
+              "expected": {
+                "literal": 0
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
         },
         {
           "name": "list limited",

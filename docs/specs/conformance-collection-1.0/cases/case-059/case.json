@@ -351,7 +351,35 @@
       "stale_markers": [],
       "checks": [
         {
+          "id": "040fd7d30e044eedcb8ce84ae9a38435de7ffab161b9691ce8d01b9ecf5457f2",
+          "result": "held_non_crediting",
+          "rule": "C8",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
           "id": "0b577d54b06b30cd4f259d54b6d941b32152c3ba80552b29b5e420f07d0654b8",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "0c6cce0ba7734324026aea9870bdc27df34d77bdffa5bb9bc6a668511f2e3c29",
           "result": "held_crediting",
           "rule": "C7",
           "reason": null,
@@ -435,6 +463,20 @@
           "to_run": null
         },
         {
+          "id": "29473ca417d026736e87d0b56cc28b918ee761f70d552bb59020f9dc3c5dc77b",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
           "id": "3073814a5b13a99f7e7af7cdc3c12e0692644ac089501f1d4036755a548fd2f5",
           "result": "held_non_crediting",
           "rule": "C8",
@@ -450,20 +492,6 @@
         },
         {
           "id": "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa",
-          "result": "held_crediting",
-          "rule": "C7",
-          "reason": null,
-          "detail": null,
-          "k": null,
-          "n": null,
-          "lower": null,
-          "upper": null,
-          "d_lo": null,
-          "d_hi": null,
-          "to_run": null
-        },
-        {
-          "id": "3a5f9f6dd4f659c533bd05e9113a41b31f802bb8bceec9cf290281fd52bf4786",
           "result": "held_crediting",
           "rule": "C7",
           "reason": null,
@@ -575,20 +603,6 @@
           "to_run": null
         },
         {
-          "id": "741f5db52e9780980a3955294dde6e27cb64b3428851881fb611ec9a66bd3d31",
-          "result": "held_crediting",
-          "rule": "C7",
-          "reason": null,
-          "detail": null,
-          "k": null,
-          "n": null,
-          "lower": null,
-          "upper": null,
-          "d_lo": null,
-          "d_hi": null,
-          "to_run": null
-        },
-        {
           "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
           "result": "held_crediting",
           "rule": "C7",
@@ -645,7 +659,7 @@
           "to_run": null
         },
         {
-          "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "id": "ba98f323c794d5baeab2796c5ff4d3906071179c2cbac05992f22246d63f496e",
           "result": "held_crediting",
           "rule": "C7",
           "reason": null,
@@ -659,9 +673,9 @@
           "to_run": null
         },
         {
-          "id": "c1c89eabdb5ddec98f09df85f159c218787754880db30c0375c66eb9e591f1d8",
-          "result": "held_non_crediting",
-          "rule": "C8",
+          "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "result": "held_crediting",
+          "rule": "C7",
           "reason": null,
           "detail": null,
           "k": null,

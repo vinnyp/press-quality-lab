@@ -1,46 +1,4 @@
 {
-  "03a63bfb4f3d92dc2bf0ab805032b5a5e8afdd4dcbd50ba5fb225a62b045bb75": {
-    "bookkeeping": [
-      ".local/state/widgets"
-    ],
-    "budget_seconds": 30,
-    "dimension": "flag-conformance",
-    "earlier": [
-      "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
-      "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
-      "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
-      "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
-      "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14",
-      "82e4cdc9ab1bcfc1f8e0c4d7944f16f6e848af266f20c6fefc6809af815c046e",
-      "a31204ef04ea7357767b39ec0f742d887145785851955218e5ac783fdb1ba8d1"
-    ],
-    "env": {},
-    "expected": {
-      "literal": 1,
-      "precondition": null
-    },
-    "index": 0,
-    "offline_args": [
-      "--offline"
-    ],
-    "parameters": {
-      "exit_codes": null
-    },
-    "path": "/widgets",
-    "predicate": "row_count",
-    "probe": null,
-    "runbook": "read",
-    "scheme": "pql-check-id-1",
-    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
-    "step": "list by tag",
-    "store": "data.json",
-    "words": [
-      "list",
-      "--json",
-      "--tag",
-      "brass"
-    ]
-  },
   "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff": {
     "bookkeeping": [
       ".local/state/widgets"
@@ -199,6 +157,49 @@
       "account"
     ]
   },
+  "2820c427f61ef5b1ae9c4f035ef6907fee027b92f66460c0cd2ec3a6670051bc": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "flag-conformance",
+    "earlier": [
+      "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
+      "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
+      "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
+      "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
+      "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14",
+      "82e4cdc9ab1bcfc1f8e0c4d7944f16f6e848af266f20c6fefc6809af815c046e",
+      "a31204ef04ea7357767b39ec0f742d887145785851955218e5ac783fdb1ba8d1",
+      "3ec6cecf347ddd586ba6ab76f3a792860653a81fdf0df456fc2c10ff4d24ae3e"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 1,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list by tag",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json",
+      "--tag",
+      "brass"
+    ]
+  },
   "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa": {
     "bookkeeping": [
       ".local/state/widgets"
@@ -223,6 +224,48 @@
     "store": "data.json",
     "words": [
       "list"
+    ]
+  },
+  "3ec6cecf347ddd586ba6ab76f3a792860653a81fdf0df456fc2c10ff4d24ae3e": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [
+      "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
+      "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
+      "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
+      "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
+      "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14",
+      "82e4cdc9ab1bcfc1f8e0c4d7944f16f6e848af266f20c6fefc6809af815c046e",
+      "a31204ef04ea7357767b39ec0f742d887145785851955218e5ac783fdb1ba8d1"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 0,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list limited",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json",
+      "--limit",
+      "2"
     ]
   },
   "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05": {
