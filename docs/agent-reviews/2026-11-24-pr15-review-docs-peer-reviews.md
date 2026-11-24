@@ -40,7 +40,7 @@ Verdict: safe to ship. 3 Low, 2 Info. The two integrity invariants left the alwa
 | 6 | Ordering rule names map iteration, not input order | code (Minor) | Confirmed: 1a64e93 added `sort.Slice` over lists | Fixed. |
 | 7 | Severity ranks a false green above leaks and escapes; no public-disclosure place; only top level defined | code, test, security | Confirmed against log rows rated Blocker and High | Fixed: three classes rank as Blocker or Critical together, and the labels and their gates are stated. |
 | 8 | Entry and exit rules contradict the file's contents | code, test (Minor) | Confirmed | Fixed: owner-stated rules admitted; a rule stays while a planned phase will bring its code back. |
-| 9 | Case-record rule repeats `check.sh`; stale record | test (Minor) | Confirmed: `check.sh` runs both scripts; 4c3182f moved the checker in | Fixed: rule narrowed to extending the checkers; record corrected. |
+| 9 | Case-record rule repeats `check.sh`; stale record | test (Minor) | Confirmed: `check.sh` runs both scripts; the checker reached `main` in 32c5cb7 (PR #12) | Fixed: rule narrowed to extending the checkers; record corrected. |
 | 10 | No reviewable evidence of breaking a rule | test (Minor) | Confirmed: the judge rounds kept this evidence; no file asks for it | Fixed: the mutation and the failing test are recorded. |
 | 11 | Goroutine rule gives no reason | test (Minor) | Confirmed from `Safe` in `internal/judge/judge.go` | Fixed: reason added. |
 | 12 | Two-readings line pulls against `AGENTS.md` | test (Minor) | Confirmed | Fixed: both readings named and reported to the owner. |
@@ -51,3 +51,22 @@ Verdict: safe to ship. 3 Low, 2 Info. The two integrity invariants left the alwa
 | 17 | "Never reports a pass" also governs production checks | test (Nit) | Agreed | Deferred: kept under Tests, where `AGENTS.md` has it. |
 | 18 | Import guard scans only `internal/` | test (outside the diff) | Not verified in this round | Deferred: outside this change. |
 | 19 | Whether Claude Code Review expands `@` includes in `REVIEW.md` | security (Info) | Not verified | Open: check on the first automated review. |
+
+## Round 2 (delta verification)
+
+**Range:** `7e1ef44..f467784`. **Reviewer:** peer-code-reviewer, runtime=claude, in a fresh clone; repository-state snapshots unchanged.
+
+Verdict: ready after two Majors. Rows 3, 4, 5, 7, 11 and 15 confirmed closed. Both Majors came from restating sealed clauses: the confinement section now names each hazard and its clause, and says review checks the code against the clause itself.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 20 | Ordering rule (row 6 fix) forbids declaration order the collection spec requires (QS7, QP1, QH11) | code (Major) | Confirmed from `collection-rules.md` and the judge contract's input-order rule | Fixed: the order the specification names, a sort key or declaration order, never map order; sort by key where input order carries no meaning. |
+| 21 | QS8/QS9 restatement (row 1 fix) drops conditions and over-applies to absolute `/bin` executables | code (Major) | Confirmed from QS8, QS9 and QA4 | Fixed: the rule requires every condition of QS8 and QS9 and names only the two reproduced hazards. |
+| 22 | "Once per grade" has no meaning in a test harness | code (Minor) | Confirmed from the solution record | Fixed: once per unit of work, a grade in the engine, a scenario in a test harness. |
+| 23 | `REVIEW.md` repeats an `AGENTS.md` sentence without a sync note | code (Minor) | Confirmed | Fixed: note added. |
+| 24 | Record still says PR #12 is pending merge | code (Minor) | Confirmed: merged as 32c5cb7 | Fixed. |
+| 25 | Row 9 cites a commit on no branch | code (Nit) | Confirmed | Fixed: cites 32c5cb7. |
+| 26 | Oracle rule opens with an absolute its next sentence breaks | code (Nit) | Agreed | Fixed: stated as one exception. |
+| 27 | Pointer to rules by position | code (Nit) | Agreed | Fixed: rules named. |
+| 28 | QH11 restatement drops "canonical and absolute" | code (Nit) | Agreed | Fixed by the change in #21's approach: the rule names the hazard and QH11 governs. |
+| 29 | Majors are sometimes accepted, not resolved; `scan.sh` misses names too | code (Nit) | Confirmed from the 2026-11-22 log and `scan.sh` | Fixed. |
