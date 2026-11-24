@@ -402,6 +402,12 @@ def main():
         subject = load(directory / case['input']['subject_file'])
         record = load(directory / 'input.json')
         preimages = load(directory / 'preimages.json')
+        try:
+            case_ids.check_pairing(record, preimages)
+        except ValueError as exc:
+            print(f"{case['id']}: {exc}")
+            bad += 1
+            continue
         recording = load(args.kit / 'behaviour' / (case['input']['form'] + '.json'))
         host = case['input']['host'] or {}
         blocked = (host.get('confinement', {}).get('applied') is False or

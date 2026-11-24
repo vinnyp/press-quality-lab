@@ -158,8 +158,7 @@ def check(args, corpus):
         elif isinstance(value, list):
             for item in value:
                 properties(item)
-    for schema in (args.kit / "schema").glob("*.json"):
-        properties(load(schema))
+    properties(load(args.kit / "schema/behaviour.schema.json"))
     findings = []
     for section in ("cases", "behaviour", "subjects"):
         for path in sorted((args.check / section).rglob("*")):
@@ -184,7 +183,7 @@ def check(args, corpus):
                 for match in sorted(set(RULE.findall(text))):
                     findings.append(f"{relative}: rule id in {location}: {match}")
                 # A baseline is an input by design: its entries' results ("held", "failed") are allowed values there.
-                allowed = (location == "JSON key" and text in schema_keys) or (path in baselines and location == "JSON" and text in ("held", "failed"))
+                allowed = (section == "behaviour" and location == "JSON key" and text in schema_keys) or (path in baselines and location == "JSON" and text in ("held", "failed"))
                 for match in sorted(set(RESULT.findall(text))) if not allowed else []:
                     findings.append(f"{relative}: result word in {location}: {match}")
                 if location == "name" or path not in baselines:

@@ -392,9 +392,9 @@ with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
     for path in (other, third):
         shutil.copytree(path.parent, scratch_cases / path.parent.name)
 
-    def export_run(*arguments, expected=0, message=""):
+    def export_run(*arguments, expected=0, message="", kit=source):
         result = subprocess.run(
-            ["python3", "-I", str(exporter), "--kit", str(source),
+            ["python3", "-I", str(exporter), "--kit", str(kit),
              "--cases", str(scratch_cases), *map(str, arguments)],
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
             capture_output=True, text=True, timeout=60, check=False,
@@ -474,6 +474,23 @@ with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
             injected.rmdir()
         else:
             injected.unlink()
+    # Only behaviour-schema keys inside behaviour files get the exemption.
+    scratch_kit = root / 'schema-kit'
+    shutil.copytree(source, scratch_kit)
+    schema_path = scratch_kit / 'schema/subject-file.schema.json'
+    schema = json.loads(schema_path.read_text())
+    schema['properties']['held'] = {}
+    schema_path.write_text(json.dumps(schema))
+    recording['held'] = None
+    recording_path.write_text(json.dumps(recording))
+    export_run('--check', first, kit=scratch_kit, expected=1, message='result word in JSON key: held')
+    del recording['held']
+    recording_path.write_text(json.dumps(recording))
+    injected = first / 'subjects/schema-key.json'
+    injected.write_text(json.dumps({'could_not_start': False}))
+    export_run('--check', first, expected=1, message='result word in JSON key: could_not_start')
+    injected.unlink()
+    print('export control: foreign schema key in behaviour and behaviour schema key in subject rejected')
     recording["form"] = "prefix-" + form + "-suffix"
     recording_path.write_text(json.dumps(recording))
     export_run("--check", first, expected=1, message="form name in JSON")
@@ -534,6 +551,12 @@ with tempfile.TemporaryDirectory(prefix="pql-outcome-controls-") as temporary:
 # Every witness mutates a fresh scratch kit and checks the diagnostic it earns.
 with tempfile.TemporaryDirectory(prefix="pql-evidence-controls-") as temporary:
     witnesses = [
+        *[(label, '001', 'discovery', tool, 'evidence check ids must pair one-to-one')
+          for tool in ('ids', 'outcomes')
+          for label in ('last evidence dropped', 'evidence duplicated', 'required dropped')],
+        ('target tier flipped', '069', 'discovery', 'ids', 'target kinds, ids or tiers differ'),
+        ('target size changed', '001', 'byte_bound', 'outcomes', 'target_size '),
+        ('precondition flipped', '093', None, 'outcomes', 'precondition_observed differs'),
         ('artifact renamed', '001', 'store_unchanged', 'ids', 'artifact targets differ from subject'),
         ('artifact dropped', '001', 'store_unchanged', 'ids', 'artifact targets differ from subject'),
         ('evidence tier flipped', '001', 'byte_bound', 'ids', 'evidence tier differs'),
@@ -571,8 +594,25 @@ with tempfile.TemporaryDirectory(prefix="pql-evidence-controls-") as temporary:
                 candidates = [e for e in record['evidence'] if e['failure_kind'] == 'crashed']
             if label in ('byte bound held changed', 'confinement failure held'):
                 candidates = [e for e in candidates if preimages[e['check_id']]['words'] is not None]
+            if label == 'precondition flipped':
+                candidates = [e for e in candidates if e['precondition_observed'] is not None]
+            if label == 'target size changed':
+                candidates = [e for e in candidates if e['target_size'] is not None]
             evidence = candidates[0]
-            if label == 'artifact renamed':
+            if label == 'last evidence dropped':
+                record['evidence'].pop()
+            elif label == 'evidence duplicated':
+                record['evidence'].append(dict(evidence))
+            elif label == 'required dropped':
+                record['required'] = [e for e in record['required'] if e['id'] != evidence['check_id']]
+            elif label == 'target tier flipped':
+                target = evidence['targets'][0]
+                target['tier'] = 'live' if target['tier'] != 'live' else 'offline'
+            elif label == 'target size changed':
+                evidence['target_size'] += 1
+            elif label == 'precondition flipped':
+                evidence['precondition_observed'] = not evidence['precondition_observed']
+            elif label == 'artifact renamed':
                 next(t for t in evidence['targets'] if t['kind'] == 'artifact')['id'] += '-renamed'
             elif label == 'artifact dropped':
                 evidence['targets'] = [t for t in evidence['targets'] if t['kind'] != 'artifact']
@@ -633,6 +673,9 @@ with tempfile.TemporaryDirectory(prefix="pql-discovery-bound-control-") as tempo
     preimages = json.loads((directory / 'preimages.json').read_text())
     evidence = next(e for e in record['evidence'] if preimages[e['check_id']]['probe'] == 'discovery')
     record['evidence'] = [evidence]
+    record['required'] = [e for e in record['required'] if e['id'] == evidence['check_id']]
+    preimages = {evidence['check_id']: preimages[evidence['check_id']]}
+    (directory / 'preimages.json').write_text(json.dumps(preimages))
     evidence['targets'] = [dict(kind='invocation', id=evidence['check_id'] + '#' + str(i + 1), tier='scripted') for i in range(65)]
     recording_path = root / 'behaviour' / (case['input']['form'] + '.json')
     recording = json.loads(recording_path.read_text())
@@ -660,3 +703,100 @@ with tempfile.TemporaryDirectory(prefix="pql-discovery-bound-control-") as tempo
     if result.returncode or '1 judge-checked cases cross-checked' not in result.stdout:
         raise RuntimeError('discovery bound control: ' + result.stdout + result.stderr)
     print('discovery bound control: stops before a sibling above the depth bound')
+
+# Branch witnesses use scratch forms and recordings, never the sealed kit.
+with tempfile.TemporaryDirectory(prefix="pql-branch-controls-") as temporary:
+    for label in ('request bound', 'empty seed', 'help crash', 'numeric precondition'):
+        root = Path(temporary) / label
+        shutil.copytree(source, root)
+        number = '093' if label == 'numeric precondition' else '001'
+        for other in (root / 'cases').iterdir():
+            if other.name != 'case-' + number:
+                shutil.rmtree(other)
+        directory = root / 'cases' / ('case-' + number)
+        case = json.loads((directory / 'case.json').read_text())
+        record = json.loads((directory / 'input.json').read_text())
+        preimages = json.loads((directory / 'preimages.json').read_text())
+        subject_path = directory / case['input']['subject_file']
+        subject = json.loads(subject_path.read_text())
+        recording = json.loads((root / 'behaviour' / (case['input']['form'] + '.json')).read_text())
+        case['input']['form'] = 'synthetic-witness'
+        recording['form'] = 'synthetic-witness'
+        seed = root / 'subjects/synthetic-witness/seed'
+        seed.mkdir(parents=True)
+        if label != 'empty seed':
+            original_case = json.loads((source / 'cases' / ('case-' + number) / 'case.json').read_text())
+            shutil.copytree(source / 'subjects' / original_case['input']['form'] / 'seed', seed, dirs_exist_ok=True)
+        probe = 'store_unchanged' if label == 'empty seed' else 'discovery'
+        if label == 'numeric precondition':
+            evidence = next(e for e in record['evidence'] if e['precondition_observed'] is not None)
+            pre = preimages[evidence['check_id']]
+            argv = pre['expected']['precondition']['computation']['argv']
+            entry = next(e for e in recording['invocations'] if e['key']['computation'] == argv
+                         and e['key']['runbook'] == pre['runbook'] and e['key']['step'] == pre['step'])
+            for run in entry['confined']:
+                run['printed_value'] = {'value': 1}
+                raw = b'1\n'
+                run['stdout'].update(bytes=len(raw), cut=False, head=raw.decode(),
+                                     kept=base64.b64encode(raw).decode(), sha256=hashlib.sha256(raw).hexdigest())
+            evidence['precondition_observed'] = False
+            diagnostic = 'precondition_observed differs: expected False'
+        else:
+            evidence = next(e for e in record['evidence'] if preimages[e['check_id']]['probe'] == probe
+                            and (probe != 'store_unchanged' or preimages[e['check_id']]['words'] is not None))
+            record['evidence'] = [evidence]
+            record['required'] = [e for e in record['required'] if e['id'] == evidence['check_id']]
+            preimages = {evidence['check_id']: preimages[evidence['check_id']]}
+            reason = 'empty_target' if label == 'empty seed' else 'precondition_unmet'
+            evidence.update(outcome='not_observed', reason=reason, failure_kind=None,
+                            target_size=None, precondition_observed=None)
+            diagnostic = "recording says ('not_observed', '" + reason + "', None)"
+            if label == 'empty seed':
+                if not isinstance(subject['store'], str) or any(seed.iterdir()):
+                    raise RuntimeError('empty seed control needs a store path and empty seed')
+            elif label == 'help crash':
+                entry = next(e for e in recording['invocations'] if e['key']['words'] == ['--help'])
+                for run in entry['confined']:
+                    run['end'] = dict(kind='signal', signal='SIGABRT', by=None)
+            else:
+                template = recording['invocations'][0]
+                recording['invocations'] = []
+                for index in range(4097):
+                    entry = json.loads(json.dumps(template))
+                    words = [] if index == 0 else ['command' + str(index)]
+                    entry['key'] = dict(words=words + ['--help'], offline_args=[], env=[],
+                                        runbook=None, step=None, computation=None, home='empty')
+                    text = 'COMMANDS:\n' + ''.join('  command' + str(i) + '\n' for i in range(1, 4097)) if index == 0 else 'Usage\n'
+                    raw = text.encode()
+                    for run in entry['confined']:
+                        run['stdout'].update(bytes=len(raw), cut=False, head=text,
+                                             kept=base64.b64encode(raw).decode(), sha256=hashlib.sha256(raw).hexdigest())
+                    recording['invocations'].append(entry)
+                spec = importlib.util.spec_from_file_location('bound_case_ids', scripts / 'check-case-ids.py')
+                checker = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(checker)
+                status = {}
+                keys = checker.discovery_keys(recording, status=status)
+                if len(keys) != 4096 or not status.get('bounded'):
+                    raise RuntimeError('request bound control did not stop after 4096 requests')
+                case['invocations'] = keys
+                evidence['targets'] = [dict(kind='invocation', id=evidence['check_id'] + '#' + str(i + 1), tier='scripted') for i in range(4096)]
+        (directory / 'case.json').write_text(json.dumps(case))
+        subject_path.write_text(json.dumps(subject))
+        (directory / 'preimages.json').write_text(json.dumps(preimages))
+        (root / 'behaviour/synthetic-witness.json').write_text(json.dumps(recording))
+        for wrong in (False, True):
+            if wrong:
+                if label == 'numeric precondition':
+                    evidence['precondition_observed'] = True
+                else:
+                    evidence.update(outcome='held', reason=None, failure_kind=None)
+            (directory / 'input.json').write_text(json.dumps(record))
+            result = subprocess.run(
+                ['python3', '-I', str(scripts / 'check-case-outcomes.py'), str(root), str(root / 'cases')],
+                env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'), capture_output=True,
+                text=True, timeout=60, check=False,
+            )
+            if result.returncode != int(wrong) or (wrong and diagnostic not in result.stdout + result.stderr):
+                raise RuntimeError('branch control: ' + label + ': ' + result.stdout + result.stderr)
+        print('branch control: ' + label + ': expected result passes; wrong result rejected: ' + diagnostic)

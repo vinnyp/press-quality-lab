@@ -136,3 +136,21 @@ agy (`gemini-4-argon-high`) read freeze 3 with the schemas, `CASES.md` and this 
 ## Blind derivation, round 4
 
 A fresh reader on the same model derived all 224 cases from the export of freeze 4 (`d02d743b…5f1c`, commit 2d77d40), the text the owner is asked to ratify. It agreed on every case: the required set, every field QE19 compares, every invocation list and every id. Its remaining two-way readings (eight) each went the corpus's way and concern which rule a derivation-only case names, already settled in QT6, or readings the text states. No review has an open Blocker or Major.
+
+## Build review of the tooling
+
+After the seal, a Claude code reviewer and a Claude test reviewer read the pull request's code outside the sealed folders: the check-id generator, the cross-check, the outcome checker, the export, the corpus and subject tests, and the sealed-kit checks. Both confirmed the sealed corpus's data independently (every id, target list, discovery outcome, planted outcome and `network_unverifiable` outcome). Their findings were about the guards:
+
+| Finding | Disposition |
+|---|---|
+| Blocker: evidence tier, artifact targets and target-set completeness unchecked | Fixed in f757885: the cross-check requires them exactly. |
+| Major: the outcome checker skipped not-observed and discovery evidence and the reasons that take precedence over held | Fixed in f757885: it derives all 3,076 public and 1,528 private pieces of evidence by the first-match order. |
+| Major: the export gave each case's kind, and its leak check matched form names only whole | Fixed in 0aa1cb3; blind round 5 reran with the kind withheld. |
+| Major: covers-tag checks without controls | Fixed in 0aa1cb3, with controls for every other unwitnessed corpus-test branch. |
+| Minors: number round-trip, canonical literals, the encoded canary, special files and empty directories in a sealed folder, case-mode refusals | Fixed in 0aa1cb3. |
+
+A re-review of those fixes confirmed each. It found two more Majors, fixed afterwards: three working comparisons (a target's tier, `target_size`, `precondition_observed`) had no witness, and neither checker paired evidence one-to-one with the required set. It also found one input the sealed text can be read two ways on: whether a store-unchanged check that runs no command names the store as an artifact target (QE8). No case reaches it; it is reported to the owner for the errata note.
+
+## Blind derivation, round 5
+
+A fresh reader derived all 224 cases with each case's kind withheld, so it decided from the text alone which cases end before collection; it placed every case correctly. It agreed on 221. The other three (`case-055`, `case-056` and one private case) differ only because the export renames a computation file whose name contains a form's name, and a computation's path enters its check's id: with the export's names, the corpus's ids are exactly the reader's.

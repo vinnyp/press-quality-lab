@@ -21,7 +21,7 @@ class CollectionIDs(unittest.TestCase):
             for text in ["NaN", "9007199254740993", "0.123456789012345678901"]:
                 path.write_text(text)
                 with self.subTest(text=text), self.assertRaises(ValueError):
-                    ids.canon(ids.load(path))
+                    ids.load(path)
         with self.assertRaises(ValueError):
             ids.canon(9007199254740993)
 

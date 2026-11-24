@@ -108,6 +108,14 @@ def streams(value, path=()):
             yield from streams(child, path + (index,))
 
 
+def check_pairing(record, preimages):
+    required = [entry["id"] for entry in record["required"]]
+    evidence = [entry["check_id"] for entry in record["evidence"]]
+    if (len(evidence) != len(set(evidence)) or sorted(evidence) != sorted(required)
+            or any(digest not in preimages for digest in evidence)):
+        raise ValueError("evidence check ids must pair one-to-one with required and exist in preimages")
+
+
 def check(cases):
     if not cases.exists() and not cases.is_symlink():
         raise ValueError("no judge-checked cases checked")
@@ -119,6 +127,7 @@ def check(cases):
         checked += 1
         preimages = ids.load(directory / "preimages.json")
         record = ids.load(directory / "input.json")
+        check_pairing(record, preimages)
         if set(preimages) != {entry["id"] for entry in record["required"]}:
             raise ValueError(case["id"] + ": preimage keys differ from required")
         root = cases.parent
