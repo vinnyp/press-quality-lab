@@ -82,6 +82,31 @@ with tempfile.TemporaryDirectory(prefix="pql-case-controls-") as temporary:
 
     save_case()
     case_run(0)
+    subject_path = directory / case["input"]["subject_file"]
+    valid_subject = subject_path.read_bytes()
+    invalid_subject = json.loads(valid_subject)
+    runbook = json.loads((root / "examples/subject-file-02.json").read_text())["runbooks"][0]
+    invalid_subject["runbooks"] = [runbook]
+    invalid_subject["runbooks"][0]["steps"][0]["checks"] = []
+    subject_path.write_text(json.dumps(invalid_subject))
+    case_run(2, "case-001: subject-file.schema.json at /runbooks/0/steps/0/checks")
+    subject_path.write_text('{"runbooks": [], "runbooks": []}')
+    case_run(2, "duplicate object key: runbooks")
+    subject_path.write_bytes(valid_subject)
+    case_run(0, "1 judge-checked: 1 passed")
+    subject_path.write_text(json.dumps(invalid_subject))
+    case["kind"] = "derivation-only"
+    case["expect"] = {"exit_code": 2, "rule": "QS1"}
+    save_case()
+    input_bytes = (directory / "input.json").read_bytes()
+    preimage_bytes = (directory / "preimages.json").read_bytes()
+    (directory / "input.json").unlink()
+    (directory / "preimages.json").unlink()
+    case_run(0, "1 derivation-only unchecked")
+    subject_path.write_bytes(valid_subject)
+    (directory / "input.json").write_bytes(input_bytes)
+    (directory / "preimages.json").write_bytes(preimage_bytes)
+    case = json.loads((root / "examples/case-01.json").read_text())
     case["input"]["fixtures"] = [
         {"kind": "link", "path": "seed/missing-link", "detail": "missing-target"},
         {"kind": "special_file", "path": "seed/pipe", "detail": None},

@@ -1098,10 +1098,14 @@ def collection_cases(root, cases_root, command, timeout):
     schemas = {path.name: load(read(path)) for path in (root / "schema").glob("*.json")}
     registry = Registry().with_resources((name, Resource.from_contents(schema)) for name, schema in schemas.items())
 
-    def validate(value, name):
+    def validate(value, name, case_id=None):
         try:
             jsonschema.Draft202012Validator(schemas[name], registry=registry).validate(value)
         except jsonschema.ValidationError as exc:
+            if case_id is not None:
+                pointer = "".join("/" + str(part).replace("~", "~0").replace("/", "~1")
+                                  for part in exc.absolute_path)
+                raise Error(f"{case_id}: {name} at {pointer}: {exc.message}") from exc
             raise Error(name + ": " + exc.message) from exc
 
     cases = []
@@ -1129,6 +1133,8 @@ def collection_cases(root, cases_root, command, timeout):
         if {path.name for path in directory.iterdir()} != allowed:
             raise Error("missing case file: " + case["id"])
         if case["kind"] == "judge-checked":
+            validate(load(read(directory / case["input"]["subject_file"])),
+                     "subject-file.schema.json", case["id"])
             validate(load(read(directory / "input.json", INPUT_LIMIT)), "judge-input.schema.json")
         cases.append((directory, case))
     checked = failed = unchecked = 0
