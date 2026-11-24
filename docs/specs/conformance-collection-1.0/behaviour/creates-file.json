@@ -1,0 +1,5127 @@
+{
+  "behaviour_version": "1.0",
+  "commit": "915819e45a29ebda916d40106d3bcb04394c6db4",
+  "computation_profile_sha256": "94d86b3f7e9ea0c7dbbf686ad365023f4b9e062896a321549b2943c69974925d",
+  "form": "creates-file",
+  "form_sha256": "acb31db1c6ff4b29f1785e02c6771373a6da14d692b1633b0204f15b3590b0a2",
+  "invocations": [
+    {
+      "key": {
+        "words": [],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "account"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":19}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6MTl9Cg==",
+            "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":19}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6MTl9Cg==",
+            "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":19}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6MTl9Cg==",
+            "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":19}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6MTl9Cg==",
+            "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":19}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6MTl9Cg==",
+            "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "count"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 12,
+            "cut": false,
+            "head": "{\"count\":3}\n",
+            "kept": "eyJjb3VudCI6M30K",
+            "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 18,
+            "cut": false,
+            "head": "gear\nspring\nvalve\n",
+            "kept": "Z2VhcgpzcHJpbmcKdmFsdmUK",
+            "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 18,
+            "cut": false,
+            "head": "gear\nspring\nvalve\n",
+            "kept": "Z2VhcgpzcHJpbmcKdmFsdmUK",
+            "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 18,
+            "cut": false,
+            "head": "gear\nspring\nvalve\n",
+            "kept": "Z2VhcgpzcHJpbmcKdmFsdmUK",
+            "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 18,
+            "cut": false,
+            "head": "gear\nspring\nvalve\n",
+            "kept": "Z2VhcgpzcHJpbmcKdmFsdmUK",
+            "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": true
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 18,
+            "cut": false,
+            "head": "gear\nspring\nvalve\n",
+            "kept": "Z2VhcgpzcHJpbmcKdmFsdmUK",
+            "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 306,
+            "cut": false,
+            "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n",
+            "kept": "d2lkZ2V0cyBrZWVwcyBhIGxvY2FsIGxpc3Qgb2Ygd2lkZ2V0cy4KClVzYWdlOgogIHdpZGdldHMgW2NvbW1hbmRdCgpBdmFpbGFibGUgQ29tbWFuZHM6CiAgYWNjb3VudCAgICAgU2hvdyB0aGUgYWNjb3VudCB0aGUgdG9rZW4gYmVsb25ncyB0bwogIGFkZCAgICAgICAgIEFkZCBhIHdpZGdldAogIGNvdW50ICAgICAgIENvdW50IHdpZGdldHMKICBsaXN0ICAgICAgICBMaXN0IHdpZGdldHMKICByZW1vdmUgICAgICBSZW1vdmUgYSB3aWRnZXQgKGRlc3RydWN0aXZlKQoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIHdpZGdldHMK",
+            "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "account",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 65,
+            "cut": false,
+            "head": "Usage:\n  widgets account\n\nFlags:\n  -h, --help   help for account\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhY2NvdW50CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgYWNjb3VudAo=",
+            "sha256": "f25e291b0ff59f2a704cff414159b3bbf7c8d41e5d274f1e5f450a5277483ce3"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 65,
+            "cut": false,
+            "head": "Usage:\n  widgets account\n\nFlags:\n  -h, --help   help for account\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhY2NvdW50CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgYWNjb3VudAo=",
+            "sha256": "f25e291b0ff59f2a704cff414159b3bbf7c8d41e5d274f1e5f450a5277483ce3"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 65,
+            "cut": false,
+            "head": "Usage:\n  widgets account\n\nFlags:\n  -h, --help   help for account\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhY2NvdW50CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgYWNjb3VudAo=",
+            "sha256": "f25e291b0ff59f2a704cff414159b3bbf7c8d41e5d274f1e5f450a5277483ce3"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 65,
+            "cut": false,
+            "head": "Usage:\n  widgets account\n\nFlags:\n  -h, --help   help for account\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhY2NvdW50CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgYWNjb3VudAo=",
+            "sha256": "f25e291b0ff59f2a704cff414159b3bbf7c8d41e5d274f1e5f450a5277483ce3"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 65,
+            "cut": false,
+            "head": "Usage:\n  widgets account\n\nFlags:\n  -h, --help   help for account\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhY2NvdW50CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgYWNjb3VudAo=",
+            "sha256": "f25e291b0ff59f2a704cff414159b3bbf7c8d41e5d274f1e5f450a5277483ce3"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "add",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 57,
+            "cut": false,
+            "head": "Usage:\n  widgets add\n\nFlags:\n  -h, --help   help for add\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhZGQKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciBhZGQK",
+            "sha256": "66c2b0a3eca37587d7827e8dabae6d2d99ef47afcbd8ad6cb59b00cf5d00e77a"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 57,
+            "cut": false,
+            "head": "Usage:\n  widgets add\n\nFlags:\n  -h, --help   help for add\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhZGQKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciBhZGQK",
+            "sha256": "66c2b0a3eca37587d7827e8dabae6d2d99ef47afcbd8ad6cb59b00cf5d00e77a"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 57,
+            "cut": false,
+            "head": "Usage:\n  widgets add\n\nFlags:\n  -h, --help   help for add\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhZGQKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciBhZGQK",
+            "sha256": "66c2b0a3eca37587d7827e8dabae6d2d99ef47afcbd8ad6cb59b00cf5d00e77a"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 57,
+            "cut": false,
+            "head": "Usage:\n  widgets add\n\nFlags:\n  -h, --help   help for add\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhZGQKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciBhZGQK",
+            "sha256": "66c2b0a3eca37587d7827e8dabae6d2d99ef47afcbd8ad6cb59b00cf5d00e77a"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 57,
+            "cut": false,
+            "head": "Usage:\n  widgets add\n\nFlags:\n  -h, --help   help for add\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBhZGQKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciBhZGQK",
+            "sha256": "66c2b0a3eca37587d7827e8dabae6d2d99ef47afcbd8ad6cb59b00cf5d00e77a"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "count",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 61,
+            "cut": false,
+            "head": "Usage:\n  widgets count\n\nFlags:\n  -h, --help   help for count\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBjb3VudAoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIGNvdW50Cg==",
+            "sha256": "2b5491dc9266bdcb3a63489b347e65e6ce1aa1ffa983176cb8f90ce121c69876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 61,
+            "cut": false,
+            "head": "Usage:\n  widgets count\n\nFlags:\n  -h, --help   help for count\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBjb3VudAoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIGNvdW50Cg==",
+            "sha256": "2b5491dc9266bdcb3a63489b347e65e6ce1aa1ffa983176cb8f90ce121c69876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 61,
+            "cut": false,
+            "head": "Usage:\n  widgets count\n\nFlags:\n  -h, --help   help for count\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBjb3VudAoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIGNvdW50Cg==",
+            "sha256": "2b5491dc9266bdcb3a63489b347e65e6ce1aa1ffa983176cb8f90ce121c69876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 61,
+            "cut": false,
+            "head": "Usage:\n  widgets count\n\nFlags:\n  -h, --help   help for count\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBjb3VudAoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIGNvdW50Cg==",
+            "sha256": "2b5491dc9266bdcb3a63489b347e65e6ce1aa1ffa983176cb8f90ce121c69876"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 61,
+            "cut": false,
+            "head": "Usage:\n  widgets count\n\nFlags:\n  -h, --help   help for count\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBjb3VudAoKRmxhZ3M6CiAgLWgsIC0taGVscCAgIGhlbHAgZm9yIGNvdW50Cg==",
+            "sha256": "2b5491dc9266bdcb3a63489b347e65e6ce1aa1ffa983176cb8f90ce121c69876"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 59,
+            "cut": false,
+            "head": "Usage:\n  widgets list\n\nFlags:\n  -h, --help   help for list\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBsaXN0CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgbGlzdAo=",
+            "sha256": "eef737db4ea15b30433606ae094d7f3910cc52185476593e8e30792b4510ea1a"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 59,
+            "cut": false,
+            "head": "Usage:\n  widgets list\n\nFlags:\n  -h, --help   help for list\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBsaXN0CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgbGlzdAo=",
+            "sha256": "eef737db4ea15b30433606ae094d7f3910cc52185476593e8e30792b4510ea1a"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 59,
+            "cut": false,
+            "head": "Usage:\n  widgets list\n\nFlags:\n  -h, --help   help for list\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBsaXN0CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgbGlzdAo=",
+            "sha256": "eef737db4ea15b30433606ae094d7f3910cc52185476593e8e30792b4510ea1a"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 59,
+            "cut": false,
+            "head": "Usage:\n  widgets list\n\nFlags:\n  -h, --help   help for list\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBsaXN0CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgbGlzdAo=",
+            "sha256": "eef737db4ea15b30433606ae094d7f3910cc52185476593e8e30792b4510ea1a"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 59,
+            "cut": false,
+            "head": "Usage:\n  widgets list\n\nFlags:\n  -h, --help   help for list\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyBsaXN0CgpGbGFnczoKICAtaCwgLS1oZWxwICAgaGVscCBmb3IgbGlzdAo=",
+            "sha256": "eef737db4ea15b30433606ae094d7f3910cc52185476593e8e30792b4510ea1a"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "remove",
+          "--help"
+        ],
+        "offline_args": [],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "empty"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 63,
+            "cut": false,
+            "head": "Usage:\n  widgets remove\n\nFlags:\n  -h, --help   help for remove\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyByZW1vdmUKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciByZW1vdmUK",
+            "sha256": "ad86bc1514722933c9b603f596b5f70800bead5626b7a5fe25041d0b8080cc85"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 63,
+            "cut": false,
+            "head": "Usage:\n  widgets remove\n\nFlags:\n  -h, --help   help for remove\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyByZW1vdmUKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciByZW1vdmUK",
+            "sha256": "ad86bc1514722933c9b603f596b5f70800bead5626b7a5fe25041d0b8080cc85"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 63,
+            "cut": false,
+            "head": "Usage:\n  widgets remove\n\nFlags:\n  -h, --help   help for remove\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyByZW1vdmUKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciByZW1vdmUK",
+            "sha256": "ad86bc1514722933c9b603f596b5f70800bead5626b7a5fe25041d0b8080cc85"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 63,
+            "cut": false,
+            "head": "Usage:\n  widgets remove\n\nFlags:\n  -h, --help   help for remove\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyByZW1vdmUKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciByZW1vdmUK",
+            "sha256": "ad86bc1514722933c9b603f596b5f70800bead5626b7a5fe25041d0b8080cc85"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 63,
+            "cut": false,
+            "head": "Usage:\n  widgets remove\n\nFlags:\n  -h, --help   help for remove\n",
+            "kept": "VXNhZ2U6CiAgd2lkZ2V0cyByZW1vdmUKCkZsYWdzOgogIC1oLCAtLWhlbHAgICBoZWxwIGZvciByZW1vdmUK",
+            "sha256": "ad86bc1514722933c9b603f596b5f70800bead5626b7a5fe25041d0b8080cc85"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "account"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "planted"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": {
+            "atime_moved": true,
+            "control_end": {
+              "by": "confinement",
+              "kind": "signal",
+              "signal": "SIGKILL"
+            },
+            "same_file": true
+          },
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":42}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6NDJ9Cg==",
+            "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": {
+            "atime_moved": true,
+            "control_end": {
+              "by": "confinement",
+              "kind": "signal",
+              "signal": "SIGKILL"
+            },
+            "same_file": true
+          },
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":42}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6NDJ9Cg==",
+            "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": {
+            "atime_moved": true,
+            "control_end": {
+              "by": "confinement",
+              "kind": "signal",
+              "signal": "SIGKILL"
+            },
+            "same_file": true
+          },
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":42}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6NDJ9Cg==",
+            "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": {
+            "atime_moved": true,
+            "control_end": {
+              "by": "confinement",
+              "kind": "signal",
+              "signal": "SIGKILL"
+            },
+            "same_file": true
+          },
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":42}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6NDJ9Cg==",
+            "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": {
+            "atime_moved": true,
+            "control_end": {
+              "by": "confinement",
+              "kind": "signal",
+              "signal": "SIGKILL"
+            },
+            "same_file": true
+          },
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"account\":\"ok\",\"token_bytes\":42}\n",
+            "kept": "eyJhY2NvdW50Ijoib2siLCJ0b2tlbl9ieXRlcyI6NDJ9Cg==",
+            "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "read",
+        "step": "list all",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "read",
+        "step": "list all",
+        "computation": [
+          "computations/count.sh",
+          "{SEED}/data.json"
+        ],
+        "home": "scratch"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 3,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "3\n",
+            "kept": "Mwo=",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "read",
+        "step": "list all again",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 142,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifV19Cg==",
+            "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json",
+          "--limit",
+          "2"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "read",
+        "step": "list limited",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 110,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6dHJ1ZSwid2lkZ2V0cyI6W3sibmFtZSI6ImdlYXIiLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InNwcmluZyIsInRhZyI6Im1ldGFsIn1dfQo=",
+            "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 110,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6dHJ1ZSwid2lkZ2V0cyI6W3sibmFtZSI6ImdlYXIiLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InNwcmluZyIsInRhZyI6Im1ldGFsIn1dfQo=",
+            "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 110,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6dHJ1ZSwid2lkZ2V0cyI6W3sibmFtZSI6ImdlYXIiLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InNwcmluZyIsInRhZyI6Im1ldGFsIn1dfQo=",
+            "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 110,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6dHJ1ZSwid2lkZ2V0cyI6W3sibmFtZSI6ImdlYXIiLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InNwcmluZyIsInRhZyI6Im1ldGFsIn1dfQo=",
+            "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 110,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6dHJ1ZSwid2lkZ2V0cyI6W3sibmFtZSI6ImdlYXIiLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InNwcmluZyIsInRhZyI6Im1ldGFsIn1dfQo=",
+            "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json",
+          "--tag",
+          "brass"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "read",
+        "step": "list by tag",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 80,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJ2YWx2ZSIsInRhZyI6ImJyYXNzIn1dfQo=",
+            "sha256": "f4fba878ff6740de6953ff888c25f538f1242f2bda95fedab405b6f63a776e76"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 80,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJ2YWx2ZSIsInRhZyI6ImJyYXNzIn1dfQo=",
+            "sha256": "f4fba878ff6740de6953ff888c25f538f1242f2bda95fedab405b6f63a776e76"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 80,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJ2YWx2ZSIsInRhZyI6ImJyYXNzIn1dfQo=",
+            "sha256": "f4fba878ff6740de6953ff888c25f538f1242f2bda95fedab405b6f63a776e76"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 80,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJ2YWx2ZSIsInRhZyI6ImJyYXNzIn1dfQo=",
+            "sha256": "f4fba878ff6740de6953ff888c25f538f1242f2bda95fedab405b6f63a776e76"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 80,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"valve\",\"tag\":\"brass\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJ2YWx2ZSIsInRhZyI6ImJyYXNzIn1dfQo=",
+            "sha256": "f4fba878ff6740de6953ff888c25f538f1242f2bda95fedab405b6f63a776e76"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--bogus"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "errors",
+        "step": "unknown flag",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 31,
+            "cut": false,
+            "head": "widgets: unknown flag: --bogus\n",
+            "kept": "d2lkZ2V0czogdW5rbm93biBmbGFnOiAtLWJvZ3VzCg==",
+            "sha256": "4e43f92dece8044f47904da55ce75d1013f856efdbc18d8c7392ef76d50196e8"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 31,
+            "cut": false,
+            "head": "widgets: unknown flag: --bogus\n",
+            "kept": "d2lkZ2V0czogdW5rbm93biBmbGFnOiAtLWJvZ3VzCg==",
+            "sha256": "4e43f92dece8044f47904da55ce75d1013f856efdbc18d8c7392ef76d50196e8"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 31,
+            "cut": false,
+            "head": "widgets: unknown flag: --bogus\n",
+            "kept": "d2lkZ2V0czogdW5rbm93biBmbGFnOiAtLWJvZ3VzCg==",
+            "sha256": "4e43f92dece8044f47904da55ce75d1013f856efdbc18d8c7392ef76d50196e8"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 31,
+            "cut": false,
+            "head": "widgets: unknown flag: --bogus\n",
+            "kept": "d2lkZ2V0czogdW5rbm93biBmbGFnOiAtLWJvZ3VzCg==",
+            "sha256": "4e43f92dece8044f47904da55ce75d1013f856efdbc18d8c7392ef76d50196e8"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 31,
+            "cut": false,
+            "head": "widgets: unknown flag: --bogus\n",
+            "kept": "d2lkZ2V0czogdW5rbm93biBmbGFnOiAtLWJvZ3VzCg==",
+            "sha256": "4e43f92dece8044f47904da55ce75d1013f856efdbc18d8c7392ef76d50196e8"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--limit",
+          "zero"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "errors",
+        "step": "bad limit",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 43,
+            "cut": false,
+            "head": "widgets: invalid value for --limit: \"zero\"\n",
+            "kept": "d2lkZ2V0czogaW52YWxpZCB2YWx1ZSBmb3IgLS1saW1pdDogInplcm8iCg==",
+            "sha256": "c02c2348255969d05cc5061574253aed9beaeb2c7f037192b708458078e93e91"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 43,
+            "cut": false,
+            "head": "widgets: invalid value for --limit: \"zero\"\n",
+            "kept": "d2lkZ2V0czogaW52YWxpZCB2YWx1ZSBmb3IgLS1saW1pdDogInplcm8iCg==",
+            "sha256": "c02c2348255969d05cc5061574253aed9beaeb2c7f037192b708458078e93e91"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 43,
+            "cut": false,
+            "head": "widgets: invalid value for --limit: \"zero\"\n",
+            "kept": "d2lkZ2V0czogaW52YWxpZCB2YWx1ZSBmb3IgLS1saW1pdDogInplcm8iCg==",
+            "sha256": "c02c2348255969d05cc5061574253aed9beaeb2c7f037192b708458078e93e91"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 43,
+            "cut": false,
+            "head": "widgets: invalid value for --limit: \"zero\"\n",
+            "kept": "d2lkZ2V0czogaW52YWxpZCB2YWx1ZSBmb3IgLS1saW1pdDogInplcm8iCg==",
+            "sha256": "c02c2348255969d05cc5061574253aed9beaeb2c7f037192b708458078e93e91"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 2,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 43,
+            "cut": false,
+            "head": "widgets: invalid value for --limit: \"zero\"\n",
+            "kept": "d2lkZ2V0czogaW52YWxpZCB2YWx1ZSBmb3IgLS1saW1pdDogInplcm8iCg==",
+            "sha256": "c02c2348255969d05cc5061574253aed9beaeb2c7f037192b708458078e93e91"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "add",
+          "sprocket",
+          "--tag",
+          "steel"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "add twice",
+        "step": "add once",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "modified",
+                "kind": "file",
+                "path": "data.json",
+                "sha256": "d8f138207eeaf2586b940b1a1d2db143cdad12683df8cbb034724cd99d5aaa3c"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 33,
+            "cut": false,
+            "head": "{\"added\":true,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6dHJ1ZSwibmFtZSI6InNwcm9ja2V0In0K",
+            "sha256": "26706852433be0feac99ace62799da072f4229dc5ea433b4b76e0573bc1e2785"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "modified",
+                "kind": "file",
+                "path": "data.json",
+                "sha256": "d8f138207eeaf2586b940b1a1d2db143cdad12683df8cbb034724cd99d5aaa3c"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 33,
+            "cut": false,
+            "head": "{\"added\":true,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6dHJ1ZSwibmFtZSI6InNwcm9ja2V0In0K",
+            "sha256": "26706852433be0feac99ace62799da072f4229dc5ea433b4b76e0573bc1e2785"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "modified",
+                "kind": "file",
+                "path": "data.json",
+                "sha256": "d8f138207eeaf2586b940b1a1d2db143cdad12683df8cbb034724cd99d5aaa3c"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 33,
+            "cut": false,
+            "head": "{\"added\":true,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6dHJ1ZSwibmFtZSI6InNwcm9ja2V0In0K",
+            "sha256": "26706852433be0feac99ace62799da072f4229dc5ea433b4b76e0573bc1e2785"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "modified",
+                "kind": "file",
+                "path": "data.json",
+                "sha256": "d8f138207eeaf2586b940b1a1d2db143cdad12683df8cbb034724cd99d5aaa3c"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 33,
+            "cut": false,
+            "head": "{\"added\":true,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6dHJ1ZSwibmFtZSI6InNwcm9ja2V0In0K",
+            "sha256": "26706852433be0feac99ace62799da072f4229dc5ea433b4b76e0573bc1e2785"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "modified",
+                "kind": "file",
+                "path": "data.json",
+                "sha256": "d8f138207eeaf2586b940b1a1d2db143cdad12683df8cbb034724cd99d5aaa3c"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 33,
+            "cut": false,
+            "head": "{\"added\":true,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6dHJ1ZSwibmFtZSI6InNwcm9ja2V0In0K",
+            "sha256": "26706852433be0feac99ace62799da072f4229dc5ea433b4b76e0573bc1e2785"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "add",
+          "sprocket",
+          "--tag",
+          "steel"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "add twice",
+        "step": "add again",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"added\":false,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6ZmFsc2UsIm5hbWUiOiJzcHJvY2tldCJ9Cg==",
+            "sha256": "4b722aa6d3013cff0e4e2d4191e9575fdad5ecead75362bd4f212d0412c6539b"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"added\":false,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6ZmFsc2UsIm5hbWUiOiJzcHJvY2tldCJ9Cg==",
+            "sha256": "4b722aa6d3013cff0e4e2d4191e9575fdad5ecead75362bd4f212d0412c6539b"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"added\":false,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6ZmFsc2UsIm5hbWUiOiJzcHJvY2tldCJ9Cg==",
+            "sha256": "4b722aa6d3013cff0e4e2d4191e9575fdad5ecead75362bd4f212d0412c6539b"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"added\":false,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6ZmFsc2UsIm5hbWUiOiJzcHJvY2tldCJ9Cg==",
+            "sha256": "4b722aa6d3013cff0e4e2d4191e9575fdad5ecead75362bd4f212d0412c6539b"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 34,
+            "cut": false,
+            "head": "{\"added\":false,\"name\":\"sprocket\"}\n",
+            "kept": "eyJhZGRlZCI6ZmFsc2UsIm5hbWUiOiJzcHJvY2tldCJ9Cg==",
+            "sha256": "4b722aa6d3013cff0e4e2d4191e9575fdad5ecead75362bd4f212d0412c6539b"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "add twice",
+        "step": "count after",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 176,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"},{\"name\":\"sprocket\",\"tag\":\"steel\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifSx7Im5hbWUiOiJzcHJvY2tldCIsInRhZyI6InN0ZWVsIn1dfQo=",
+            "sha256": "a47f1ae68f27cc8d99fb8549e260027a26db1cf95eed49f23380b97ca12ec136"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 176,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"},{\"name\":\"sprocket\",\"tag\":\"steel\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifSx7Im5hbWUiOiJzcHJvY2tldCIsInRhZyI6InN0ZWVsIn1dfQo=",
+            "sha256": "a47f1ae68f27cc8d99fb8549e260027a26db1cf95eed49f23380b97ca12ec136"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 176,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"},{\"name\":\"sprocket\",\"tag\":\"steel\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifSx7Im5hbWUiOiJzcHJvY2tldCIsInRhZyI6InN0ZWVsIn1dfQo=",
+            "sha256": "a47f1ae68f27cc8d99fb8549e260027a26db1cf95eed49f23380b97ca12ec136"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 176,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"},{\"name\":\"sprocket\",\"tag\":\"steel\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifSx7Im5hbWUiOiJzcHJvY2tldCIsInRhZyI6InN0ZWVsIn1dfQo=",
+            "sha256": "a47f1ae68f27cc8d99fb8549e260027a26db1cf95eed49f23380b97ca12ec136"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": "notes.txt",
+                "sha256": "47a8dea66db04a6f2a18b6e27ef53a56f2122c0733e67f3908f1485fe1d4547f"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 176,
+            "cut": false,
+            "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"},{\"name\":\"sprocket\",\"tag\":\"steel\"}]}\n",
+            "kept": "eyJzb3VyY2UiOiJsb2NhbCIsInRydW5jYXRlZCI6ZmFsc2UsIndpZGdldHMiOlt7Im5hbWUiOiJnZWFyIiwidGFnIjoibWV0YWwifSx7Im5hbWUiOiJzcHJpbmciLCJ0YWciOiJtZXRhbCJ9LHsibmFtZSI6InZhbHZlIiwidGFnIjoiYnJhc3MifSx7Im5hbWUiOiJzcHJvY2tldCIsInRhZyI6InN0ZWVsIn1dfQo=",
+            "sha256": "a47f1ae68f27cc8d99fb8549e260027a26db1cf95eed49f23380b97ca12ec136"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "add twice",
+        "step": "count after",
+        "computation": [
+          "computations/count-after-add.sh",
+          "{SEED}/data.json",
+          "sprocket"
+        ],
+        "home": "scratch"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 4,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "4\n",
+            "kept": "NAo=",
+            "sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 4,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "4\n",
+            "kept": "NAo=",
+            "sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 4,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "4\n",
+            "kept": "NAo=",
+            "sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 4,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "4\n",
+            "kept": "NAo=",
+            "sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": 4,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 2,
+            "cut": false,
+            "head": "4\n",
+            "kept": "NAo=",
+            "sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "remove",
+          "gear"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "remove guard",
+        "step": "remove without confirm",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 3,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 53,
+            "cut": false,
+            "head": "widgets: refusing to remove \"gear\" without --confirm\n",
+            "kept": "d2lkZ2V0czogcmVmdXNpbmcgdG8gcmVtb3ZlICJnZWFyIiB3aXRob3V0IC0tY29uZmlybQo=",
+            "sha256": "f41aae2c09f8806cc5a4084398fa7db8fa0c965ed3cdb064e42da2475d76d76f"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 3,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 53,
+            "cut": false,
+            "head": "widgets: refusing to remove \"gear\" without --confirm\n",
+            "kept": "d2lkZ2V0czogcmVmdXNpbmcgdG8gcmVtb3ZlICJnZWFyIiB3aXRob3V0IC0tY29uZmlybQo=",
+            "sha256": "f41aae2c09f8806cc5a4084398fa7db8fa0c965ed3cdb064e42da2475d76d76f"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 3,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 53,
+            "cut": false,
+            "head": "widgets: refusing to remove \"gear\" without --confirm\n",
+            "kept": "d2lkZ2V0czogcmVmdXNpbmcgdG8gcmVtb3ZlICJnZWFyIiB3aXRob3V0IC0tY29uZmlybQo=",
+            "sha256": "f41aae2c09f8806cc5a4084398fa7db8fa0c965ed3cdb064e42da2475d76d76f"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 3,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 53,
+            "cut": false,
+            "head": "widgets: refusing to remove \"gear\" without --confirm\n",
+            "kept": "d2lkZ2V0czogcmVmdXNpbmcgdG8gcmVtb3ZlICJnZWFyIiB3aXRob3V0IC0tY29uZmlybQo=",
+            "sha256": "f41aae2c09f8806cc5a4084398fa7db8fa0c965ed3cdb064e42da2475d76d76f"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 3,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 53,
+            "cut": false,
+            "head": "widgets: refusing to remove \"gear\" without --confirm\n",
+            "kept": "d2lkZ2V0czogcmVmdXNpbmcgdG8gcmVtb3ZlICJnZWFyIiB3aXRob3V0IC0tY29uZmlybQo=",
+            "sha256": "f41aae2c09f8806cc5a4084398fa7db8fa0c965ed3cdb064e42da2475d76d76f"
+          },
+          "stdout": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      ]
+    }
+  ],
+  "launcher_sha256": "7e57b38b44f6292e91304110e433b7e4d8b581303cbff3bfaa5afc2c5ee441a9",
+  "subject_profile_sha256": "dc08c614b72a5b9620380b04ebc27b95db8194f677781e72270d19e95d8baa6e",
+  "system": {
+    "build": "26B123",
+    "product_version": "27.2"
+  },
+  "violating": false
+}
