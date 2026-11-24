@@ -471,6 +471,144 @@
           ]
         }
       ]
+    },
+    {
+      "name": "oracles",
+      "steps": [
+        {
+          "name": "list for oracles",
+          "words": [
+            "list",
+            "--json"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/pipe-count.sh",
+                    "{SUBJECT_DIR}/computations/fixture.json"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [
+                    "computations/fixture.json"
+                  ],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/runs-subject.sh",
+                    "{SUBJECT_DIR}/bin/subject"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/exits-1.sh"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/prints-big.sh"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/not-json.sh"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/overruns.sh"
+                  ],
+                  "budget_seconds": 2,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            },
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/big-number.sh"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
     }
   ],
   "markers": [],

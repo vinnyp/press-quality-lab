@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -188,6 +189,8 @@ func TestCollectionSubject(t *testing.T) {
 			digest := subjectSourceDigest(t, root, tag)
 			if form == "known-good" {
 				testKnownGoodSubject(t, binary)
+			} else {
+				testDefectSubject(t, binary, form)
 			}
 			recordingFile := filepath.Join(root, "docs/specs/conformance-collection-1.0/behaviour", form+".json")
 			b, err := os.ReadFile(recordingFile)
@@ -222,10 +225,14 @@ func TestCollectionSubject(t *testing.T) {
 				if !help {
 					subjectCopy(t, filepath.Join(root, "docs/specs/conformance-collection-1.0/subjects", form, "seed"), home)
 				}
+				first := entry.Confined[0]
+				// Signal and budget endings are checked by the macOS recorder.
+				if first.End.Kind != "exit" {
+					continue
+				}
 				args := append(slices.Clone(key.Words), key.OfflineArgs...)
 				out, _, code := subjectInvoke(t, binary, home, args...)
-				first := entry.Confined[0]
-				if len(out) != first.Stdout.Bytes || subjectHash(out) != first.Stdout.SHA256 || first.End.Kind != "exit" || code != first.End.Code {
+				if len(out) != first.Stdout.Bytes || subjectHash(out[:min(len(out), 1<<20)]) != first.Stdout.SHA256 || first.End.Kind != "exit" || code != first.End.Code {
 					t.Errorf("direct invocation %v differs from recording", args)
 				}
 			}
@@ -439,4 +446,265 @@ Flags:
 			t.Fatalf("help %s wrote to empty home", command)
 		}
 	}
+}
+
+func testDefectSubject(t *testing.T, binary, form string) {
+	t.Helper()
+	home := t.TempDir()
+	subjectCopy(t, filepath.Join(kit, "subjects", form, "seed"), home)
+	args := []string{"list", "--json"}
+	want := ""
+	switch form {
+	case "drops-last":
+		want = `{"source":"local","truncated":false,"widgets":[{"name":"gear","tag":"metal"},{"name":"spring","tag":"metal"}]}` + "\n"
+	case "ignores-store":
+		want = `{"source":"local","truncated":false,"widgets":[]}` + "\n"
+	case "big-number":
+		args = []string{"count"}
+		want = `{"count":123456789012345678901234567890123}` + "\n"
+	case "never-reads-secret", "opens-secret":
+		args = []string{"account"}
+		want = `{"account":"ok","token_bytes":19}` + "\n"
+	case "ignores-help":
+		args = []string{"add", "--help"}
+		want = `{"added":true,"name":"help"}` + "\n"
+	case "invalid-utf8":
+		args = []string{"list"}
+		want = "gear\xff\nspring\xff\nvalve\xff\n"
+	case "huge-output":
+		args = []string{"list"}
+	case "hides-command", "renames-command", "adds-command", "help-urfave", "help-clap", "help-cobra-group", "help-fails", "help-manpage", "help-no-section", "help-deep", "help-cycle":
+		args = []string{"--help"}
+	case "crashes", "kills-self":
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, binary, "count")
+		cmd.Env = []string{"HOME=" + home, "PATH=/usr/bin:/bin"}
+		output, err := cmd.CombinedOutput()
+		if err == nil || ctx.Err() != nil {
+			t.Fatal("count did not signal within budget", err)
+		}
+		status, ok := cmd.ProcessState.Sys().(syscall.WaitStatus)
+		want := syscall.SIGKILL
+		if form == "crashes" {
+			want = syscall.SIGABRT
+		}
+		if !ok || !status.Signaled() || status.Signal() != want || len(output) != 0 {
+			t.Fatalf("count signal=%v output=%q", status, output)
+		}
+		return
+	case "overruns":
+		return // The recorder checks the budget ending.
+	default:
+
+		if strings.HasPrefix(form, "leak-") {
+			args = []string{"account"}
+		}
+	}
+	out, diagnostic, code := subjectInvoke(t, binary, home, args...)
+	expectedCode := 0
+	if form == "help-fails" {
+		expectedCode = 1
+	}
+	if code != expectedCode || len(diagnostic) != 0 {
+		t.Fatalf("form %s: code=%d diagnostic=%q", form, code, diagnostic)
+	}
+	if want != "" && string(out) != want {
+		t.Fatalf("form %s output=%q", form, out)
+	}
+	switch form {
+	case "huge-output":
+		line := []byte(strings.Repeat("w", 63) + "\n")
+		if len(out) != 17<<20 || !bytes.Equal(out, bytes.Repeat(line, (17<<20)/64)) {
+			t.Fatal("huge-output differs from exact line pattern or size")
+		}
+	case "creates-file":
+		if string(read(t, filepath.Join(home, "notes.txt"))) != "seen\n" {
+			t.Fatal("notes differs")
+		}
+	case "creates-link":
+		target, err := os.Readlink(filepath.Join(home, "latest"))
+		if err != nil || target != "data.json" {
+			t.Fatal("link differs", err)
+		}
+	case "writes-wal", "writes-empty-wal", "writes-shm":
+		name, size := "data.json-wal", 8
+		if form == "writes-empty-wal" {
+			size = 0
+		}
+		if form == "writes-shm" {
+			name = "data.json-shm"
+			size = 32768
+		}
+		if len(read(t, filepath.Join(home, name))) != size {
+			t.Fatal("side-file size differs")
+		}
+	case "writes-store":
+		var state struct{ Widgets []struct{ Name string } }
+		decode(t, read(t, filepath.Join(home, "data.json")), &state)
+		if len(state.Widgets) != 3 || state.Widgets[0].Name != "valve" || state.Widgets[2].Name != "gear" {
+			t.Fatal("store was not reversed")
+		}
+	case "hides-command":
+		if bytes.Contains(out, []byte("  count ")) {
+			t.Fatal("count still listed")
+		}
+	case "renames-command":
+		if !bytes.Contains(out, []byte("  tally ")) || bytes.Contains(out, []byte("  count ")) {
+			t.Fatal("renamed help differs")
+		}
+		count, errout, exit := subjectInvoke(t, binary, home, "count")
+		if exit != 2 || len(count) != 0 || string(errout) != "widgets: unknown command: count\n" {
+			t.Fatal("old name still works")
+		}
+		count, _, exit = subjectInvoke(t, binary, home, "tally")
+		if exit != 0 || string(count) != "{\"count\":3}\n" {
+			t.Fatal("new name differs")
+		}
+	case "adds-command":
+		if !bytes.Contains(out, []byte("  export      Export widgets\n")) {
+			t.Fatal("export not listed")
+		}
+		exported, _, exit := subjectInvoke(t, binary, home, "export")
+		listed, _, _ := subjectInvoke(t, binary, home, "list", "--json")
+		if exit != 0 || !bytes.Equal(exported, listed) {
+			t.Fatal("export differs from JSON list")
+		}
+	}
+	if strings.HasPrefix(form, "help-") {
+		want := []string{"account", "add", "count", "list", "remove"}
+		switch form {
+		case "help-cobra-group":
+			want = []string{"add", "count", "list", "remove", "account"}
+		case "help-manpage", "help-no-section":
+			want = nil
+		case "help-deep":
+			want = []string{"a"}
+		case "help-cycle":
+			want = []string{"x"}
+		}
+		if got := subjectHelpCommands(string(out)); !slices.Equal(got, want) {
+			t.Fatalf("help commands=%v want=%v", got, want)
+		}
+		if form == "help-deep" || form == "help-cycle" {
+			next := []string{"a", "a", "--help"}
+			expected := "a"
+			if form == "help-cycle" {
+				next = []string{"x", "y", "--help"}
+				expected = "x"
+			}
+			nested, _, exit := subjectInvoke(t, binary, t.TempDir(), next...)
+			if exit != 0 || !slices.Equal(subjectHelpCommands(string(nested)), []string{expected}) {
+				t.Fatal("recursive help stopped or chose wrong child")
+			}
+		}
+	}
+	if form == "drops-last" {
+		limited, _, exit := subjectInvoke(t, binary, home, "list", "--json", "--limit", "2")
+		if exit != 0 || string(limited) != `{"source":"local","truncated":true,"widgets":[{"name":"gear","tag":"metal"},{"name":"spring","tag":"metal"}]}`+"\n" {
+			t.Fatal("drop changed pre-drop truncation or removed a widget before the store's last")
+		}
+		plain, _, exit := subjectInvoke(t, binary, home, "list", "--tag", "brass")
+		if exit != 0 || len(plain) != 0 {
+			t.Fatal("filtered plain list kept the last widget")
+		}
+	}
+	if strings.HasPrefix(form, "leak-") {
+		token := read(t, filepath.Join(home, ".config/widgets/token"))
+		switch form {
+		case "leak-file":
+			if !bytes.Equal(read(t, filepath.Join(home, ".cache/widgets/debug.log")), token) {
+				t.Fatal("debug file differs")
+			}
+		case "leak-past-bound":
+			data := read(t, filepath.Join(home, ".cache/widgets/big.log"))
+			if len(data) != (16<<20)+len(token) || !bytes.Equal(data[:16<<20], bytes.Repeat([]byte("x"), 16<<20)) || !bytes.Equal(data[16<<20:], token) {
+				t.Fatal("past-bound file differs")
+			}
+		default:
+			var account struct{ Debug string }
+			decode(t, out, &account)
+			text := strings.TrimSuffix(string(token), "\n")
+			var decoded []byte
+			var err error
+			switch strings.TrimPrefix(form, "leak-") {
+			case "plain":
+				decoded = []byte(account.Debug)
+			case "base64":
+				decoded, err = base64.StdEncoding.DecodeString(account.Debug)
+			case "base64-nopad":
+				decoded, err = base64.RawStdEncoding.DecodeString(account.Debug)
+			case "base64url":
+				decoded, err = base64.URLEncoding.DecodeString(account.Debug)
+			case "base64url-nopad":
+				decoded, err = base64.RawURLEncoding.DecodeString(account.Debug)
+			case "hex-lower", "hex-upper":
+				decoded, err = hex.DecodeString(account.Debug)
+			case "percent-lower", "percent-upper":
+				decoded, err = hex.DecodeString(strings.ReplaceAll(account.Debug, "%", ""))
+			}
+			if err != nil || string(decoded) != text {
+				t.Fatal("debug encoding differs", err)
+			}
+		}
+	}
+}
+
+func TestSubjectPlanCaseSubset(t *testing.T) {
+	var plan struct {
+		Invocations []struct{ Key map[string]any }
+	}
+	decode(t, read(t, "../../testdata/collection-subject/plans/known-good.json"), &plan)
+	keys := map[string]bool{}
+	for _, entry := range plan.Invocations {
+		b, err := json.Marshal(entry.Key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if keys[string(b)] {
+			t.Fatal("duplicate plan key")
+		}
+		keys[string(b)] = true
+	}
+	var c struct{ Invocations []map[string]any }
+	decode(t, read(t, filepath.Join(kit, "cases/case-001/case.json")), &c)
+	for _, key := range c.Invocations {
+		b, err := json.Marshal(key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !keys[string(b)] {
+			t.Fatalf("case invocation absent from plan: %s", b)
+		}
+	}
+	var subject struct{ Runbooks []struct{ Name string } }
+	decode(t, read(t, filepath.Join(kit, "cases/case-001/subject.json")), &subject)
+	for _, book := range subject.Runbooks {
+		if book.Name == "oracles" {
+			t.Fatal("case acquired oracle runbook")
+		}
+	}
+}
+
+func subjectHelpCommands(text string) []string {
+	var commands []string
+	section := false
+	for _, line := range strings.Split(text, "\n") {
+		if line == "" || !strings.HasPrefix(line, " ") {
+			section = strings.HasSuffix(line, " Commands:") || line == "COMMANDS:" || line == "Commands:" || line == "SUBCOMMANDS:"
+			continue
+		}
+		if !section {
+			continue
+		}
+		words := strings.Fields(line)
+		if len(words) == 0 {
+			continue
+		}
+		command := strings.TrimSuffix(words[0], ",")
+		if command != "help" && command != "completion" {
+			commands = append(commands, command)
+		}
+	}
+	return commands
 }

@@ -145,10 +145,15 @@ func TestRecordSubjectBehaviour(t *testing.T) {
 			if plan.Form != strings.TrimSuffix(filepath.Base(path), ".json") || len(plan.Invocations) == 0 {
 				t.Fatal("invalid form plan")
 			}
-			subjectDir := filepath.Join(root, "docs/specs/conformance-collection-1.0/subjects", plan.Form)
+			canonical := filepath.Join(root, "docs/specs/conformance-collection-1.0/subjects", plan.Form)
+			// Computations receive a real subject directory with its binary. Keep
+			// generated executables out of the canonical corpus in the checkout.
+			subjectDir := filepath.Join(temporary, plan.Form+"-subject")
+			recordMust(t, os.CopyFS(subjectDir, os.DirFS(canonical)))
+			recordMust(t, os.MkdirAll(filepath.Join(subjectDir, "bin"), 0700))
 			var subject recordSubject
 			recordJSON(t, filepath.Join(subjectDir, "subject.json"), &subject)
-			binary := filepath.Join(temporary, plan.Form)
+			binary := filepath.Join(subjectDir, "bin/subject")
 			tag := "form_" + strings.ReplaceAll(plan.Form, "-", "_")
 			recordCommand(t, root, "go", "build", "-tags", tag, "-o", binary, "./testdata/collection-subject")
 			f := recordFixture(t, temporary, launcher, binary)
@@ -434,7 +439,7 @@ func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject record
 		decoder := json.NewDecoder(bytes.NewReader(stdout))
 		decoder.UseNumber()
 		var extra any
-		if decoder.Decode(&printed) != nil || decoder.Decode(&extra) != io.EOF {
+		if decoder.Decode(&printed) != nil || decoder.Decode(&extra) != io.EOF || !recordPrintedNumbers(printed) {
 			printed = nil
 		}
 	}
@@ -624,20 +629,17 @@ func recordSnapshot(t *testing.T, home, canary string) map[string]recordNode {
 				_ = file.Close()
 				return statErr
 			}
-			if !info.Mode().IsRegular() || info.Size() > 16<<20 {
+			if !info.Mode().IsRegular() {
 				_ = file.Close()
-				return fmt.Errorf("home snapshot exceeded file bound or changed kind; nothing written")
+				return fmt.Errorf("home snapshot changed kind; nothing written")
 			}
-			b, err := io.ReadAll(io.LimitReader(file, 16<<20))
+			b, err := io.ReadAll(file)
 			closeErr := file.Close()
 			if err != nil {
 				return err
 			}
 			if closeErr != nil {
 				return closeErr
-			}
-			if len(b) > 16<<20 {
-				return fmt.Errorf("home snapshot exceeded file bound; nothing written")
 			}
 			node.Digest = recordHash(recordMask(b, canary))
 		case d.IsDir():
@@ -762,4 +764,125 @@ func recordLeakScan(t *testing.T, home, planted string, stdout, stderr []byte, c
 		return nil
 	}))
 	return map[string]any{"bound_reached": bound, "leaks": leaks}
+}
+
+// A JSON number that the judge rejects must not be embedded in the recording.
+func recordPrintedNumbers(v any) bool {
+	switch x := v.(type) {
+	case json.Number:
+		text := string(x)
+		if len(text) > 32 {
+			return false
+		}
+		if i := strings.IndexAny(text, "eE"); i >= 0 {
+			exponent := strings.TrimLeft(text[i+1:], "+-")
+			if len(exponent) > 4 {
+				return false
+			}
+		}
+	case []any:
+		for _, child := range x {
+			if !recordPrintedNumbers(child) {
+				return false
+			}
+		}
+	case map[string]any:
+		for _, child := range x {
+			if !recordPrintedNumbers(child) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func TestSubjectRecorderEdges(t *testing.T) {
+	t.Run("cut", func(t *testing.T) {
+		data := bytes.Repeat([]byte("w"), 17<<20)
+		stream := recordStream(data)
+		if stream["bytes"] != len(data) || stream["cut"] != true || stream["kept"] != nil || stream["sha256"] != recordHash(data[:1<<20]) {
+			t.Fatal("cut stream lost byte count, kept digest, or null kept")
+		}
+	})
+	t.Run("utf8", func(t *testing.T) {
+		stream := recordStream([]byte{'a', 0xff, 0xff, '\n'})
+		if stream["head"] != "a\ufffd\ufffd\n" {
+			t.Fatal("each ill-formed byte needs its own replacement")
+		}
+	})
+	t.Run("ends", func(t *testing.T) {
+		for _, row := range []struct {
+			signal  syscall.Signal
+			timeout bool
+			kind    string
+		}{
+			{syscall.SIGKILL, false, "confinement"}, {syscall.SIGKILL, true, "budget"}, {syscall.SIGABRT, false, ""},
+		} {
+			end := recordEnd(t, result{marked: true, timedOut: row.timeout, status: syscall.WaitStatus(row.signal)}, false)
+			if end["kind"] != "signal" {
+				t.Fatal(end)
+			}
+			if row.signal == syscall.SIGABRT {
+				if end["signal"] != "SIGABRT" || end["by"] != nil {
+					t.Fatal(end)
+				}
+			} else if end["by"] != row.kind {
+				t.Fatal(end)
+			}
+		}
+	})
+	t.Run("home", func(t *testing.T) {
+		home := t.TempDir()
+		before := recordSnapshot(t, home, "")
+		recordMust(t, os.WriteFile(filepath.Join(home, "data.json-wal"), []byte{}, 0600))
+		recordMust(t, os.WriteFile(filepath.Join(home, "data.json-shm"), make([]byte, 32768), 0600))
+		recordMust(t, os.Symlink("data.json", filepath.Join(home, "latest")))
+		recordMust(t, os.WriteFile(filepath.Join(home, "big.log"), bytes.Repeat([]byte("x"), (16<<20)+1), 0600))
+		after := recordSnapshot(t, home, "")
+		changes := recordChanges(before, after)
+		if len(changes) != 4 || after["big.log"].Digest != recordHash(bytes.Repeat([]byte("x"), (16<<20)+1)) || after["latest"].Kind != "link" {
+			t.Fatal("snapshot lost link, side file, or bytes past scan bound")
+		}
+	})
+	t.Run("encodings", func(t *testing.T) {
+		// Only the masked canary is ever written, including in test scratch files.
+		canary := "pql" + "canary" + strings.Repeat("0", 32)
+		original := recordEncodings([]byte(strings.Repeat("l", 41)))
+		for i, encoding := range recordEncodings([]byte(canary)) {
+			t.Run(encoding[0], func(t *testing.T) {
+				home := t.TempDir()
+				recordMust(t, os.WriteFile(filepath.Join(home, "debug.log"), []byte(encoding[1]), 0600))
+				scan := recordLeakScan(t, home, "", []byte(encoding[1]), nil, canary)
+				leaks := scan["leaks"].([]any)
+				found := map[string]bool{}
+				for _, value := range leaks {
+					leak := value.(map[string]any)
+					if leak["encoding"] == encoding[0] {
+						found[leak["place"].(string)] = true
+					}
+				}
+				if !found["stdout"] || !found["home/debug.log"] {
+					t.Fatal("encoding absent from stream or file scan", scan)
+				}
+				if !bytes.Equal(recordMask([]byte(original[i][1]), strings.Repeat("l", 41)), []byte(encoding[1])) {
+					t.Fatal("encoding was not masked")
+				}
+			})
+		}
+	})
+	t.Run("scan-bound", func(t *testing.T) {
+		home := t.TempDir()
+		canary := "pql" + "canary" + strings.Repeat("0", 32)
+		content := append(bytes.Repeat([]byte("x"), 16<<20), []byte(canary+"\n")...)
+		recordMust(t, os.WriteFile(filepath.Join(home, "big.log"), content, 0600))
+		scan := recordLeakScan(t, home, "", nil, nil, canary)
+		if scan["bound_reached"] != true || len(scan["leaks"].([]any)) != 0 {
+			t.Fatal("scan crossed its file bound", scan)
+		}
+	})
+	t.Run("number-form", func(t *testing.T) {
+		if recordPrintedNumbers(json.Number(strings.Repeat("1", 33))) || recordPrintedNumbers(map[string]any{"n": json.Number("1e00001")}) || !recordPrintedNumbers(json.Number("1e9999")) {
+			t.Fatal("printed number limits changed")
+		}
+	})
 }
