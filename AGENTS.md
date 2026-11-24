@@ -11,6 +11,7 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 - `docs/solutions/`: documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`).
 - `CODING_STANDARDS.md`: the rules code here follows, including the code rules below. Read it before writing or reviewing code, and update it when a change adds or retires a rule.
 - `REVIEW.md`: how review works here, the severity of a finding and the evidence it needs. Read it before reviewing a change or acting on a finding.
+- `CONCEPTS.md`: the project's shared domain vocabulary, terms with a project-specific meaning such as a sealed specification. Relevant when orienting to the project or discussing its concepts.
 
 ## Specifications are the authority
 
