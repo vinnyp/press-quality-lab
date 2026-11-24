@@ -595,6 +595,23 @@
     },
     {
       "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "emptiness",
+        "step": "list none",
+        "computation": [
+          "computations/has-gadgets.sh",
+          "{SEED}/data.json"
+        ],
+        "home": "scratch"
+      },
+      "budget_seconds": 5,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
         "words": [
           "list",
           "--json",
@@ -623,43 +640,6 @@
         "step": "list none json",
         "computation": [
           "computations/has-widgets.sh",
-          "{SEED}/data.json"
-        ],
-        "home": "scratch"
-      },
-      "budget_seconds": 5,
-      "store_control": false,
-      "planted": false
-    },
-    {
-      "key": {
-        "words": [
-          "list",
-          "--tag",
-          "none"
-        ],
-        "offline_args": [
-          "--offline"
-        ],
-        "env": [],
-        "runbook": "emptiness unproved",
-        "step": "list none",
-        "computation": null,
-        "home": "runbook"
-      },
-      "budget_seconds": 30,
-      "store_control": false,
-      "planted": false
-    },
-    {
-      "key": {
-        "words": null,
-        "offline_args": [],
-        "env": [],
-        "runbook": "emptiness unproved",
-        "step": "list none",
-        "computation": [
-          "computations/has-gadgets.sh",
           "{SEED}/data.json"
         ],
         "home": "scratch"

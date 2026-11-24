@@ -641,6 +641,26 @@
                 }
               },
               "exit_codes": null
+            },
+            {
+              "dimension": "response-correctness",
+              "predicate": "stdout_empty",
+              "path": null,
+              "expected": {
+                "literal": null
+              },
+              "precondition": {
+                "computation": {
+                  "argv": [
+                    "computations/has-gadgets.sh",
+                    "{SEED}/data.json"
+                  ],
+                  "budget_seconds": 5,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "exit_codes": null
             }
           ]
         },
@@ -665,42 +685,6 @@
                 "computation": {
                   "argv": [
                     "computations/has-widgets.sh",
-                    "{SEED}/data.json"
-                  ],
-                  "budget_seconds": 5,
-                  "declared_files": [],
-                  "captures": []
-                }
-              },
-              "exit_codes": null
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "emptiness unproved",
-      "steps": [
-        {
-          "name": "list none",
-          "words": [
-            "list",
-            "--tag",
-            "none"
-          ],
-          "budget_seconds": 30,
-          "checks": [
-            {
-              "dimension": "response-correctness",
-              "predicate": "stdout_empty",
-              "path": null,
-              "expected": {
-                "literal": null
-              },
-              "precondition": {
-                "computation": {
-                  "argv": [
-                    "computations/has-gadgets.sh",
                     "{SEED}/data.json"
                   ],
                   "budget_seconds": 5,
