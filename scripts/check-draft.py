@@ -261,6 +261,36 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
     save_ids()
     cross_run(0, "1 judge-checked")
 
+
+    # A blocked discovery makes only the first help request, despite recorded help.
+    preimage["probe"] = "discovery"
+    digest = ids.check_id(preimage)
+    record["required"][0]["id"] = digest
+    evidence["check_id"] = digest
+    case["input"]["host"] = {"confinement": {"applied": False}}
+    help_keys = [dict(words=words + ["--help"], offline_args=[], env=[], runbook=None,
+                      step=None, computation=None, home="empty")
+                 for words in ([], ["one"], ["two"], ["three"], ["four"], ["five"])]
+    case["invocations"] = help_keys
+    template = behaviour["invocations"][0]
+    behaviour["invocations"] = []
+    for index, help_key in enumerate(help_keys):
+        entry = json.loads(json.dumps(template))
+        entry["key"] = help_key
+        text = "COMMANDS:\n  one\n  two\n  three\n  four\n  five\n" if index == 0 else ""
+        entry["confined"][0]["stdout"]["head"] = text
+        entry["confined"][0]["stdout"]["bytes"] = len(text.encode("utf-8"))
+        entry["confined"][0]["stdout"]["cut"] = False
+        behaviour["invocations"].append(entry)
+    (root / "behaviour/byte-bound.json").write_text(json.dumps(behaviour))
+    evidence["targets"] = [{"kind": "invocation", "id": digest + "#" + str(index), "tier": "live"}
+                           for index in range(1, 7)]
+    save_ids()
+    cross_run(1, "invalid invocation target numbering")
+    evidence["targets"] = [{"kind": "invocation", "id": digest, "tier": "live"}]
+    save_ids()
+    cross_run(0, "1 judge-checked")
+
 # Blind exports preserve inputs but must reveal injected oracle material.
 with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
     root = Path(temporary)

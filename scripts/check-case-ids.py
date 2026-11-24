@@ -14,7 +14,7 @@ def key(preimage, invocation=None):
     return dict(words=invocation["words"], offline_args=invocation["offline_args"], env=sorted(invocation["env"], key=lambda name: name.encode("utf-8")), runbook=preimage["runbook"], step=preimage["step"], computation=None, home="runbook" if preimage["runbook"] is not None else "planted" if preimage["probe"] == "planted_secret" else "seed")
 
 
-def discovery_keys(recording):
+def discovery_keys(recording, first_only=False):
     """Walk the recorded help tree in QD2 order, without running a subject."""
     found = []
 
@@ -24,6 +24,8 @@ def discovery_keys(recording):
         if len(matches) != 1:
             raise ValueError("cannot decide discovery invocation: " + ids.canon(invocation_key))
         found.append(invocation_key)
+        if first_only:
+            return
         run = matches[0]["confined"][0]
         stream = run["stdout"] if run["stdout"]["bytes"] else run["stderr"]
         if stream["cut"] or stream["bytes"] > len(stream["head"].encode("utf-8")):
@@ -47,10 +49,14 @@ def discovery_keys(recording):
     return found
 
 
-def target_keys(preimage, evidence, recording):
+def target_keys(preimage, evidence, recording, host, binary):
     probe = preimage["probe"]
     if probe == "discovery":
-        invocations = discovery_keys(recording)
+        first_only = (isinstance(binary, dict) or
+                      host.get("confinement", {}).get("applied") is False or
+                      host.get("self_test") == "failed" or
+                      host.get("private_copy") == "changed")
+        invocations = discovery_keys(recording, first_only)
     elif probe == "planted_secret":
         invocations = [key(preimage, command) for command in preimage["parameters"].get("commands", [])]
     elif preimage["words"] is not None:
@@ -110,7 +116,8 @@ def check(cases):
         for fixture in case["input"]["fixtures"]:
             if fixture["kind"] in ("link", "special_file") and (fixture["path"] == "seed" or fixture["path"].startswith("seed/")):
                 raise ValueError(case["id"] + ": seed contains a link or special file: " + fixture["path"])
-        subject_seed = ids.load(directory / case["input"]["subject_file"])["seed"]
+        subject = ids.load(directory / case["input"]["subject_file"])
+        subject_seed = subject["seed"]
         if subject_seed is None or isinstance(subject_seed, dict) and set(subject_seed) == {"placeholder"}:
             expected_seed = subject_seed
         else:
@@ -122,7 +129,8 @@ def check(cases):
             if preimage["seed"] != expected_seed:
                 raise ValueError(case["id"] + ": seed digest mismatch: " + digest)
         for evidence in record["evidence"]:
-            targets = target_keys(preimages[evidence["check_id"]], evidence, recording)
+            targets = target_keys(preimages[evidence["check_id"]], evidence, recording,
+                                  case["input"]["host"] or {}, subject["binary"])
             runs = []
             for name, invocation_key in targets:
                 if invocation_key is None:
