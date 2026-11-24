@@ -9,6 +9,9 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 - `docs/requirements.md`: the requirements (R1 to R42) and acceptance examples (AE1 to AE36) that the specifications cite. Their numbers and wording do not change, and actors A1 to A4 and flows F1 to F5 keep their ids.
 - The engine's command is `pql`, under `cmd/pql`; the plan's §4 gives the intended package layout.
 - `docs/solutions/`: documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`).
+- `CODING_STANDARDS.md`: the rules code here follows, including the code rules below. Read it before writing or reviewing code, and update it when a change adds or retires a rule.
+- `REVIEW.md`: how review works here, the severity of a finding and the evidence it needs. Read it before reviewing a change or acting on a finding. It repeats the claim-to-verify rule under Review; change both together.
+- `CONCEPTS.md`: the project's shared domain vocabulary, terms with a project-specific meaning such as a sealed specification. Relevant when orienting to the project or discussing its concepts.
 
 ## Specifications are the authority
 
@@ -82,6 +85,7 @@ Run Python there with `PYTHONDONTWRITEBYTECODE=1`; a stray file makes the case r
 
 - Test the rules, not only the given cases. A test must fail when the rule it guards is broken; check that by breaking the rule.
 - A check that could not evaluate its subject never reports a pass.
+- `CODING_STANDARDS.md` holds the rest of the rules tests must meet.
 - Cobra (`github.com/spf13/cobra`) is the approved command framework, used under `cmd/` only. The import-guard test enforces this. Any other dependency beyond the standard library is a deliberate, reviewed addition. The gate runs with the network off.
 
 ## Review
