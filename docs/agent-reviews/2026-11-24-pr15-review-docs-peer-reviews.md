@@ -94,3 +94,17 @@ Verdicts: code ship-ready (5 Minor, 4 Nit); test trustworthy after one Major (1 
 | 42 | "Before anything is read or copied" adds a timing QS8 and QS9 do not state | code (Nit) | Confirmed | Fixed by the rewrite. |
 | 43 | The 223bd2f commit message calls the ordering rule a restatement | code (Nit) | Agreed | No change: commit messages are not rewritten. |
 | 44 | The `CONCEPTS.md` "stable ids" wording is stated by no specification | security (Info) | Agreed | Fixed. |
+
+## Round 4 (delta check)
+
+**Range:** `b1dfed7..8df358a`. **Reviewer:** peer-code-reviewer, runtime=claude, in a fresh clone; repository-state snapshots unchanged. Verdict: ready after one Major. Rows 31 to 34, 37, 40 to 42 and 44 confirmed closed.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 45 | Row 30's fix ties the one-reading-path rule to X12 alone, but evidence code reads under QS2 and QA6, with other bounds and no judge schema | code (Major) | Confirmed from QS2 and QA6 in `collection-rules.md` | Fixed: one reading path per kind of input, each with the conditions its clause sets; the section names both specifications. |
+| 46 | The goroutine rule restates the rejection exit status without its clause | code (Minor) | Confirmed from judge contract §3 and rulebook §8 | Fixed: both cited; the panic exit is the hazard. |
+| 47 | `CONCEPTS.md` holds a copy of the judge rule with no sync note | code (Minor) | Confirmed | Fixed. |
+| 48 | "Never remade" drops "silently" from QH8 and the record | code (Minor) | Confirmed from QH8 | Fixed. |
+| 49 | "Defers to the clause" has no single clause when specifications differ | code (Nit) | Agreed | Fixed. |
+| 50 | "The review rule below" is ambiguous; the Review section has three rules | code (Nit) | Confirmed | Fixed. |
+| 51 | "Two readers were merged" could not be traced | code (risk) | Confirmed from the round-2 notes in cf39092: "replaced the two raw-byte readers with `readDocument`" | No change. |

@@ -10,7 +10,7 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 - The engine's command is `pql`, under `cmd/pql`; the plan's §4 gives the intended package layout.
 - `docs/solutions/`: documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`).
 - `CODING_STANDARDS.md`: the rules code here follows, including the code rules below. Read it before writing or reviewing code, and update it when a change adds or retires a rule.
-- `REVIEW.md`: how review works here, the severity of a finding and the evidence it needs. Read it before reviewing a change or acting on a finding. It repeats the review rule below; change both together.
+- `REVIEW.md`: how review works here, the severity of a finding and the evidence it needs. Read it before reviewing a change or acting on a finding. It repeats the claim-to-verify rule under Review; change both together.
 - `CONCEPTS.md`: the project's shared domain vocabulary, terms with a project-specific meaning such as a sealed specification. Relevant when orienting to the project or discussing its concepts.
 
 ## Specifications are the authority

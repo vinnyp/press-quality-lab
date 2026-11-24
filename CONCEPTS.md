@@ -18,4 +18,4 @@ The dated note kept beside a sealed specification's folder, holding editorial co
 
 The part of the engine that decides every verdict, by the rules of its own sealed specification.
 
-The project's rule, quoted in full: "The judge decides every verdict. Code that collects evidence reports what it saw for one check or one trial and nothing above that: no requiredness, no rollups, no comparison, no verdict."
+The project's rule, quoted in full: "The judge decides every verdict. Code that collects evidence reports what it saw for one check or one trial and nothing above that: no requiredness, no rollups, no comparison, no verdict." `AGENTS.md` and `CODING_STANDARDS.md` hold the same rule; change every copy together.
