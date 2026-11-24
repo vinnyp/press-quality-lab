@@ -259,7 +259,9 @@
             "leaks": []
           },
           "decoys": [],
-          "printed_value": true
+          "printed_value": {
+            "value": true
+          }
         },
         {
           "markers": {
@@ -298,7 +300,9 @@
             "leaks": []
           },
           "decoys": [],
-          "printed_value": true
+          "printed_value": {
+            "value": true
+          }
         },
         {
           "markers": {
@@ -337,7 +341,9 @@
             "leaks": []
           },
           "decoys": [],
-          "printed_value": true
+          "printed_value": {
+            "value": true
+          }
         },
         {
           "markers": {
@@ -376,7 +382,9 @@
             "leaks": []
           },
           "decoys": [],
-          "printed_value": true
+          "printed_value": {
+            "value": true
+          }
         },
         {
           "markers": {
@@ -415,7 +423,9 @@
             "leaks": []
           },
           "decoys": [],
-          "printed_value": true
+          "printed_value": {
+            "value": true
+          }
         }
       ]
     },

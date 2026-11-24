@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
 
 type recordKey struct {
@@ -1102,10 +1103,97 @@ func (d *recordDecoys) close(t *testing.T) {
 	}
 }
 
+// Check the text constraints encoding/json deliberately relaxes. The decoder
+// below checks grammar; this pass rejects malformed UTF-8 and surrogate escapes.
+func recordPrintedText(data []byte) bool {
+	if !utf8.Valid(data) {
+		return false
+	}
+	inString := false
+	for i := 0; i < len(data); i++ {
+		if data[i] == '"' {
+			inString = !inString
+			continue
+		}
+		if !inString || data[i] != '\\' {
+			continue
+		}
+		i++
+		if i >= len(data) {
+			return false
+		}
+		if data[i] != 'u' {
+			continue
+		}
+		if i+4 >= len(data) {
+			return false
+		}
+		n, err := strconv.ParseUint(string(data[i+1:i+5]), 16, 16)
+		if err != nil {
+			return false
+		}
+		i += 4
+		if n >= 0xdc00 && n <= 0xdfff {
+			return false
+		}
+		if n < 0xd800 || n > 0xdbff {
+			continue
+		}
+		if i+6 >= len(data) || data[i+1] != '\\' || data[i+2] != 'u' {
+			return false
+		}
+		low, err := strconv.ParseUint(string(data[i+3:i+7]), 16, 16)
+		if err != nil || low < 0xdc00 || low > 0xdfff {
+			return false
+		}
+		i += 6
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	var value func(int) bool
+	value = func(depth int) bool {
+		token, err := decoder.Token()
+		if err != nil {
+			return false
+		}
+		delim, container := token.(json.Delim)
+		if !container {
+			return true
+		}
+		if depth >= 64 || (delim != '{' && delim != '[') {
+			return false
+		}
+		keys := map[string]bool{}
+		for decoder.More() {
+			if delim == '{' {
+				key, err := decoder.Token()
+				if err != nil {
+					return false
+				}
+				name, ok := key.(string)
+				if !ok || keys[name] {
+					return false
+				}
+				keys[name] = true
+			}
+			if !value(depth + 1) {
+				return false
+			}
+		}
+		end, err := decoder.Token()
+		return err == nil && ((delim == '{' && end == json.Delim('}')) || (delim == '[' && end == json.Delim(']')))
+	}
+	if !value(0) {
+		return false
+	}
+	_, err := decoder.Token()
+	return err == io.EOF
+}
+
 // Exit status does not decide whether a computation printed one JSON value.
 func recordPrintedValue(r result) any {
 	stdout := []byte(r.output)
-	if len(stdout) > 1<<20 {
+	if len(stdout) > 1<<20 || !recordPrintedText(stdout) {
 		return nil
 	}
 	decoder := json.NewDecoder(bytes.NewReader(stdout))
@@ -1114,10 +1202,10 @@ func recordPrintedValue(r result) any {
 	if decoder.Decode(&value) != nil || decoder.Decode(&extra) != io.EOF || !recordPrintedNumbers(value) {
 		return nil
 	}
-	return value
+	return map[string]any{"value": value}
 }
 func TestRecordPrintedValue(t *testing.T) {
-	for _, row := range []struct{ output, want string }{{"3\n", "3"}, {"true", "true"}, {"3 4", "null"}, {"not json", "null"}, {"", "null"}} {
+	for _, row := range []struct{ output, want string }{{"3\n", `{"value":3}`}, {"true", `{"value":true}`}, {"null", `{"value":null}`}, {`{"a":1,"\u0061":2}`, "null"}, {`"\ud800"`, "null"}, {`"\udc00"`, "null"}, {`"\ud800\udc00"`, `{"value":"𐀀"}`}, {string([]byte{34, 255, 34}), "null"}, {strings.Repeat("[", 65) + "0" + strings.Repeat("]", 65), "null"}, {strings.Repeat("1", 33), "null"}, {"1e00001", "null"}, {"1e9999", `{"value":1e9999}`}, {"3 4", "null"}, {"not json", "null"}, {"", "null"}} {
 		got := string(recordCanonical(t, recordPrintedValue(result{output: row.output})))
 		if got != row.want {
 			t.Errorf("printed %q: got %s, want %s", row.output, got, row.want)
@@ -1130,7 +1218,7 @@ func TestRecordPrintedValue(t *testing.T) {
 	if err == nil {
 		t.Fatal("nonzero fixture exited successfully")
 	}
-	if got := recordPrintedValue(result{output: string(out), status: cmd.ProcessState.Sys().(syscall.WaitStatus)}); got != json.Number("3") {
+	if got := recordPrintedValue(result{output: string(out), status: cmd.ProcessState.Sys().(syscall.WaitStatus)}); !reflect.DeepEqual(got, map[string]any{"value": json.Number("3")}) {
 		t.Fatalf("nonzero computation printed value = %v", got)
 	}
 }

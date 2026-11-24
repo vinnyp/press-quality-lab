@@ -223,7 +223,7 @@ func TestCollectionSubject(t *testing.T) {
 			var recording subjectRecording
 			decode(t, b, &recording)
 			if err := subjectDigestGuard(digest, recording.FormSHA); err != nil {
-				t.Fatal(err)
+				t.Error(err)
 			}
 			if len(recording.Invocations) == 0 {
 				t.Fatal("recording has no invocations")
@@ -326,6 +326,9 @@ func testKnownGoodSubject(t *testing.T, binary string) {
 	}{
 		{[]string{"account"}, fmt.Sprintf("{\"account\":\"ok\",\"token_bytes\":%d}\n", tokenBytes), "", 0, false},
 		{[]string{"count"}, "{\"count\":3}\n", "", 0, false},
+		{[]string{"--quiet", "count"}, "{\"count\":3}\n", "", 0, false},
+		{[]string{"count", "--quiet", "--offline"}, "{\"count\":3}\n", "", 0, false},
+		{[]string{"count", "--quiet", "--tag", "metal"}, "{\"count\":2}\n", "", 0, false},
 		{[]string{"list", "--json", "--tag", "absent"}, "{\"source\":\"local\",\"truncated\":false,\"widgets\":[]}\n", "", 0, false},
 		{[]string{"--offline", "count", "--tag", "metal"}, "{\"count\":2}\n", "", 0, false},
 		{[]string{"list", "--tag", "brass", "--offline"}, "valve\n", "", 0, false},
@@ -534,7 +537,7 @@ func testDefectSubject(t *testing.T, binary, form string) {
 		want = "gear\xff\nspring\xff\nvalve\xff\n"
 	case "huge-output":
 		args = []string{"list"}
-	case "hides-command", "renames-command", "adds-command", "help-urfave", "help-clap", "help-cobra-group", "help-fails", "help-manpage", "help-no-section", "help-deep", "help-cycle":
+	case "hides-command", "renames-command", "adds-command", "help-hidden", "help-stderr", "help-urfave", "help-clap", "help-cobra-group", "help-fails", "help-manpage", "help-no-section", "help-deep", "help-cycle":
 		args = []string{"--help"}
 	case "crashes", "kills-self":
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -566,6 +569,12 @@ func testDefectSubject(t *testing.T, binary, form string) {
 	expectedCode := 0
 	if form == "help-fails" {
 		expectedCode = 1
+	}
+	if form == "help-stderr" {
+		if len(out) != 0 || !bytes.Contains(diagnostic, []byte("SUBCOMMANDS:")) {
+			t.Fatal("stderr help stream or heading differs")
+		}
+		out, diagnostic = diagnostic, out
 	}
 	if code != expectedCode || len(diagnostic) != 0 {
 		t.Fatalf("form %s: code=%d diagnostic=%q", form, code, diagnostic)
@@ -630,6 +639,25 @@ func testDefectSubject(t *testing.T, binary, form string) {
 		listed, _, _ := subjectInvoke(t, binary, home, "list", "--json")
 		if exit != 0 || !bytes.Equal(exported, listed) {
 			t.Fatal("export differs from JSON list")
+		}
+	}
+	if form == "help-hidden" || form == "help-stderr" {
+		commands := []string{"account", "add", "count", "list", "remove"}
+		if form == "help-hidden" {
+			if !bytes.Contains(out, []byte("Additional Commands:\n  debug       (hidden)")) || !bytes.Contains(out, []byte("  completion ")) {
+				t.Fatal("excluded commands missing from help")
+			}
+			commands = append(commands, "debug", "completion")
+		}
+		for _, command := range commands {
+			stdout, stderr, exit := subjectInvoke(t, binary, t.TempDir(), command, "--help")
+			help := stdout
+			if form == "help-stderr" {
+				help, stderr = stderr, stdout
+			}
+			if exit != 0 || len(stderr) != 0 || !bytes.Contains(help, []byte("Usage:")) || len(subjectHelpCommands(string(help))) != 0 {
+				t.Fatalf("leaf help %s differs", command)
+			}
 		}
 	}
 	if strings.HasPrefix(form, "help-") {
@@ -763,7 +791,8 @@ func subjectHelpCommands(text string) []string {
 			continue
 		}
 		command := strings.TrimSuffix(words[0], ",")
-		if command != "help" && command != "completion" {
+		hidden := len(words) > 1 && (words[1] == "(hidden)" || words[1] == "[hidden]" || words[1] == "HIDDEN")
+		if command != "help" && command != "completion" && !hidden {
 			commands = append(commands, command)
 		}
 	}

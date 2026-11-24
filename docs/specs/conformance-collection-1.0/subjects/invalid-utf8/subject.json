@@ -471,6 +471,30 @@
           ]
         }
       ]
+    },
+    {
+      "name": "bytes",
+      "steps": [
+        {
+          "name": "list plain",
+          "words": [
+            "list"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "stdout_contains",
+              "path": null,
+              "expected": {
+                "literal": "�"
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
     }
   ],
   "markers": [],

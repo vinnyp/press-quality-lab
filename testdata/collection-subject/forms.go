@@ -18,8 +18,8 @@ import (
 	"syscall"
 )
 
-// Keep the known-good compiled source set unchanged. Forms intercept only their
-// named operation and delegate all other operations to the original runner.
+// Forms intercept their named operation and delegate other operations to the
+// shared runner.
 func runSelectedForm(form string) {
 	os.Exit(runForm(form, os.Args[1:], os.Getenv("HOME"), os.Stdout, os.Stderr))
 }
@@ -27,16 +27,20 @@ func runSelectedForm(form string) {
 func runForm(form string, args []string, home string, out, errout io.Writer) int {
 	words := make([]string, 0, len(args))
 	for _, word := range args {
-		if word != "--offline" {
+		if word != "--offline" && word != "--quiet" {
 			words = append(words, word)
 		}
 	}
 	if len(words) > 0 && words[0] == "widgets" {
 		words = words[1:]
 	}
+	helpOut := out
+	if form == "help-stderr" {
+		helpOut = errout
+	}
 	root := len(words) == 0 || words[0] == "--help" || words[0] == "-h"
 	if root {
-		_, _ = io.WriteString(out, formHelp(form))
+		_, _ = io.WriteString(helpOut, formHelp(form))
 		if form == "help-fails" && len(words) > 0 && words[0] == "--help" {
 			return 1
 		}
@@ -84,7 +88,11 @@ func runForm(form string, args []string, home string, out, errout io.Writer) int
 		return run([]string{"add", "help"}, home, out, errout, selectedForm)
 	}
 	if help {
-		return run(args, home, out, errout, selectedForm)
+		if form == "help-hidden" && (command == "debug" || command == "completion") {
+			_, _ = fmt.Fprintf(helpOut, "Usage:\n  widgets %s\n\nFlags:\n  --help   Show help\n", command)
+			return 0
+		}
+		return run(args, home, helpOut, errout, selectedForm)
 	}
 	if command == "account" && len(words) != 1 {
 		return run(args, home, out, errout, selectedForm)
@@ -336,6 +344,11 @@ func formHelp(form string) string {
 		return strings.Replace(rootHelp, "count       Count", "tally       Count", 1)
 	case "adds-command":
 		return strings.Replace(rootHelp, "  list        List", "  export      Export widgets\n  list        List", 1)
+	case "help-hidden":
+		help := strings.Replace(rootHelp, "  count       Count widgets\n", "  completion  Generate shell completion\n  count       Count widgets\n", 1)
+		return strings.Replace(help, "Flags:", "Additional Commands:\n  debug       (hidden) Show diagnostics\n\nFlags:", 1)
+	case "help-stderr":
+		return strings.Replace(rootHelp, "Available Commands:", "SUBCOMMANDS:", 1)
 	case "help-urfave":
 		return "NAME:\n   widgets - keeps widgets\n\nUSAGE:\n   widgets command\n\nCOMMANDS:\n   account, a   Show the account the token belongs to\n   add   Add a widget\n   count   Count widgets\n   list   List widgets\n   remove   Remove a widget (destructive)\n\nGLOBAL OPTIONS:\n   --help   Show help\n"
 	case "help-clap":

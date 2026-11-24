@@ -531,6 +531,85 @@
       "store_control": false,
       "planted": true,
       "violates": false
+    },
+    {
+      "key": {
+        "words": [
+          "account"
+        ],
+        "offline_args": [],
+        "env": [
+          "WIDGETS_OFFLINE"
+        ],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false,
+      "violates": false
+    },
+    {
+      "key": {
+        "words": [
+          "count"
+        ],
+        "offline_args": [],
+        "env": [
+          "WIDGETS_OFFLINE"
+        ],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false,
+      "violates": false
+    },
+    {
+      "key": {
+        "words": [
+          "list"
+        ],
+        "offline_args": [
+          "--offline",
+          "--quiet"
+        ],
+        "env": [
+          "WIDGETS_OFFLINE"
+        ],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "seed"
+      },
+      "budget_seconds": 30,
+      "store_control": true,
+      "planted": false,
+      "violates": false
+    },
+    {
+      "key": {
+        "words": [
+          "account"
+        ],
+        "offline_args": [],
+        "env": [
+          "WIDGETS_OFFLINE"
+        ],
+        "runbook": null,
+        "step": null,
+        "computation": null,
+        "home": "planted"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": true,
+      "violates": false
     }
   ]
 }

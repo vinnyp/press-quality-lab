@@ -773,7 +773,7 @@ def draft(root):
     })
 
     arbitrary_values = {
-            ("schema/behaviour.schema.json", "/$defs/run/properties/printed_value"),
+            ("schema/behaviour.schema.json", "/$defs/run/properties/printed_value/oneOf/1/properties/value"),
             ("schema/subject-file.schema.json", "/$defs/expected/oneOf/0/properties/literal"),
             ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/expected/oneOf/1/properties/literal"),
         }

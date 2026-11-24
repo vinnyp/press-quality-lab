@@ -472,7 +472,23 @@
             }
           }
         },
-        "printed_value": true
+        "printed_value": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "value"
+              ],
+              "properties": {
+                "value": true
+              }
+            }
+          ]
+        }
       }
     },
     "end": {

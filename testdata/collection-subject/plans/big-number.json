@@ -422,6 +422,24 @@
       "budget_seconds": 30,
       "store_control": false,
       "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "count"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "number",
+        "step": "count",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
     }
   ]
 }

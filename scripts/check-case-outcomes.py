@@ -148,7 +148,10 @@ def derive(pre, subject, recording, host):
             expected = expected['literal']
         else:
             computation = dict(words=None, offline_args=[], env=[], runbook=pre['runbook'], step=pre['step'], computation=expected['computation']['argv'], home='scratch')
-            expected = find(recording, computation)['printed_value']
+            printed = find(recording, computation)['printed_value']
+            if printed is None:
+                return ('not_observed', 'computation_failed', None), size
+            expected = printed['value']
         accepted = [expected] if check['predicate'] == 'exit_code' else check['exit_codes'] if check['exit_codes'] is not None else accepted
     if run['end']['code'] not in accepted:
         return ('not_held', None, 'wrong_exit'), size

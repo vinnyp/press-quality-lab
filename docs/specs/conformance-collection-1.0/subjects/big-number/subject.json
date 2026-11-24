@@ -471,6 +471,30 @@
           ]
         }
       ]
+    },
+    {
+      "name": "number",
+      "steps": [
+        {
+          "name": "count",
+          "words": [
+            "count"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "json_path_equals",
+              "path": "/count",
+              "expected": {
+                "literal": 3
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
     }
   ],
   "markers": [],

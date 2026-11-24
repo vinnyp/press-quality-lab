@@ -471,6 +471,59 @@
           ]
         }
       ]
+    },
+    {
+      "name": "cut",
+      "steps": [
+        {
+          "name": "list plain",
+          "words": [
+            "list"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "stdout_contains",
+              "path": null,
+              "expected": {
+                "literal": "widget"
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        },
+        {
+          "name": "count from capture",
+          "words": [
+            "count"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "json_path_equals",
+              "path": "/count",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/count-lines.sh",
+                    "{CAPTURE:list plain}"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": [
+                    "list plain"
+                  ]
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
     }
   ],
   "markers": [],

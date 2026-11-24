@@ -46,7 +46,7 @@ func run(args []string, home string, out, errout io.Writer, form behaviour) int 
 	}
 	words := make([]string, 0, len(args))
 	for _, arg := range args {
-		if arg != "--offline" {
+		if arg != "--offline" && arg != "--quiet" {
 			words = append(words, arg)
 		}
 	}

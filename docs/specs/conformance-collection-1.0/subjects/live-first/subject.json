@@ -81,7 +81,46 @@
   "declared_count": 5,
   "seed": "seed",
   "store": "data.json",
-  "offline": [],
+  "offline": [
+    {
+      "applies_to": [
+        [
+          "account"
+        ],
+        [
+          "count"
+        ]
+      ],
+      "args": [],
+      "env": {
+        "WIDGETS_OFFLINE": "1"
+      }
+    },
+    {
+      "applies_to": [
+        [
+          "list"
+        ]
+      ],
+      "args": [
+        "--offline"
+      ],
+      "env": {}
+    },
+    {
+      "applies_to": [
+        [
+          "list"
+        ]
+      ],
+      "args": [
+        "--quiet"
+      ],
+      "env": {
+        "WIDGETS_OFFLINE": "1"
+      }
+    }
+  ],
   "bookkeeping": [
     ".local/state/widgets"
   ],

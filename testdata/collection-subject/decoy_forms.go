@@ -20,7 +20,7 @@ const decoyRoot = "/private/tmp/pql-decoys"
 
 func runDecoyForm(form string) {
 	args, home := os.Args[1:], os.Getenv("HOME")
-	words := slices.DeleteFunc(slices.Clone(args), func(s string) bool { return s == "--offline" })
+	words := slices.DeleteFunc(slices.Clone(args), func(s string) bool { return s == "--offline" || s == "--quiet" })
 	if len(words) > 0 && words[0] == "widgets" {
 		words = words[1:]
 	}
@@ -31,7 +31,7 @@ func runDecoyForm(form string) {
 	if command == "list" {
 		switch form {
 		case "tries-network", "live-first":
-			if form != "live-first" || !slices.Contains(args, "--offline") {
+			if form != "live-first" || !(slices.Contains(args, "--offline") || os.Getenv("WIDGETS_OFFLINE") == "1") {
 				c, err := net.DialTimeout("tcp4", "127.0.0.1:47391", time.Second)
 				if err == nil {
 					_ = c.Close()
@@ -98,7 +98,7 @@ func decoyList(args []string, home string, data []byte) int {
 	if os.MkdirAll(statePath, 0700) != nil || os.WriteFile(filepath.Join(statePath, "last-command"), []byte("list\n"), 0600) != nil {
 		return 5
 	}
-	words := slices.DeleteFunc(slices.Clone(args), func(s string) bool { return s == "--offline" })
+	words := slices.DeleteFunc(slices.Clone(args), func(s string) bool { return s == "--offline" || s == "--quiet" })
 	if words[0] == "widgets" {
 		words = words[1:]
 	}
