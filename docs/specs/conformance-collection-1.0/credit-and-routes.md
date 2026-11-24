@@ -1,7 +1,5 @@
 # Credit and routes
 
-**Draft.** This folder is a draft of the conformance collection specification, version 1.0. It is not sealed, and it holds no `KIT.sha256`.
-
 **What this file covers.** Which check can make each dimension green, where each expected value comes from, which known routes lead to a false pass or a false fail and what controls them, and the lists other rules refer to. These tables restate, in this specification's own words, the crediting and routing rules it takes from the CDR specification 0.9.1, which was their starting point; no text or fixture is copied from it. How to read the rules, and what binds, is as `collection-rules.md` says. The tables here bind.
 
 ## 1. The generated probes

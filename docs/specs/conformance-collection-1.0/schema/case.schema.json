@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "case.schema.json",
-  "title": "Conformance collection 1.0 case (draft; the corpus fills it)",
+  "title": "Conformance collection 1.0 case",
   "type": "object",
   "additionalProperties": false,
   "required": [

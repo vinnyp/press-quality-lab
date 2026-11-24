@@ -1,7 +1,5 @@
 # Confinement
 
-**Draft.** This folder is a draft of the conformance collection specification, version 1.0. It is not sealed, and it holds no `KIT.sha256`.
-
 **What this file covers.** How the engine confines the subject and each computation on macOS, how it tells a refusal from the subject's own result, and which limits remain. The rules are family QH. They rest on the confinement spike recorded in `docs/spikes/2026-11-28-confinement.md`, which tested these rules on synthetic programs and on one real printed CLI. The refusals that no harmless attempt could witness are named in §8. Nothing here depends on the spike's code: the template below is complete, and its comments say what each line is for. How to read the rules, and what binds, is as `collection-rules.md` says.
 
 ## 1. Where the engine may grade

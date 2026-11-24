@@ -1,7 +1,5 @@
 # Collection rules
 
-**Draft.** This folder is a draft of the conformance collection specification, version 1.0. It is not sealed, and it holds no `KIT.sha256`.
-
 **Specification version:** `1.0`. A collector reports this string with every record it writes. Check ids carry a separate id-scheme string (QE2), so a new specification version keeps every check's id unless it changes what an id is made of.
 
 **What this file covers.** How an engine turns one subject file and one requested scope into observations:

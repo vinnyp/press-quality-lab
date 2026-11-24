@@ -1,7 +1,5 @@
 # Collection contract
 
-**Draft.** This folder is a draft of the conformance collection specification, version 1.0. It is not sealed, and it holds no `KIT.sha256`.
-
 **What this file covers.** How the engine turns its observations into the judge's input, what it does with the judge's output, which exit code it ends with, and how it keeps and cleans up what it ran. The rules are families QE and QT. How to read the rules, and what binds, is as `collection-rules.md` says. The judge decides every verdict; nothing here decides one.
 
 ## 1. Versions
