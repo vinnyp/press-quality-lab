@@ -105,13 +105,15 @@ Items in each phase are numbered and cited as "phase.item": 0.2 is the second it
 
 ### Phase 2: the conformance collection specification
 
+**Status:** done on 2026-11-24, with the pull request that removed the spike's code. The spike passed for macOS 27.0.1 and 27.2, and Linux is stated as unsupported. The owner ratified the specification, sealed as `docs/specs/conformance-collection-1.0/` (`docs/specs/conformance-collection-1.0-seal.md`), with a synthetic subject of 54 forms recorded on macOS, a public corpus of 152 cases, and a private half kept outside the repository. A reader on a different model derived every case from the text alone and agreed with the corpus, and the reviews left no open blocker.
+
 1. A short spike first, in week 1: can the engine verify, on macOS and on Linux, that a child process made no network request? Answered in `docs/spikes/2026-11-28-confinement.md`: on macOS, with `sandbox-exec`; version 1.0 supports macOS only, and Linux is stated as unsupported. The requirements say a check is not measured when this cannot be verified, so without a mechanism every offline grade would be not-measured.
 2. The specification of the conformance items in §3, written by the plan's author with the owner's decisions, in the same form as the judge specification: stable rule ids, closed lists, worked cases.
 3. A synthetic subject: a small CLI kept in this repository's test data, in a known-good form and in forms each carrying one seeded defect.
 4. A collection corpus built on it, two-sided as the requirements demand: every not-measured case has a repaired twin that grades green, the known-good subject grades green, and each seeded defect grades red on the named check.
 5. Reviewed by a standards reviewer and by a different model, then ratified by the owner and sealed as `docs/specs/conformance-collection-1.0/`.
 
-**Done when:** the network spike is answered, the specification is sealed, and the synthetic subject and its corpus exist and are reviewed. The specification was sealed on 2026-11-24; phase 2 ends when the spike's harness is removed from the repository, in the pull request after the seal.
+**Done when:** the network spike is answered, the specification is sealed, and the synthetic subject and its corpus exist and are reviewed.
 
 ### Phase 3: the grade command
 
@@ -180,7 +182,7 @@ These are estimates. The trial showed that a build takes hours and a specificati
 |---|---|
 | 2026-11-28 | Phase 0 done. Judge built and scored. Network spike answered. |
 | 2026-12-05 | Phase 1 done: milestone part 1. |
-| 2026-12-19 | Phase 2 done. |
+| 2026-12-19 | Phase 2 done. Reached on 2026-11-24. |
 | 2027-01-16 | Phase 3 done. |
 | 2027-01-25 | **Halfway check.** On course if phase 3 is done and the real CLI's first conformance grade has run. |
 | 2027-01-30 | Phase 4 done. |
