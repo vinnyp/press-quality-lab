@@ -3,7 +3,6 @@
   "kind": "judge-checked",
   "rules": [
     "QA4",
-    "QH16",
     "QA2"
   ],
   "input": {

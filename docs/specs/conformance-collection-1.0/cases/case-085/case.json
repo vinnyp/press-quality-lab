@@ -3,9 +3,6 @@
   "kind": "judge-checked",
   "rules": [
     "QO3",
-    "QH12",
-    "QH15",
-    "QH22",
     "QE13"
   ],
   "input": {

@@ -93,6 +93,8 @@ The leak scan looks for the canary in each of these forms. The same list governs
 | `percent-upper` | percent-encoding of every byte, with upper-case hexadecimal digits |
 | `percent-lower` | percent-encoding of every byte, with lower-case hexadecimal digits |
 
+For the canary's alphabet (QP10), `base64` and `base64url` give the same text, and each unpadded form is a prefix of its padded one. The table keeps all four so that the scan, and masking, match each spelling a subject could produce.
+
 ## 5. Help formats discovery reads
 
 A **section heading** is a line that starts with no space and is one of these:

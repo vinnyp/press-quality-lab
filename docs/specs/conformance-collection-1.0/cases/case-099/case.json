@@ -2,8 +2,7 @@
   "id": "case-099",
   "kind": "judge-checked",
   "rules": [
-    "QS7",
-    "QH12"
+    "QS7"
   ],
   "input": {
     "subject_file": "subject.json",

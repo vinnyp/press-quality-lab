@@ -3,7 +3,6 @@
   "kind": "judge-checked",
   "rules": [
     "QO3",
-    "QH20",
     "QE13"
   ],
   "input": {

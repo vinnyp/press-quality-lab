@@ -184,7 +184,7 @@ QS5's override of an otherwise held check comes last of all.
 - **QD3. What discovery compares.** Discovery compares names as well as the count. It holds when every declared command was found and the number found equals `declared_count`. With every declared command found:
   - a different count is `not_held` with `predicate`;
   - each command found but not declared is named on the scorecard and has no safety class, so QS5 applies.
-- **QD4. A command discovery did not find.** When discovery read every help it requested and a declared command was not found, discovery and every other generated check are not observed with `precondition_unmet`. When QD5 or a bound of QD2 decides discovery, discovery alone is not observed, and every other generated check stands on its own invocations. None of them is red (R42). The scorecard shows both counts and the missing names.
+- **QD4. A command discovery did not find.** When discovery read every help it requested and a declared command was not found, discovery and every other generated check are not observed with `precondition_unmet`. When QD5 or a bound of QD2 decides discovery, this sentence governs even when the walk also missed a declared command: discovery alone is not observed, and every other generated check stands on its own invocations. None of them is red (R42). The scorecard shows both counts and the missing names.
 - **QD5. Help that cannot be read.** Discovery is not observed with `precondition_unmet` in either of these cases:
   - a help request ends in any way other than exiting 0 with output;
   - the bare binary's help lists no command section while commands other than the bare binary are declared.

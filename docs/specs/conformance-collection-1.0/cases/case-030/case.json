@@ -3,8 +3,7 @@
   "kind": "judge-checked",
   "rules": [
     "QP12",
-    "QO7",
-    "QE18"
+    "QO7"
   ],
   "input": {
     "subject_file": "subject.json",

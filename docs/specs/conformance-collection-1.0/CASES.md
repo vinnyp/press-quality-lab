@@ -35,4 +35,14 @@ A case fixes a subject file, a form and its recording, a request and scope, a ve
 - QH23: a scripted run starts no process (QT3), so it has no process group to end.
 - QP14: each limit it states is something the engine cannot observe, so no recording can show it.
 
+These rules govern how a real run confines the subject or what only a scorecard shows. A scripted run takes each invocation's end from its recording (QT3), so its record cannot break them, and the cases do not cite them:
+
+- QE18: masking shows in `expected`, `observed` and the scorecard, which QE19 does not compare; the recordings are masked before recording (QT5).
+- QH10: the profile's kill on refusal shows in a scripted record only as a recorded kill, which QO3 decides.
+- QH12: the environment the engine builds is part of a real run; a scripted run passes no environment to anything.
+- QH15: what the profile allows shows in a scripted record only as recorded ends.
+- QH16: a computation's profile shows in a scripted record only as a computation's recorded end, which QO6 decides.
+- QH20: a computation's lack of network shows in a scripted record only as its recorded end.
+- QH22: a refusal turned into a kill shows in a scripted record only as a recorded kill.
+
 Corpus: complete
