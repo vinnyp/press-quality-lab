@@ -114,7 +114,8 @@
             "env",
             "runbook",
             "step",
-            "computation"
+            "computation",
+            "home"
           ],
           "properties": {
             "words": {
@@ -151,6 +152,10 @@
             },
             "computation": {
               "type": "null"
+            },
+            "home": {
+              "type": "string",
+              "pattern": "^(seed|empty|planted|runbook)$"
             }
           },
           "allOf": [
@@ -163,6 +168,10 @@
                     },
                     "step": {
                       "type": "string"
+                    },
+                    "home": {
+                      "type": "string",
+                      "pattern": "^runbook$"
                     }
                   }
                 },
@@ -173,6 +182,10 @@
                     },
                     "step": {
                       "type": "null"
+                    },
+                    "home": {
+                      "type": "string",
+                      "pattern": "^(seed|empty|planted)$"
                     }
                   }
                 }
@@ -189,7 +202,8 @@
             "step",
             "words",
             "offline_args",
-            "env"
+            "env",
+            "home"
           ],
           "properties": {
             "computation": {
@@ -228,6 +242,10 @@
             "env": {
               "type": "array",
               "maxItems": 0
+            },
+            "home": {
+              "type": "string",
+              "pattern": "^scratch$"
             }
           }
         }

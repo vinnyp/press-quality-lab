@@ -331,7 +331,8 @@
             ],
             "runbook": null,
             "step": null,
-            "computation": null
+            "computation": null,
+            "home": "seed"
           },
           "by": "memory"
         }
@@ -352,7 +353,8 @@
       ],
       "runbook": null,
       "step": null,
-      "computation": null
+      "computation": null,
+      "home": "seed"
     },
     {
       "words": null,
@@ -363,7 +365,8 @@
       "computation": [
         "/usr/bin/true",
         "{SEED}/data.json"
-      ]
+      ],
+      "home": "scratch"
     }
   ],
   "covers": [

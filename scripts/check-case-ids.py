@@ -11,7 +11,7 @@ _spec.loader.exec_module(ids)
 
 def key(preimage, invocation=None):
     invocation = preimage if invocation is None else invocation
-    return dict(words=invocation["words"], offline_args=invocation["offline_args"], env=sorted(invocation["env"], key=lambda name: name.encode("utf-8")), runbook=preimage["runbook"], step=preimage["step"], computation=None)
+    return dict(words=invocation["words"], offline_args=invocation["offline_args"], env=sorted(invocation["env"], key=lambda name: name.encode("utf-8")), runbook=preimage["runbook"], step=preimage["step"], computation=None, home="runbook" if preimage["runbook"] is not None else "planted" if preimage["probe"] == "planted_secret" else "seed")
 
 
 def discovery_keys(recording):
@@ -19,7 +19,7 @@ def discovery_keys(recording):
     found = []
 
     def walk(words):
-        invocation_key = dict(words=words + ["--help"], offline_args=[], env=[], runbook=None, step=None, computation=None)
+        invocation_key = dict(words=words + ["--help"], offline_args=[], env=[], runbook=None, step=None, computation=None, home="empty")
         matches = [entry for entry in recording["invocations"] if entry["key"] == invocation_key]
         if len(matches) != 1:
             raise ValueError("cannot decide discovery invocation: " + ids.canon(invocation_key))

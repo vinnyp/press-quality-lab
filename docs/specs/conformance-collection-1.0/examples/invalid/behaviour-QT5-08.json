@@ -25,7 +25,8 @@
         ],
         "runbook": null,
         "step": null,
-        "computation": null
+        "computation": null,
+        "home": "planted"
       },
       "unconfined": {
         "markers": {
@@ -644,7 +645,8 @@
         "computation": [
           "/usr/bin/true",
           "{SEED}/data.json"
-        ]
+        ],
+        "home": "scratch"
       },
       "unconfined": {
         "markers": {

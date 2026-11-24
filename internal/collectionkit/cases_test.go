@@ -38,7 +38,7 @@ func scratchCorpus(t *testing.T) string {
 		}
 	}
 	writeCorpus(t, root, "subjects/form/source.json", map[string]any{})
-	invocation := map[string]any{"words": []string{"list"}, "offline_args": []string{}, "env": []string{}, "runbook": nil, "step": nil, "computation": nil}
+	invocation := map[string]any{"words": []string{"list"}, "offline_args": []string{}, "env": []string{}, "runbook": nil, "step": nil, "computation": nil, "home": "seed"}
 	writeCorpus(t, root, "behaviour/form.json", map[string]any{"invocations": []any{map[string]any{"key": invocation, "confined": []any{map[string]any{"stdout": map[string]any{"head": "Available Commands:\n  list  List\n"}, "stderr": map[string]any{"head": ""}, "leak_scan": map[string]any{"leaks": []any{}}}}}}})
 	writeCorpus(t, root, "cases/case-001/subject.json", map[string]any{"runbooks": []any{map[string]any{"steps": []any{map[string]any{"checks": []any{map[string]any{"predicate": "stdout_equals"}}}}}}})
 	writeCorpus(t, root, "cases/case-001/input.json", map[string]any{"required": []any{map[string]any{"id": "a", "dimension": "bounding", "crediting": true}}})

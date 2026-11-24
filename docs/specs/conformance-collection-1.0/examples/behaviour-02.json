@@ -25,7 +25,8 @@
         ],
         "runbook": null,
         "step": null,
-        "computation": null
+        "computation": null,
+        "home": "planted"
       },
       "unconfined": null,
       "confined": [
@@ -56,7 +57,11 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": null,
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -91,7 +96,11 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": null,
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -126,7 +135,11 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": null,
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -161,7 +174,11 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": null,
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -196,7 +213,11 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": null,
+          "planted": {
+            "atime_moved": false,
+            "same_file": true,
+            "control_end": null
+          },
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -216,7 +237,8 @@
         "computation": [
           "/usr/bin/true",
           "{SEED}/data.json"
-        ]
+        ],
+        "home": "scratch"
       },
       "unconfined": null,
       "confined": [
@@ -247,11 +269,7 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": {
-            "atime_moved": false,
-            "same_file": true,
-            "control_end": null
-          },
+          "planted": null,
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -286,11 +304,7 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": {
-            "atime_moved": false,
-            "same_file": true,
-            "control_end": null
-          },
+          "planted": null,
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -325,11 +339,7 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": {
-            "atime_moved": false,
-            "same_file": true,
-            "control_end": null
-          },
+          "planted": null,
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -364,11 +374,7 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": {
-            "atime_moved": false,
-            "same_file": true,
-            "control_end": null
-          },
+          "planted": null,
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -403,11 +409,7 @@
             "changes": [],
             "control_detected": null
           },
-          "planted": {
-            "atime_moved": false,
-            "same_file": true,
-            "control_end": null
-          },
+          "planted": null,
           "leak_scan": {
             "bound_reached": false,
             "leaks": []
@@ -427,7 +429,8 @@
         "computation": [
           "computations/check",
           "{SEED}/data.json"
-        ]
+        ],
+        "home": "scratch"
       },
       "unconfined": null,
       "confined": [
@@ -617,7 +620,8 @@
         "env": [],
         "runbook": "widgets",
         "step": "list",
-        "computation": null
+        "computation": null,
+        "home": "runbook"
       },
       "unconfined": null,
       "confined": [

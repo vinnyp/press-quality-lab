@@ -48,6 +48,8 @@ step draft-controls 'verify draft seal refusal and banner'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-draft.py
 step ids-tests 'test canonical JSON and collection check ids'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/test_collection_ids.py
+step behaviour 'validate behaviour schemas and agreement'
+PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I scripts/check-behaviour.py docs/specs/conformance-collection-1.0
 step ids-cross-check 'cross-check collection case ids and recordings'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-case-ids.py docs/specs/conformance-collection-1.0/cases
 step cases 'run collection judge-checked cases'

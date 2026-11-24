@@ -53,7 +53,8 @@
             "computation": [
               "/usr/bin/true",
               "{SEED}/data.json"
-            ]
+            ],
+            "home": "scratch"
           },
           "by": "other_process"
         }
