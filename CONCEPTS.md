@@ -8,7 +8,7 @@
 
 A versioned specification whose folder is frozen: a digest file lists every file in it, and the folder is never edited again.
 
-A rule that needs changing gets a new version in a new folder, ratified by the owner. Its clauses carry stable ids, and they are the authority for the code and for review; a summary of a clause elsewhere never replaces the clause itself.
+A rule that needs changing gets a new version in a new folder, ratified by the owner. Its clauses carry ids that other documents cite, and they are the authority for the code and for review; a summary of a clause elsewhere never replaces the clause itself.
 
 ### Errata note
 
@@ -16,4 +16,6 @@ The dated note kept beside a sealed specification's folder, holding editorial co
 
 ### Judge
 
-The part of the engine that decides every verdict, by the rules of its own sealed specification. Code that collects evidence reports only what it saw for one check or one trial and leaves every verdict to the judge.
+The part of the engine that decides every verdict, by the rules of its own sealed specification.
+
+The project's rule, quoted in full: "The judge decides every verdict. Code that collects evidence reports what it saw for one check or one trial and nothing above that: no requiredness, no rollups, no comparison, no verdict."

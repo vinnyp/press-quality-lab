@@ -61,7 +61,7 @@ Verdict: ready after two Majors. Rows 3, 4, 5, 7, 11 and 15 confirmed closed. Bo
 | # | finding | raised-by | verify | disposition |
 |---|---|---|---|---|
 | 20 | Ordering rule (row 6 fix) forbids declaration order the collection spec requires (QS7, QP1, QH11) | code (Major) | Confirmed from `collection-rules.md` and the judge contract's input-order rule | Fixed: the order the specification names, a sort key or declaration order, never map order; sort by key where input order carries no meaning. |
-| 21 | QS8/QS9 restatement (row 1 fix) drops conditions and over-applies to absolute `/bin` executables | code (Major) | Confirmed from QS8, QS9 and QA4 | Fixed: the rule requires every condition of QS8 and QS9 and names only the two reproduced hazards. |
+| 21 | QS8/QS9 restatement (row 1 fix) drops conditions and over-applies to absolute `/bin` executables | code (Major) | Confirmed from QS8, QS9 and QA4 | Fixed: the rule requires every condition of QS8 and QS9 and names its two hazards (corrected in round 3: only the seed-link copy was reproduced; the missing containment rule was found in review). |
 | 22 | "Once per grade" has no meaning in a test harness | code (Minor) | Confirmed from the solution record | Fixed: once per unit of work, a grade in the engine, a scenario in a test harness. |
 | 23 | `REVIEW.md` repeats an `AGENTS.md` sentence without a sync note | code (Minor) | Confirmed | Fixed: note added. |
 | 24 | Record still says PR #12 is pending merge | code (Minor) | Confirmed: merged as 32c5cb7 | Fixed. |
@@ -70,3 +70,27 @@ Verdict: ready after two Majors. Rows 3, 4, 5, 7, 11 and 15 confirmed closed. Bo
 | 27 | Pointer to rules by position | code (Nit) | Agreed | Fixed: rules named. |
 | 28 | QH11 restatement drops "canonical and absolute" | code (Nit) | Agreed | Fixed by the change in #21's approach: the rule names the hazard and QH11 governs. |
 | 29 | Majors are sometimes accepted, not resolved; `scan.sh` misses names too | code (Nit) | Confirmed from the 2026-11-22 log and `scan.sh` | Fixed. |
+
+## Round 3
+
+**Range:** `f467784..b1dfed7` (three commits: the round-2 fixes, the sealed-clause maintenance condition with `CONCEPTS.md`, and the `AGENTS.md` pointer to it). **Reviewers:** peer-code-reviewer, peer-test-reviewer, peer-security-reviewer, runtime=claude, each in its own clone; repository-state snapshots unchanged.
+
+Verdicts: code ship-ready (5 Minor, 4 Nit); test trustworthy after one Major (1 Major, 4 Minor, 2 Nit); security safe to ship (2 Low, 3 Info). Rows 20 to 29 were confirmed closed. The shared finding was that the new maintenance condition was broken on landing by rules in the same file.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 30 | The one-reading-path rule restates X12 without naming it and drops some of its conditions; the judge section has no clause-authority line | test (Major) | Confirmed from judge contract §3 | Fixed: the rule cites X12 (§3), and the section says review checks code against the clause. |
+| 31 | The QH8, QH11 and later-rule-decides rules still restate their clauses | code, test (Minor), security (Low) | Confirmed from QH8 and QH11 in `confinement.md` | Fixed: each names the hazard and the clause; the maintenance condition allows only as much as names the hazard. |
+| 32 | The test-harness copy rule lost the consequence of a changed copy | test (Minor) | Confirmed from the solution record | Fixed: a changed copy fails the runs that would use it and is never remade. |
+| 33 | "Reproduced" overstates the declared-path hazard | code, test (Minor), security (Info) | Confirmed from the 2026-11-22 log rows 11, 24, 38, 46, 54, 58 | Fixed in the rule and in row 21. |
+| 34 | The `CONCEPTS.md` judge entry paraphrases the rule more weakly, with no sync note | code (Minor) | Confirmed | Fixed: the rule is quoted in full and listed among the copies. |
+| 35 | The ordering rule's list of orders reads as complete | code (Minor), test (Nit) | Confirmed from QD2 and judge contract §5 | Fixed: a stated procedure's order is included, and the judge case follows the Order clause. |
+| 36 | The second maintenance sentence is hard to apply | code (Minor) | Agreed | Fixed: a rule covering more than one specification is checked against each, and defers to the clause. |
+| 37 | An owner's acceptance of a Major is not recorded | security (Low) | Agreed | Fixed: the acceptance and its reason go in the dispositions. |
+| 38 | Clause ids name no version | test (Minor) | Agreed | Fixed: each section names the specification and its version. |
+| 39 | Nothing checks that cited clause ids and paths resolve | test (Minor) | Confirmed: `internal/docrefs` checks R and AE ids under `docs/` only | Deferred: a code change for a later PR. |
+| 40 | The `scan.sh` sentence misstates what it catches | code (Nit) | Confirmed from `scan.sh` | Fixed. |
+| 41 | The sync note points one way only | code (Nit) | Confirmed | Fixed: the `AGENTS.md` pointer to `REVIEW.md` names the repeated rule. |
+| 42 | "Before anything is read or copied" adds a timing QS8 and QS9 do not state | code (Nit) | Confirmed | Fixed by the rewrite. |
+| 43 | The 223bd2f commit message calls the ordering rule a restatement | code (Nit) | Agreed | No change: commit messages are not rewritten. |
+| 44 | The `CONCEPTS.md` "stable ids" wording is stated by no specification | security (Info) | Agreed | Fixed. |

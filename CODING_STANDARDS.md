@@ -1,6 +1,6 @@
 # Coding standards
 
-The rules code in this repository follows. Code review checks every change against them. Anything a lint, a test or a CI check already enforces is not repeated here; `gate.sh`, `check.sh` and `scan.sh` own those. Some rules are also in `AGENTS.md`, so every agent loads them: both rules under Specifications, and the opening sentences of "Test the rules" and "A check that could not evaluate its subject" under Tests. Change both copies together.
+The rules code in this repository follows. Code review checks every change against them. Anything a lint, a test or a CI check already enforces is not repeated here; `gate.sh`, `check.sh` and `scan.sh` own those. Some rules are also in `AGENTS.md`, so every agent loads them: both rules under Specifications, and the opening sentences of "Test the rules" and "A check that could not evaluate its subject" under Tests. The judge rule is also quoted in `CONCEPTS.md`. Change every copy together.
 
 ## Specifications
 
@@ -18,19 +18,21 @@ The rules code in this repository follows. Code review checks every change again
 
 ## Judge and evidence code
 
-- Raw bytes reach a decision through one reading path that does the size, encoding, parse and end-of-document checks. A second reader can drift from the first.
-- Every list written out is in the order the specification names, a sort key or declaration order, and never in map-iteration order. Where the specification says input order carries no meaning, as the judge contract does, sort explicitly by its key.
-- Judge code starts no goroutines, and a defect can never leave the process with the exit status that means "rejected". `recover` covers only the goroutine it runs in, and a Go panic that is not recovered exits with status 2, the status a rejection uses.
+Where a rule here names a clause of the judge specification 1.0, review checks the code against the clause itself, not against this summary.
+
+- Raw bytes reach a decision through one reading path that applies every condition of X12 (judge contract §3). Two readers once existed and were merged into one; a second reader can drift from the first.
+- Every list written out is in the order the specification names: a sort key, a declared order, or the order of a stated procedure. It is never in map-iteration order. Where the specification says input order carries no meaning, as the judge contract's Input order clause does, the output follows its Order clause (judge contract §5).
+- Judge code starts no goroutines, and a defect can never leave the process with the exit status a rejection uses. `recover` covers only the goroutine it runs in, and a Go panic that is not recovered exits with status 2, which is that status.
 
 ## Confinement harness
 
-These apply to the verifier and any code that confines a subject's run. Each names a hazard past work reproduced and the sealed clause that governs it. Review checks the code against the clause itself, not against this summary.
+These apply to the verifier and any code that confines a subject's run. Each names a hazard past work found and the clause of the collection specification 1.0 that governs it. Review checks the code against the clause itself, not against this summary.
 
-- A private copy of an executable is made once per unit of work, never once per launch: once per grade in the engine (QH8), once per scenario in a test harness. It is checked unchanged before each use and never silently remade (QH8). See `docs/solutions/test-failures/fresh-executable-per-run-stalls-parallel-sandbox-suite.md`.
-- In a sandbox profile the later rule decides. Write each refusal after the allowance it narrows, and diagnose a failure by adding one narrow allowance to the unchanged profile. This was measured on one macOS release; measure it again on a new one. See `docs/solutions/best-practices/sandbox-profile-later-rule-decides.md`.
-- Every path reaches a sandbox profile as a parameter, never spliced into its text (QH11). A path spliced into the profile once granted a read of a decoy.
-- The files a subject file names and its seed pass every condition of QS8 and QS9 before anything is read or copied. The hazards reproduced were a named path that leaves the subject file's directory once its links resolve, and a seed copy that follows a link. A seed that QS9 rejects is rejected, never followed and never skipped.
+- The engine makes and checks its private copies as QH8 requires. A test harness follows the same pattern once per scenario: a changed copy fails the runs that would use it and is never remade. Hazard: a fresh executable per launch stalled a parallel suite. See `docs/solutions/test-failures/fresh-executable-per-run-stalls-parallel-sandbox-suite.md`.
+- A profile's lines keep the order QH11's template gives them, because the later rule decides. Diagnose a failure by adding one narrow allowance to the unchanged profile. The rule order was measured on one macOS release; measure it again on a new one. See `docs/solutions/best-practices/sandbox-profile-later-rule-decides.md`.
+- Every path reaches a sandbox profile as QH11 requires. Hazard: a path spliced into profile text granted a read of a decoy (reproduced).
+- The files a subject file names and its seed meet QS8 and QS9, and the seed is copied by content as QS9 requires, never through a link. Hazards: a seed copy that followed a link exposed a decoy (reproduced), and named paths had no containment rule (found in review).
 
 ## Maintaining this file
 
-A rule enters this file when its defect class appeared in a review finding the author fixed, a fix commit, a cleanup that removed it across the codebase, or a solution record, and no check covers it; or when the owner states it. State the class as a condition that stays true without naming volatile numbers or symbols, and keep rules grouped by area. A rule that a sealed specification clause governs names the hazard and the clause id and does not restate the clause's conditions, because a restatement drifts from the clause and review then checks the wrong text. Before a rule about ordering, copying or containment applies to all code, check that every specification it touches says the same thing. Remove a rule when a check starts to enforce it, or when the code it guards is gone and no planned phase will bring it back.
+A rule enters this file when its defect class appeared in a review finding the author fixed, a fix commit, a cleanup that removed it across the codebase, or a solution record, and no check covers it; or when the owner states it. State the class as a condition that stays true without naming volatile numbers or symbols, and keep rules grouped by area. A rule that a sealed specification clause governs names the hazard and the clause, with the specification's version, and restates no more of the clause than it takes to name the hazard, because a restatement drifts from the clause and review then checks the wrong text. Before a rule is worded to cover code that more than one specification governs, check it against each of those specifications' clauses; where they differ, the rule defers to the clause. Remove a rule when a check starts to enforce it, or when the code it guards is gone and no planned phase will bring it back.

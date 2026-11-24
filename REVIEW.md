@@ -6,12 +6,12 @@ This file holds how review works in this repository: which findings rank highest
 
 ## Severity
 
-Reviewers grade findings Blocker, Major, Minor and Nit, or Critical, High, Medium, Low and Info for security and privacy. A Blocker or Critical is resolved before work continues, and a Major or High is resolved or accepted by the owner before merge.
+Reviewers grade findings Blocker, Major, Minor and Nit, or Critical, High, Medium, Low and Info for security and privacy. A Blocker or Critical is resolved before work continues, and a Major or High is resolved or accepted by the owner before merge. An acceptance and its reason are recorded in the review log's dispositions.
 
 These rank as Blocker or Critical:
 
 - A check, verifier or test that can report a pass without having evaluated its subject. Past examples: a verifier whose own working was not checked at run time, and corpus checks that left tier, artifact targets and target-set completeness unchecked.
-- A breach of the public-by-default rule in `AGENTS.md`: a secret, personal data, or a private subject's name, host or data in a tracked file or a commit message. `scan.sh` checks home paths, emails and secrets; it cannot catch a real name, a username or a private subject's name, so review is the only check for those, and a push makes the breach permanent.
+- A breach of the public-by-default rule in `AGENTS.md`: a secret, personal data, or a private subject's name, host or data in a tracked file or a commit message. `scan.sh` checks home paths, emails and secrets; it cannot catch a real name, a username outside a home path, or a private subject's name, host or data, so review is the only check for those, and a push makes the breach permanent.
 - A subject escaping its confinement, or reading or leaking a file it was never granted. Past example: a seed copy that followed links and defeated the claim about secrets.
 
 A wrong result that is visible is still serious; it ranks with these when it decides a verdict.
