@@ -335,8 +335,32 @@ func checkCorpus(root string) ([]string, []string) {
 	}
 	expected := corpusTags(texts["credit-and-routes.md"], texts["collection-rules.md"], texts["collection-contract.md"])
 	complete := false
+	notExpressible := map[string]bool{}
+	entryPattern := regexp.MustCompile(`^- (Q[A-Z][0-9]+): (.*\S.*)$`)
 	if data, err := os.ReadFile(filepath.Join(root, "CASES.md")); err == nil {
+		inSection := false
 		for _, line := range strings.Split(string(data), "\n") {
+			if strings.HasPrefix(line, "## ") {
+				inSection = line == "## Not expressible as a case"
+				continue
+			}
+			if inSection && strings.HasPrefix(line, "- ") {
+				match := entryPattern.FindStringSubmatch(line)
+				if match == nil {
+					fail("CASES.md: malformed entry %s", line)
+				} else {
+					rule := match[1]
+					if notExpressible[rule] {
+						fail("CASES.md: %s listed twice", rule)
+					} else {
+						notExpressible[rule] = true
+						logs = append(logs, fmt.Sprintf("%s: not expressible as a case", rule))
+						if !defined[rule] {
+							fail("CASES.md: %s is not a defined rule", rule)
+						}
+					}
+				}
+			}
 			if line == "Corpus: complete" {
 				complete = true
 			}
@@ -375,6 +399,9 @@ func checkCorpus(root string) ([]string, []string) {
 		c := cases[id]
 		path := directories[id]
 		for _, rule := range c.Rules {
+			if notExpressible[rule] && covered[rule] == 0 {
+				fail("CASES.md: %s is listed and covered by %s", rule, id)
+			}
 			covered[rule]++
 			if c.Kind == "judge-checked" {
 				judged[rule]++
@@ -535,33 +562,57 @@ func checkCorpus(root string) ([]string, []string) {
 			}
 		}
 		for _, checkID := range unobserved {
-			if twin == nil {
-				fail("%s: not-measured check %s needs twin", id, checkID)
-				continue
+			held, cycled := false, false
+			visited := map[string]bool{id: true}
+			candidate := c
+			if candidate.preimages == nil {
+				if err := corpusJSON(filepath.Join(directories[candidate.ID], "preimages.json"), &candidate.preimages); err != nil {
+					fail("%s: counterpart preimages: %v", candidate.ID, err)
+				}
 			}
-			held := false
-			for _, candidate := range []*corpusCase{c, twin} {
+			selector, present := c.preimages[checkID]
+			next := c.Twin
+			for next != nil {
+				if visited[*next] {
+					fail("%s: twin chain cycles at %s", id, *next)
+					cycled = true
+					break
+				}
+				visited[*next] = true
+				candidate = cases[*next]
+				if candidate == nil {
+					break
+				}
 				if candidate.preimages == nil {
 					if err := corpusJSON(filepath.Join(directories[candidate.ID], "preimages.json"), &candidate.preimages); err != nil {
 						fail("%s: counterpart preimages: %v", candidate.ID, err)
 					}
 				}
-			}
-			selector, present := c.preimages[checkID]
-			for _, check := range twin.Expect.Output.Checks {
-				counterpart, exists := twin.preimages[check.ID]
-				if present && exists && corpusEqual(selector, counterpart) && check.Result == "held_crediting" {
-					held = true
+				result := ""
+				for _, check := range candidate.Expect.Output.Checks {
+					counterpart, exists := candidate.preimages[check.ID]
+					if present && exists && corpusEqual(selector, counterpart) {
+						result = check.Result
+						break
+					}
 				}
+				if result == "held_crediting" {
+					held = true
+					break
+				}
+				if result != "unobserved" {
+					break
+				}
+				next = candidate.Twin
 			}
-			if !held {
+			if !held && !cycled {
 				fail("%s: twin counterpart %s must be held and crediting", id, checkID)
 			}
 		}
 	}
 	for _, rule := range sortedCorpusKeys(defined) {
 		logs = append(logs, fmt.Sprintf("%s: %d cases; %d judge-checked", rule, covered[rule], judged[rule]))
-		if covered[rule] == 0 {
+		if covered[rule] == 0 && !notExpressible[rule] {
 			message := "uncovered rule " + rule
 			if complete {
 				fail("%s", message)
@@ -659,5 +710,103 @@ func TestCorpusOrderTags(t *testing.T) {
 	}
 	if !corpusEqual(tags, want) {
 		t.Fatalf("order tags = %v; want %v", tags, want)
+	}
+}
+
+func TestCorpusTwinChains(t *testing.T) {
+	for _, test := range []struct {
+		name, last, want string
+		cycle            bool
+	}{
+		{"repaired", "held_crediting", "", false},
+		{"non crediting", "held_non_crediting", "case-001: twin counterpart a must be held and crediting", false},
+		{"ended", "unobserved", "case-003: twin counterpart c must be held and crediting", false},
+		{"cycle", "unobserved", "case-001: twin chain cycles at case-001", true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := scratchCorpus(t)
+			count := 3
+			if test.cycle {
+				count = 2
+			}
+			for i := 1; i <= count; i++ {
+				var c map[string]any
+				decode(t, read(t, filepath.Join(root, "cases/case-001/case.json")), &c)
+				id := fmt.Sprintf("case-%03d", i)
+				check := string(rune('a' + i - 1))
+				c["id"], c["named_check"], c["twin"] = id, nil, nil
+				c["input"] = map[string]any{"form": "form", "subject_file": "subject.json", "request": strconv.Itoa(i)}
+				if i < count {
+					c["twin"] = fmt.Sprintf("case-%03d", i+1)
+				}
+				if test.cycle && i == count {
+					c["twin"] = "case-001"
+				}
+				result := "unobserved"
+				if i == count {
+					result = test.last
+				}
+				corpusMap(corpusMap(c["expect"])["judge_output"])["checks"] = []any{map[string]any{"id": check, "result": result}}
+				writeCorpus(t, root, "cases/"+id+"/case.json", c)
+				if i > 1 {
+					for _, name := range []string{"subject.json", "input.json"} {
+						var v any
+						decode(t, read(t, filepath.Join(root, "cases/case-001", name)), &v)
+						writeCorpus(t, root, "cases/"+id+"/"+name, v)
+					}
+				}
+				writeCorpus(t, root, "cases/"+id+"/preimages.json", map[string]any{check: map[string]any{"probe": "byte_bound", "dimension": "bounding", "words": []string{"list"}}})
+			}
+			failures, _ := checkCorpus(root)
+			if test.want == "" {
+				if len(failures) != 0 {
+					t.Fatal(failures)
+				}
+				return
+			}
+			if !strings.Contains(strings.Join(failures, "\n"), test.want) {
+				t.Fatalf("want %q, got %v", test.want, failures)
+			}
+		})
+	}
+}
+
+func TestCorpusNotExpressible(t *testing.T) {
+	for _, test := range []struct{ name, entry, want string }{
+		{"closes gap", "- QH3: Requires host state", ""},
+		{"covered", "- QP3: Requires host state", "CASES.md: QP3 is listed and covered by case-001"},
+		{"undefined", "- QH999: Requires host state", "CASES.md: QH999 is not a defined rule"},
+		{"empty reason", "- QH3: ", "CASES.md: malformed entry - QH3: "},
+		{"duplicate", "- QH3: Host state\n- QH3: Host state", "CASES.md: QH3 listed twice"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := scratchCorpus(t)
+			put := func(body string) {
+				t.Helper()
+				if err := os.WriteFile(filepath.Join(root, "CASES.md"), []byte(body), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			put("Corpus: complete\n")
+			failures, _ := checkCorpus(root)
+			if !strings.Contains(strings.Join(failures, "\n"), "uncovered rule QH3") {
+				t.Fatal(failures)
+			}
+			put("Corpus: complete\n## Not expressible as a case\n" + test.entry + "\n## Other\n- invalid outside section\n")
+			failures, logs := checkCorpus(root)
+			joined := strings.Join(failures, "\n")
+			if test.want != "" {
+				if !strings.Contains(joined, test.want) {
+					t.Fatalf("want %q, got %s", test.want, joined)
+				}
+				return
+			}
+			if strings.Contains(joined, "uncovered rule QH3") {
+				t.Fatal("listed rule remains uncovered")
+			}
+			if !strings.Contains(strings.Join(logs, "\n"), "QH3: not expressible as a case") {
+				t.Fatal(logs)
+			}
+		})
 	}
 }
