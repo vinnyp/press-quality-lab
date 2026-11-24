@@ -107,7 +107,8 @@
     }
   ],
   "bookkeeping": [
-    ".local/state/widgets"
+    ".local/state/widgets",
+    ".cache/widgets"
   ],
   "secret": {
     "path": ".config/widgets/token",

@@ -1,0 +1,1286 @@
+{
+  "request": "grade",
+  "scope": [
+    "conformance"
+  ],
+  "claimed_tier": "scripted",
+  "subject_facts": {
+    "read_only": false,
+    "has_destructive_ops": true,
+    "store_backed": true,
+    "has_cli": true,
+    "bounding": "declared"
+  },
+  "required": [
+    {
+      "id": "05a65d85555ffc3ce8f1afce7f50fff7f49656159e268204c679810fd8300de0",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "06e0754586a7f487cf3c1e973b6f1da9dc96d2c5040989a6d569a0d78d38c703",
+      "kind": "plain",
+      "dimension": "idempotency",
+      "record": "add twice",
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "12a85248502eee3d20c5c930a6b5d522db48e5eec40ba8eb1b6b51d3e5c63d8f",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "1dc20fde77f2c0e271e2996f7f79266b591109539bf3abee4603533c99dcefc5",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "1f19d6257462fde875567f7d1016732a01d9d22f7edd4edd73f172581066f3e8",
+      "kind": "plain",
+      "dimension": "availability",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "223567788e79629a7a1d7453e7aba0c9782684497e6787cc8631a85fbaf2000a",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "2a9ac439f7a11e7d026dea60c7fb12382b09b0f15a908aae054f7a5018689ece",
+      "kind": "plain",
+      "dimension": "determinism",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "339777ff3ed0582c9c65b1622435cbe077fa1ff8b39a2e6646a5f6b2e24b0cbf",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "34150221ef04b3a80db4a590c95fc9b8859657a61aa2e501104ada8b2e8fa0bf",
+      "kind": "plain",
+      "dimension": "output-conformance",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "3d4f82cef6f007ef5a14ac41b2cf3da798728eb4426a23345239215b3f2a3413",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "4435ef9b865093e3f4531cf4b9baafe1a148146257bcdfa11c89ccd8646e2c07",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "46b2e5cce19bb8623393c243aa185196e84b4b4d4b18c81bb096897ff6012047",
+      "kind": "plain",
+      "dimension": "side-effect-integrity",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "498dd01f332a996cfd4dd305ca6ec2f4e4e4f14626ecfe3c29165be47105cdae",
+      "kind": "plain",
+      "dimension": "graceful-failure",
+      "record": "errors",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "5296c85f3ca33d5afcd86abaa0138fc1651347e3a96e61d9d9a4b6f28c3e4db0",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "78b60be5e301b1e5a7f7ead15b075050d9398e6e72237146f88037239f6e11f2",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "791f57a4dced6fa5a02029f74a52dc02964a92d27f1458a1f13e22d6a3ae267c",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "8830f326c881e93fce9cfbbba57385adaf47827aa0845af511b437d39377c625",
+      "kind": "plain",
+      "dimension": "flag-conformance",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "aa1aa6b16704abd40ab666538a05441f030ccb5397bf572ab3ad02f47ba84948",
+      "kind": "plain",
+      "dimension": "response-correctness",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "b554d0a59a69c40d4bd92f827cb0fe5e709981cca7a6476a16cdb6bec155b605",
+      "kind": "plain",
+      "dimension": "error-message-quality",
+      "record": "errors",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd",
+      "kind": "plain",
+      "dimension": "discoverability",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "b7b9ef95b37cb3ff3e67017639242b9bf4cc66295bc92f1f2f22f28fa95fd7c2",
+      "kind": "plain",
+      "dimension": "bounding",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "c59331c4468900cecb1142199e2c4351e749d5f324e0cc7b616b375f21d2fb22",
+      "kind": "plain",
+      "dimension": "token-economy",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": true,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "d09d2ed41b6f31f3bcfd8616861edaa9da2aec83d9e4bc31e0627bc9dafa1214",
+      "kind": "plain",
+      "dimension": "completeness-signaling",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "d548084912a02a4643057d6a052fec02000f73299f350cb8579af11b273dc033",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": "add twice",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "e98b3e3e7296e25b8e568d308361512c2c34b24af82a2cc107f1136775ff5e2b",
+      "kind": "plain",
+      "dimension": "determinism",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f47d9dc5fb7cd74224e3847a0655298cc8aef05a246296832670096e132adde0",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": "add twice",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f48f8775ae1eb588cdbcd47f0fa9292dfcb8df350fbb4c5e7d6371fb48eab455",
+      "kind": "plain",
+      "dimension": "robustness",
+      "record": "errors",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "f4e55fb3368c0f67acf6032123378b41ce33aab0c05c253ebd3fde9b6a39e9b2",
+      "kind": "plain",
+      "dimension": "pii-secret-hygiene",
+      "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "faa1439718430795813cbc0bcd187474657d855c84ff3a81fcd855de5a25f45f",
+      "kind": "plain",
+      "dimension": "provenance-honesty",
+      "record": "read",
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    }
+  ],
+  "evidence": [
+    {
+      "check_id": "05a65d85555ffc3ce8f1afce7f50fff7f49656159e268204c679810fd8300de0",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "05a65d85555ffc3ce8f1afce7f50fff7f49656159e268204c679810fd8300de0",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "06e0754586a7f487cf3c1e973b6f1da9dc96d2c5040989a6d569a0d78d38c703",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 4,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 176,
+          "sha256": "a47f1ae68f27cc8d99fb8549e260027a26db1cf95eed49f23380b97ca12ec136",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"},{\"name\":\"sprocket\",\"tag\":\"steel\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "06e0754586a7f487cf3c1e973b6f1da9dc96d2c5040989a6d569a0d78d38c703",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "12a85248502eee3d20c5c930a6b5d522db48e5eec40ba8eb1b6b51d3e5c63d8f",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "12a85248502eee3d20c5c930a6b5d522db48e5eec40ba8eb1b6b51d3e5c63d8f",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "1dc20fde77f2c0e271e2996f7f79266b591109539bf3abee4603533c99dcefc5",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "1dc20fde77f2c0e271e2996f7f79266b591109539bf3abee4603533c99dcefc5",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "1f19d6257462fde875567f7d1016732a01d9d22f7edd4edd73f172581066f3e8",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "1f19d6257462fde875567f7d1016732a01d9d22f7edd4edd73f172581066f3e8",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "223567788e79629a7a1d7453e7aba0c9782684497e6787cc8631a85fbaf2000a",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 18,
+          "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2",
+          "cut": false,
+          "head": "gear\nspring\nvalve\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "223567788e79629a7a1d7453e7aba0c9782684497e6787cc8631a85fbaf2000a",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "2a9ac439f7a11e7d026dea60c7fb12382b09b0f15a908aae054f7a5018689ece",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 142,
+          "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "2a9ac439f7a11e7d026dea60c7fb12382b09b0f15a908aae054f7a5018689ece",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "339777ff3ed0582c9c65b1622435cbe077fa1ff8b39a2e6646a5f6b2e24b0cbf",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 18,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 18,
+          "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2",
+          "cut": false,
+          "head": "gear\nspring\nvalve\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "339777ff3ed0582c9c65b1622435cbe077fa1ff8b39a2e6646a5f6b2e24b0cbf",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "34150221ef04b3a80db4a590c95fc9b8859657a61aa2e501104ada8b2e8fa0bf",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 142,
+          "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "34150221ef04b3a80db4a590c95fc9b8859657a61aa2e501104ada8b2e8fa0bf",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "3d4f82cef6f007ef5a14ac41b2cf3da798728eb4426a23345239215b3f2a3413",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "3d4f82cef6f007ef5a14ac41b2cf3da798728eb4426a23345239215b3f2a3413",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "4435ef9b865093e3f4531cf4b9baafe1a148146257bcdfa11c89ccd8646e2c07",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "4435ef9b865093e3f4531cf4b9baafe1a148146257bcdfa11c89ccd8646e2c07",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "46b2e5cce19bb8623393c243aa185196e84b4b4d4b18c81bb096897ff6012047",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "46b2e5cce19bb8623393c243aa185196e84b4b4d4b18c81bb096897ff6012047",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "498dd01f332a996cfd4dd305ca6ec2f4e4e4f14626ecfe3c29165be47105cdae",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "498dd01f332a996cfd4dd305ca6ec2f4e4e4f14626ecfe3c29165be47105cdae",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "5296c85f3ca33d5afcd86abaa0138fc1651347e3a96e61d9d9a4b6f28c3e4db0",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 12,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "5296c85f3ca33d5afcd86abaa0138fc1651347e3a96e61d9d9a4b6f28c3e4db0",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "78b60be5e301b1e5a7f7ead15b075050d9398e6e72237146f88037239f6e11f2",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 34,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "350909745c3282cf7c9fd73086cc726883a03353da0e850e95d4aa0cdd22061b",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":19}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "78b60be5e301b1e5a7f7ead15b075050d9398e6e72237146f88037239f6e11f2",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "791f57a4dced6fa5a02029f74a52dc02964a92d27f1458a1f13e22d6a3ae267c",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 18,
+          "sha256": "1d2c281d66aa26b6970de9972cd93605ecf8726d238ea45fecca7536d2d08db2",
+          "cut": false,
+          "head": "gear\nspring\nvalve\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "791f57a4dced6fa5a02029f74a52dc02964a92d27f1458a1f13e22d6a3ae267c",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "8830f326c881e93fce9cfbbba57385adaf47827aa0845af511b437d39377c625",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 80,
+          "sha256": "f4fba878ff6740de6953ff888c25f538f1242f2bda95fedab405b6f63a776e76",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "8830f326c881e93fce9cfbbba57385adaf47827aa0845af511b437d39377c625",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "aa1aa6b16704abd40ab666538a05441f030ccb5397bf572ab3ad02f47ba84948",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 3,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 142,
+          "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "aa1aa6b16704abd40ab666538a05441f030ccb5397bf572ab3ad02f47ba84948",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "b554d0a59a69c40d4bd92f827cb0fe5e709981cca7a6476a16cdb6bec155b605",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "b554d0a59a69c40d4bd92f827cb0fe5e709981cca7a6476a16cdb6bec155b605",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "commands_found": 5
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd#1",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd#2",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd#3",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd#4",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd#5",
+          "tier": "scripted"
+        },
+        {
+          "kind": "invocation",
+          "id": "b5f6e25f1d3f51c2f4cc66b332d789a10876105415606fdaf7a14c58ff0061cd#6",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "b7b9ef95b37cb3ff3e67017639242b9bf4cc66295bc92f1f2f22f28fa95fd7c2",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 306,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 306,
+          "sha256": "3fe2148c968a19a20732c911a2e1acd154157ac7fe1c6a1fa998a3af77e42876",
+          "cut": false,
+          "head": "widgets keeps a local list of widgets.\n\nUsage:\n  widgets [command]\n\nAvailable Commands:\n  account     Show the account the token belongs to\n  add         Add a widget\n  count       Count widgets\n  list        List widgets\n  remove      Remove a widget (destructive)\n\nFlags:\n  -h, --help   help for widgets\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "b7b9ef95b37cb3ff3e67017639242b9bf4cc66295bc92f1f2f22f28fa95fd7c2",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "c59331c4468900cecb1142199e2c4351e749d5f324e0cc7b616b375f21d2fb22",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": 142,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 142,
+          "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "c59331c4468900cecb1142199e2c4351e749d5f324e0cc7b616b375f21d2fb22",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "d09d2ed41b6f31f3bcfd8616861edaa9da2aec83d9e4bc31e0627bc9dafa1214",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 110,
+          "sha256": "4f08ed832b55e24ad318c37e86088bc9954100f3644d12bd1b1b96e124392335",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":true,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "d09d2ed41b6f31f3bcfd8616861edaa9da2aec83d9e4bc31e0627bc9dafa1214",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "d548084912a02a4643057d6a052fec02000f73299f350cb8579af11b273dc033",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "4b722aa6d3013cff0e4e2d4191e9575fdad5ecead75362bd4f212d0412c6539b",
+          "cut": false,
+          "head": "{\"added\":false,\"name\":\"sprocket\"}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "d548084912a02a4643057d6a052fec02000f73299f350cb8579af11b273dc033",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "e98b3e3e7296e25b8e568d308361512c2c34b24af82a2cc107f1136775ff5e2b",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 142,
+          "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "e98b3e3e7296e25b8e568d308361512c2c34b24af82a2cc107f1136775ff5e2b",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f47d9dc5fb7cd74224e3847a0655298cc8aef05a246296832670096e132adde0",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 33,
+          "sha256": "26706852433be0feac99ace62799da072f4229dc5ea433b4b76e0573bc1e2785",
+          "cut": false,
+          "head": "{\"added\":true,\"name\":\"sprocket\"}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f47d9dc5fb7cd74224e3847a0655298cc8aef05a246296832670096e132adde0",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f48f8775ae1eb588cdbcd47f0fa9292dfcb8df350fbb4c5e7d6371fb48eab455",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cut": false,
+          "head": ""
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f48f8775ae1eb588cdbcd47f0fa9292dfcb8df350fbb4c5e7d6371fb48eab455",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "f4e55fb3368c0f67acf6032123378b41ce33aab0c05c253ebd3fde9b6a39e9b2",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 34,
+          "sha256": "30deb4432aaba770ca077e5d9a94e6abf9338a5f00b700e3825398e18939fc8f",
+          "cut": false,
+          "head": "{\"account\":\"ok\",\"token_bytes\":42}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "f4e55fb3368c0f67acf6032123378b41ce33aab0c05c253ebd3fde9b6a39e9b2",
+          "tier": "scripted"
+        },
+        {
+          "kind": "artifact",
+          "id": ".config/widgets/token",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "faa1439718430795813cbc0bcd187474657d855c84ff3a81fcd855de5a25f45f",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 142,
+          "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "faa1439718430795813cbc0bcd187474657d855c84ff3a81fcd855de5a25f45f",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    }
+  ],
+  "trials": [],
+  "markers": [],
+  "baseline": null,
+  "retired": [],
+  "accepted_regressions": []
+}
