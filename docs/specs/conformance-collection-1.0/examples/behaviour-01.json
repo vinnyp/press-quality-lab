@@ -50,7 +50,7 @@
           "head": "",
           "kept": null
         },
-        "home": {
+        "home_changes": {
           "changes": [],
           "control_detected": null
         },
@@ -87,7 +87,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [
               {
                 "path": "data.json",
@@ -200,7 +200,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [
               {
                 "path": "data.json",
@@ -313,7 +313,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [
               {
                 "path": "data.json",
@@ -426,7 +426,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [
               {
                 "path": "data.json",
@@ -539,7 +539,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [
               {
                 "path": "data.json",
@@ -665,7 +665,7 @@
           "head": "",
           "kept": null
         },
-        "home": {
+        "home_changes": {
           "changes": [],
           "control_detected": null
         },
@@ -701,7 +701,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [],
             "control_detected": null
           },
@@ -736,7 +736,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [],
             "control_detected": null
           },
@@ -771,7 +771,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [],
             "control_detected": null
           },
@@ -806,7 +806,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [],
             "control_detected": null
           },
@@ -841,7 +841,7 @@
             "head": "",
             "kept": null
           },
-          "home": {
+          "home_changes": {
             "changes": [],
             "control_detected": null
           },

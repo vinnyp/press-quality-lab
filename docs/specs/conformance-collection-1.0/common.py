@@ -722,9 +722,9 @@ def draft(root):
 
     # Conditional fragments refine objects closed and required at their owning site.
     fragments.update({
-        ('schema/behaviour.schema.json', '/$defs/run/properties/home/properties/changes/items/if'),
-        ('schema/behaviour.schema.json', '/$defs/run/properties/home/properties/changes/items/then'),
-        ('schema/behaviour.schema.json', '/$defs/run/properties/home/properties/changes/items/else'),
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home_changes/properties/changes/items/if'),
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home_changes/properties/changes/items/then'),
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home_changes/properties/changes/items/else'),
         ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/if'),
         ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/then'),
         ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/else'),

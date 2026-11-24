@@ -221,7 +221,7 @@
         "end",
         "stdout",
         "stderr",
-        "home",
+        "home_changes",
         "planted",
         "leak_scan",
         "decoys",
@@ -253,7 +253,7 @@
         "stderr": {
           "$ref": "#/$defs/stream"
         },
-        "home": {
+        "home_changes": {
           "type": "object",
           "additionalProperties": false,
           "required": [
