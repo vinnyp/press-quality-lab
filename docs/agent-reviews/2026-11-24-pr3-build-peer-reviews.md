@@ -1,6 +1,6 @@
 # PR3 build: review log
 
-The plan is `docs/plans/2026-11-21-2309-feat-conformance-collection-spec-plan.md`, PR3 group. This log records the review of the test entry's specification text and the corpus's map to the plan's acceptance examples. The blind derivation of the corpus by a different model is its own step, and its results are added here when it runs.
+The plan is `docs/plans/2026-11-21-2309-feat-conformance-collection-spec-plan.md`, PR3 group. This log records the review of the test entry's specification text and the corpus's map to the plan's acceptance examples. Later sections record the reviews of the frozen text and the corpus, and the blind derivation by a different model.
 
 ## The test entry's text
 
@@ -16,7 +16,7 @@ Round 1's Blockers were: a `kill_attribution` value with no decision rule; no st
 
 ## The corpus and the acceptance examples
 
-The corpus has 138 cases: 107 judge-checked and 31 derivation-only. Every judge-checked case's expected output was written from the rules and agrees with the judge (`./check.sh`, step `cases`). Every held or not-held outcome a case states was also checked against its form's recording by a separate checker that reads only the case and the recording. It found two cases red on a second check, `case-039` and `case-040`, which were fixed. The four outcomes it cannot evaluate are the ends by a signal, which QO4 and QO5 decide: `case-072`, `case-076`, `case-078` and `case-089`.
+The corpus has 152 cases: 121 judge-checked and 31 derivation-only. Every judge-checked case's expected output was written from the rules and agrees with the judge (`./check.sh`, step `cases`). Every held or not-held outcome a case states was also checked against its form's recording by a separate checker that reads only the case and the recording. It found two cases red on a second check, `case-039` and `case-040`, which were fixed. The four outcomes it cannot evaluate are the ends by a signal, which QO4 and QO5 decide: `case-072`, `case-076`, `case-078` and `case-089`.
 
 | Example | Cases | Note |
 |---|---|---|
@@ -63,3 +63,50 @@ Each of these changed the text or the tools, and each is in this pull request:
 - QT5: the source digest of a form that is one file, not a build.
 - The cross-check reads a placeholder seed as the placeholder object, as QS5 says.
 - A not-measured check still names the invocation it would have used (QE8), so a placeholder case lists every invocation of its kinds (QT6).
+
+## The frozen text: standards review
+
+A Claude standards reviewer read the whole frozen text (digest `c4180a35…e802`, commit de882dd) with its schemas and `CASES.md`. Verdict: publish with these changes. Every finding was checked against the text and the corpus before it was acted on; all are fixed (commits 711457b, ab8735b, 774067a).
+
+| Finding | Disposition |
+|---|---|
+| B1: discovery's targets when no help request ran | Fixed. QE8: discovery's targets are the help requests its walk made; with nothing run it has one. Cases 003, 004, 005, 060 and 090 now have one target. |
+| B2: the recordings' profile and launcher digests cannot be reproduced from the text, and QT1 makes a mismatch exit 2 | Fixed. QT5: those digests, the system and the commit are provenance, and a collector rejects no recording on them. |
+| M1: no scripted-run exemption from the system-version check | Fixed in QT3. |
+| M2: QE7's catch-all nulls `dimension` | Fixed: QE7 names `dimension`; QE8 names `check_id` and `targets`. |
+| M3: QE1 sends binding changes outside the record to errata | Fixed: any binding change is a new version. |
+| M4: the judge version is not pinned | Fixed: the rules pin judge 1.0. |
+| M5: no conformance clause | Fixed in QE19; QT6's `input.json` is "up to QE19's comparison". |
+| M6: twin identity undefined | Fixed in QT6: one input, and a counterpart's selector. |
+| M7: tiers of targets that never ran, and of the planted file | Fixed in QE8 and QE9. |
+| M8: the freeze digest left out the schemas | Fixed: the second freeze covers the four text files, `CASES.md` and the schemas. |
+| m1 to m5, n1, n2 | Fixed: QT1's flags, `bin/subject` in a scripted assembly, a case with no secret (`case-144`), artifact targets only for a path, QE4's tie, and the status wording. m5 is moot after B2. |
+
+Fixing B1 also showed that the reason pair QD4 before QH8 cannot happen in a scripted run, where the private copy is changed for every use, discovery included. QT6's `order:` rows are now the pairs a scripted run can show, and `case-092` shows QH8 before QA6 instead.
+
+## The corpus: review against the recordings
+
+A Claude test reviewer read every form against its recording and sampled about 70 cases. Every recording matched its source and every sampled outcome followed from its recording. Its findings:
+
+| Finding | Disposition |
+|---|---|
+| Nothing in the repository ties case outcomes to recordings | Fixed: `scripts/check-case-outcomes.py` runs in `check.sh` (4c3182f). Its first run also found that the builder counted only standard output for a byte bound, which QP3 counts on both streams; fixed in the cases. |
+| Two violating forms act only beside setup the recorder prepares | Fixed in the text: QT5 names the decoys. |
+| Rules that only a recording shows counted as covered | Fixed: `CASES.md` lists QE18, QH10, QH12, QH15, QH16, QH20 and QH22 as rules a scripted record cannot break, and cases no longer cite them. §4 notes that four encodings coincide for the canary's alphabet. |
+| Collector paths with no form or case | Fixed after the owner chose to add them (2026-11-24): `help-hidden` and `help-stderr`, an environment value and two offline settings on one command, a secret read by two commands, a predicate and a capture on a cut stream, invalid bytes and a 33-digit number before a predicate, and a subject file without the bare binary (cases 145 to 157). Every form was recorded again. |
+| A recorded `null` printed value was ambiguous | Fixed: `printed_value` is `{"value": v}` or `null`. |
+| QD4's two sentences unranked | Fixed: the bound or QD5 sentence governs. |
+
+## Blind derivation, round 1
+
+A reader on a different model (agy, `gemini-4-argon-high`) received only the export (`scripts/collection-export.py`) of the frozen text and 210 cases, public and private, and wrote its own derivation program. It matched 161 cases exactly. After the corrections below, 199 of 210 matched; the remaining 11 come from text changed after its export, and round 2 re-derives them.
+
+| Disagreement | Disposition |
+|---|---|
+| The corpus listed runbook steps of a destructive runbook outside the destructive scope among a case's invocations (35 cases) | The reader was right. QT6 now defines the list from the record; cases fixed. |
+| `target_size` for a check not held for its exit code or end | Settled in QE8: a size only when the predicate was evaluated; the reader's reading. |
+| The rule a pre-check rejection names (QE5 or QE6) | Settled in QT6: QE6. |
+| Invocations of a placeholder case | Settled in QT6: every invocation a target names, a not-observed check naming the one it would have used. |
+| QS5's override beside a missing declared command, and a secret command with a placeholder class | Settled in QS5; the corpus already took these readings. |
+
+Of the reader's other two-way readings, it took the corpus's reading each time: the specific rule over the schema for a rejected file, `wrong_exit` for an exit code a check does not accept, and QS6 for an undeclared secret command.
