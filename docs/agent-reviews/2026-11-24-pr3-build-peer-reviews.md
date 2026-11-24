@@ -110,3 +110,25 @@ A reader on a different model (agy, `gemini-4-argon-high`) received only the exp
 | QS5's override beside a missing declared command, and a secret command with a placeholder class | Settled in QS5; the corpus already took these readings. |
 
 Of the reader's other two-way readings, it took the corpus's reading each time: the specific rule over the schema for a rejected file, `wrong_exit` for an exit code a check does not accept, and QS6 for an undeclared secret command.
+
+## Blind derivation, rounds 2 and 3
+
+Each round gave a fresh reader on the same model only the export of the frozen text and every case, 224 in all.
+
+| Round | Freeze | Agreement | Disposition |
+|---|---|---|---|
+| 2 | `d04af121…2c5f` | 223 of 224 | The reader stopped discovery's walk at a help request that exited 1 with a command list (`case-044`). QD2 now says a help request that ran lists its commands whatever its exit code, as QO7's "whatever an earlier one's end" implies; the corpus already took that reading. QA7 now says QS5's last override stops no runbook. |
+| 3 | `da13c11c…98ff` | 224 of 224 | No disagreement. Its remaining two-way readings all went the corpus's way; the depth bound and QS5's override are now stated outright. |
+
+## The frozen text: different-model standards review
+
+agy (`gemini-4-argon-high`) read freeze 3 with the schemas, `CASES.md` and this log. Verdict: publish with these changes; self-contained for the corpus and the core contract. Every finding was checked against the text and fixed in 2d77d40; no case changed.
+
+| Finding | Disposition |
+|---|---|
+| Masking (QE18): no replacement text, and a short declared value such as `1` would be masked everywhere | Fixed: the canary becomes the masked string QT5 uses; declared values of 8 bytes or more become `*`; masking changes no count, digest or outcome; shorter values are not masked and the scorecard says so. |
+| `target_size` of a row count with no array, and when `precondition_observed` is reported | Fixed in QE8; QS5's override applies whatever the observed precondition. |
+| `json_path_equals` and `row_count` not read under the judge contract's §3 | Fixed in QA9. |
+| `determinism` credit read per runbook; `idempotency`'s "same command" | Fixed in `credit-and-routes.md` §2: per check, and the same declared command. |
+| QH26 against QO7, and QP9 against QP6 | Fixed: a failed read calibration proves no read but lets a leak or an earlier end decide; QP9's outcomes come first. |
+| Minors: QS6 and QP10's secret commands, QS7's engine-set names, QS5's `writes` placeholder and QP7 skip, QP8's regular side files, links inside left-out paths, the walk stopping at a bound, QS11's depth counting, an empty file's digest in QT5 | Fixed. |
