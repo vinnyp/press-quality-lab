@@ -159,7 +159,7 @@
   |---|---|
   | `check_id` | the check's id (QE7) |
   | `outcome`, `reason`, `failure_kind` | by §2 of `collection-rules.md` and the check's predicate |
-  | `target_size` | for an empty-satisfiable check that was observed, the number of bytes or items its predicate evaluated |
+  | `target_size` | for an empty-satisfiable check whose predicate was evaluated, the number of bytes or items it evaluated; that is, a check that is held, or not held with `failure_kind` `predicate`. Otherwise `null`, a check not held for its exit code or its end included |
   | `precondition_observed` | for a check that asserts emptiness and was observed, the observed precondition (QA9) |
   | `expected`, `observed` | bounded as QE10 says |
   | `tier` | as QE9 says |
@@ -300,7 +300,7 @@
     - `special_file`: assembly creates a named pipe at `path`, relative to the assembled directory;
     - `oversized_output`, `invalid_bytes` and `planted_secret` describe what the form or its seed already does, and assembly creates nothing. Their `path` is `stdout`, `stderr`, or a path relative to the home.
   - **A judge-checked case** also holds `input.json`, the judge input the collector must send, up to QE19's comparison, and `preimages.json`, which maps each check id in it to that check's preimage (QE2). Its `expect` holds the judge's whole output and the engine's exit code.
-  - **A derivation-only case** ends before any record exists. Its `expect` holds the engine's exit code and the id of the rule that decides it.
+  - **A derivation-only case** ends before any record exists. Its `expect` holds the engine's exit code and the id of the rule that decides it: the rule whose condition the file breaks, even when the file's schema also rejects it (QS2 says only that the file is validated), or QE6 for a rejection the judge returns at the pre-check.
   - **Assembly.** A case names a form, and the form's canonical directory `subjects/<form>/` holds its seed and its computations. Before applying §1 of `collection-rules.md`, a collector assembles one temporary directory holding:
     - the case's subject file;
     - a copy of the form's seed, at `seed/`;
@@ -309,7 +309,7 @@
     - each `link` and `special_file` fixture.
 
     A case's subject file names those fixed paths, so QS8 and QS9 hold. A scripted run never executes `bin/subject`, which there may be any regular file whose content differs from every other assembled file. A real run needs the form built from the source whose digest its recording names.
-  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and removes one reason a check was not measured, or `null`, where following `twin` from a case reaches a case in which each such check is held and crediting. One input is one field of `input`, the subject file's content, or the form. A check's counterpart in a twin is the check whose preimage has the same `probe`, `runbook`, `step`, `index`, `dimension` and `words`; its id may differ, because the input the twin changes can enter the id; `invocations`, the keys (QT5), each once, of every invocation of these kinds for the case's request and scope: each probe's, each help request discovery's walk makes (QE8), the bare binary's, every runbook step's whether or not an earlier failure would stop it, and every computation's, or none for a derivation-only case that ends before collection; and `covers`.
+  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and removes one reason a check was not measured, or `null`, where following `twin` from a case reaches a case in which each such check is held and crediting. One input is one field of `input`, the subject file's content, or the form. A check's counterpart in a twin is the check whose preimage has the same `probe`, `runbook`, `step`, `index`, `dimension` and `words`; its id may differ, because the input the twin changes can enter the id; `invocations`, the keys (QT5), each once, of every invocation the case's record names or implies: each invocation a piece of evidence names as a target, a check that is not observed naming the invocation it would have used (QE8); each help request discovery's walk makes; every step of each runbook in the required set, whether or not an earlier failure would stop it; and every computation of those runbooks' required checks. A derivation-only case that ends before collection has none; and `covers`.
   - **`covers`** names the table rows, credit-condition sides and reason-order pairs the case exercises. Each tag is `<table>:<row>` or `<table>:<row>:<side>`:
 
     | Table | Tag | Rows |

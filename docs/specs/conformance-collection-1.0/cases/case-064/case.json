@@ -323,20 +323,6 @@
         "sprocket"
       ],
       "home": "scratch"
-    },
-    {
-      "words": [
-        "remove",
-        "gear"
-      ],
-      "offline_args": [
-        "--offline"
-      ],
-      "env": [],
-      "runbook": "remove guard",
-      "step": "remove without confirm",
-      "computation": null,
-      "home": "runbook"
     }
   ],
   "covers": [],

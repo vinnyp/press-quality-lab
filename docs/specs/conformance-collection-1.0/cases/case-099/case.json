@@ -42,39 +42,6 @@
     },
     {
       "words": [
-        "account"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "seed"
-    },
-    {
-      "words": [
-        "count"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "seed"
-    },
-    {
-      "words": [
-        "list"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "seed"
-    },
-    {
-      "words": [
         "--help"
       ],
       "offline_args": [],
@@ -146,44 +113,7 @@
     },
     {
       "words": [
-        "account"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "planted"
-    },
-    {
-      "words": [
         "list"
-      ],
-      "offline_args": [
-        "--offline"
-      ],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "seed"
-    },
-    {
-      "words": [
-        "list",
-        "--json"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "seed"
-    },
-    {
-      "words": [
-        "list",
-        "--json"
       ],
       "offline_args": [
         "--offline"

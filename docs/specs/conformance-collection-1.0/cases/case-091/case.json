@@ -141,19 +141,6 @@
     },
     {
       "words": [
-        "account"
-      ],
-      "offline_args": [
-        "--offline"
-      ],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "planted"
-    },
-    {
-      "words": [
         "list",
         "--json"
       ],
@@ -311,20 +298,6 @@
         "sprocket"
       ],
       "home": "scratch"
-    },
-    {
-      "words": [
-        "remove",
-        "gear"
-      ],
-      "offline_args": [
-        "--offline"
-      ],
-      "env": [],
-      "runbook": "remove guard",
-      "step": "remove without confirm",
-      "computation": null,
-      "home": "runbook"
     }
   ],
   "covers": [
