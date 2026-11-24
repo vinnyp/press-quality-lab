@@ -705,7 +705,7 @@ func TestCorpusTwinSelectors(t *testing.T) {
 func TestCorpusOrderTags(t *testing.T) {
 	tags := corpusTags("", "", string(read(t, filepath.Join(kit, "collection-contract.md"))))
 	want := map[string]bool{}
-	for _, pair := range []string{"QO1>QS5", "QO1>QA7", "QS5>QD4", "QS5>QA7", "QD4>QH8", "QA7>QH8", "QH8>QA6"} {
+	for _, pair := range []string{"QO1>QS5", "QO1>QA7", "QS5>QD4", "QS5>QA7", "QA7>QH8", "QH8>QA6"} {
 		want["order:"+pair] = true
 	}
 	if !corpusEqual(tags, want) {

@@ -1243,32 +1243,7 @@
       "targets": [
         {
           "kind": "invocation",
-          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#1",
-          "tier": "scripted"
-        },
-        {
-          "kind": "invocation",
-          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#2",
-          "tier": "scripted"
-        },
-        {
-          "kind": "invocation",
-          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#3",
-          "tier": "scripted"
-        },
-        {
-          "kind": "invocation",
-          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#4",
-          "tier": "scripted"
-        },
-        {
-          "kind": "invocation",
-          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#5",
-          "tier": "scripted"
-        },
-        {
-          "kind": "invocation",
-          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc#6",
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
           "tier": "scripted"
         }
       ],

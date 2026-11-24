@@ -94,66 +94,6 @@
     },
     {
       "words": [
-        "account",
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
-        "add",
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
-        "count",
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
-        "list",
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
-        "remove",
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
         "account"
       ],
       "offline_args": [

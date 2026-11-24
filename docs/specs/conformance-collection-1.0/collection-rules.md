@@ -2,6 +2,8 @@
 
 **Specification version:** `1.0`. A collector reports this string with every record it writes. Check ids carry a separate id-scheme string (QE2), so a new specification version keeps every check's id unless it changes what an id is made of.
 
+**The judge it feeds.** Every reference to the judge's rulebook or contract, and to its rules (X1 to X12, C3 and the others), is to judge specification 1.0 (`docs/specs/judge-1.0/`). A later judge version is used only by a new version of this specification.
+
 **What this file covers.** How an engine turns one subject file and one requested scope into observations:
 - §1: what the subject file holds;
 - §2: what a run of the subject means;

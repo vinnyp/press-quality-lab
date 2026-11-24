@@ -2,12 +2,12 @@
   "id": "case-092",
   "kind": "judge-checked",
   "rules": [
-    "QD4",
-    "QH8"
+    "QH8",
+    "QA6"
   ],
   "input": {
     "subject_file": "subject.json",
-    "form": "hides-command",
+    "form": "known-good",
     "request": "grade",
     "scope": [
       "conformance"
@@ -30,7 +30,7 @@
     "fixtures": []
   },
   "named_check": null,
-  "twin": "case-020",
+  "twin": "case-052",
   "invocations": [
     {
       "words": [],
@@ -82,54 +82,6 @@
     },
     {
       "words": [
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
-        "account",
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
-        "add",
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
-        "list",
-        "--help"
-      ],
-      "offline_args": [],
-      "env": [],
-      "runbook": null,
-      "step": null,
-      "computation": null,
-      "home": "empty"
-    },
-    {
-      "words": [
-        "remove",
         "--help"
       ],
       "offline_args": [],
@@ -311,10 +263,49 @@
         "sprocket"
       ],
       "home": "scratch"
+    },
+    {
+      "words": [
+        "remove",
+        "gear"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "remove guard",
+      "step": "remove without confirm",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "oracles",
+      "step": "list for oracles",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "oracles",
+      "step": "list for oracles",
+      "computation": [
+        "computations/exits-1.sh"
+      ],
+      "home": "scratch"
     }
   ],
   "covers": [
-    "order:QD4>QH8"
+    "order:QH8>QA6"
   ],
   "expect": {
     "exit_code": 4,
@@ -370,7 +361,7 @@
           "id": "20059c1619244c1ab00820b1514309e4f14445cac80b473c0f91e1198982f99e",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -384,7 +375,7 @@
           "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -412,7 +403,7 @@
           "id": "270c4c43c84525851e3646a6ec588c632c08e2cd2de87c804ecabb5418d7aa35",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -426,7 +417,7 @@
           "id": "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -440,7 +431,7 @@
           "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -496,7 +487,7 @@
           "id": "4f7aa1fa7be749c66667dedddb8c051838018a2362224df68de89f0f4c3a5f9f",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -524,7 +515,7 @@
           "id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -538,7 +529,7 @@
           "id": "71419728f22ff646bbedd2b64e9be4210905fefc8aef50c09e6ef860912718fe",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -552,7 +543,7 @@
           "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -566,7 +557,7 @@
           "id": "8c4cb2919c964946af308a8f2cae75a1d0ff5f0fe606cea95b2f466fe5fbd84b",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -608,7 +599,21 @@
           "id": "a493349a773343813d0d6cf91bbfc96bb391d1dc432475ff3ca49df5414d9d3d",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "b6154ff9b68be68e43d2adc9b57b506e4bfd79f5b5876439bfafe4a3739eef90",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -622,7 +627,7 @@
           "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -678,7 +683,7 @@
           "id": "d65cc1fe00837294339d19e0cabeeaebd65ce02d0606cf3bb69f4d335606dfc9",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -706,7 +711,7 @@
           "id": "f219a323acc8fde487fe7ba43951b83bb999ead817dfda45652a0c0180fcd187",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,
@@ -734,7 +739,7 @@
           "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
           "result": "unobserved",
           "rule": "C2",
-          "reason": "precondition_unmet",
+          "reason": "harness_fault",
           "detail": null,
           "k": null,
           "n": null,

@@ -471,6 +471,38 @@
           ]
         }
       ]
+    },
+    {
+      "name": "oracles",
+      "steps": [
+        {
+          "name": "list for oracles",
+          "words": [
+            "list",
+            "--json"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "row_count",
+              "path": "/widgets",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/exits-1.sh"
+                  ],
+                  "budget_seconds": 10,
+                  "declared_files": [],
+                  "captures": []
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
     }
   ],
   "markers": [],

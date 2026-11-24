@@ -5,7 +5,7 @@
 ## 1. Versions
 
 - **QE1. Version and change.** This specification's version string is `1.0`.
-  - **When the string changes.** It changes when, and only when, some subject file, scope and subject behaviour can lead to a different record for the judge or a different engine exit code. Every other change is editorial and goes in the dated errata note `docs/specs/conformance-collection-1.0-errata.md`, outside the sealed folder.
+  - **When the string changes.** It changes when any binding rule changes what a conforming engine must do, whether or not the record or the exit code changes. An erratum may only correct text whose intended reading the corpus or a worked example already fixes; it goes in the dated errata note `docs/specs/conformance-collection-1.0-errata.md`, outside the sealed folder. Version 1.x draws no line between a major and a minor change: every change of string is a new specification that the owner ratifies.
   - **Ratification.** The owner ratifies each version.
   - **Reading older files.** A later specification version states which subject-file versions it reads. Version strings take the form `<major>.<minor>`.
   - **Other version strings.** These strings are versioned on their own, and each changes only when its own format does:
@@ -118,7 +118,7 @@
 - **QE3. A fixed set.** The engine fixes the required set from the subject file, the judge's rulebook and the requested scope before discovery or any other check runs (R21). It holds every generated check QP1 places, and every authored check whose dimension is in the requested scope and whose runbook may run in it (QA7). Evidence never adds to it or removes from it.
 - **QE4. Baselines and missing ids.**
   - **What a baseline holds.** It stores each check's preimage beside its entry.
-  - **Which baseline a grade uses.** The baseline the user names. Without one, it uses the baseline with the latest `created_at` stored for the subject file's canonical path.
+  - **Which baseline a grade uses.** The baseline the user names. Without one, it uses the baseline with the latest `created_at` stored for the subject file's canonical path, and among baselines with the same `created_at`, the one whose file's SHA-256 is greatest.
   - **Missing ids.** When the baseline holds ids the new required set lacks, the engine lists each one. It names the cause from the stored preimage: the command, step or runbook that is gone, or the preimage keys whose values changed. It writes the list as a JSON array of the missing ids, sorted. That file is the form `pql anchor` accepts as its retired list. The engine retires none by itself.
 
 ## 3. Before collection
@@ -147,6 +147,7 @@
   |---|---|
   | `id` | as QE2 says |
   | `kind` | `plain` |
+  | `dimension` | the dimension the check feeds: a probe's from `credit-and-routes.md` §1, an authored check's own `dimension` |
   | `record` | the runbook that holds the check, or `null` for a probe |
   | `crediting` | from QA3, and from the probe table of `credit-and-routes.md` §1 for a probe |
   | `empty_satisfiable` | as QA9 says for an authored check; `true` for byte bound; otherwise `false` |
@@ -156,20 +157,23 @@
 
   | Field | Value |
   |---|---|
+  | `check_id` | the check's id (QE7) |
   | `outcome`, `reason`, `failure_kind` | by §2 of `collection-rules.md` and the check's predicate |
   | `target_size` | for an empty-satisfiable check that was observed, the number of bytes or items its predicate evaluated |
   | `precondition_observed` | for a check that asserts emptiness and was observed, the observed precondition (QA9) |
   | `expected`, `observed` | bounded as QE10 says |
   | `tier` | as QE9 says |
   | `evaluator` | `{"kind": "deterministic", "model": null}` |
+  | `targets` | as below |
 
   **Targets.**
   - Each invocation is a target of kind `invocation`. Its id is the check's id, or the check's id followed by `#` and the invocation's position from 1 when the check has more than one invocation. Discovery's help requests are numbered in the order QD2 gives; the planted secret's invocations in the order its commands are listed, counting listed commands only. A control invocation is never a target.
   - A check that would use no invocation still has one target, because the judge contract requires one: a target of kind `invocation` whose id is the check's id. Such a check is a probe that runs no command (QP1), or the planted-secret probe whose `secret` is `null` or a placeholder.
-  - The store-unchanged probe adds the declared store as a target of kind `artifact`. The planted-secret probe adds the planted file the same way. Each artifact's id is its path relative to the home, and its tier is the tier of the invocation that used it.
+  - **Discovery's targets** are the help requests its walk made, in QD2's order. A help request that did not run, or whose binary could not start, printed nothing and lists no command, so the walk goes no further below it. The first request counts as made even when it did not run, so discovery has at least one target: with `binary` a placeholder (QS5), when QO1 holds, or when the private copy changed (QH8), it has exactly one.
+  - When the declared store is a path, the store-unchanged probe adds it as a target of kind `artifact`. When `secret` is an object, the planted-secret probe adds the planted file the same way. Each artifact's id is its path relative to the home. The store's tier is the tier of the invocation that used it; the planted file's is `offline` when every listed command's invocation is `offline`, and `live` otherwise.
 
   A check that is not observed has an `outcome` of `not_observed` and carries its reason and the invocation it would have used.
-- **QE9. Tiers.** A normal run claims `live`. Each target that ran with an offline setting carries the tier `offline`, and every other target carries `live`. A piece of evidence carries `offline` when every one of its targets does, and `live` otherwise.
+- **QE9. Tiers.** A normal run claims `live`. Each invocation target whose invocation applies an offline setting (QS7) carries the tier `offline`, whether or not it ran, and every other invocation target carries `live`. A piece of evidence carries `offline` when every one of its targets does, and `live` otherwise.
 - **QE10. Bounds.**
   - **Draining.** Captured output is drained as it is produced, so the subject is never blocked by a full pipe. The engine counts every drained byte and keeps the first 1 MiB of each stream for predicates and the leak scan. Past that point it records that the stream was cut and keeps draining.
   - **What a record carries.** In `expected` and `observed`, a stream appears as an object with exactly these keys:
@@ -230,7 +234,9 @@
   - each piece of evidence has equal `check_id`, `outcome`, `reason`, `failure_kind`, `target_size`, `precondition_observed` and `tier`;
   - each piece of evidence has the same set of target kinds, ids and tiers.
 
-  `expected` and `observed` are left out of the comparison.
+  `expected` and `observed` are left out of the comparison; their content is the collector's choice within QE10's bounds.
+
+  **A conforming collector.** A collector conforms to this specification when, for every judge-checked case of the corpus, its record agrees with the case's `input.json` under the comparison above and it exits with the case's `expect.exit_code`, and for every derivation-only case it exits with the case's `expect.exit_code` before collection. A case with the real verifier counts only on a system QH1 names.
 - **QE20. Cleanup.**
   - **When.** Throwaway homes, scratch directories and private copies are removed on every exit, a check killed by the confinement included.
   - **Where they live.** Each is created under one engine-owned directory per run. That directory holds a file naming the engine's process id and that process's start time.
@@ -241,11 +247,12 @@
 
 - **QT1. A scripted verifier and a scripted host.** `--verifier` takes `real`, the default, or `scripted`. Only a build made with the `scripted` build tag contains a scripted network verifier, selected by `--verifier scripted`, which reads a recording named by `--behaviour <file>` (QT5) and a scripted host named by `--host <file>` (QT4).
   - **The released build** parses all three flags. It accepts `--verifier real`. It rejects `--verifier scripted`, any `--host` and any `--behaviour` with exit 2, and every other value of `--verifier` as a malformed command line with exit 64.
-  - **A scripted build** runs a scripted run only with all of `--verifier scripted`, `--host` and `--behaviour`. Any one of them without the other two exits 2, and so does a host or recording file that cannot be read, that the judge contract's §3 would refuse as JSON, that its schema rejects, or that breaks a rule of QT4 or QT5.
+  - **A scripted build** runs a scripted run only with all of `--verifier scripted`, `--host` and `--behaviour`. Given any of them without all three, it exits 2, and so does a host or recording file that cannot be read, that the judge contract's §3 would refuse as JSON, that its schema rejects, or that breaks a rule of QT4 or QT5.
 - **QT2. A test run is scripted.** A run with the scripted verifier claims the tier `scripted`, and so do its targets and evidence. It cannot be anchored, and the judge refuses an anchor of it. The corpus's baseline cases for it use scripted baselines supplied as files.
 - **QT3. What it is for.** The scripted verifier lets the corpus run without a sandbox. It shows that the rules turn observations into the right record. It shows nothing about a real subject, and a record from it is never evidence that a subject made no network request.
   - **What a scripted run observes.** It takes each invocation's result from the recording `--behaviour` names (QT5), in place of running the subject or a computation. It uses the recording's first confined run, and the unconfined run never. An invocation the recording lacks is an engine fault, exit 70.
   - **The engine's own controls.** It takes their raw results from the scripted host (QT4).
+  - **The system.** A scripted run checks no system version (QH1, QH2): whether confinement was applied comes from the host's `confinement` field alone. QH3 applies to every run.
 - **QT4. The scripted host.** The host file holds one JSON object, as the `host` subschema of `schema/case.schema.json` defines it. Each field forces the raw result of one control the engine runs, and every field is required:
 
   | Field | Forces | Values |
@@ -270,6 +277,8 @@
     - the digest of the form's source: QE2's seed digest computed over the source files the form's build compiles, as paths relative to the synthetic subject's source root, with an entry for each file and none for a directory. A form that is one file rather than a build, such as one the system cannot execute, names that file's SHA-256 instead;
     - the digests of the subject profile and the computation profile, each as the template renders with its variant's fixed text and before any line the engine adds for one invocation, and of the launcher's source;
     - the macOS version and build it was recorded on, and the commit.
+
+    These digests, the system and the commit say where a recording came from. A collector reads none of them and rejects no recording on their values.
   - **An invocation's key.** Each invocation is keyed by an object with these fields. `home` names the home it runs in: `seed` for a fresh copy of the seed, `empty` for an empty home (discovery's), `planted` for a fresh copy with the canary planted (the planted-secret probe's), `runbook` for its runbook's shared home, and `scratch` for a computation's scratch directory. The other fields: for a subject invocation, `words`, `offline_args`, `env` (the declared environment names that apply, sorted by their bytes), `runbook` and `step` (both strings for a runbook step, both `null` for a probe's invocation), and `computation` `null`; for a computation's, `computation` (its argument list as the subject file gives it), `runbook` and `step` (those of the check it serves, because a capture makes its result depend on them), `words` `null`, and `offline_args` and `env` empty. No two invocations of one recording have equal keys.
   - **The runs.** Every invocation has five confined runs. An invocation of a violating form also has one unconfined run first, the positive control that the form's act happens. A non-violating form's invocations have no unconfined run.
   - **One run records:**
@@ -289,7 +298,7 @@
     - `link`: assembly creates a symbolic link at `path`, relative to the assembled directory, whose target is the text of `detail`, which may name nothing;
     - `special_file`: assembly creates a named pipe at `path`, relative to the assembled directory;
     - `oversized_output`, `invalid_bytes` and `planted_secret` describe what the form or its seed already does, and assembly creates nothing. Their `path` is `stdout`, `stderr`, or a path relative to the home.
-  - **A judge-checked case** also holds `input.json`, the judge input the collector must send, and `preimages.json`, which maps each check id in it to that check's preimage (QE2). Its `expect` holds the judge's whole output and the engine's exit code.
+  - **A judge-checked case** also holds `input.json`, the judge input the collector must send, up to QE19's comparison, and `preimages.json`, which maps each check id in it to that check's preimage (QE2). Its `expect` holds the judge's whole output and the engine's exit code.
   - **A derivation-only case** ends before any record exists. Its `expect` holds the engine's exit code and the id of the rule that decides it.
   - **Assembly.** A case names a form, and the form's canonical directory `subjects/<form>/` holds its seed and its computations. Before applying §1 of `collection-rules.md`, a collector assembles one temporary directory holding:
     - the case's subject file;
@@ -298,8 +307,8 @@
     - the form's computations, under `computations/`;
     - each `link` and `special_file` fixture.
 
-    A case's subject file names those fixed paths, so QS8 and QS9 hold. A scripted run never executes `bin/subject`. A real run needs the form built from the source whose digest its recording names.
-  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and removes one reason a check was not measured, or `null`, where following `twin` from a case reaches a case in which each such check is held and crediting; `invocations`, the keys (QT5), each once, of every invocation of these kinds for the case's request and scope: each probe's, each help request QD2 reaches in the form's recording, the bare binary's, every runbook step's whether or not an earlier failure would stop it, and every computation's, or none for a derivation-only case that ends before collection; and `covers`.
+    A case's subject file names those fixed paths, so QS8 and QS9 hold. A scripted run never executes `bin/subject`, which there may be any regular file whose content differs from every other assembled file. A real run needs the form built from the source whose digest its recording names.
+  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and removes one reason a check was not measured, or `null`, where following `twin` from a case reaches a case in which each such check is held and crediting. One input is one field of `input`, the subject file's content, or the form. A check's counterpart in a twin is the check whose preimage has the same `probe`, `runbook`, `step`, `index`, `dimension` and `words`; its id may differ, because the input the twin changes can enter the id; `invocations`, the keys (QT5), each once, of every invocation of these kinds for the case's request and scope: each probe's, each help request discovery's walk makes (QE8), the bare binary's, every runbook step's whether or not an earlier failure would stop it, and every computation's, or none for a derivation-only case that ends before collection; and `covers`.
   - **`covers`** names the table rows, credit-condition sides and reason-order pairs the case exercises. Each tag is `<table>:<row>` or `<table>:<row>:<side>`:
 
     | Table | Tag | Rows |
@@ -309,7 +318,7 @@
     | `credit-and-routes.md` §4 | `encoding:<name>` | each encoding |
     | `credit-and-routes.md` §5 | `help:<generator>` | `cobra`, `urfave-cli`, `clap` |
     | QA9 | `predicate:<predicate>` | each predicate |
-    | the reason order of `collection-rules.md` §2 | `order:<earlier>><later>` | each pair of reasons that can apply to one check together, the earlier deciding: `QO1>QS5`, `QO1>QA7`, `QS5>QD4`, `QS5>QA7`, `QD4>QH8`, `QA7>QH8`, `QH8>QA6` |
+    | the reason order of `collection-rules.md` §2 | `order:<earlier>><later>` | each pair of reasons that can apply to one check together in a scripted run, the earlier deciding: `QO1>QS5`, `QO1>QA7`, `QS5>QD4`, `QS5>QA7`, `QA7>QH8`, `QH8>QA6` |
 
     A tag that names no row rejects the case.
 
