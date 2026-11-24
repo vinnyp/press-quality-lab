@@ -310,7 +310,7 @@
     | `credit-and-routes.md` §4 | `encoding:<name>` | each encoding |
     | `credit-and-routes.md` §5 | `help:<generator>` | `cobra`, `urfave-cli`, `clap` |
     | QA9 | `predicate:<predicate>` | each predicate |
-    | the reason order of `collection-rules.md` §2 | `order:<earlier>><later>` | each adjacent pair of QO1, QS5, QD4, QA7, QH8, QA6, QO2, QO3, QO4, QO5 |
+    | the reason order of `collection-rules.md` §2 | `order:<earlier>><later>` | each pair of reasons that can apply to one check together, the earlier deciding: `QO1>QS5`, `QO1>QA7`, `QS5>QD4`, `QS5>QA7`, `QD4>QH8`, `QA7>QH8`, `QH8>QA6` |
 
     A tag that names no row rejects the case.
 
