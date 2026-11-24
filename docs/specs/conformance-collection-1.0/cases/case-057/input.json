@@ -1087,7 +1087,7 @@
       "check_id": "d629059678d689cfef3132cde44a4ee9eab213668bf219578ae63f30338d6dc6",
       "outcome": "not_held",
       "reason": null,
-      "failure_kind": "predicate",
+      "failure_kind": "wrong_exit",
       "target_size": null,
       "precondition_observed": null,
       "tier": "scripted",
