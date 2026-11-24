@@ -39,6 +39,9 @@ func subjectCopy(t *testing.T, source, destination string) {
 }
 func subjectSourceDigest(t *testing.T, root, tag string) string {
 	t.Helper()
+	if tag == "form_not_executable" {
+		return subjectHash(read(t, filepath.Join(root, "testdata/collection-subject/not-executable.txt")))
+	}
 	var info struct{ GoFiles []string }
 	decode(t, subjectGo(t, root, "list", "-tags", tag, "-json", "./testdata/collection-subject"), &info)
 	if len(info.GoFiles) == 0 {
@@ -161,36 +164,46 @@ func TestCollectionSubject(t *testing.T) {
 	if len(tags) == 0 {
 		t.Fatal("no subject forms")
 	}
+	tags["form_not_executable"] = true
 	for tag := range tags {
 		t.Run(tag, func(t *testing.T) {
 			form := strings.ReplaceAll(strings.TrimPrefix(tag, "form_"), "_", "-")
-			var deps []struct {
-				ImportPath string
-				Standard   bool
-			}
-			dec := json.NewDecoder(bytes.NewReader(subjectGo(t, root, "list", "-deps", "-tags", tag, "-json", "./testdata/collection-subject")))
-			for dec.More() {
-				var dep struct {
+			digest := subjectSourceDigest(t, root, tag)
+			binary := filepath.Join(t.TempDir(), "widgets")
+			if form == "not-executable" {
+				if err := os.WriteFile(binary, read(t, filepath.Join(root, "testdata/collection-subject/not-executable.txt")), 0644); err != nil {
+					t.Fatal(err)
+				}
+				if err := exec.Command(binary).Run(); err == nil {
+					t.Fatal("not-executable started")
+				}
+			} else {
+				var deps []struct {
 					ImportPath string
 					Standard   bool
 				}
-				if err := dec.Decode(&dep); err != nil {
-					t.Fatal(err)
+				dec := json.NewDecoder(bytes.NewReader(subjectGo(t, root, "list", "-deps", "-tags", tag, "-json", "./testdata/collection-subject")))
+				for dec.More() {
+					var dep struct {
+						ImportPath string
+						Standard   bool
+					}
+					if err := dec.Decode(&dep); err != nil {
+						t.Fatal(err)
+					}
+					deps = append(deps, dep)
 				}
-				deps = append(deps, dep)
-			}
-			for _, dep := range deps {
-				if !dep.Standard && dep.ImportPath != "github.com/vinnyp/press-quality-lab/testdata/collection-subject" {
-					t.Fatalf("non-standard subject import: %s", dep.ImportPath)
+				for _, dep := range deps {
+					if !dep.Standard && dep.ImportPath != "github.com/vinnyp/press-quality-lab/testdata/collection-subject" {
+						t.Fatalf("non-standard subject import: %s", dep.ImportPath)
+					}
 				}
-			}
-			binary := filepath.Join(t.TempDir(), "widgets")
-			subjectGo(t, root, "build", "-tags", tag, "-o", binary, "./testdata/collection-subject")
-			digest := subjectSourceDigest(t, root, tag)
-			if form == "known-good" {
-				testKnownGoodSubject(t, binary)
-			} else {
-				testDefectSubject(t, binary, form)
+				subjectGo(t, root, "build", "-tags", tag, "-o", binary, "./testdata/collection-subject")
+				if form == "known-good" {
+					testKnownGoodSubject(t, binary)
+				} else {
+					testDefectSubject(t, binary, form)
+				}
 			}
 			recordingFile := filepath.Join(root, "docs/specs/conformance-collection-1.0/behaviour", form+".json")
 			b, err := os.ReadFile(recordingFile)
@@ -210,6 +223,26 @@ func TestCollectionSubject(t *testing.T) {
 			}
 			if len(recording.Invocations) == 0 {
 				t.Fatal("recording has no invocations")
+			}
+			var plan struct {
+				Invocations []struct{ Key map[string]any }
+			}
+			decode(t, read(t, filepath.Join(root, "testdata/collection-subject/plans", form+".json")), &plan)
+			var recorded struct {
+				Invocations []struct{ Key map[string]any }
+			}
+			decode(t, b, &recorded)
+			for _, planned := range plan.Invocations {
+				found := false
+				for _, actual := range recorded.Invocations {
+					if corpusEqual(planned.Key, actual.Key) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("missing recording for %s invocation %v", form, planned.Key)
+				}
 			}
 			for _, entry := range recording.Invocations {
 				key := entry.Key

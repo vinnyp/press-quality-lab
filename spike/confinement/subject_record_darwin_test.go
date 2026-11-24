@@ -110,6 +110,9 @@ func recordCommand(t *testing.T, dir, name string, args ...string) []byte {
 }
 func recordSource(t *testing.T, root, tag string) string {
 	t.Helper()
+	if tag == "form_not_executable" {
+		return recordHash(recordRead(t, filepath.Join(root, "testdata/collection-subject/not-executable.txt")))
+	}
 	var pkg struct{ GoFiles []string }
 	recordMust(t, json.Unmarshal(recordCommand(t, root, "go", "list", "-tags", tag, "-json", "./testdata/collection-subject"), &pkg))
 	slices.Sort(pkg.GoFiles)
@@ -158,7 +161,11 @@ func TestRecordSubjectBehaviour(t *testing.T) {
 			recordJSON(t, filepath.Join(subjectDir, "subject.json"), &subject)
 			binary := filepath.Join(subjectDir, "bin/subject")
 			tag := "form_" + strings.ReplaceAll(plan.Form, "-", "_")
-			recordCommand(t, root, "go", "build", "-tags", tag, "-o", binary, "./testdata/collection-subject")
+			if plan.Form == "not-executable" {
+				recordMust(t, os.WriteFile(binary, recordRead(t, filepath.Join(root, "testdata/collection-subject/not-executable.txt")), 0644))
+			} else {
+				recordCommand(t, root, "go", "build", "-tags", tag, "-o", binary, "./testdata/collection-subject")
+			}
 			f := recordFixture(t, temporary, launcher, binary)
 			private, release, err := f.prepareImagesOn(t)
 			recordMust(t, err)
@@ -392,7 +399,18 @@ func recordSubjectRun(t *testing.T, f fixture, entry recordEntry, subject record
 	f.params = params
 	f.env = env
 	r := recordExecute(t, f, p, args, home, entry.Budget, unconfined)
-	end := recordEnd(t, r, unconfined)
+	if form == "not-executable" && !computation && (!r.startFailed || !r.marked || !r.status.Exited() || r.status.ExitStatus() != 71) {
+		t.Fatal("not-executable did not produce the launcher could-not-start end")
+	}
+	var end map[string]any
+	if form == "not-executable" && !computation {
+		if r.harnessKilled {
+			t.Fatal("recorder harness killed launcher")
+		}
+		end = map[string]any{"kind": "exit", "code": r.status.ExitStatus()}
+	} else {
+		end = recordEnd(t, r, unconfined)
+	}
 	var proof any
 	if entry.Planted {
 		after, err := os.Stat(planted)
@@ -987,6 +1005,14 @@ func recordPrepareDecoys(t *testing.T, form, home, planted string, peer bool) *r
 		_, err := rand.Read(random[:])
 		recordMust(t, err)
 		victim := exec.Command("/bin/sleep", "600")
+		if form == "reads-process-env" {
+			directory := t.TempDir()
+			source := filepath.Join(directory, "victim.go")
+			binary := filepath.Join(directory, "victim")
+			recordMust(t, os.WriteFile(source, []byte("package main\nimport \"time\"\nfunc main() { time.Sleep(10*time.Minute) }\n"), 0600))
+			recordCommand(t, directory, "go", "build", "-o", binary, source)
+			victim = exec.Command(binary)
+		}
 		victim.Env = []string{"WIDGETS_API_KEY=pql" + "canary" + hex.EncodeToString(random[:])}
 		recordMust(t, victim.Start())
 		d.victim = victim

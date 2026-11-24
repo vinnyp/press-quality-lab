@@ -555,6 +555,173 @@
       "budget_seconds": 10,
       "store_control": false,
       "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--tag",
+          "none"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "emptiness",
+        "step": "list none",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "emptiness",
+        "step": "list none",
+        "computation": [
+          "computations/has-widgets.sh",
+          "{SEED}/data.json"
+        ],
+        "home": "scratch"
+      },
+      "budget_seconds": 5,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json",
+          "--tag",
+          "none"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "emptiness",
+        "step": "list none json",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "emptiness",
+        "step": "list none json",
+        "computation": [
+          "computations/has-widgets.sh",
+          "{SEED}/data.json"
+        ],
+        "home": "scratch"
+      },
+      "budget_seconds": 5,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--tag",
+          "none"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "emptiness unproved",
+        "step": "list none",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "emptiness unproved",
+        "step": "list none",
+        "computation": [
+          "computations/has-gadgets.sh",
+          "{SEED}/data.json"
+        ],
+        "home": "scratch"
+      },
+      "budget_seconds": 5,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "self agreement",
+        "step": "first",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "self agreement",
+        "step": "second",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "self agreement",
+        "step": "second",
+        "computation": [
+          "computations/count-capture.sh",
+          "{CAPTURE:first}"
+        ],
+        "home": "scratch"
+      },
+      "budget_seconds": 5,
+      "store_control": false,
+      "planted": false
     }
   ]
 }

@@ -142,10 +142,19 @@ type corpusCase struct {
 	} `json:"expect"`
 	subject   []byte
 	required  []corpusRequired
-	preimages map[string]struct {
-		Probe *string `json:"probe"`
-	}
+	preimages map[string]corpusSelector
 }
+
+// Only these preimage fields identify a counterpart; repaired inputs may change its id.
+type corpusSelector struct {
+	Probe     *string  `json:"probe"`
+	Runbook   *string  `json:"runbook"`
+	Step      *string  `json:"step"`
+	Index     *int     `json:"index"`
+	Dimension string   `json:"dimension"`
+	Words     []string `json:"words"`
+}
+
 type corpusRequired struct {
 	ID        string `json:"id"`
 	Dimension string `json:"dimension"`
@@ -203,7 +212,7 @@ func corpusRows(text string) [][]string {
 	}
 	return rows
 }
-func corpusTags(routes, rules string) map[string]bool {
+func corpusTags(routes, rules, contract string) map[string]bool {
 	tags := map[string]bool{}
 	for _, row := range corpusRows(corpusSection(routes, "## 2.")) {
 		dimension := strings.Trim(row[0], "`")
@@ -230,9 +239,13 @@ func corpusTags(routes, rules string) map[string]bool {
 	for _, row := range corpusRows(corpusSection(rules, "- **QA9.")) {
 		tags["predicate:"+strings.Trim(row[0], "`")] = true
 	}
-	order := []string{"QO1", "QS5", "QD4", "QA7", "QH8", "QA6", "QO2", "QO3", "QO4", "QO5"}
-	for i := 0; i < len(order)-1; i++ {
-		tags["order:"+order[i]+">"+order[i+1]] = true
+	for _, row := range strings.Split(corpusSection(contract, "- **QT6."), "\n") {
+		if !strings.Contains(row, "| `order:<earlier>><later>` |") {
+			continue
+		}
+		for _, pair := range regexp.MustCompile("`(Q[A-Z][0-9]+>Q[A-Z][0-9]+)`").FindAllStringSubmatch(row, -1) {
+			tags["order:"+pair[1]] = true
+		}
 	}
 	return tags
 }
@@ -320,7 +333,7 @@ func checkCorpus(root string) ([]string, []string) {
 			defined[match[1]] = true
 		}
 	}
-	expected := corpusTags(texts["credit-and-routes.md"], texts["collection-rules.md"])
+	expected := corpusTags(texts["credit-and-routes.md"], texts["collection-rules.md"], texts["collection-contract.md"])
 	complete := false
 	if data, err := os.ReadFile(filepath.Join(root, "CASES.md")); err == nil {
 		for _, line := range strings.Split(string(data), "\n") {
@@ -461,6 +474,9 @@ func checkCorpus(root string) ([]string, []string) {
 	}
 	for _, id := range sortedCorpusKeys(cases) {
 		c := cases[id]
+		if c.Kind != "judge-checked" {
+			continue
+		}
 		var twin *corpusCase
 		if c.Twin != nil {
 			twin = cases[*c.Twin]
@@ -524,8 +540,17 @@ func checkCorpus(root string) ([]string, []string) {
 				continue
 			}
 			held := false
+			for _, candidate := range []*corpusCase{c, twin} {
+				if candidate.preimages == nil {
+					if err := corpusJSON(filepath.Join(directories[candidate.ID], "preimages.json"), &candidate.preimages); err != nil {
+						fail("%s: counterpart preimages: %v", candidate.ID, err)
+					}
+				}
+			}
+			selector, present := c.preimages[checkID]
 			for _, check := range twin.Expect.Output.Checks {
-				if check.ID == checkID && check.Result == "held_crediting" {
+				counterpart, exists := twin.preimages[check.ID]
+				if present && exists && corpusEqual(selector, counterpart) && check.Result == "held_crediting" {
 					held = true
 				}
 			}
@@ -588,5 +613,51 @@ func corpusString(value any) string {
 		return node
 	default:
 		return ""
+	}
+}
+
+func TestCorpusTwinSelectors(t *testing.T) {
+	for _, result := range []string{"held_crediting", "held_non_crediting", "unobserved", "failed"} {
+		t.Run(result, func(t *testing.T) {
+			root := scratchCorpus(t)
+			var twin map[string]any
+			decode(t, read(t, filepath.Join(root, "cases/case-001/case.json")), &twin)
+			twin["id"] = "case-002"
+			twin["named_check"] = nil
+			corpusMap(twin["input"])["request"] = "anchor"
+			corpusMap(corpusMap(twin["expect"])["judge_output"])["checks"] = []any{map[string]any{"id": "b", "result": result}}
+			writeCorpus(t, root, "cases/case-002/case.json", twin)
+			for _, name := range []string{"subject.json", "input.json"} {
+				var value any
+				decode(t, read(t, filepath.Join(root, "cases/case-001", name)), &value)
+				writeCorpus(t, root, "cases/case-002/"+name, value)
+			}
+			selector := map[string]any{"probe": "byte_bound", "runbook": nil, "step": nil, "index": nil, "dimension": "bounding", "words": []string{"list"}}
+			writeCorpus(t, root, "cases/case-001/preimages.json", map[string]any{"a": selector})
+			writeCorpus(t, root, "cases/case-002/preimages.json", map[string]any{"b": selector})
+			mutateCorpus(t, root, "cases/case-001/case.json", func(v map[string]any) {
+				v["named_check"] = nil
+				v["twin"] = "case-002"
+				corpusMap(corpusMap(v["expect"])["judge_output"])["checks"] = []any{map[string]any{"id": "a", "result": "unobserved"}}
+			})
+			failures, _ := checkCorpus(root)
+			if result == "held_crediting" && len(failures) != 0 {
+				t.Fatal(failures)
+			}
+			if result != "held_crediting" && !strings.Contains(strings.Join(failures, "\n"), "twin counterpart a must be held and crediting") {
+				t.Fatal(failures)
+			}
+		})
+	}
+}
+
+func TestCorpusOrderTags(t *testing.T) {
+	tags := corpusTags("", "", string(read(t, filepath.Join(kit, "collection-contract.md"))))
+	want := map[string]bool{}
+	for _, pair := range []string{"QO1>QS5", "QO1>QA7", "QS5>QD4", "QS5>QA7", "QD4>QH8", "QA7>QH8", "QH8>QA6"} {
+		want["order:"+pair] = true
+	}
+	if !corpusEqual(tags, want) {
+		t.Fatalf("order tags = %v; want %v", tags, want)
 	}
 }
