@@ -172,11 +172,11 @@
 - **QE9. Tiers.** A normal run claims `live`. Each target that ran with an offline setting carries the tier `offline`, and every other target carries `live`. A piece of evidence carries `offline` when every one of its targets does, and `live` otherwise.
 - **QE10. Bounds.**
   - **Draining.** Captured output is drained as it is produced, so the subject is never blocked by a full pipe. The engine counts every drained byte and keeps the first 1 MiB of each stream for predicates and the leak scan. Past that point it records that the stream was cut and keeps draining.
-  - **What a record carries.** In `expected` and `observed`, a stream appears as an object holding:
-    - the stream's byte count;
-    - its SHA-256 over the kept bytes;
-    - whether it was cut;
-    - its first 64 KiB decoded as UTF-8, with each ill-formed byte replaced by U+FFFD.
+  - **What a record carries.** In `expected` and `observed`, a stream appears as an object with exactly these keys:
+    - `bytes`, the stream's byte count;
+    - `sha256`, its SHA-256 over the kept bytes;
+    - `cut`, whether it was cut;
+    - `head`, its first 64 KiB decoded as UTF-8, with each ill-formed byte replaced by U+FFFD.
   - **The whole record.** The `expected` and `observed` values of all evidence together are held to 4 MiB, measured on the serialized JSON the engine sends. The cap is applied in the order of check ids. Past it, a value is replaced by an object holding only its byte count and SHA-256.
   - **The subject file.** A literal is bounded at 64 KiB and at a nesting depth of 48 (QS11).
   - **Why this fits.** QS11 allows at most 3,587 required checks: 2,048 authored, three probes with one check per command for at most 512 commands each, and three more. Without its values, each check costs at most about 2 KiB across `required`, its evidence and its baseline entry, names included, which is under 8 MiB in all. Markers add at most 1,024 small objects. With the 4 MiB of values, a record stays under 13 MiB, inside the judge contract's 16 MiB.
@@ -279,7 +279,7 @@
     - **the leak scan:** whether it reached a bound (QP13), and each leak found, as its place (`stdout`, `stderr`, or `home/` followed by a path relative to the home) and its encoding, named as `credit-and-routes.md` §4 names it;
     - **each decoy's state:** for each decoy the run set up, its name and whether it was touched;
     - **for a computation,** the one JSON value it printed, or `null` when it printed anything else.
-  - **What a recording never holds.** No absolute path, and no canary. Before anything is recorded, every occurrence of the run's canary, in every encoding §4 lists, is replaced by the same encoding of `pqlcanary` followed by 32 zeros. Both have 41 characters, so every count and every leak's place survive.
+  - **What a recording never holds.** No absolute path, except an executable under `/bin` or `/usr/bin` that a computation's argument list names (QA4); and no canary. Before anything is recorded, every occurrence of the run's canary, in every encoding §4 lists, is replaced by the same encoding of `pqlcanary` followed by 32 zeros. Both have 41 characters, so every count and every leak's place survive.
   - **Agreement.** The five confined runs of an invocation agree on the markers, the end, the leak scan, the planted file, the decoys, the home's change list and every stream's digest. A recording whose runs disagree is invalid.
 - **QT6. The corpus's cases.** Each case is a directory `cases/<id>/` holding `case.json`, whose schema is `schema/case.schema.json`, its subject file, and the files below.
   - **`input`** holds what a collector is given: the subject file's name, the form, the request and scope, the verifier (`real` or `scripted`), the scripted host (QT4) for a scripted case or `null` for a real one, the baseline file's name or `null`, and the fixture descriptions.
