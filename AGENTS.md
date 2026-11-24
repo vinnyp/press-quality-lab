@@ -42,7 +42,7 @@ Test subjects in this repository are synthetic.
 - Commit subjects follow Conventional Commits (`feat:`, `fix:`, `docs:` …).
 - Hooks and checks are never skipped (`--no-verify` and its equivalents are not used).
 - CI must be green before a merge. A local run is not a substitute for checking the pull request's own checks, with one exception, for evidence that needs macOS.
-- GitHub Actions run on Linux only. Evidence that needs macOS, such as the confinement suite, comes from a run on a machine the owner controls. The pull request states:
+- GitHub Actions run on Linux only. Evidence that needs macOS, such as a run of the real verifier, comes from a run on a machine the owner controls. The pull request states:
   - the exact commit tested;
   - the macOS version and build;
   - the command;
@@ -62,7 +62,7 @@ The tests include a check that every R and AE number cited under `docs/` resolve
 `scan.sh` checks tracked files and an optional commit range for home paths, emails and secrets with gitleaks.
 Only noreply@anthropic.com and addresses at `users.noreply.github.com` are allowed emails.
 The `ci` workflow runs three jobs on Linux: `gate`, `cases` and `scan`.
-The confinement spike's suite and its recorder were removed after the conformance collection specification was sealed. Its record is `docs/spikes/2026-11-28-confinement.md`, and its code stays in the history before the pull request that removed it. Until phase 3's verifier exists, no form of the synthetic subject can be recorded again; the sealed recordings are the ones the corpus uses.
+The confinement spike's suite and its recorder were removed after the conformance collection specification was sealed. Its record is `docs/spikes/2026-11-28-confinement.md`, and its code stays in the history: commit 490d650 is the last commit on `main` that holds it. Until phase 3's verifier exists, no form of the synthetic subject can be recorded again; the sealed recordings are the ones the corpus uses.
 
 Install the pinned tools once, then run `go mod download`:
 

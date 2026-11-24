@@ -233,7 +233,7 @@ func TestCollectionSubject(t *testing.T) {
 			recordingFile := filepath.Join(root, "docs/specs/conformance-collection-1.0/behaviour", form+".json")
 			b, err := os.ReadFile(recordingFile)
 			if os.IsNotExist(err) {
-				t.Fatalf("missing recording behaviour/%s.json; record on macOS before committing", form)
+				t.Fatalf("missing recording behaviour/%s.json; no recorder exists until phase 3's verifier (AGENTS.md, Checks)", form)
 			}
 			if err != nil {
 				t.Fatal(err)

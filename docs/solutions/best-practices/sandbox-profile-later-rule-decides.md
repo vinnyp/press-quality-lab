@@ -16,7 +16,7 @@ tags: [confinement, sandbox, macos, sbpl, sandbox-exec, diagnosis, spike]
 
 ## Context
 
-A real printed Go CLI was killed at startup under the confinement spike's subject profile (record `docs/spikes/2026-11-28-confinement.md`; the spike's code in `spike/confinement/` was removed after the conformance collection specification was sealed, and stays in the history). Finding the missing allowance took two attempts.
+A real printed Go CLI was killed at startup under the confinement spike's subject profile (record `docs/spikes/2026-11-28-confinement.md`; the spike's code in `spike/confinement/` was removed after the conformance collection specification was sealed, and stays in the history at commit 490d650). Finding the missing allowance took two attempts.
 
 **The first attempt:** a "complement" method. It allowed everything known and then took away one subtree at a time, reading each kill as a need. It named needs that were false, such as the throwaway home and `/dev`, which the profile already grants.
 
