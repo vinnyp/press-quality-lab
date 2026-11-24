@@ -1,9 +1,9 @@
 {
   "behaviour_version": "1.0",
-  "commit": "ca3c04e34cfd7d3e26fbb9877ab621952c50931b",
+  "commit": "35e488e863611115bd95aa43d6372cb412158bf8",
   "computation_profile_sha256": "94d86b3f7e9ea0c7dbbf686ad365023f4b9e062896a321549b2943c69974925d",
   "form": "invalid-utf8",
-  "form_sha256": "49c4748217964af397dbc0691dbe75a16325c68cb27061aa7bc86744ecfdc882",
+  "form_sha256": "c8f28f505124f8b1e2997ca85f93d1a6e800acaadaf77b61b98ebb6973cec2cf",
   "invocations": [
     {
       "key": {
@@ -2635,7 +2635,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -2670,7 +2672,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -2705,7 +2709,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -2740,7 +2746,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -2775,7 +2783,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -4674,7 +4684,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -4709,7 +4721,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -4744,7 +4758,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -4779,7 +4795,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -4814,7 +4832,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5022,6 +5042,324 @@
             "head": "",
             "kept": "",
             "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      ]
+    },
+    {
+      "key": {
+        "words": [
+          "list"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "bytes",
+        "step": "list plain",
+        "computation": null,
+        "home": "runbook"
+      },
+      "unconfined": null,
+      "confined": [
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 21,
+            "cut": false,
+            "head": "gear�\nspring�\nvalve�\n",
+            "kept": "Z2Vhcv8Kc3ByaW5n/wp2YWx2Zf8K",
+            "sha256": "0476c9342b01cd3e034e1b28acc46dd6e2b1eaf92d9d6dfd88f65e63a38e6ad6"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 21,
+            "cut": false,
+            "head": "gear�\nspring�\nvalve�\n",
+            "kept": "Z2Vhcv8Kc3ByaW5n/wp2YWx2Zf8K",
+            "sha256": "0476c9342b01cd3e034e1b28acc46dd6e2b1eaf92d9d6dfd88f65e63a38e6ad6"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 21,
+            "cut": false,
+            "head": "gear�\nspring�\nvalve�\n",
+            "kept": "Z2Vhcv8Kc3ByaW5n/wp2YWx2Zf8K",
+            "sha256": "0476c9342b01cd3e034e1b28acc46dd6e2b1eaf92d9d6dfd88f65e63a38e6ad6"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 21,
+            "cut": false,
+            "head": "gear�\nspring�\nvalve�\n",
+            "kept": "Z2Vhcv8Kc3ByaW5n/wp2YWx2Zf8K",
+            "sha256": "0476c9342b01cd3e034e1b28acc46dd6e2b1eaf92d9d6dfd88f65e63a38e6ad6"
+          }
+        },
+        {
+          "decoys": [],
+          "end": {
+            "code": 0,
+            "kind": "exit"
+          },
+          "home_changes": {
+            "changes": [
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "directory",
+                "path": ".local/state/widgets",
+                "sha256": null
+              },
+              {
+                "change": "created",
+                "kind": "file",
+                "path": ".local/state/widgets/last-command",
+                "sha256": "7fd09355f7901c0dba3aaec7ae0950f71ed35068d154e0a8f5cf4e8cb9de7bd4"
+              }
+            ],
+            "control_detected": null
+          },
+          "leak_scan": {
+            "bound_reached": false,
+            "leaks": []
+          },
+          "markers": {
+            "confinement": true,
+            "could_not_start": false
+          },
+          "planted": null,
+          "printed_value": null,
+          "stderr": {
+            "bytes": 0,
+            "cut": false,
+            "head": "",
+            "kept": "",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stdout": {
+            "bytes": 21,
+            "cut": false,
+            "head": "gear�\nspring�\nvalve�\n",
+            "kept": "Z2Vhcv8Kc3ByaW5n/wp2YWx2Zf8K",
+            "sha256": "0476c9342b01cd3e034e1b28acc46dd6e2b1eaf92d9d6dfd88f65e63a38e6ad6"
           }
         }
       ]

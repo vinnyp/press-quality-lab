@@ -1,9 +1,9 @@
 {
   "behaviour_version": "1.0",
-  "commit": "ca3c04e34cfd7d3e26fbb9877ab621952c50931b",
+  "commit": "35e488e863611115bd95aa43d6372cb412158bf8",
   "computation_profile_sha256": "94d86b3f7e9ea0c7dbbf686ad365023f4b9e062896a321549b2943c69974925d",
   "form": "signals-process",
-  "form_sha256": "74f6f0b77a60f036ff12c3ecefedab967bb7370dbc3ac95bca572b4d918ac2d0",
+  "form_sha256": "d9d569c01e43bb4ea490980ca5b317d804ee18b0fa5e224df7a0660f22423421",
   "invocations": [
     {
       "key": {
@@ -3148,7 +3148,9 @@
           "could_not_start": false
         },
         "planted": null,
-        "printed_value": 3,
+        "printed_value": {
+          "value": 3
+        },
         "stderr": {
           "bytes": 0,
           "cut": false,
@@ -3184,7 +3186,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -3219,7 +3223,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -3254,7 +3260,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -3289,7 +3297,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -3324,7 +3334,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 3,
+          "printed_value": {
+            "value": 3
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5550,7 +5562,9 @@
           "could_not_start": false
         },
         "planted": null,
-        "printed_value": 4,
+        "printed_value": {
+          "value": 4
+        },
         "stderr": {
           "bytes": 0,
           "cut": false,
@@ -5586,7 +5600,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5621,7 +5637,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5656,7 +5674,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5691,7 +5711,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5726,7 +5748,9 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": 4,
+          "printed_value": {
+            "value": 4
+          },
           "stderr": {
             "bytes": 0,
             "cut": false,

@@ -458,23 +458,6 @@
       "budget_seconds": 30,
       "store_control": false,
       "planted": false
-    },
-    {
-      "key": {
-        "words": null,
-        "offline_args": [],
-        "env": [],
-        "runbook": "cut",
-        "step": "count from capture",
-        "computation": [
-          "computations/count-lines.sh",
-          "{CAPTURE:list plain}"
-        ],
-        "home": "scratch"
-      },
-      "budget_seconds": 10,
-      "store_control": false,
-      "planted": false
     }
   ]
 }
