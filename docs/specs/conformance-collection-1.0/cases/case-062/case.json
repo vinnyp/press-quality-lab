@@ -1,0 +1,944 @@
+{
+  "id": "case-062",
+  "kind": "judge-checked",
+  "rules": [
+    "QS5",
+    "QS9"
+  ],
+  "input": {
+    "subject_file": "subject.json",
+    "form": "known-good",
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "verifier": "scripted",
+    "host": {
+      "confinement": {
+        "applied": true,
+        "sandbox_exec_exit": null
+      },
+      "self_test": "passed",
+      "known_fast": "within",
+      "read_calibration": "moved",
+      "store_control": "detected",
+      "read_control": "killed",
+      "private_copy": "unchanged",
+      "kill_attribution": []
+    },
+    "baseline": null,
+    "fixtures": []
+  },
+  "named_check": null,
+  "twin": "case-001",
+  "invocations": [
+    {
+      "words": [],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "count"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "account",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "add",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "count",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "list",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "remove",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "planted"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list all",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "read",
+      "step": "list all",
+      "computation": [
+        "computations/count.sh",
+        "{SEED}/data.json"
+      ],
+      "home": "scratch"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list all again",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json",
+        "--limit",
+        "2"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list limited",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json",
+        "--tag",
+        "brass"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list by tag",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--bogus"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "errors",
+      "step": "unknown flag",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--limit",
+        "zero"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "errors",
+      "step": "bad limit",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "add",
+        "sprocket",
+        "--tag",
+        "steel"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "add once",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "add",
+        "sprocket",
+        "--tag",
+        "steel"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "add again",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "count after",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "add twice",
+      "step": "count after",
+      "computation": [
+        "computations/count-after-add.sh",
+        "{SEED}/data.json",
+        "sprocket"
+      ],
+      "home": "scratch"
+    },
+    {
+      "words": [
+        "remove",
+        "gear"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "remove guard",
+      "step": "remove without confirm",
+      "computation": null,
+      "home": "runbook"
+    }
+  ],
+  "covers": [],
+  "expect": {
+    "exit_code": 4,
+    "judge_output": {
+      "rulebook_version": "1.0",
+      "outcome": "verdict",
+      "rejected_by": null,
+      "exit_code": 4,
+      "scope": [
+        "conformance"
+      ],
+      "verdict": {
+        "token": "PROVISIONAL",
+        "sub_label": "gaps",
+        "plain": "not_measured"
+      },
+      "own_verdict": null,
+      "counts": {
+        "xfail": 0,
+        "xpass": 0
+      },
+      "stale_markers": [],
+      "checks": [
+        {
+          "id": "0e02d22a8962571f6040c072b8ca67e77751b85a249e865e784c10765a186d42",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "137a598ffd021aeb1d1a2fc70e0217e40b7561f4b9f18c41daa879d976548224",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "1fe8a0100567bbbcd042cb34cc008c387a047fa39b5ffe95206dd42aea7857b4",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "259958af22d606b97bb9b42217513c8e2665b209bd6e6ad55f0d45cf185cb331",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "2e9a24f5e57447c59e4ce26b9a6f6ac7b04bcd3ee8a1bf6ec888d8c913684b53",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "313dec9e0aa61b0037a4feb981ac69aba8a812f088913f7a96bfd3904337e70c",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "367acbc19482286ccd077d5c806fd9160cc85bf788ea3b4fd3581958b4000e24",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "3789d8ed4be1d9e823b29462089ccee58dd131cfc9c5344262fbcb9aadcd5701",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "42b939869e49488bb979007763a623b3e75da9f8cc1415f97b3dc501edbb2263",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "5a7137423c2599a17287cd67b0832a9ce6e36fc3fe72ccffe26f69cbaebeadc4",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "5d097a654a0cce3ef1e68cd407ca7a6585113342fc0ddb96ade753e0385e479d",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "72446946418adb699e8da4f27744faa82488c5b13da8328f9801403194843a18",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "73c13ba99ffa15b81f2de5107338672ef00c01446af22b6466117e858f88d879",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "7ac9fa73e2fe0b14f690cc4943cc761608ba0cf34e8ae119d229b07fde5800c5",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "7bed796b01fc9b3b44d98192bd2020c94d3ebc6a67f151eecb3fbc1fcb0bfc87",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "8bb1e690ecd09efe66cc501f5be5491b3cb65ee1aa9fbfdd91b3c09d8918d4cc",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "8f97b60c0904287d6648ebc66848399790c453c6c69059a8e6dcb48670136b72",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "8fc2e1c571093548280ec6231d5325ec348c9e412caeae36cb258fc94635b919",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "94209be60a0a1e2edb4ef01aa8f306244d264eba5fe84c037d68b5d448548956",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "bbd2175dfafd7b787836372e3faacfe33588fdae053c25e9af665dd675c54359",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "c3d5b5f6aa0f873642f39758333e472faa67066d1d69c07cc8d898c7b46f0818",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "c479a4fed57c30c0b5a1c98fe4bb8c03523781be8d585fd3f5786554152b3c8b",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "c9e5a7bd9b65cdc541b619f04c9c59c5b19f59c29c7ad58b65a1ad4969940265",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "ce9447e8bb9e2b45ef815fdca0edd28614f585849d25b55a56b597e3758ecdd7",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "cfbcaf775825dac99ca04f6f54a85f36b616578addfae31f270ac9559bd7d60b",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "ea2be9c2a72a47adf43d8c6c2c0a6f30caeda3e9dd7ad50b3b14ff7385138d9b",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "eb48ea5b779c7f7eafb0204fe0799177c966e5d37548da031650a72d115a03aa",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "efcbb07ca7db8345e63d1ff6c74607d3af071448ec8985c397a8fae0c1c16963",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f2d409497abefbc30a04ff72a0422614a97f1c12762abd0aa89d9204ecc3998d",
+          "result": "unobserved",
+          "rule": "C2",
+          "reason": "placeholder_unfilled",
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        }
+      ],
+      "dimensions": [
+        {
+          "dimension": "availability",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "execution",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "graceful-failure",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "robustness",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "response-correctness",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "determinism",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "cli-mcp-parity",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "scope_not_requested"
+        },
+        {
+          "dimension": "provenance-honesty",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "completeness-signaling",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "output-conformance",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "flag-conformance",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "bounding",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "discoverability",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "error-message-quality",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "token-economy",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "side-effect-integrity",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "idempotency",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "destructive-guard",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "scope_not_requested"
+        },
+        {
+          "dimension": "pii-secret-hygiene",
+          "state": "HARNESS",
+          "rule": "D4",
+          "reason": null
+        },
+        {
+          "dimension": "steering",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "live_not_run"
+        },
+        {
+          "dimension": "tool-description-efficacy",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "live_not_run"
+        }
+      ],
+      "groups": [
+        {
+          "group": "Operability",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Correctness",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Conformance",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Usability",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Safety",
+          "state": "GAPPED",
+          "rule": "G3"
+        },
+        {
+          "group": "Steering",
+          "state": "OUT-OF-SCOPE",
+          "rule": "G1"
+        }
+      ],
+      "comparison": {
+        "result": "none",
+        "rule": "B1",
+        "next_action": null,
+        "entries": [],
+        "new": []
+      },
+      "set_aside": [],
+      "earlier_pools": [],
+      "anchor": null
+    }
+  }
+}

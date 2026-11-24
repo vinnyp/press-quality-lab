@@ -10,7 +10,7 @@
   - **When the string changes.** It changes when, and only when, some subject file, scope and subject behaviour can lead to a different record for the judge or a different engine exit code. Every other change is editorial and goes in the dated errata note `docs/specs/conformance-collection-1.0-errata.md`, outside the sealed folder.
   - **Ratification.** The owner ratifies each version.
   - **Reading older files.** A later specification version states which subject-file versions it reads. Version strings take the form `<major>.<minor>`.
-  - **Other version strings.** Three strings are versioned on their own, and each changes only when its own format does:
+  - **Other version strings.** These strings are versioned on their own, and each changes only when its own format does:
     - the subject file's `subject_file_version`;
     - the stored record's and baseline's `record_version` and `baseline_version`;
     - recorded behaviour's `behaviour_version` (QT5);
@@ -300,7 +300,7 @@
     - each `link` and `special_file` fixture.
 
     A case's subject file names those fixed paths, so QS8 and QS9 hold. A scripted run never executes `bin/subject`. A real run needs the form built from the source whose digest its recording names.
-  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and repairs it, or `null`; `invocations`, the keys (QT5), each once, of every invocation of these kinds for the case's request and scope: each probe's, each help request QD2 reaches in the form's recording, the bare binary's, every runbook step's whether or not an earlier failure would stop it, and every computation's, or none for a derivation-only case that ends before collection; and `covers`.
+  - **Fields outside `input`** say what the case is for, and a collector reads none of them: `rules`, the rule ids it exercises; `named_check`, the check a defect case is red on, or `null`; `twin`, the case that differs from it in one input and removes one reason a check was not measured, or `null`, where following `twin` from a case reaches a case in which each such check is held and crediting; `invocations`, the keys (QT5), each once, of every invocation of these kinds for the case's request and scope: each probe's, each help request QD2 reaches in the form's recording, the bare binary's, every runbook step's whether or not an earlier failure would stop it, and every computation's, or none for a derivation-only case that ends before collection; and `covers`.
   - **`covers`** names the table rows, credit-condition sides and reason-order pairs the case exercises. Each tag is `<table>:<row>` or `<table>:<row>:<side>`:
 
     | Table | Tag | Rows |
