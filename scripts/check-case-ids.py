@@ -1,5 +1,6 @@
 """Cross-check case preimages, seeds and observed streams against recordings."""
 import argparse
+import base64
 import importlib.util
 from pathlib import Path
 import sys
@@ -14,11 +15,21 @@ def key(preimage, invocation=None):
     return dict(words=invocation["words"], offline_args=invocation["offline_args"], env=sorted(invocation["env"], key=lambda name: name.encode("utf-8")), runbook=preimage["runbook"], step=preimage["step"], computation=None, home="runbook" if preimage["runbook"] is not None else "planted" if preimage["probe"] == "planted_secret" else "seed")
 
 
-def discovery_keys(recording, first_only=False):
+def discovery_keys(recording, first_only=False, status=None):
     """Walk the recorded help tree in QD2 order, without running a subject."""
     found = []
 
+    stopped = False
+
     def walk(words):
+        nonlocal stopped
+        if stopped:
+            return
+        if len(words) > 64 or len(found) >= 4096:
+            stopped = True
+            if status is not None:
+                status["bounded"] = True
+            return
         invocation_key = dict(words=words + ["--help"], offline_args=[], env=[], runbook=None, step=None, computation=None, home="empty")
         matches = [entry for entry in recording["invocations"] if entry["key"] == invocation_key]
         if len(matches) != 1:
@@ -27,11 +38,16 @@ def discovery_keys(recording, first_only=False):
         if first_only:
             return
         run = matches[0]["confined"][0]
+        if not run["markers"]["confinement"] or run["markers"]["could_not_start"]:
+            return
         stream = run["stdout"] if run["stdout"]["bytes"] else run["stderr"]
-        if stream["cut"] or stream["bytes"] > len(stream["head"].encode("utf-8")):
+        if stream["cut"]:
+            raise ValueError("cannot decide discovery order from truncated help")
+        text = base64.b64decode(stream["kept"], validate=True).decode("utf-8", errors="replace") if stream.get("kept") is not None else stream["head"]
+        if stream["bytes"] > len(text.encode("utf-8")):
             raise ValueError("cannot decide discovery order from truncated help")
         section = False
-        for line in stream["head"].splitlines():
+        for line in text.splitlines():
             if not line or not line.startswith(" "):
                 section = line in ("COMMANDS:", "Commands:", "SUBCOMMANDS:") or line.endswith(" Commands:")
             elif section:
@@ -41,9 +57,9 @@ def discovery_keys(recording, first_only=False):
                 command = pieces[0].removesuffix(",")
                 description = pieces[1] if len(pieces) == 2 else ""
                 if command not in ("help", "completion") and not description.startswith(("(hidden)", "[hidden]", "HIDDEN")):
-                    if len(words) >= 64 or len(found) >= 4096:
-                        return
                     walk(words + [command])
+                    if stopped:
+                        return
 
     walk([])
     return found
@@ -72,13 +88,11 @@ def target_keys(preimage, evidence, recording, host, binary):
         if any(streams(evidence["observed"])):
             raise ValueError("no-invocation check has an observed stream: " + check_id)
         return [(check_id, None)]
-    for target in evidence["targets"]:
-        if target["kind"] != "invocation":
-            continue
-        names = [check_id] if len(invocations) == 1 else [check_id + "#" + str(index + 1) for index in range(len(invocations))]
-        if target["id"] not in names:
-            raise ValueError("invalid invocation target numbering: " + target["id"])
-        result.append((target["id"], invocations[names.index(target["id"])]))
+    names = [check_id] if len(invocations) == 1 else [check_id + "#" + str(index + 1) for index in range(len(invocations))]
+    actual = [target["id"] for target in evidence["targets"] if target["kind"] == "invocation"]
+    if actual != names:
+        raise ValueError("invalid invocation target numbering: expected " + str(names) + "; got " + str(actual))
+    result = list(zip(names, invocations))
     return result
 
 
@@ -96,8 +110,7 @@ def streams(value, path=()):
 
 def check(cases):
     if not cases.exists() and not cases.is_symlink():
-        print("no cases yet")
-        return
+        raise ValueError("no judge-checked cases checked")
     checked = 0
     for directory in sorted(cases.iterdir()):
         case = ids.load(directory / "case.json")
@@ -131,6 +144,32 @@ def check(cases):
         for evidence in record["evidence"]:
             targets = target_keys(preimages[evidence["check_id"]], evidence, recording,
                                   case["input"]["host"] or {}, subject["binary"])
+            pre = preimages[evidence["check_id"]]
+            artifacts = []
+            if pre["probe"] == "store_unchanged" and pre["words"] is not None and isinstance(subject["store"], str):
+                artifacts.append(subject["store"])
+            if pre["probe"] == "planted_secret" and isinstance(subject["secret"], dict) and "placeholder" not in subject["secret"]:
+                artifacts.append(subject["secret"]["path"])
+            if [t["id"] for t in evidence["targets"] if t["kind"] == "artifact"] != artifacts:
+                raise ValueError(case["id"] + ": artifact targets differ from subject")
+            scripted = case["input"]["verifier"] == "scripted"
+            tiers = []
+            for name, invocation in targets:
+                offline = False
+                if invocation is not None and pre["probe"] != "discovery":
+                    commands = [c for c in subject["commands"] if invocation["words"][:len(c["words"])] == c["words"]]
+                    command = max(commands, key=lambda c: len(c["words"]), default={"words": []})
+                    offline = any(command["words"] in setting["applies_to"] for setting in subject["offline"])
+                tiers.append("scripted" if scripted else "offline" if offline else "live")
+            artifact_tier = "scripted" if scripted else "offline" if all(t == "offline" for t in tiers) else "live"
+            expected_targets = [("invocation", name, tier) for (name, _), tier in zip(targets, tiers)]
+            expected_targets += [("artifact", name, artifact_tier) for name in artifacts]
+            actual_targets = [(t["kind"], t["id"], t["tier"]) for t in evidence["targets"]]
+            if sorted(actual_targets) != sorted(expected_targets):
+                raise ValueError(case["id"] + ": target kinds, ids or tiers differ")
+            tier = "scripted" if scripted else "offline" if all(t[2] == "offline" for t in expected_targets) else "live"
+            if evidence["tier"] != tier:
+                raise ValueError(case["id"] + ": evidence tier differs")
             runs = []
             for name, invocation_key in targets:
                 if invocation_key is None:
@@ -149,6 +188,8 @@ def check(cases):
                 recorded = selected[0][names[0]]
                 if any(stream[field] != recorded[field] for field in ("bytes", "sha256")):
                     raise ValueError(case["id"] + ": stream differs from recording at " + str(path))
+    if not checked:
+        raise ValueError("no judge-checked cases checked")
     print(f"{checked} judge-checked cases cross-checked")
 
 

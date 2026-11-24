@@ -275,6 +275,7 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
     evidence = record["evidence"][0]
     evidence["check_id"] = digest
     evidence["observed"] = None
+    evidence["tier"] = "live"
     evidence["targets"] = [{"kind": "invocation", "id": digest, "tier": "live"}]
     case["invocations"] = []
     save_ids()
@@ -290,6 +291,8 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
     save_ids()
     cross_run(1, "no-invocation check has an observed stream")
     evidence["observed"] = None
+    subject["secret"] = None
+    (directory / case["input"]["subject_file"]).write_text(json.dumps(subject))
     preimage["probe"] = "planted_secret"
     preimage["parameters"] = {}
     digest = ids.check_id(preimage)
@@ -319,6 +322,8 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
         entry["confined"][0]["stdout"]["head"] = text
         entry["confined"][0]["stdout"]["bytes"] = len(text.encode("utf-8"))
         entry["confined"][0]["stdout"]["cut"] = False
+        import base64
+        entry["confined"][0]["stdout"]["kept"] = base64.b64encode(text.encode()).decode()
         behaviour["invocations"].append(entry)
     (root / "behaviour/byte-bound.json").write_text(json.dumps(behaviour))
     evidence["targets"] = [{"kind": "invocation", "id": digest + "#" + str(index), "tier": "live"}
@@ -442,3 +447,134 @@ with tempfile.TemporaryDirectory(prefix="pql-outcome-controls-") as temporary:
         if result.returncode != expected or message not in result.stdout + result.stderr:
             raise RuntimeError("outcome control: " + label + ": " + result.stdout + result.stderr)
         print("outcome control: " + label + ": " + message)
+
+
+# Every witness mutates a fresh scratch kit and checks the diagnostic it earns.
+with tempfile.TemporaryDirectory(prefix="pql-evidence-controls-") as temporary:
+    witnesses = [
+        ('artifact renamed', '001', 'store_unchanged', 'ids', 'artifact targets differ from subject'),
+        ('artifact dropped', '001', 'store_unchanged', 'ids', 'artifact targets differ from subject'),
+        ('evidence tier flipped', '001', 'byte_bound', 'ids', 'evidence tier differs'),
+        ('discovery sixth dropped', '001', 'discovery', 'ids', 'invalid invocation target numbering'),
+        ('discovery first duplicated', '001', 'discovery', 'ids', 'invalid invocation target numbering'),
+        ('discovery held changed', '001', 'discovery', 'outcomes', "recording says ('held', None, None)"),
+        ('byte bound held changed', '001', 'byte_bound', 'outcomes', "recording says ('held', None, None)"),
+        ('store failure hidden', '012', 'store_unchanged', 'outcomes', "recording says ('not_held', None, 'predicate')"),
+        ('crash hidden', '076', None, 'outcomes', "recording says ('not_held', None, 'crashed')"),
+        ('missing read held', '018', 'planted_secret', 'outcomes', "recording says ('not_observed', 'input_missing', None)"),
+        ('scan bound held', '040', 'planted_secret', 'outcomes', "recording says ('not_observed', 'harness_fault', None)"),
+        ('private copy held', '005', 'store_unchanged', 'outcomes', "recording says ('not_observed', 'harness_fault', None)"),
+        ('confinement failure held', '003', 'byte_bound', 'outcomes', "recording says ('not_observed', 'network_unverifiable', None)"),
+        ('stream byte count changed', '001', 'byte_bound', 'ids', 'stream differs from recording'),
+        ('cut recorded help', '001', 'discovery', 'ids', 'cannot decide discovery order from truncated help'),
+        ('empty cases', None, None, 'ids', 'no judge-checked cases checked'),
+        ('empty outcomes', None, None, 'outcomes', 'no judge-checked cases checked'),
+    ]
+    for index, (label, number, probe, tool, diagnostic) in enumerate(witnesses):
+        root = Path(temporary) / str(index)
+        shutil.copytree(source, root)
+        cases = root / 'cases'
+        if number is None:
+            shutil.rmtree(cases)
+            cases.mkdir()
+        else:
+            directory = cases / ('case-' + number)
+            path = directory / 'input.json'
+            record = json.loads(path.read_text())
+            preimages = json.loads((directory / 'preimages.json').read_text())
+            candidates = [e for e in record['evidence'] if preimages[e['check_id']]['probe'] == probe]
+            if label == 'store failure hidden':
+                candidates = [e for e in candidates if e['outcome'] == 'not_held']
+            if label == 'crash hidden':
+                candidates = [e for e in record['evidence'] if e['failure_kind'] == 'crashed']
+            if label in ('byte bound held changed', 'confinement failure held'):
+                candidates = [e for e in candidates if preimages[e['check_id']]['words'] is not None]
+            evidence = candidates[0]
+            if label == 'artifact renamed':
+                next(t for t in evidence['targets'] if t['kind'] == 'artifact')['id'] += '-renamed'
+            elif label == 'artifact dropped':
+                evidence['targets'] = [t for t in evidence['targets'] if t['kind'] != 'artifact']
+            elif label == 'evidence tier flipped':
+                evidence['tier'] = 'live'
+            elif label == 'discovery sixth dropped':
+                evidence['targets'] = [t for t in evidence['targets'] if not t['id'].endswith('#6')]
+            elif label == 'discovery first duplicated':
+                evidence['targets'].append(dict(evidence['targets'][0]))
+            elif label == 'discovery held changed':
+                evidence.update(outcome='not_held', reason=None, failure_kind='predicate')
+            elif label in ('byte bound held changed', 'store failure hidden'):
+                evidence.update(outcome='not_observed', reason='harness_fault', failure_kind=None, target_size=None)
+            elif label == 'crash hidden':
+                evidence.update(outcome='not_observed', reason='network_unverifiable', failure_kind=None)
+            elif label in ('missing read held', 'scan bound held', 'private copy held', 'confinement failure held'):
+                evidence.update(outcome='held', reason=None, failure_kind=None)
+                if label == 'confinement failure held':
+                    pre = preimages[evidence['check_id']]
+                    spec = importlib.util.spec_from_file_location('witness_outcomes', scripts / 'check-case-outcomes.py')
+                    checker = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(checker)
+                    case = json.loads((directory / 'case.json').read_text())
+                    recording = json.loads((root / 'behaviour' / (case['input']['form'] + '.json')).read_text())
+                    run = checker.find(recording, checker.key(pre))
+                    evidence['target_size'] = run['stdout']['bytes'] + run['stderr']['bytes']
+            elif label == 'stream byte count changed':
+                evidence['observed']['stdout']['bytes'] += 1
+            elif label == 'cut recorded help':
+                case = json.loads((directory / 'case.json').read_text())
+                recording_path = root / 'behaviour' / (case['input']['form'] + '.json')
+                recording = json.loads(recording_path.read_text())
+                entry = next(e for e in recording['invocations'] if e['key']['words'] == ['--help'])
+                entry['confined'][0]['stdout']['cut'] = True
+                recording_path.write_text(json.dumps(recording))
+            path.write_text(json.dumps(record))
+        arguments = [str(cases)] if tool == 'ids' else [str(root), str(cases)]
+        result = subprocess.run(
+            ['python3', '-I', str(scripts / ('check-case-' + tool + '.py')), *arguments],
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'), capture_output=True,
+            text=True, timeout=60, check=False,
+        )
+        if result.returncode != 1 or diagnostic not in result.stdout + result.stderr:
+            raise RuntimeError('evidence control: ' + label + ': ' + result.stdout + result.stderr)
+        print('evidence control: ' + label + ': rejected: ' + diagnostic)
+
+
+# A depth bound ends the whole walk, including siblings above that depth.
+with tempfile.TemporaryDirectory(prefix="pql-discovery-bound-control-") as temporary:
+    root = Path(temporary) / 'kit'
+    shutil.copytree(source, root)
+    for other in (root / 'cases').iterdir():
+        if other.name != 'case-001':
+            shutil.rmtree(other)
+    directory = root / 'cases/case-001'
+    case = json.loads((directory / 'case.json').read_text())
+    record = json.loads((directory / 'input.json').read_text())
+    preimages = json.loads((directory / 'preimages.json').read_text())
+    evidence = next(e for e in record['evidence'] if preimages[e['check_id']]['probe'] == 'discovery')
+    record['evidence'] = [evidence]
+    evidence['targets'] = [dict(kind='invocation', id=evidence['check_id'] + '#' + str(i + 1), tier='scripted') for i in range(65)]
+    recording_path = root / 'behaviour' / (case['input']['form'] + '.json')
+    recording = json.loads(recording_path.read_text())
+    template = recording['invocations'][0]
+    recording['invocations'] = []
+    case['invocations'] = []
+    import base64
+    import hashlib
+    for depth in range(65):
+        entry = json.loads(json.dumps(template))
+        entry['key'] = dict(words=['down'] * depth + ['--help'], offline_args=[], env=[], runbook=None, step=None, computation=None, home='empty')
+        text = 'COMMANDS:\n  down\n' + ('  sibling\n' if depth == 0 else '')
+        raw = text.encode()
+        entry['confined'][0]['stdout'].update(bytes=len(raw), cut=False, head=text, kept=base64.b64encode(raw).decode(), sha256=hashlib.sha256(raw).hexdigest())
+        recording['invocations'].append(entry)
+        case['invocations'].append(entry['key'])
+    recording_path.write_text(json.dumps(recording))
+    (directory / 'case.json').write_text(json.dumps(case))
+    (directory / 'input.json').write_text(json.dumps(record))
+    result = subprocess.run(
+        ['python3', '-I', str(scripts / 'check-case-ids.py'), str(root / 'cases')],
+        env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'), capture_output=True,
+        text=True, timeout=60, check=False,
+    )
+    if result.returncode or '1 judge-checked cases cross-checked' not in result.stdout:
+        raise RuntimeError('discovery bound control: ' + result.stdout + result.stderr)
+    print('discovery bound control: stops before a sibling above the depth bound')
