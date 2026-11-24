@@ -29,13 +29,13 @@ The "Route to credit" and "Source" columns describe how a dimension is usually m
 |---|---|---|---|---|
 | `availability` | Bare invocation (QP2); or an authored check that a declared command exits as declared | The file's declared exit code | none | none |
 | `execution` | Declared exit codes (QP4); or an authored exit-code check | The file's declared exit codes | none | none |
-| `graceful-failure` | An authored check that an invalid invocation exits with a declared non-zero code and does not crash | Literal | none | none |
+| `graceful-failure` | An authored check that an invalid invocation exits with a declared non-zero code and does not crash | Literal | the check accepts no exit code 0: it is an `exit_code` check whose expected value is a literal other than 0, or it gives its own `exit_codes` and none of them is 0 | none |
 | `robustness` | An authored check that malformed input, such as an unknown flag value or an empty argument, gives a declared result | Literal | none | none |
 | `response-correctness` | An authored check comparing output with an expected value | Literal or computation | none | a subject with no output that can be checked against the seed |
 | `determinism` | An authored runbook that runs the same invocation twice, each time checked against the same expected value | Literal or computation, the same for both | the check's runbook has at least two steps with the same words, each with a check on `determinism` with the same predicate, `path` and expected value | a subject whose output carries a timestamp or random value it cannot be asked to omit |
 | `provenance-honesty` | An authored check that the output states its source truthfully, for example that data came from the local store under an offline setting | Literal | none | a subject whose output never states a source |
 | `completeness-signaling` | An authored check that a truncated or partial result says so, for example with a limit below the seeded row count | Literal or computation | none | a subject that never truncates |
-| `output-conformance` | An authored check of the output's form, such as valid JSON with declared top-level keys | Literal | none | none |
+| `output-conformance` | An authored check of the output's form, such as valid JSON with declared top-level keys | Literal | the predicate is `stdout_json_equals`, `json_path_equals` or `row_count` | none |
 | `flag-conformance` | An authored check that a flag has its documented effect | Literal or computation | none | a subject without a CLI, which the judge excludes |
 | `bounding` | Byte bound (QP3) | The file's declared bound | none | a subject whose `bounding` is `none`, which the judge excludes |
 | `discoverability` | Discovery (QD1 to QD4) | The file's declared commands and count | none | none |
@@ -47,6 +47,8 @@ The "Route to credit" and "Source" columns describe how a dimension is usually m
 | `pii-secret-hygiene` | Planted secret (QP10 to QP13) only | The canary the engine planted | never: only the probe credits | a subject that reads no secret from a file |
 
 `cli-mcp-parity` is in no scope in this version and has no route. Steering's dimensions are outside this specification.
+
+**Where the table states no condition.** An authored check routed to a dimension whose condition is "none" credits whenever QA3 allows it. The engine does not test that the check measures that dimension: the routing is the author's claim, and this is a stated limit.
 
 **Restricted credit.** Only the planted-secret probe credits `pii-secret-hygiene`, and only the store-unchanged probe credits `side-effect-integrity`. Any other check routed to either dimension can be not held, but is non-crediting. A pattern scan of output can show that a secret leaked; it can never show that none did.
 
@@ -60,7 +62,8 @@ A green speaks only for the invocations and offline settings the subject file de
 |---|---|---|---|
 | A missing or empty store answers a read with success and no rows | false pass of an emptiness check, or of a check that any rows match | A check that an empty target would satisfy states its target size, and an empty target is not observed; a check that asserts emptiness first proves the data exists | QA9, QE7, QE8, the judge's C3 |
 | Confinement was never applied | false pass of anything the subject would have refused | The launcher's marker, and the self-test before any check | QH5, QH6, QH9 |
-| The self-test passes under a profile that grants one refused operation | false pass of that operation's refusal | The specification's own test suite shows each self-test program necessary, by a profile that grants exactly its operation; a grade does not repeat this | QH9 |
+| The self-test passes under a profile that grants one refused operation | false pass of that operation's refusal | The confinement spike's record, `docs/spikes/2026-11-28-confinement.md`, showed once that each self-test program is necessary, by a profile that grants exactly its operation, on the spike code that the main branch holds from commit `5aa554a`, on which the confinement rules froze; a grade does not repeat this | QH9 |
+| An author routes a check to a dimension it does not measure | false pass of that dimension | The credit conditions of §2, where the table states one; otherwise none, a stated limit | QA3 |
 | A kill by the engine or a timeout is read as the confinement's | false fail | A kill counts only after the marker, not at the budget, and not by the engine | QH21 |
 | A slow host makes a fast command miss its budget | false fail | The known-fast control | QO4, QH24 |
 | The store-unchanged comparison cannot see a change | false pass | A control copy that must show a written change | QP9 |
@@ -78,7 +81,18 @@ A green speaks only for the invocations and offline settings the subject file de
 
 ## 4. Encodings of a leaked secret
 
-The leak scan looks for the canary in each of these forms: as written; base64 in the standard and the URL-safe alphabets, each with and without padding; hexadecimal in lower and upper case; and percent-encoding of every byte. The same list governs masking (QE18).
+The leak scan looks for the canary in each of these forms. The same list governs masking (QE18) and the masking of recorded behaviour (QT5).
+
+| Name | Form |
+|---|---|
+| `plain` | as written |
+| `base64` | base64 in the standard alphabet, with padding |
+| `base64-nopad` | base64 in the standard alphabet, without padding |
+| `base64url` | base64 in the URL-safe alphabet, with padding |
+| `base64url-nopad` | base64 in the URL-safe alphabet, without padding |
+| `hex-lower` | hexadecimal in lower case |
+| `hex-upper` | hexadecimal in upper case |
+| `percent` | percent-encoding of every byte |
 
 ## 5. Help formats discovery reads
 
