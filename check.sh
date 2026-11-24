@@ -52,6 +52,8 @@ step behaviour 'validate behaviour schemas and agreement'
 PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I scripts/check-behaviour.py docs/specs/conformance-collection-1.0
 step ids-cross-check 'cross-check collection case ids and recordings'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-case-ids.py docs/specs/conformance-collection-1.0/cases
+step outcomes 'cross-check collection case outcomes against recordings'
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-case-outcomes.py docs/specs/conformance-collection-1.0 docs/specs/conformance-collection-1.0/cases
 step cases 'run collection judge-checked cases'
 if [[ -d docs/specs/conformance-collection-1.0/cases ]]; then
  (

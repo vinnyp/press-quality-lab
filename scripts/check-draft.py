@@ -353,3 +353,54 @@ with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
     recording_path.write_text(json.dumps(recording))
     export_run("--check", first, expected=1, message="form name in JSON")
     print("export control: original form in recording found")
+
+# Each mutation starts with a fresh copy; production recordings stay untouched.
+with tempfile.TemporaryDirectory(prefix="pql-outcome-controls-") as temporary:
+    for label in ("unchanged", "store", "failure-kind", "signal"):
+        root = Path(temporary) / label
+        shutil.copytree(source, root)
+        expected = 0
+        message = "0 outcome disagreements"
+        if label == "store":
+            path = root / "behaviour/writes-store.json"
+            recording = json.loads(path.read_text())
+            changed = 0
+            for entry in recording["invocations"]:
+                if entry["key"]["home"] == "seed" and entry["key"]["words"] and entry["key"]["words"][0] == "list":
+                    for run in entry["confined"]:
+                        changes = run["home_changes"]["changes"]
+                        kept_changes = [change for change in changes if change["path"] != "data.json"]
+                        changed += len(changes) - len(kept_changes)
+                        run["home_changes"]["changes"] = kept_changes
+            if not changed:
+                raise RuntimeError("outcome control: store mutation changed nothing")
+            path.write_text(json.dumps(recording))
+            expected, message = 1, "case-012 check "
+        elif label == "failure-kind":
+            path = root / "cases/case-057/input.json"
+            record = json.loads(path.read_text())
+            evidence = next(e for e in record["evidence"] if e["failure_kind"] == "wrong_exit")
+            evidence["failure_kind"] = "predicate"
+            path.write_text(json.dumps(record))
+            expected, message = 1, "case-057 check "
+        elif label == "signal":
+            path = root / "behaviour/crashes.json"
+            recording = json.loads(path.read_text())
+            changed = 0
+            for entry in recording["invocations"]:
+                end = entry["confined"][0]["end"]
+                if end.get("signal") == "SIGABRT":
+                    end.update(signal="SIGKILL", by="confinement")
+                    changed += 1
+            if not changed:
+                raise RuntimeError("outcome control: signal mutation changed nothing")
+            path.write_text(json.dumps(recording))
+            expected, message = 1, "case-076 check "
+        result = subprocess.run(
+            ["python3", "-I", str(guard_script.with_name("check-case-outcomes.py")), str(root), str(root / "cases")],
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+            capture_output=True, text=True, timeout=60, check=False,
+        )
+        if result.returncode != expected or message not in result.stdout + result.stderr:
+            raise RuntimeError("outcome control: " + label + ": " + result.stdout + result.stderr)
+        print("outcome control: " + label + ": " + message)
