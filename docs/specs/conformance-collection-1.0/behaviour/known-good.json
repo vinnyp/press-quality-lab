@@ -1,6 +1,6 @@
 {
   "behaviour_version": "1.0",
-  "commit": "915819e45a29ebda916d40106d3bcb04394c6db4",
+  "commit": "e05b7b0eba8eff27e47fc0fa20fcc5943d8de363",
   "computation_profile_sha256": "94d86b3f7e9ea0c7dbbf686ad365023f4b9e062896a321549b2943c69974925d",
   "form": "known-good",
   "form_sha256": "e2fa692774fa939c8e3717a181ff568f30c7fcd09e5875923f3e2644262ce78d",
@@ -5767,7 +5767,7 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": null,
+          "printed_value": 3,
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5802,7 +5802,7 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": null,
+          "printed_value": 3,
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5837,7 +5837,7 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": null,
+          "printed_value": 3,
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5872,7 +5872,7 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": null,
+          "printed_value": 3,
           "stderr": {
             "bytes": 0,
             "cut": false,
@@ -5907,7 +5907,7 @@
             "could_not_start": false
           },
           "planted": null,
-          "printed_value": null,
+          "printed_value": 3,
           "stderr": {
             "bytes": 0,
             "cut": false,

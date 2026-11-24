@@ -1,6 +1,6 @@
 {
   "behaviour_version": "1.0",
-  "commit": "915819e45a29ebda916d40106d3bcb04394c6db4",
+  "commit": "e05b7b0eba8eff27e47fc0fa20fcc5943d8de363",
   "computation_profile_sha256": "94d86b3f7e9ea0c7dbbf686ad365023f4b9e062896a321549b2943c69974925d",
   "form": "renames-command",
   "form_sha256": "5d456e963cf8be3c1b3bc4c9991c0654306352f3db4b50d35d56e960a094cd15",
