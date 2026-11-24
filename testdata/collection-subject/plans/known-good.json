@@ -702,6 +702,60 @@
       "budget_seconds": 5,
       "store_control": false,
       "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "list",
+          "--json"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "count agreement",
+        "step": "first",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": [
+          "count"
+        ],
+        "offline_args": [
+          "--offline"
+        ],
+        "env": [],
+        "runbook": "count agreement",
+        "step": "second",
+        "computation": null,
+        "home": "runbook"
+      },
+      "budget_seconds": 30,
+      "store_control": false,
+      "planted": false
+    },
+    {
+      "key": {
+        "words": null,
+        "offline_args": [],
+        "env": [],
+        "runbook": "count agreement",
+        "step": "second",
+        "computation": [
+          "computations/count-capture.sh",
+          "{CAPTURE:first}"
+        ],
+        "home": "scratch"
+      },
+      "budget_seconds": 5,
+      "store_control": false,
+      "planted": false
     }
   ]
 }
