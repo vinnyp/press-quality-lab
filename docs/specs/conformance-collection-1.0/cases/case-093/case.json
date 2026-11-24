@@ -431,6 +431,45 @@
         "{CAPTURE:first}"
       ],
       "home": "scratch"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "count agreement",
+      "step": "first",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "count"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "count agreement",
+      "step": "second",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "count agreement",
+      "step": "second",
+      "computation": [
+        "computations/count-capture.sh",
+        "{CAPTURE:first}"
+      ],
+      "home": "scratch"
     }
   ],
   "covers": [
@@ -669,6 +708,20 @@
           "to_run": null
         },
         {
+          "id": "605408445adf852f88e05ffc8cfd9e27dc32d5fe7958bdbef90950ab246322bb",
+          "result": "held_non_crediting",
+          "rule": "C8",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
           "id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
           "result": "held_crediting",
           "rule": "C7",
@@ -754,6 +807,20 @@
         },
         {
           "id": "a493349a773343813d0d6cf91bbfc96bb391d1dc432475ff3ca49df5414d9d3d",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "b684c078c880a820f40663672c9043010541cfa7e6ce96e44c5a0c40f832dede",
           "result": "held_crediting",
           "rule": "C7",
           "reason": null,

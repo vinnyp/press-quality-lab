@@ -6,6 +6,16 @@ Run the judge-checked cases with `uv run runner.py --judge "<command>" --cases c
 
 Two cases, `case-069` and `case-070`, use the real verifier. A collector meets them only in a local run on a macOS version QH1 names.
 
+## Stated limits
+
+The specification states limits it does not detect. These cases show a limit with a recorded behaviour:
+
+- `case-141` is a known false pass. A check routed to `completeness-signaling` that only reads an exit code credits, and the dimension is green, because routing is the author's claim where `credit-and-routes.md` §2 states no condition.
+- `case-077` shows that a subject that kills itself with `SIGKILL` reads as a kill by the confinement (QH21), so it is not measured rather than red.
+- `case-026` shows a subject that ignores a help request and runs that command's action inside the confinement, in an empty home (QD6).
+
+The other stated limits are things the engine cannot observe, so no recording can show them: a leak through the system's unified log (QP14), another process reading the planted file (QP14, QH28), a read of no bytes at the end of the file (QP14, QH28), a directory-server lookup (QP14), a copy of the subject's binary at another path (QH17), and a child that leaves its process group (QH19).
+
 ## Not expressible as a case
 
 A case fixes a subject file, a form and its recording, a request and scope, a verifier, a scripted host, a baseline and fixtures, and expects the judge's output and the engine's exit code. These rules govern something none of those carries.

@@ -1,0 +1,1322 @@
+{
+  "baseline": {
+    "entries": [
+      {
+        "check_id": "15e99e64335ea74efa33aaf30d6f400ed15ef664aaa4d1cc047487a71d31a957",
+        "condition": null,
+        "dimension": "side-effect-integrity",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "184c7dcba4e959a99c2fdf4967cb91ec8370b982719a19fb1804ad03b55f1cfa",
+        "condition": null,
+        "dimension": "pii-secret-hygiene",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "2eec644d4175c5c51817fb33d78be5fc346feb2b99121de933334b778820c0e9",
+        "condition": null,
+        "dimension": "completeness-signaling",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "3353456664ea866e041218b8115087db6df78e1c05e61da7d18abe1bdfd7a71a",
+        "condition": null,
+        "dimension": "robustness",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "370153ac232afea47ed020b259335627129e84d619a3bce46886eca9cd49c22b",
+        "condition": null,
+        "dimension": "execution",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "395ca542e3cac18abea9cd1f8ee77f7cab6e29a50ac966da578abff320e3df01",
+        "condition": null,
+        "dimension": "determinism",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "452e3d8f35d257fb23435d4707841c76312cd61f42775b33aa86377137b4ad34",
+        "condition": null,
+        "dimension": "determinism",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "4580a9e837d3dbb09b8ef3e257e05186d5823b65946772ee6ac2617edfdedbdf",
+        "condition": null,
+        "dimension": "side-effect-integrity",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "5597a9032692e9f32a82bb81453b0f447d435e5d3db2c8458a645e6b6fbe4210",
+        "condition": null,
+        "dimension": "bounding",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "5f98243b567f42f165ca32e4d1e030c650977ca43eedc527b2b28ab3e26076c0",
+        "condition": null,
+        "dimension": "bounding",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "64fc23df83bc89a4a9168ac0f515eb91033726de30f188174e37ffaf43f4b001",
+        "condition": null,
+        "dimension": "execution",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "7be046fca0ae3651212025297b851c5b67f255319a28771cfe49f18ec745a15b",
+        "condition": null,
+        "dimension": "side-effect-integrity",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "7c343b2fff2c029ce97ba3bcfde502fdde2de3495142cafb1e09d9a9abdb5c33",
+        "condition": null,
+        "dimension": "response-correctness",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "82c8908a76562ade477abf37e9d2f60a2614bad84cb123d54b797d7b87382060",
+        "condition": null,
+        "dimension": "execution",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "87e9c693f645b228972d9459ded835004dfed7d33749f3d953c80076b753a32a",
+        "condition": null,
+        "dimension": "execution",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "aa1336c22736d3b4ddbde0cc76d1024836f575cebb2e1b5f7337a73f4d2a539e",
+        "condition": null,
+        "dimension": "error-message-quality",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "af083bc237d5448e060e76ce9cbbceabe9a1c087c7ff137407d199f5c4288d35",
+        "condition": null,
+        "dimension": "availability",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "b31b93401b13eb5b9fd61f1e8a0c5365697c3d383cfd27d49d99c626bac74820",
+        "condition": null,
+        "dimension": "token-economy",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "bd384235ced62afd0a4c333c6800e7dc9e0e6ee62028ea7c8e0a90acca9cfc52",
+        "condition": null,
+        "dimension": "bounding",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "c60525f72991a056bc05c781ed852f5a2dbab854f0e40ae6f2197fb4c0739f6d",
+        "condition": null,
+        "dimension": "execution",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "c96a293edc03df82b8ebb48c0bfa29c0024e96f8feaa379c24ea836ad0e603ca",
+        "condition": null,
+        "dimension": "output-conformance",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "d25ec15a1cde00027d5a885d5148424e18267e9fb6fbf0044e23eb104248aae5",
+        "condition": null,
+        "dimension": "side-effect-integrity",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "d324cbf4bd4afaeda42aad2e70b4debe2d3c74039f8c23ff31284755bcf7021e",
+        "condition": null,
+        "dimension": "idempotency",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "dfdc1e9154cba2a0a9799f8d4eb9ce378b5a10228623340a0146d86452a0536a",
+        "condition": null,
+        "dimension": "bounding",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "e09b70c88725bdb6f492a727d2d65d6c79ca88a37b693c457c7996046af3cf66",
+        "condition": null,
+        "dimension": "execution",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "ed7f84541d0f1cb7b46aac657eebd97e3bf007da93a815041cdcc78917a3e0cc",
+        "condition": null,
+        "dimension": "discoverability",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "ef05e4e85a816e0ea1cd8bd439495e7e3b68f2fb828d0ef10108ea58d5e93200",
+        "condition": null,
+        "dimension": "flag-conformance",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "f259f4c9580e40cc67ca178dfac8b46dfd9129147146a6c684bdb8cb656c3ea8",
+        "condition": null,
+        "dimension": "graceful-failure",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      },
+      {
+        "check_id": "f7992bad9ba0ee8ec2ae7eb3661b49e4c9e0607323993aa79c2431f965e2a80c",
+        "condition": null,
+        "dimension": "provenance-honesty",
+        "k": null,
+        "kind": "plain",
+        "n": null,
+        "result": "held",
+        "rulebook_version": "1.0",
+        "tier": "scripted"
+      }
+    ]
+  },
+  "baseline_version": "1.0",
+  "created_at": "2026-11-24T09:00:00Z",
+  "preimages": {
+    "15e99e64335ea74efa33aaf30d6f400ed15ef664aaa4d1cc047487a71d31a957": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "side-effect-integrity",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {},
+      "path": null,
+      "predicate": null,
+      "probe": "store_unchanged",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "account"
+      ]
+    },
+    "184c7dcba4e959a99c2fdf4967cb91ec8370b982719a19fb1804ad03b55f1cfa": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": null,
+      "dimension": "pii-secret-hygiene",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [],
+      "parameters": {
+        "commands": [
+          {
+            "budget_seconds": 30,
+            "env": {},
+            "offline_args": [
+              "--offline"
+            ],
+            "words": [
+              "account"
+            ]
+          }
+        ],
+        "kind": "credential",
+        "path": ".config/widgets/token",
+        "text_sha256": "d2ea444a8905d8d4d040c5770edcd4a576b858fe4b357ff9e277241dea36261b"
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "planted_secret",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": null
+    },
+    "2eec644d4175c5c51817fb33d78be5fc346feb2b99121de933334b778820c0e9": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "completeness-signaling",
+      "earlier": [
+        "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
+        "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
+        "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
+        "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
+        "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14",
+        "cb3a5f752c37a4168fea870c44c67f3163164ffccbd78de2d98716935f2db707"
+      ],
+      "env": {},
+      "expected": {
+        "literal": true,
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": "/truncated",
+      "predicate": "json_path_equals",
+      "probe": null,
+      "runbook": "read",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "list limited",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json",
+        "--limit",
+        "2"
+      ]
+    },
+    "3353456664ea866e041218b8115087db6df78e1c05e61da7d18abe1bdfd7a71a": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "robustness",
+      "earlier": [
+        "24a8af63171cb82d5655c111e8e4480849edbc3d472376dbdad8724b391e91e7",
+        "d11ed313b976d3e5e993eb643ef27ed42684e4117d3928ae20187a649ad15fa7"
+      ],
+      "env": {},
+      "expected": {
+        "literal": 2,
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": null,
+      "predicate": "exit_code",
+      "probe": null,
+      "runbook": "errors",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "bad limit",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--limit",
+        "zero"
+      ]
+    },
+    "370153ac232afea47ed020b259335627129e84d619a3bce46886eca9cd49c22b": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "execution",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": [
+          0
+        ]
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "exit_codes",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "list"
+      ]
+    },
+    "395ca542e3cac18abea9cd1f8ee77f7cab6e29a50ac966da578abff320e3df01": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "determinism",
+      "earlier": [
+        "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
+        "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
+        "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
+        "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
+        "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14"
+      ],
+      "env": {},
+      "expected": {
+        "literal": {
+          "source": "local",
+          "truncated": false,
+          "widgets": [
+            {
+              "name": "gear",
+              "tag": "metal"
+            },
+            {
+              "name": "spring",
+              "tag": "metal"
+            },
+            {
+              "name": "valve",
+              "tag": "brass"
+            }
+          ]
+        },
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": null,
+      "predicate": "stdout_json_equals",
+      "probe": null,
+      "runbook": "read",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "list all again",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json"
+      ]
+    },
+    "452e3d8f35d257fb23435d4707841c76312cd61f42775b33aa86377137b4ad34": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "determinism",
+      "earlier": [],
+      "env": {},
+      "expected": {
+        "literal": {
+          "source": "local",
+          "truncated": false,
+          "widgets": [
+            {
+              "name": "gear",
+              "tag": "metal"
+            },
+            {
+              "name": "spring",
+              "tag": "metal"
+            },
+            {
+              "name": "valve",
+              "tag": "brass"
+            }
+          ]
+        },
+        "precondition": null
+      },
+      "index": 1,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": null,
+      "predicate": "stdout_json_equals",
+      "probe": null,
+      "runbook": "read",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "list all",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json"
+      ]
+    },
+    "4580a9e837d3dbb09b8ef3e257e05186d5823b65946772ee6ac2617edfdedbdf": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "side-effect-integrity",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {},
+      "path": null,
+      "predicate": null,
+      "probe": "store_unchanged",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "count"
+      ]
+    },
+    "5597a9032692e9f32a82bb81453b0f447d435e5d3db2c8458a645e6b6fbe4210": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 10,
+      "dimension": "bounding",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [],
+      "parameters": {
+        "bound": 4096
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "byte_bound",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": []
+    },
+    "5f98243b567f42f165ca32e4d1e030c650977ca43eedc527b2b28ab3e26076c0": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "bounding",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "bound": 4096
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "byte_bound",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "count"
+      ]
+    },
+    "64fc23df83bc89a4a9168ac0f515eb91033726de30f188174e37ffaf43f4b001": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "execution",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": [
+          0
+        ]
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "exit_codes",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "account"
+      ]
+    },
+    "7be046fca0ae3651212025297b851c5b67f255319a28771cfe49f18ec745a15b": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "side-effect-integrity",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {},
+      "path": null,
+      "predicate": null,
+      "probe": "store_unchanged",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "list"
+      ]
+    },
+    "7c343b2fff2c029ce97ba3bcfde502fdde2de3495142cafb1e09d9a9abdb5c33": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "response-correctness",
+      "earlier": [],
+      "env": {},
+      "expected": {
+        "computation": {
+          "argv": [
+            "computations/count.sh",
+            "{SEED}/data.json"
+          ],
+          "budget_seconds": 10,
+          "captures": [],
+          "files": {
+            "computations/count.sh": "163f715d8a0aa56d5eb5eb64655df138e12ae4d9b1cf559d4aeae73484e2a394"
+          }
+        },
+        "precondition": null
+      },
+      "index": 2,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": "/widgets",
+      "predicate": "row_count",
+      "probe": null,
+      "runbook": "read",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "list all",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json"
+      ]
+    },
+    "82c8908a76562ade477abf37e9d2f60a2614bad84cb123d54b797d7b87382060": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "execution",
+      "earlier": [],
+      "env": {},
+      "expected": {
+        "literal": 0,
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": null,
+      "predicate": "exit_code",
+      "probe": null,
+      "runbook": "add twice",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "add once",
+      "store": "data.json",
+      "words": [
+        "add",
+        "sprocket",
+        "--tag",
+        "steel"
+      ]
+    },
+    "87e9c693f645b228972d9459ded835004dfed7d33749f3d953c80076b753a32a": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 10,
+      "dimension": "execution",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [],
+      "parameters": {
+        "exit_codes": [
+          0
+        ]
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "exit_codes",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": []
+    },
+    "aa1336c22736d3b4ddbde0cc76d1024836f575cebb2e1b5f7337a73f4d2a539e": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "error-message-quality",
+      "earlier": [],
+      "env": {},
+      "expected": {
+        "literal": "--bogus",
+        "precondition": null
+      },
+      "index": 1,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": [
+          2
+        ]
+      },
+      "path": null,
+      "predicate": "stderr_contains",
+      "probe": null,
+      "runbook": "errors",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "unknown flag",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--bogus"
+      ]
+    },
+    "af083bc237d5448e060e76ce9cbbceabe9a1c087c7ff137407d199f5c4288d35": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 10,
+      "dimension": "availability",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [],
+      "parameters": {
+        "exit_codes": [
+          0
+        ]
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "bare",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": []
+    },
+    "b31b93401b13eb5b9fd61f1e8a0c5365697c3d383cfd27d49d99c626bac74820": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "token-economy",
+      "earlier": [],
+      "env": {},
+      "expected": {
+        "literal": 4096,
+        "precondition": null
+      },
+      "index": 4,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": null,
+      "predicate": "stdout_bytes_at_most",
+      "probe": null,
+      "runbook": "read",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "list all",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json"
+      ]
+    },
+    "bd384235ced62afd0a4c333c6800e7dc9e0e6ee62028ea7c8e0a90acca9cfc52": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "bounding",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "bound": 4096
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "byte_bound",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "account"
+      ]
+    },
+    "c60525f72991a056bc05c781ed852f5a2dbab854f0e40ae6f2197fb4c0739f6d": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "execution",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": [
+          0
+        ]
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "exit_codes",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "count"
+      ]
+    },
+    "c96a293edc03df82b8ebb48c0bfa29c0024e96f8feaa379c24ea836ad0e603ca": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "output-conformance",
+      "earlier": [],
+      "env": {},
+      "expected": {
+        "literal": {
+          "source": "local",
+          "truncated": false,
+          "widgets": [
+            {
+              "name": "gear",
+              "tag": "metal"
+            },
+            {
+              "name": "spring",
+              "tag": "metal"
+            },
+            {
+              "name": "valve",
+              "tag": "brass"
+            }
+          ]
+        },
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": null,
+      "predicate": "stdout_json_equals",
+      "probe": null,
+      "runbook": "read",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "list all",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json"
+      ]
+    },
+    "d25ec15a1cde00027d5a885d5148424e18267e9fb6fbf0044e23eb104248aae5": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 10,
+      "dimension": "side-effect-integrity",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [],
+      "parameters": {},
+      "path": null,
+      "predicate": null,
+      "probe": "store_unchanged",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": []
+    },
+    "d324cbf4bd4afaeda42aad2e70b4debe2d3c74039f8c23ff31284755bcf7021e": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "idempotency",
+      "earlier": [
+        "4c743b75739bb0fdf5d1a7db8f608e8b6878de0610f7aaf44d9886a0a0c6c777",
+        "d6dc3cd95c0be6e70be785de622873725766581e73375324438490c5b3319577"
+      ],
+      "env": {},
+      "expected": {
+        "computation": {
+          "argv": [
+            "computations/count-after-add.sh",
+            "{SEED}/data.json",
+            "sprocket"
+          ],
+          "budget_seconds": 10,
+          "captures": [],
+          "files": {
+            "computations/count-after-add.sh": "ddccb3eda4207ffed75ae5b29cff3fd3e63dd9168e007560da9b0abf19767e67"
+          }
+        },
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": "/widgets",
+      "predicate": "row_count",
+      "probe": null,
+      "runbook": "add twice",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "count after",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json"
+      ]
+    },
+    "dfdc1e9154cba2a0a9799f8d4eb9ce378b5a10228623340a0146d86452a0536a": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "bounding",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "bound": 65536
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "byte_bound",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": [
+        "list"
+      ]
+    },
+    "e09b70c88725bdb6f492a727d2d65d6c79ca88a37b693c457c7996046af3cf66": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "execution",
+      "earlier": [
+        "4c743b75739bb0fdf5d1a7db8f608e8b6878de0610f7aaf44d9886a0a0c6c777"
+      ],
+      "env": {},
+      "expected": {
+        "literal": 0,
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": null,
+      "predicate": "exit_code",
+      "probe": null,
+      "runbook": "add twice",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "add again",
+      "store": "data.json",
+      "words": [
+        "add",
+        "sprocket",
+        "--tag",
+        "steel"
+      ]
+    },
+    "ed7f84541d0f1cb7b46aac657eebd97e3bf007da93a815041cdcc78917a3e0cc": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": null,
+      "dimension": "discoverability",
+      "earlier": [],
+      "env": {},
+      "expected": null,
+      "index": null,
+      "offline_args": [],
+      "parameters": {
+        "commands": [
+          [
+            "account"
+          ],
+          [
+            "add"
+          ],
+          [
+            "count"
+          ],
+          [
+            "list"
+          ],
+          [
+            "remove"
+          ]
+        ],
+        "declared_count": 5
+      },
+      "path": null,
+      "predicate": null,
+      "probe": "discovery",
+      "runbook": null,
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": null,
+      "store": "data.json",
+      "words": null
+    },
+    "ef05e4e85a816e0ea1cd8bd439495e7e3b68f2fb828d0ef10108ea58d5e93200": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "flag-conformance",
+      "earlier": [
+        "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
+        "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
+        "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
+        "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
+        "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14",
+        "cb3a5f752c37a4168fea870c44c67f3163164ffccbd78de2d98716935f2db707",
+        "4b706a089b7a8c7601c0d50d1e1c9c47cd8635faf1334225b0a70b1f3bc81031"
+      ],
+      "env": {},
+      "expected": {
+        "literal": 1,
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": "/widgets",
+      "predicate": "row_count",
+      "probe": null,
+      "runbook": "read",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "list by tag",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json",
+        "--tag",
+        "brass"
+      ]
+    },
+    "f259f4c9580e40cc67ca178dfac8b46dfd9129147146a6c684bdb8cb656c3ea8": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "graceful-failure",
+      "earlier": [],
+      "env": {},
+      "expected": {
+        "literal": 2,
+        "precondition": null
+      },
+      "index": 0,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": null,
+      "predicate": "exit_code",
+      "probe": null,
+      "runbook": "errors",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "unknown flag",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--bogus"
+      ]
+    },
+    "f7992bad9ba0ee8ec2ae7eb3661b49e4c9e0607323993aa79c2431f965e2a80c": {
+      "bookkeeping": [
+        ".local/state/widgets"
+      ],
+      "budget_seconds": 30,
+      "dimension": "provenance-honesty",
+      "earlier": [],
+      "env": {},
+      "expected": {
+        "literal": "local",
+        "precondition": null
+      },
+      "index": 3,
+      "offline_args": [
+        "--offline"
+      ],
+      "parameters": {
+        "exit_codes": null
+      },
+      "path": "/source",
+      "predicate": "json_path_equals",
+      "probe": null,
+      "runbook": "read",
+      "scheme": "pql-check-id-1",
+      "seed": "0000000000000000000000000000000000000000000000000000000000000001",
+      "step": "list all",
+      "store": "data.json",
+      "words": [
+        "list",
+        "--json"
+      ]
+    }
+  },
+  "rulebook_version": "1.0",
+  "spec_version": "1.0",
+  "subject_file_digest": "f7e739405d8dcbec121840546c1b6580897d046ad99e1b024194e15d54662fa6",
+  "subject_file_path": "/opt/widgets/subject.json"
+}

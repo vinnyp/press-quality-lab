@@ -1,0 +1,42 @@
+{
+  "id": "case-136",
+  "kind": "derivation-only",
+  "rules": [
+    "QE6",
+    "QE11",
+    "QE5",
+    "QE16"
+  ],
+  "input": {
+    "subject_file": "subject.json",
+    "form": "known-good",
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "verifier": "scripted",
+    "host": {
+      "confinement": {
+        "applied": true,
+        "sandbox_exec_exit": null
+      },
+      "self_test": "passed",
+      "known_fast": "within",
+      "read_calibration": "moved",
+      "store_control": "detected",
+      "read_control": "killed",
+      "private_copy": "unchanged",
+      "kill_attribution": []
+    },
+    "baseline": null,
+    "fixtures": []
+  },
+  "named_check": null,
+  "twin": null,
+  "invocations": [],
+  "covers": [],
+  "expect": {
+    "exit_code": 2,
+    "rule": "QE6"
+  }
+}

@@ -208,6 +208,19 @@
       "condition_a": null
     },
     {
+      "id": "605408445adf852f88e05ffc8cfd9e27dc32d5fe7958bdbef90950ab246322bb",
+      "kind": "plain",
+      "dimension": "response-correctness",
+      "record": "count agreement",
+      "crediting": false,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
       "id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
       "kind": "plain",
       "dimension": "execution",
@@ -290,6 +303,19 @@
       "kind": "plain",
       "dimension": "side-effect-integrity",
       "record": null,
+      "crediting": true,
+      "empty_satisfiable": false,
+      "asserts_emptiness": false,
+      "precondition": null,
+      "declared_count": null,
+      "condition": null,
+      "condition_a": null
+    },
+    {
+      "id": "b684c078c880a820f40663672c9043010541cfa7e6ce96e44c5a0c40f832dede",
+      "kind": "plain",
+      "dimension": "execution",
+      "record": "count agreement",
       "crediting": true,
       "empty_satisfiable": false,
       "asserts_emptiness": false,
@@ -884,6 +910,35 @@
       }
     },
     {
+      "check_id": "605408445adf852f88e05ffc8cfd9e27dc32d5fe7958bdbef90950ab246322bb",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 12,
+          "sha256": "e47a017378035aa1ff1638d67aef0d69a98de658186afce3306a622be93b62b4",
+          "cut": false,
+          "head": "{\"count\":3}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "605408445adf852f88e05ffc8cfd9e27dc32d5fe7958bdbef90950ab246322bb",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
       "check_id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
       "outcome": "held",
       "reason": null,
@@ -1093,6 +1148,35 @@
         {
           "kind": "artifact",
           "id": "data.json",
+          "tier": "scripted"
+        }
+      ],
+      "evaluator": {
+        "kind": "deterministic",
+        "model": null
+      }
+    },
+    {
+      "check_id": "b684c078c880a820f40663672c9043010541cfa7e6ce96e44c5a0c40f832dede",
+      "outcome": "held",
+      "reason": null,
+      "failure_kind": null,
+      "target_size": null,
+      "precondition_observed": null,
+      "tier": "scripted",
+      "expected": null,
+      "observed": {
+        "stdout": {
+          "bytes": 142,
+          "sha256": "f148d059afb32a2e26adda6c027bc6cd945312a0b350a265c51c4236029b33d1",
+          "cut": false,
+          "head": "{\"source\":\"local\",\"truncated\":false,\"widgets\":[{\"name\":\"gear\",\"tag\":\"metal\"},{\"name\":\"spring\",\"tag\":\"metal\"},{\"name\":\"valve\",\"tag\":\"brass\"}]}\n"
+        }
+      },
+      "targets": [
+        {
+          "kind": "invocation",
+          "id": "b684c078c880a820f40663672c9043010541cfa7e6ce96e44c5a0c40f832dede",
           "tier": "scripted"
         }
       ],

@@ -1,0 +1,1107 @@
+{
+  "id": "case-137",
+  "kind": "judge-checked",
+  "rules": [
+    "QE4",
+    "QE2",
+    "QT2"
+  ],
+  "input": {
+    "subject_file": "subject.json",
+    "form": "known-good",
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "verifier": "scripted",
+    "host": {
+      "confinement": {
+        "applied": true,
+        "sandbox_exec_exit": null
+      },
+      "self_test": "passed",
+      "known_fast": "within",
+      "read_calibration": "moved",
+      "store_control": "detected",
+      "read_control": "killed",
+      "private_copy": "unchanged",
+      "kill_attribution": []
+    },
+    "baseline": "baseline.json",
+    "fixtures": []
+  },
+  "named_check": null,
+  "twin": null,
+  "invocations": [
+    {
+      "words": [],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "count"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "seed"
+    },
+    {
+      "words": [
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "account",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "add",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "count",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "list",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "remove",
+        "--help"
+      ],
+      "offline_args": [],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "empty"
+    },
+    {
+      "words": [
+        "account"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": null,
+      "step": null,
+      "computation": null,
+      "home": "planted"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list all",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "read",
+      "step": "list all",
+      "computation": [
+        "computations/count.sh",
+        "{SEED}/data.json"
+      ],
+      "home": "scratch"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list all again",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json",
+        "--limit",
+        "2"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list limited",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json",
+        "--tag",
+        "brass"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "read",
+      "step": "list by tag",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--bogus"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "errors",
+      "step": "unknown flag",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--limit",
+        "zero"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "errors",
+      "step": "bad limit",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "add",
+        "sprocket",
+        "--tag",
+        "steel"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "add once",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "add",
+        "sprocket",
+        "--tag",
+        "steel"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "add again",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": [
+        "list",
+        "--json"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [],
+      "runbook": "add twice",
+      "step": "count after",
+      "computation": null,
+      "home": "runbook"
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "add twice",
+      "step": "count after",
+      "computation": [
+        "computations/count-after-add.sh",
+        "{SEED}/data.json",
+        "sprocket"
+      ],
+      "home": "scratch"
+    }
+  ],
+  "covers": [],
+  "expect": {
+    "exit_code": 4,
+    "judge_output": {
+      "rulebook_version": "1.0",
+      "outcome": "verdict",
+      "rejected_by": null,
+      "exit_code": 4,
+      "scope": [
+        "conformance"
+      ],
+      "verdict": {
+        "token": "PROVISIONAL",
+        "sub_label": "gaps",
+        "plain": "not_measured"
+      },
+      "own_verdict": null,
+      "counts": {
+        "xfail": 0,
+        "xpass": 0
+      },
+      "stale_markers": [],
+      "checks": [
+        {
+          "id": "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "1fb8e6965810606292e22338f844141fa8097198462963047741ed3c61e54001",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "20059c1619244c1ab00820b1514309e4f14445cac80b473c0f91e1198982f99e",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "24a8af63171cb82d5655c111e8e4480849edbc3d472376dbdad8724b391e91e7",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "270c4c43c84525851e3646a6ec588c632c08e2cd2de87c804ecabb5418d7aa35",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "4b706a089b7a8c7601c0d50d1e1c9c47cd8635faf1334225b0a70b1f3bc81031",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "4c743b75739bb0fdf5d1a7db8f608e8b6878de0610f7aaf44d9886a0a0c6c777",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "4f7aa1fa7be749c66667dedddb8c051838018a2362224df68de89f0f4c3a5f9f",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "71419728f22ff646bbedd2b64e9be4210905fefc8aef50c09e6ef860912718fe",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "8c4cb2919c964946af308a8f2cae75a1d0ff5f0fe606cea95b2f466fe5fbd84b",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "9623eb5a406665080cc0129a9343999df5edb20e0fff534403e6de500e3d522b",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "963c1e2a3a08632079188934de4afbc9c812ea5ffb8e68aa0438ea0146233fca",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "a493349a773343813d0d6cf91bbfc96bb391d1dc432475ff3ca49df5414d9d3d",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "cb3a5f752c37a4168fea870c44c67f3163164ffccbd78de2d98716935f2db707",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "d11ed313b976d3e5e993eb643ef27ed42684e4117d3928ae20187a649ad15fa7",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "d65cc1fe00837294339d19e0cabeeaebd65ce02d0606cf3bb69f4d335606dfc9",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "d6dc3cd95c0be6e70be785de622873725766581e73375324438490c5b3319577",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f219a323acc8fde487fe7ba43951b83bb999ead817dfda45652a0c0180fcd187",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        },
+        {
+          "id": "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc",
+          "result": "held_crediting",
+          "rule": "C7",
+          "reason": null,
+          "detail": null,
+          "k": null,
+          "n": null,
+          "lower": null,
+          "upper": null,
+          "d_lo": null,
+          "d_hi": null,
+          "to_run": null
+        }
+      ],
+      "dimensions": [
+        {
+          "dimension": "availability",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "execution",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "graceful-failure",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "robustness",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "response-correctness",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "determinism",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "cli-mcp-parity",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "scope_not_requested"
+        },
+        {
+          "dimension": "provenance-honesty",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "completeness-signaling",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "output-conformance",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "flag-conformance",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "bounding",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "discoverability",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "error-message-quality",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "token-economy",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "side-effect-integrity",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "idempotency",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "destructive-guard",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "scope_not_requested"
+        },
+        {
+          "dimension": "pii-secret-hygiene",
+          "state": "GREEN",
+          "rule": "D7",
+          "reason": null
+        },
+        {
+          "dimension": "steering",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "live_not_run"
+        },
+        {
+          "dimension": "tool-description-efficacy",
+          "state": "OUT-OF-SCOPE",
+          "rule": "D0",
+          "reason": "live_not_run"
+        }
+      ],
+      "groups": [
+        {
+          "group": "Operability",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Correctness",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Conformance",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Usability",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Safety",
+          "state": "GREEN",
+          "rule": "G5"
+        },
+        {
+          "group": "Steering",
+          "state": "OUT-OF-SCOPE",
+          "rule": "G1"
+        }
+      ],
+      "comparison": {
+        "result": "not_measured",
+        "rule": "R2",
+        "next_action": "re_anchor",
+        "entries": [
+          {
+            "check_id": "15e99e64335ea74efa33aaf30d6f400ed15ef664aaa4d1cc047487a71d31a957",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "184c7dcba4e959a99c2fdf4967cb91ec8370b982719a19fb1804ad03b55f1cfa",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "2eec644d4175c5c51817fb33d78be5fc346feb2b99121de933334b778820c0e9",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "3353456664ea866e041218b8115087db6df78e1c05e61da7d18abe1bdfd7a71a",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "370153ac232afea47ed020b259335627129e84d619a3bce46886eca9cd49c22b",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "395ca542e3cac18abea9cd1f8ee77f7cab6e29a50ac966da578abff320e3df01",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "452e3d8f35d257fb23435d4707841c76312cd61f42775b33aa86377137b4ad34",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "4580a9e837d3dbb09b8ef3e257e05186d5823b65946772ee6ac2617edfdedbdf",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "5597a9032692e9f32a82bb81453b0f447d435e5d3db2c8458a645e6b6fbe4210",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "5f98243b567f42f165ca32e4d1e030c650977ca43eedc527b2b28ab3e26076c0",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "64fc23df83bc89a4a9168ac0f515eb91033726de30f188174e37ffaf43f4b001",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "7be046fca0ae3651212025297b851c5b67f255319a28771cfe49f18ec745a15b",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "7c343b2fff2c029ce97ba3bcfde502fdde2de3495142cafb1e09d9a9abdb5c33",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "82c8908a76562ade477abf37e9d2f60a2614bad84cb123d54b797d7b87382060",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "87e9c693f645b228972d9459ded835004dfed7d33749f3d953c80076b753a32a",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "aa1336c22736d3b4ddbde0cc76d1024836f575cebb2e1b5f7337a73f4d2a539e",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "af083bc237d5448e060e76ce9cbbceabe9a1c087c7ff137407d199f5c4288d35",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "b31b93401b13eb5b9fd61f1e8a0c5365697c3d383cfd27d49d99c626bac74820",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "bd384235ced62afd0a4c333c6800e7dc9e0e6ee62028ea7c8e0a90acca9cfc52",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "c60525f72991a056bc05c781ed852f5a2dbab854f0e40ae6f2197fb4c0739f6d",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "c96a293edc03df82b8ebb48c0bfa29c0024e96f8feaa379c24ea836ad0e603ca",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "d25ec15a1cde00027d5a885d5148424e18267e9fb6fbf0044e23eb104248aae5",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "d324cbf4bd4afaeda42aad2e70b4debe2d3c74039f8c23ff31284755bcf7021e",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "dfdc1e9154cba2a0a9799f8d4eb9ce378b5a10228623340a0146d86452a0536a",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "e09b70c88725bdb6f492a727d2d65d6c79ca88a37b693c457c7996046af3cf66",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "ed7f84541d0f1cb7b46aac657eebd97e3bf007da93a815041cdcc78917a3e0cc",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "ef05e4e85a816e0ea1cd8bd439495e7e3b68f2fb828d0ef10108ea58d5e93200",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "f259f4c9580e40cc67ca178dfac8b46dfd9129147146a6c684bdb8cb656c3ea8",
+            "class": "missing",
+            "rule": "E1"
+          },
+          {
+            "check_id": "f7992bad9ba0ee8ec2ae7eb3661b49e4c9e0607323993aa79c2431f965e2a80c",
+            "class": "missing",
+            "rule": "E1"
+          }
+        ],
+        "new": [
+          "11a725c1bb42d690e71b102310fb27b463d8b11b4eedae07d06296d3c12819ff",
+          "1fb8e6965810606292e22338f844141fa8097198462963047741ed3c61e54001",
+          "20059c1619244c1ab00820b1514309e4f14445cac80b473c0f91e1198982f99e",
+          "21082e451dede045c904bb7767290427755b017233af5f3426ec023147b77c2b",
+          "24a8af63171cb82d5655c111e8e4480849edbc3d472376dbdad8724b391e91e7",
+          "270c4c43c84525851e3646a6ec588c632c08e2cd2de87c804ecabb5418d7aa35",
+          "3549741a43f68ece3d93d8d7c9aa1762120823fe97ab3e1f04e9fd04aa5081fa",
+          "44ea66465768f919d9426977534957bf172835eda09ef1c0f63f4f202ceffb05",
+          "47738b0e399f888e265d7cb951475e66c0e99c93bb70b062e5091ab9f8d991ef",
+          "4b706a089b7a8c7601c0d50d1e1c9c47cd8635faf1334225b0a70b1f3bc81031",
+          "4c743b75739bb0fdf5d1a7db8f608e8b6878de0610f7aaf44d9886a0a0c6c777",
+          "4f7aa1fa7be749c66667dedddb8c051838018a2362224df68de89f0f4c3a5f9f",
+          "56b5e3b8176925a05196495b03ee058f0bbdf0381a4dfa86d396be4f11c31b1f",
+          "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d",
+          "71419728f22ff646bbedd2b64e9be4210905fefc8aef50c09e6ef860912718fe",
+          "7f5bed2ff16e3a8325191d14268cdd9a1388bf90ab63b368ee895a6a4cbf8ea1",
+          "8c4cb2919c964946af308a8f2cae75a1d0ff5f0fe606cea95b2f466fe5fbd84b",
+          "9623eb5a406665080cc0129a9343999df5edb20e0fff534403e6de500e3d522b",
+          "963c1e2a3a08632079188934de4afbc9c812ea5ffb8e68aa0438ea0146233fca",
+          "a493349a773343813d0d6cf91bbfc96bb391d1dc432475ff3ca49df5414d9d3d",
+          "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96",
+          "c8a6dbe6010de627146af40d18cfe1a9d7aeca76582b3dcacb4b4e6babf4dded",
+          "cb3a5f752c37a4168fea870c44c67f3163164ffccbd78de2d98716935f2db707",
+          "d11ed313b976d3e5e993eb643ef27ed42684e4117d3928ae20187a649ad15fa7",
+          "d65cc1fe00837294339d19e0cabeeaebd65ce02d0606cf3bb69f4d335606dfc9",
+          "d6dc3cd95c0be6e70be785de622873725766581e73375324438490c5b3319577",
+          "f219a323acc8fde487fe7ba43951b83bb999ead817dfda45652a0c0180fcd187",
+          "f2f92c3000ed74020d0edce6a385bc4a7dce9bb9851627e0bc8fc472624d2c14",
+          "f76d3dab8d69a4d3b36579175b6a388dfcd08da22946a8711d6e8708d3b2bbcc"
+        ]
+      },
+      "set_aside": [],
+      "earlier_pools": [],
+      "anchor": null
+    }
+  }
+}

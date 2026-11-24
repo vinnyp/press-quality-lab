@@ -594,6 +594,60 @@
           ]
         }
       ]
+    },
+    {
+      "name": "count agreement",
+      "steps": [
+        {
+          "name": "first",
+          "words": [
+            "list",
+            "--json"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "execution",
+              "predicate": "exit_code",
+              "path": null,
+              "expected": {
+                "literal": 0
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        },
+        {
+          "name": "second",
+          "words": [
+            "count"
+          ],
+          "budget_seconds": 30,
+          "checks": [
+            {
+              "dimension": "response-correctness",
+              "predicate": "json_path_equals",
+              "path": "/count",
+              "expected": {
+                "computation": {
+                  "argv": [
+                    "computations/count-capture.sh",
+                    "{CAPTURE:first}"
+                  ],
+                  "budget_seconds": 5,
+                  "declared_files": [],
+                  "captures": [
+                    "first"
+                  ]
+                }
+              },
+              "precondition": null,
+              "exit_codes": null
+            }
+          ]
+        }
+      ]
     }
   ],
   "markers": [],

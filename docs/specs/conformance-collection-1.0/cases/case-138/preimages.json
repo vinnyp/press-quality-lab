@@ -1,0 +1,991 @@
+{
+  "122f028ffebd8b7c48c44e0a8ea873587328a0e2618af5bd0d3adcc14696cdea": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "completeness-signaling",
+    "earlier": [
+      "44122f2fb547f94727584207b141f98f0bd51c3ef65b45f9f51454f00b5d3cb9",
+      "f43403d97e915c5d552f18fd8d757999edaa15566568e05a4082e6e69a678fa9",
+      "56a676614bea9305ed63ced07df1679d4540abe9ae0d8690ecce369430b6802f",
+      "3649968e80d3c2015487c2c685f336dffccb561c726492b03bab3ee36f5fc418",
+      "c4683bb6e7782589396dbe311c1516708759ddb299c872e0fef608e4a0074dd7",
+      "fac33e5b75e6c8a146440e623c681b2eb83382ec7368acc32385517b50b3eb30"
+    ],
+    "env": {},
+    "expected": {
+      "literal": true,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/truncated",
+    "predicate": "json_path_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list limited",
+    "store": null,
+    "words": [
+      "list",
+      "--json",
+      "--limit",
+      "2"
+    ]
+  },
+  "1691b2884d40fb2db35752ac7e3b10c9a04d5138bbc41d2b94420d4281f0a71d": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 65536
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "list"
+    ]
+  },
+  "1debcdc4d443488b2f46d8200997fd08f5e3e32b4678b1c258d40ac5a270755c": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "account"
+    ]
+  },
+  "2200b5ee6d6fbb8cf3dfce63c5755b631d1c9b19d487e5f037c57d579f0bf387": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": null,
+    "dimension": "pii-secret-hygiene",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "commands": [
+        {
+          "budget_seconds": 30,
+          "env": {},
+          "offline_args": [
+            "--offline"
+          ],
+          "words": [
+            "account"
+          ]
+        }
+      ],
+      "kind": "credential",
+      "path": ".config/widgets/token",
+      "text_sha256": "d2ea444a8905d8d4d040c5770edcd4a576b858fe4b357ff9e277241dea36261b"
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "planted_secret",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": null
+  },
+  "288bff3cc4895d34f5fdaa1e4d9607d87c0b37f614fa9c2b9d103197cf96e1a3": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "graceful-failure",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 2,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "unknown flag",
+    "store": null,
+    "words": [
+      "list",
+      "--bogus"
+    ]
+  },
+  "2e7d4b8d60103830be033b8078b3e406546b52208b15abcf5bcf4396c465b6b9": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "count"
+    ]
+  },
+  "3636afdf734c691461f39e33b3a54b1c125ed41e39053764fdb288f52dd8ae19": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "account"
+    ]
+  },
+  "3649968e80d3c2015487c2c685f336dffccb561c726492b03bab3ee36f5fc418": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "provenance-honesty",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": "local",
+      "precondition": null
+    },
+    "index": 3,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/source",
+    "predicate": "json_path_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": null,
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "3e8fc9792c3c493f501b312284071c1b037459cb01f80c6dfab47e1f3b068cc1": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 0,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "add once",
+    "store": null,
+    "words": [
+      "add",
+      "sprocket",
+      "--tag",
+      "steel"
+    ]
+  },
+  "436eab7f9e5ae45b24a7d5c381a8887dfd3f072760f7e46fde418bc77d3e8bea": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": []
+  },
+  "44122f2fb547f94727584207b141f98f0bd51c3ef65b45f9f51454f00b5d3cb9": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "output-conformance",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": null,
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "56a676614bea9305ed63ced07df1679d4540abe9ae0d8690ecce369430b6802f": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "response-correctness",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "computation": {
+        "argv": [
+          "computations/count.sh",
+          "{SEED}/data.json"
+        ],
+        "budget_seconds": 10,
+        "captures": [],
+        "files": {
+          "computations/count.sh": "163f715d8a0aa56d5eb5eb64655df138e12ae4d9b1cf559d4aeae73484e2a394"
+        }
+      },
+      "precondition": null
+    },
+    "index": 2,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": null,
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "5cd368ee6f00b4e3c78030620a96cb817b2ab0e86efb99cc08aaef43b19dd07e": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": []
+  },
+  "5e483db733b33b6da324fac42d649b323afacd1110771a2657c38e357da9badd": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "idempotency",
+    "earlier": [
+      "3e8fc9792c3c493f501b312284071c1b037459cb01f80c6dfab47e1f3b068cc1",
+      "a590a0123890225750f608cf1583f6eec028356163f3896f041fc0890b8909b2"
+    ],
+    "env": {},
+    "expected": {
+      "computation": {
+        "argv": [
+          "computations/count-after-add.sh",
+          "{SEED}/data.json",
+          "sprocket"
+        ],
+        "budget_seconds": 10,
+        "captures": [],
+        "files": {
+          "computations/count-after-add.sh": "ddccb3eda4207ffed75ae5b29cff3fd3e63dd9168e007560da9b0abf19767e67"
+        }
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "count after",
+    "store": null,
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "6bf5f514b7a7a165626d35eeabb57533b0f85e9de6fb0a6fc88543dbac9165cb": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": []
+  },
+  "74e03d32fa986fe9ea2cf0d2ad5e011ebe7ce74c69b779dade0da3c601212387": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": null,
+    "dimension": "discoverability",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "commands": [
+        [
+          "account"
+        ],
+        [
+          "add"
+        ],
+        [
+          "count"
+        ],
+        [
+          "list"
+        ],
+        [
+          "remove"
+        ]
+      ],
+      "declared_count": 5
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "discovery",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": null
+  },
+  "845c5ea02e792ee8672abdbdb3bca3be3624762e2431e3b2c479eb43b724925f": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "account"
+    ]
+  },
+  "8961d1110698ffcecc239426c4f546991b4a2ce3670045ac970327682e10e3a8": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "bounding",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "bound": 4096
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "byte_bound",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "count"
+    ]
+  },
+  "a590a0123890225750f608cf1583f6eec028356163f3896f041fc0890b8909b2": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [
+      "3e8fc9792c3c493f501b312284071c1b037459cb01f80c6dfab47e1f3b068cc1"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 0,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "add twice",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "add again",
+    "store": null,
+    "words": [
+      "add",
+      "sprocket",
+      "--tag",
+      "steel"
+    ]
+  },
+  "c4683bb6e7782589396dbe311c1516708759ddb299c872e0fef608e4a0074dd7": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "token-economy",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 4096,
+      "precondition": null
+    },
+    "index": 4,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_bytes_at_most",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": null,
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "c6c60ae1cc9399a617acbd4fad59f5b0430c9dfe41af72cc6f3c9942dc41e19c": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 10,
+    "dimension": "availability",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "bare",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": []
+  },
+  "c8ddfb57a02c5bcd98ff13889311906e3d229442acb4451b5c1eb0185208f2f2": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "error-message-quality",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": "--bogus",
+      "precondition": null
+    },
+    "index": 1,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        2
+      ]
+    },
+    "path": null,
+    "predicate": "stderr_contains",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "unknown flag",
+    "store": null,
+    "words": [
+      "list",
+      "--bogus"
+    ]
+  },
+  "c933130c436e1a4a705c8167498123df628ede2742f3b2c43003eaf661dc5e93": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "flag-conformance",
+    "earlier": [
+      "44122f2fb547f94727584207b141f98f0bd51c3ef65b45f9f51454f00b5d3cb9",
+      "f43403d97e915c5d552f18fd8d757999edaa15566568e05a4082e6e69a678fa9",
+      "56a676614bea9305ed63ced07df1679d4540abe9ae0d8690ecce369430b6802f",
+      "3649968e80d3c2015487c2c685f336dffccb561c726492b03bab3ee36f5fc418",
+      "c4683bb6e7782589396dbe311c1516708759ddb299c872e0fef608e4a0074dd7",
+      "fac33e5b75e6c8a146440e623c681b2eb83382ec7368acc32385517b50b3eb30",
+      "122f028ffebd8b7c48c44e0a8ea873587328a0e2618af5bd0d3adcc14696cdea"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 1,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/widgets",
+    "predicate": "row_count",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list by tag",
+    "store": null,
+    "words": [
+      "list",
+      "--json",
+      "--tag",
+      "brass"
+    ]
+  },
+  "cc8cdfa698dd15b975ec70741bb30296de47974c6dc06281dc782e7485a094b0": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": [
+        0
+      ]
+    },
+    "path": null,
+    "predicate": null,
+    "probe": "exit_codes",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "list"
+    ]
+  },
+  "da97f2dded454ba820cb9e4e6fcc6121f458ea133363d9d33152854b7c7ab5ed": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "list"
+    ]
+  },
+  "e61545d89e78388af30c2ec867f52ca2a7a8e9814ad4e438bf34cb961a722c6a": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "side-effect-integrity",
+    "earlier": [],
+    "env": {},
+    "expected": null,
+    "index": null,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {},
+    "path": null,
+    "predicate": null,
+    "probe": "store_unchanged",
+    "runbook": null,
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": null,
+    "store": null,
+    "words": [
+      "count"
+    ]
+  },
+  "f43403d97e915c5d552f18fd8d757999edaa15566568e05a4082e6e69a678fa9": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "determinism",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 1,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all",
+    "store": null,
+    "words": [
+      "list",
+      "--json"
+    ]
+  },
+  "f8ed7c2f21b71ae0009e08c4cd2217234035362370fa689379e96a988d265b63": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "robustness",
+    "earlier": [
+      "288bff3cc4895d34f5fdaa1e4d9607d87c0b37f614fa9c2b9d103197cf96e1a3",
+      "c8ddfb57a02c5bcd98ff13889311906e3d229442acb4451b5c1eb0185208f2f2"
+    ],
+    "env": {},
+    "expected": {
+      "literal": 2,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "errors",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "bad limit",
+    "store": null,
+    "words": [
+      "list",
+      "--limit",
+      "zero"
+    ]
+  },
+  "fac33e5b75e6c8a146440e623c681b2eb83382ec7368acc32385517b50b3eb30": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "determinism",
+    "earlier": [
+      "44122f2fb547f94727584207b141f98f0bd51c3ef65b45f9f51454f00b5d3cb9",
+      "f43403d97e915c5d552f18fd8d757999edaa15566568e05a4082e6e69a678fa9",
+      "56a676614bea9305ed63ced07df1679d4540abe9ae0d8690ecce369430b6802f",
+      "3649968e80d3c2015487c2c685f336dffccb561c726492b03bab3ee36f5fc418",
+      "c4683bb6e7782589396dbe311c1516708759ddb299c872e0fef608e4a0074dd7"
+    ],
+    "env": {},
+    "expected": {
+      "literal": {
+        "source": "local",
+        "truncated": false,
+        "widgets": [
+          {
+            "name": "gear",
+            "tag": "metal"
+          },
+          {
+            "name": "spring",
+            "tag": "metal"
+          },
+          {
+            "name": "valve",
+            "tag": "brass"
+          }
+        ]
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "stdout_json_equals",
+    "probe": null,
+    "runbook": "read",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "list all again",
+    "store": null,
+    "words": [
+      "list",
+      "--json"
+    ]
+  }
+}

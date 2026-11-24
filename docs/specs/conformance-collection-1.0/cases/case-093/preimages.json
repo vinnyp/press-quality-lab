@@ -528,6 +528,51 @@
       "--json"
     ]
   },
+  "605408445adf852f88e05ffc8cfd9e27dc32d5fe7958bdbef90950ab246322bb": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "response-correctness",
+    "earlier": [
+      "b684c078c880a820f40663672c9043010541cfa7e6ce96e44c5a0c40f832dede"
+    ],
+    "env": {},
+    "expected": {
+      "computation": {
+        "argv": [
+          "computations/count-capture.sh",
+          "{CAPTURE:first}"
+        ],
+        "budget_seconds": 5,
+        "captures": [
+          "first"
+        ],
+        "files": {
+          "computations/count-capture.sh": "142d9ac205652539d1c90ae62161d19ef42040f0243f42543fd4b2aefd3b8f47"
+        }
+      },
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": "/count",
+    "predicate": "json_path_equals",
+    "probe": null,
+    "runbook": "count agreement",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "second",
+    "store": "data.json",
+    "words": [
+      "count"
+    ]
+  },
   "650ab5cfc403ac6a87799e3bf9f11bea0fceb7891c63a1c39f1f50956963359d": {
     "bookkeeping": [
       ".local/state/widgets"
@@ -754,6 +799,38 @@
     "store": "data.json",
     "words": [
       "account"
+    ]
+  },
+  "b684c078c880a820f40663672c9043010541cfa7e6ce96e44c5a0c40f832dede": {
+    "bookkeeping": [
+      ".local/state/widgets"
+    ],
+    "budget_seconds": 30,
+    "dimension": "execution",
+    "earlier": [],
+    "env": {},
+    "expected": {
+      "literal": 0,
+      "precondition": null
+    },
+    "index": 0,
+    "offline_args": [
+      "--offline"
+    ],
+    "parameters": {
+      "exit_codes": null
+    },
+    "path": null,
+    "predicate": "exit_code",
+    "probe": null,
+    "runbook": "count agreement",
+    "scheme": "pql-check-id-1",
+    "seed": "65e8f77d306e65bda7cc68c9abc7c70fe259b42e04e822b18dd74a1013205812",
+    "step": "first",
+    "store": "data.json",
+    "words": [
+      "list",
+      "--json"
     ]
   },
   "bfa633203a199ce46ea98fb6a9d49ed559ebe0bdf59087a841b014b043455d96": {
