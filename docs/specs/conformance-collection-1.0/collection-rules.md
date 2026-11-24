@@ -176,7 +176,7 @@ QS5's override of an otherwise held check comes last of all.
 - **QD2. How help is asked.**
   - **The request.** Discovery asks the binary for help with exactly one form, `<command words> --help`, starting from the bare binary and descending into each command it lists.
   - **Its run.** Each request runs under the subject's full confinement, in a throwaway home that starts empty whatever the seed, with no offline setting and no other argument (QS7). Each has a budget of 10 seconds.
-  - **What is read.** Help output is read from standard output, and from standard error when standard output is empty. How a command list is read is as §5 of `credit-and-routes.md` says.
+  - **What is read.** Help output is read from standard output, and from standard error when standard output is empty. How a command list is read is as §5 of `credit-and-routes.md` says. A help request that ran lists the commands its output names whatever its exit code, so the walk descends below it (QO7); only a request that did not run or could not start lists none (QE8).
   - **A leaf.** A help that exits 0 and lists no command section belongs to a leaf command.
   - **What is counted.** Every listed command at every level counts, a command that has commands of its own included. The commands `help` and `completion`, and any command the help marks as hidden, are left out.
   - **Order.** Help requests are made, and numbered as targets (QE8), depth first, each command's children in the order its help lists them. A command left out of the count is never asked for help.
@@ -285,7 +285,7 @@ QS5's override of an otherwise held check comes last of all.
     - its invocation's time budget is the step's `budget_seconds`, and QO4 decides a step that times out;
     - its checks all judge that one invocation.
   - **Shared state.** All steps share one throwaway home holding one copy of the seed.
-  - **After a failure.** A step is not held when any of its checks is not held or not observed. Every check of every later step is not observed with `earlier_step_failed` (R33).
+  - **After a failure.** A step is not held when any of its checks is not held or not observed. Every check of every later step is not observed with `earlier_step_failed` (R33). QS5's last override of an otherwise held check comes after every runbook has run, so it stops no runbook.
 - **QA8. The destructive-refusal check.** The check that a destructive command refuses without its confirmation is authored, and runs only in a scope that includes `destructive` (R12).
 - **QA9. Predicates.** An authored check uses one of these predicates on its step's invocation. Every predicate reads the invocation's drained bytes, never the text decoded for the record (QE10).
 
