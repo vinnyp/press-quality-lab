@@ -260,3 +260,66 @@ with tempfile.TemporaryDirectory(prefix="pql-id-controls-") as temporary:
     evidence["targets"][0]["id"] = digest
     save_ids()
     cross_run(0, "1 judge-checked")
+
+# Blind exports preserve inputs but must reveal injected oracle material.
+with tempfile.TemporaryDirectory(prefix="pql-export-controls-") as temporary:
+    root = Path(temporary)
+    exporter = guard_script.with_name("collection-export.py")
+    scratch_cases = root / "cases"
+    directory = scratch_cases / "case-001"
+    shutil.copytree(source / "cases/case-001", directory)
+
+    def export_run(*arguments, expected=0, message=""):
+        result = subprocess.run(
+            ["python3", "-I", str(exporter), "--kit", str(source),
+             "--cases", str(scratch_cases), *map(str, arguments)],
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+            capture_output=True, text=True, timeout=60, check=False,
+        )
+        if result.returncode != expected or message not in result.stdout + result.stderr:
+            raise RuntimeError("export control: " + result.stdout + result.stderr)
+        return result
+
+    first = root / "first"
+    second = root / "second"
+    export_run("--out", first, "--map", root / "first-map.json")
+    export_run("--out", second, "--map", root / "second-map.json")
+
+    def snapshot(path):
+        return {str(p.relative_to(path)): p.read_bytes() if p.is_file() else None
+                for p in path.rglob("*")}
+
+    if snapshot(first) != snapshot(second) or (root / "first-map.json").read_bytes() != (root / "second-map.json").read_bytes():
+        raise RuntimeError("export control: repeated exports differ")
+    print("export control: repeated exports are byte-identical")
+    export_run("--check", first)
+    export_run("--out", first, "--map", root / "unused-map.json", expected=2, message="--out must not exist")
+    print("export control: existing output refused")
+    export_run("--out", root / "inside", "--map", root / "inside/map.json", expected=2, message="--map must not lie inside --out")
+    if (root / "inside").exists():
+        raise RuntimeError("export control: refused map created output")
+    print("export control: map inside output refused")
+
+    subject = directory / "subject.json"
+    original = subject.read_bytes()
+    record = json.loads((directory / "input.json").read_text())
+    check_id = record["required"][0]["id"]
+    for label, token, finding in (("rule", "QS12345", "rule id"), ("check", check_id, "check id")):
+        subject.write_bytes(original + token.encode() + b"\n")
+        output = root / label
+        export_run("--out", output, "--map", root / (label + "-map.json"))
+        export_run("--check", output, expected=1, message=finding)
+        subject.write_bytes(original)
+        print("export control: injected " + finding + " found in copied subject")
+
+    recording_path = next((first / "behaviour").glob("*.json"))
+    recording = json.loads(recording_path.read_text())
+    recording["export_control"] = "could_not_start"
+    recording_path.write_text(json.dumps(recording))
+    export_run("--check", first, expected=1, message="result word in JSON: could_not_start")
+    print("export control: result word in recording string value found")
+    del recording["export_control"]
+    recording["form"] = json.loads((directory / "case.json").read_text())["input"]["form"]
+    recording_path.write_text(json.dumps(recording))
+    export_run("--check", first, expected=1, message="form name in JSON")
+    print("export control: original form in recording found")

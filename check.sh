@@ -62,4 +62,12 @@ if [[ -d docs/specs/conformance-collection-1.0/cases ]]; then
 else
  echo 'no cases yet'
 fi
+step export 'export blind collection inputs and check for leaks'
+(
+ export_tmp=$(mktemp -d "${TMPDIR:-/tmp}/pql-export.XXXXXX")
+ trap 'rm -rf "$export_tmp"' EXIT
+ kit=docs/specs/conformance-collection-1.0
+ PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/collection-export.py --kit "$kit" --cases "$kit/cases" --out "$export_tmp/out" --map "$export_tmp/map.json"
+ PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/collection-export.py --check "$export_tmp/out" --cases "$kit/cases" --kit "$kit"
+)
 echo 'CHECK PASSED'
