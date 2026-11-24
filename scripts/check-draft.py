@@ -1,4 +1,5 @@
 """Witness the unsealed runner's refusal and banner in an isolated copy."""
+import json
 import os
 from pathlib import Path
 import shutil
@@ -42,4 +43,12 @@ with tempfile.TemporaryDirectory(prefix="pql-draft-controls-") as temporary:
         raise RuntimeError(normal.stderr)
     if not normal.stdout.startswith("UNSEALED\n"):
         raise RuntimeError("missing first-line banner")
+    invalid = root / "examples/invalid/subject-file-QP10-01.json"
+    repaired = json.loads(invalid.read_text())
+    repaired["secret"]["reason"] = "Reading the seeded token proves the file was read."
+    invalid.write_text(json.dumps(repaired) + "\n")
+    accepted = run()
+    if accepted.returncode != 1 or "accepted invalid example: subject-file-QP10-01.json" not in accepted.stderr:
+        raise RuntimeError("draft accepted a valid negative fixture: " + str(accepted.returncode) + " " + accepted.stderr)
+print("draft controls: repaired invalid example refused")
 print("draft controls: regular seal refused; dangling seal refused; UNSEALED first")

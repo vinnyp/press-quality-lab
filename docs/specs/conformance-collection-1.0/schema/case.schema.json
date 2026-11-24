@@ -8,9 +8,12 @@
     "id",
     "rules",
     "kind",
-    "entry",
     "expect",
-    "twin"
+    "twin",
+    "input",
+    "named_check",
+    "invocations",
+    "covers"
   ],
   "properties": {
     "id": {
@@ -23,7 +26,8 @@
       "items": {
         "type": "string",
         "pattern": "^Q[SHODPAET][0-9]+$"
-      }
+      },
+      "uniqueItems": true
     },
     "kind": {
       "enum": [
@@ -31,7 +35,24 @@
         "derivation-only"
       ]
     },
-    "entry": {
+    "expect": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/judge_expect"
+        },
+        {
+          "$ref": "#/$defs/derivation_expect"
+        }
+      ]
+    },
+    "twin": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^case-[0-9]{3}$"
+    },
+    "input": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -40,7 +61,9 @@
         "scope",
         "form",
         "baseline",
-        "fixtures"
+        "fixtures",
+        "verifier",
+        "host"
       ],
       "properties": {
         "subject_file": {
@@ -67,7 +90,7 @@
         },
         "form": {
           "type": "string",
-          "minLength": 1
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
         },
         "baseline": {
           "type": [
@@ -107,18 +130,187 @@
               }
             }
           }
+        },
+        "verifier": {
+          "enum": [
+            "real",
+            "scripted"
+          ]
+        },
+        "host": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/host"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "verifier": {
+            "const": "scripted"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "host": {
+            "$ref": "#/$defs/host"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "host": {
+            "type": "null"
+          }
         }
       }
     },
-    "expect": {
+    "named_check": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "invocations": {
+      "type": "array",
+      "items": {
+        "$ref": "behaviour.schema.json#/$defs/key"
+      }
+    },
+    "covers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?:route:availability|route:execution|route:graceful-failure|route:robustness|route:response-correctness|route:determinism|route:provenance-honesty|route:completeness-signaling|route:output-conformance|route:flag-conformance|route:bounding|route:discoverability|route:error-message-quality|route:token-economy|route:side-effect-integrity|route:idempotency|route:destructive-guard|route:pii-secret-hygiene|credit:graceful-failure:holds|credit:graceful-failure:fails|credit:determinism:holds|credit:determinism:fails|credit:output-conformance:holds|credit:output-conformance:fails|credit:error-message-quality:holds|credit:error-message-quality:fails|credit:token-economy:holds|credit:token-economy:fails|credit:idempotency:holds|credit:idempotency:fails|credit:destructive-guard:holds|credit:destructive-guard:fails|encoding:plain|encoding:base64|encoding:base64-nopad|encoding:base64url|encoding:base64url-nopad|encoding:hex-lower|encoding:hex-upper|encoding:percent|help:cobra|help:urfave-cli|help:clap|predicate:exit_code|predicate:stdout_equals|predicate:stdout_json_equals|predicate:stdout_contains|predicate:stdout_not_contains|predicate:stderr_contains|predicate:stdout_bytes_at_most|predicate:json_path_equals|predicate:row_count|predicate:stdout_empty|order:QO1>QS5|order:QS5>QD4|order:QD4>QA7|order:QA7>QH8|order:QH8>QA6|order:QA6>QO2|order:QO2>QO3|order:QO3>QO4|order:QO4>QO5)$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "confinement",
+        "self_test",
+        "known_fast",
+        "read_calibration",
+        "store_control",
+        "read_control",
+        "private_copy",
+        "kill_attribution"
+      ],
+      "properties": {
+        "confinement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "applied",
+                "sandbox_exec_exit"
+              ],
+              "properties": {
+                "applied": {
+                  "const": true
+                },
+                "sandbox_exec_exit": {
+                  "type": "null"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "applied",
+                "sandbox_exec_exit"
+              ],
+              "properties": {
+                "applied": {
+                  "const": false
+                },
+                "sandbox_exec_exit": {
+                  "type": "integer"
+                }
+              }
+            }
+          ]
+        },
+        "self_test": {
+          "enum": [
+            "passed",
+            "failed"
+          ]
+        },
+        "known_fast": {
+          "enum": [
+            "within",
+            "over"
+          ]
+        },
+        "read_calibration": {
+          "enum": [
+            "moved",
+            "not_moved"
+          ]
+        },
+        "store_control": {
+          "enum": [
+            "detected",
+            "not_detected"
+          ]
+        },
+        "read_control": {
+          "enum": [
+            "killed",
+            "not_killed"
+          ]
+        },
+        "private_copy": {
+          "enum": [
+            "unchanged",
+            "changed"
+          ]
+        },
+        "kill_attribution": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "invocation",
+              "by"
+            ],
+            "properties": {
+              "invocation": {
+                "$ref": "behaviour.schema.json#/$defs/key"
+              },
+              "by": {
+                "enum": [
+                  "memory",
+                  "code_signing",
+                  "other_process"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "judge_expect": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "exit_code",
-        "judge_output",
-        "reason"
+        "judge_output"
       ],
-      "description": "For judge-checked, the judge's output and exit code; for derivation-only, the engine's exit code and the reason it states.",
       "properties": {
         "exit_code": {
           "enum": [
@@ -133,30 +325,56 @@
           ]
         },
         "judge_output": {
-          "oneOf": [
-            {
-              "$ref": "judge-output.schema.json"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "reason": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "maxLength": 4096
+          "$ref": "judge-output.schema.json"
         }
       }
     },
-    "twin": {
-      "type": [
-        "string",
-        "null"
+    "derivation_expect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exit_code",
+        "rule"
       ],
-      "pattern": "^case-[0-9]{3}$"
+      "properties": {
+        "exit_code": {
+          "enum": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            64,
+            70
+          ]
+        },
+        "rule": {
+          "type": "string",
+          "pattern": "^Q[SHODPAET][0-9]+$"
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "kind": {
+        "const": "judge-checked"
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "expect": {
+        "$ref": "#/$defs/judge_expect"
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "expect": {
+        "$ref": "#/$defs/derivation_expect"
+      }
     }
   }
 }

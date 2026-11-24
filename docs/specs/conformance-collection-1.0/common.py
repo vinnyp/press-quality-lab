@@ -720,7 +720,48 @@ def draft(root):
         ("schema/subject-file.schema.json", "/properties/secret/oneOf/2/then"),
     }
 
+    # Conditional fragments refine objects closed and required at their owning site.
+    fragments.update({
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home/properties/changes/items/if'),
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home/properties/changes/items/then'),
+        ('schema/behaviour.schema.json', '/$defs/run/properties/home/properties/changes/items/else'),
+        ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/if'),
+        ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/then'),
+        ('schema/behaviour.schema.json', '/$defs/end/oneOf/1/else'),
+        ('schema/behaviour.schema.json', '/if'),
+        ('schema/behaviour.schema.json', '/then'),
+        ('schema/behaviour.schema.json', '/then/properties/invocations/items'),
+        ('schema/behaviour.schema.json', '/else'),
+        ('schema/behaviour.schema.json', '/else/properties/invocations/items'),
+        ('schema/case.schema.json', '/properties/input/if'),
+        ('schema/case.schema.json', '/properties/input/then'),
+        ('schema/case.schema.json', '/properties/input/else'),
+        ('schema/case.schema.json', '/if'),
+        ('schema/case.schema.json', '/then'),
+        ('schema/case.schema.json', '/else'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/0/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/0/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/1/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/1/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/2/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/2/then/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/2/then/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/2/then/else'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/then/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/then/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/then/else'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/3/then/else/properties/parameters/allOf/1'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/4/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/4/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/5/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/5/then'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/6/if'),
+        ('schema/baseline.schema.json', '/properties/preimages/additionalProperties/allOf/6/then'),
+    })
+
     arbitrary_values = {
+            ("schema/behaviour.schema.json", "/$defs/run/properties/printed_value"),
             ("schema/subject-file.schema.json", "/$defs/expected/oneOf/0/properties/literal"),
             ("schema/baseline.schema.json", "/properties/preimages/additionalProperties/properties/expected/oneOf/1/properties/literal"),
         }
@@ -758,9 +799,9 @@ def draft(root):
             if node.get("type") == "object" or "properties" in node:
                 if site not in open_objects | fragments and node.get("additionalProperties") is not False:
                     raise Error(f"open object: {name} {path}")
-                optional = {"detail"} if site == ("schema/case.schema.json", "/properties/entry/properties/fixtures/items") else set()
+                optional = {"detail"} if site == ("schema/case.schema.json", "/properties/input/properties/fixtures/items") else set()
                 if site in fragments:
-                    optional = {"kind"} if path.endswith("/if") else {"reason"}
+                    optional = set(node.get("properties", {}))
                 missing = set(node.get("properties", {})) - set(node.get("required", [])) - optional
                 if missing:
                     raise Error(f"properties not required: {name} {path}: {sorted(missing)}")
@@ -909,11 +950,26 @@ def draft(root):
     seen = set()
     if not examples:
         raise Error("no examples")
+    invalid_rejected = 0
     for path in examples:
+        if path.name == "invalid":
+            if not path.is_dir():
+                raise Error("invalid examples is not a directory")
+            for invalid in sorted(path.iterdir()):
+                match = re.fullmatch(r"(subject-file|record|baseline|case|behaviour)-(Q[SHODPAET][0-9]+)-[0-9]{2}\.json", invalid.name)
+                if not match or not invalid.is_file():
+                    raise Error("unexpected invalid example: " + invalid.name)
+                schema, uri = schemas["schema/" + match[1] + ".schema.json"]
+                document = load(read(invalid))
+                if validator(schema, registry.resolver(uri)).is_valid(document):
+                    failures.append("accepted invalid example: " + invalid.name)
+                else:
+                    invalid_rejected += 1
+            continue
         if path.name == "subject-file.json":
             name = "subject-file.schema.json"
         else:
-            match = re.fullmatch(r"(subject-file|record|baseline|case)-[0-9]{2}\.json", path.name)
+            match = re.fullmatch(r"(subject-file|record|baseline|case|behaviour)-[0-9]{2}\.json", path.name)
             if not match:
                 raise Error("unexpected example: " + path.name)
             name = match[1] + ".schema.json"
@@ -987,6 +1043,7 @@ def draft(root):
     unreached = sorted(schema_sites - reached)
     for name, pointer in unreached:
         failures.append(f"unreached subschema: {name} {pointer}")
+    print(f"invalid examples: rejected={invalid_rejected}")
     print(f"coverage: reached={len(schema_sites & reached)} total={len(schema_sites)} unreached={len(unreached)}")
     for kind, count in counts.items():
         print(f"{kind}: made={count['made']} rejected={count['rejected']}; " + "; ".join(f"{why}={n}" for why, n in sorted(count.items()) if why.startswith("skipped:")))

@@ -5,29 +5,7 @@
     "QP11",
     "QO7"
   ],
-  "kind": "derivation-only",
-  "entry": {
-    "subject_file": "subject.json",
-    "request": "anchor",
-    "scope": [
-      "conformance",
-      "destructive"
-    ],
-    "form": "the listed secret command never opens the planted file",
-    "baseline": "baseline.json",
-    "fixtures": [
-      {
-        "kind": "planted_secret",
-        "path": ".config/widgets/token",
-        "detail": "the token appears once"
-      },
-      {
-        "kind": "oversized_output",
-        "path": "stdout",
-        "detail": null
-      }
-    ]
-  },
+  "kind": "judge-checked",
   "expect": {
     "exit_code": 4,
     "judge_output": {
@@ -305,8 +283,91 @@
         "sub_label": "gaps",
         "token": "PROVISIONAL"
       }
-    },
-    "reason": "input_missing"
+    }
   },
-  "twin": "case-001"
+  "twin": "case-001",
+  "input": {
+    "subject_file": "subject.json",
+    "request": "grade",
+    "scope": [
+      "conformance"
+    ],
+    "form": "secret-unread",
+    "baseline": "baseline.json",
+    "fixtures": [
+      {
+        "kind": "planted_secret",
+        "path": ".config/widgets/token",
+        "detail": "the token appears once"
+      },
+      {
+        "kind": "oversized_output",
+        "path": "stdout",
+        "detail": null
+      }
+    ],
+    "verifier": "scripted",
+    "host": {
+      "confinement": {
+        "applied": true,
+        "sandbox_exec_exit": null
+      },
+      "self_test": "passed",
+      "known_fast": "within",
+      "read_calibration": "moved",
+      "store_control": "detected",
+      "read_control": "killed",
+      "private_copy": "unchanged",
+      "kill_attribution": [
+        {
+          "invocation": {
+            "words": [
+              "list"
+            ],
+            "offline_args": [
+              "--offline"
+            ],
+            "env": [
+              "WIDGETS_OFFLINE"
+            ],
+            "runbook": null,
+            "step": null,
+            "computation": null
+          },
+          "by": "memory"
+        }
+      ]
+    }
+  },
+  "named_check": null,
+  "invocations": [
+    {
+      "words": [
+        "list"
+      ],
+      "offline_args": [
+        "--offline"
+      ],
+      "env": [
+        "WIDGETS_OFFLINE"
+      ],
+      "runbook": null,
+      "step": null,
+      "computation": null
+    },
+    {
+      "words": null,
+      "offline_args": [],
+      "env": [],
+      "runbook": "widgets",
+      "step": "list",
+      "computation": [
+        "/usr/bin/true",
+        "{SEED}/data.json"
+      ]
+    }
+  ],
+  "covers": [
+    "route:pii-secret-hygiene"
+  ]
 }
