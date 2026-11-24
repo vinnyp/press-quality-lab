@@ -62,7 +62,7 @@
 - **QS5. Placeholders.** A value the author has not supplied is a placeholder: an object with exactly one key, `placeholder`, whose value is a sentence saying what belongs there and why the grade needs it. A placeholder may stand only for the binary, a subject fact, `declared_count`, the seed, the store, the secret, or a command's class or `writes`; anywhere else it rejects the file.
   - A placeholder is never read as false, `none` or empty.
   - `pql create` writes a placeholder for every value it cannot know, so the file explains itself without comments.
-  - The rules of §1 that check a value's content (QS8, QS9) skip a placeholder.
+  - The rules that check a value's content skip a placeholder: QS8, QS9 and QS12 skip a placeholder binary, seed or store, and QP10's checks against the seed and the store, and its rule that a listed command is `safe`, skip a placeholder seed, store or class.
   - A subject fact left as a placeholder reaches the judge as unstated.
   - Nothing that depends on a placeholder runs, and the check that needed it is not observed with `placeholder_unfilled`:
     - with `binary` a placeholder, nothing runs;
@@ -156,7 +156,7 @@ QS5's override of an otherwise held check comes last of all.
     - for every other check, the codes of a successful run of the invocation's command (QS6).
   - Every other result is judged by the check's own predicate, and a predicate that does not hold gives `predicate`.
 - **QO6. A computation's own run.** A computation's run (QA4) changes only its check:
-  - When the confinement was not applied to it, it was killed by its confinement, it could not start, or it ran past its budget, the check is not observed with `computation_failed`.
+  - When the confinement was not applied to it, it could not start, or it ended by any signal, a kill by its confinement, by the engine at its budget or outside it, and one with a memory or code-signing exit detail included, the check is not observed with `computation_failed`.
   - When QO1 holds for the grade, the check is not observed with `network_unverifiable` like every other check.
 - **QO7. A check with several invocations.**
   - **Discovery.** Discovery makes every help request QD2 reaches, whatever an earlier one's end, and whatever `declared_count` holds. For each help request, QO1 to QO4 decide as for any invocation, and every other end is QD5. When QO1 to QO4 decide any help request, the first such request in QD2's order decides discovery.
