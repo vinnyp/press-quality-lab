@@ -57,7 +57,18 @@ Both code reviewers built `pql` before and after the change and compared its out
 | 15 | A constructed non-integer `Number` (`1e`, `x.y`) is still copied unchecked | test (Minor) | Probe | Fixed: the whole number grammar is validated |
 | 16 | Nits: a duplicate call, an unchecked field, Python `-I` ignoring `PYTHONDONTWRITEBYTECODE`, unnamed rows | test | Confirmed | Fixed |
 
-After both rounds, the coordinator built `pql` at the base and at the head and compared their stdout and exit code over every JSON file under `docs/specs` and `testdata` (1,609 files). There were 0 differences.
+## Round 3 (ce-code-review)
+
+**Range:** the whole branch against `main`. Five reviewers ran: correctness, project standards, testing, maintainability and the learnings search. The receipt is `20261125-120819-bdba0d4f`, with the verdict "Ready with fixes" and no P0 or P1. Both of the group's units (U3, U22) are met.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 17 | `jcs.decimalKey` duplicates `strictjson.Normalize`, which panics on a valid number whose exponent overflows `int` | maintainability (P2) | Confirmed by the validator | Fixed: `Normalize` holds the exponent as a big integer, and jcs uses it |
+| 18 | The writer's and the comparison's defect panics have no test | testing (gap) | Mutants survive | Fixed: `TestUnwritableValue`, `TestInvalidComparison` |
+| 19 | A discarded wildcard free string has no memory guard | testing (gap) | Mutant survives | Fixed: `TestFreeStringMemory/expected_*` |
+| 20 | No test has an exponent beyond int64 | testing (gap) | Mutant survives | Fixed: `TestHugeExponent` |
+
+After every round, the coordinator built `pql` at the base and at the head and compared stdout and exit code over every JSON file under `docs/specs` and `testdata` (1,609 files). There were 0 differences.
 
 ## Mutation record
 
