@@ -180,3 +180,19 @@ The owner chose to rewrite the plan around Baker A's approach (GKD10).
 | 123 | The standard error line for a judge-rejected record is not fixed | judge | Confirmed from GKD8's wording | To the owner (Open Questions). |
 | 124 | Steps 5 and 7 of §2 apply to every invocation, so they cannot wait for slice d's scripted half | coordinator | Confirmed from `collection-rules.md` §2 | Fixed: U44 in slice b1. |
 | 125 | A collection 1.1 changes the record schema's fixed `spec_version` | Baker A | Confirmed: `record.schema.json` fixes it at `"1.0"` | Noted in Scope Boundaries and Open Questions. |
+
+## The short pass on the rebuilt order
+
+Reviewed at commit `1e8c501` by the staff engineer and plan lenses, runtime claude, each in its own clone with unchanged repository-state snapshots. Neither found a Blocker. Both found that §2's "stop at the first that applies" makes the precedence levels cumulative. Every judge-checked case carries the six probes (QP1), so splitting slice b put the probes' level after slice c, and the predictions for slice b1, slice c and slice d's scripted half did not hold. The staff lens counted 99 of the 121 judge-checked cases that cannot leave the pending list before the probes' level lands.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 126 | Levels are cumulative, but the Waits-on lines and predictions treat them as independent | staff, plan | Confirmed from §2 and the corpus | Fixed: slice b2 moves ahead of slice c, the slices merge in level order, and each design note computes its ratchet set from the levels built. |
+| 127 | "Reaches an unbuilt level" has two readings | plan, staff | Confirmed | Fixed: KTD11 names each level's trigger; an unbuilt level exits 70 when its trigger holds or cannot be ruled out. |
+| 128 | Invocation keys and QS7's appended arguments have no owner before their first users (row 47 lost) | plan, staff | Confirmed from `case-092`'s keys | Fixed: U5 and U39 build every key with QS7's arguments; U12 keeps the probes' selection. |
+| 129 | The real producer's parity replay needs the probes, the control copy and the canary from slice b2 | plan, staff | Confirmed | Fixed: PR15 waits on PR10 and PR12; U32 and U41 depend on those units. |
+| 130 | The self-test ran before draining and the environment (row 84 lost) | plan, staff | Confirmed | Fixed: U30 and U28 move into PR11 ahead of U29; U16 and U29 are taken again after PR15. |
+| 131 | One proof per rule drops a rule's macOS proof when it also has a Linux test | staff | Confirmed against GR15 | Fixed: KTD22 allows several proofs, requires a `macos_evidence` entry for every GR15 rule, and the evidence script runs every such test. |
+| 132 | The corpus runner could land before the gate runs tagged tests | staff | Confirmed: `gate.sh` has no tagged pass today | Fixed: PR5 waits on PR3. |
+| 133 | The thin slice has no room if the confinement core runs to its stop date | plan, staff | Agreed | Fixed: dates move to 2026-12-08 for the thin slice and 2026-12-30 for slice d end to end, the readings are asked for on 2026-11-25, and the first week's holiday is named. |
+| 134 | Smaller items: the derivation-only cases U4 already catches, "still pending" in U9, U10's AE20 test against `create`'s input, the `internal/scripted` difference before U6, single owners for QH26 and QO5, a shared form-build helper, the store test before PR6, U35's leftover violator prediction, the different-model review's wording, and missing diagram edges | plan, staff | Confirmed | Fixed in the units, KTDs and Verification Contract named in each. |

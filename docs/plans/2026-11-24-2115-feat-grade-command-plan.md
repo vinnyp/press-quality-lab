@@ -31,16 +31,17 @@ This plan covers phase 3 of the [engine plan](2026-11-21-engine-plan.md). Its ow
   | Pull requests | Merge target |
   |---|---|
   | the plan | 2026-11-25 |
-  | the leaf, the confinement core and the corpus harness | 2026-11-30 |
+  | the leaf, the confinement core and the corpus harness | 2026-12-01 |
   | the launcher stop rule falls | 2026-12-04 |
-  | the hostile-home spike and the thin end-to-end slice | 2026-12-04 |
-  | unconfined safety, slice a, slice b1, slice c, and self-test and necessity | 2026-12-11 |
-  | slice b2, the scripted half of slice d, slice f, and the real producer with parity; first private scoring | 2026-12-18 |
-  | slice d end to end | 2026-12-23 |
+  | the hostile-home spike and the thin end-to-end slice | 2026-12-08 |
+  | unconfined safety, slice a, slice b1, and the macOS self-test track | 2026-12-14 |
+  | slice b2 and slice c | 2026-12-18 |
+  | the scripted half of slice d, slice f, and the real producer with parity; first private scoring | 2026-12-23 |
+  | slice d end to end | 2026-12-30 |
   | slice e; second private scoring | 2027-01-08 |
   | the close | 2027-01-13 |
 
-  The weeks of 2026-12-21 and 2026-12-28 are half buffer, and 2027-01-16 is kept spare. The owner's E-3 ruling is asked for on 2026-11-25 and needed by 2026-12-11. If the owner adopts a collection 1.1, slice e waits for its seal, and the owner is told the same day if the close is at risk.
+  The first week spans a public holiday, so 2026-12-08 for the thin slice is at risk if the confinement core runs to its stop date. The weeks of 2026-12-21 and 2026-12-28 are half buffer, and 2027-01-16 is kept spare. The owner's E-3 ruling and the readings the thin slice needs are asked for on 2026-11-25; E-3 is needed by 2026-12-11. If the owner adopts a collection 1.1, slice e waits for its seal, and the owner is told the same day if the close is at risk.
 
 ---
 
@@ -134,8 +135,8 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
 
 - KTD1. **Eighteen pull requests, risk first (GKD10).**
   - **Order.** The first week merges the strict JSON leaf, the confinement core with its launcher stop rule, and the corpus harness. A hostile-home spike and the thin end-to-end slice follow. Then the slices run beside a macOS track that builds self-test and necessity, then the real producer, then slice d end to end. Slices f and e and the close come last.
-  - **Parallel work.** Pull requests in the same week are written in parallel and merge in the order their Waits-on lines give. Each slice fills its own levels of the precedence table in its own files (KTD11).
-  - **Ratchet sets.** A case leaves the pending list when the last rule it needs lands. Each slice's design note predicts its ratchet set. Its pull request traces every case that passed outside the prediction to the rule that produced it, and diagnoses every predicted case still pending.
+  - **Parallel work.** Pull requests in the same week are written in parallel and merge in the order their Waits-on lines give. The precedence table's levels are cumulative (KTD11), so the slices merge in level order: slice a (level 2), slice b1 (levels 3, 5 and 7), slice b2 (the probes' level 8), then slice c (levels 4 and 6, and the predicates' level 8). Each level sits in its own file in `internal/decide`.
+  - **Ratchet sets.** A case leaves the pending list when every level its checks pass through exists. Each slice's design note computes its ratchet set with a script that reads each case's checks against KTD11's trigger table and the levels built so far; the plan names only the anchor cases. Its pull request traces every case that passed outside the prediction to the rule that produced it, and diagnoses every predicted case still pending.
   - The engine plan requires at least one pull request per slice.
 - KTD2. **The corpus runner is a Go test behind the `scripted` tag, with a two-sided ratchet and guards against vacuous passes.**
   1. **Finding the cases.** It finds the cases, asserts their number, and derives the real-verifier exclusions from `input.verifier`, asserting they are exactly `case-069`, `case-070` and `case-143`.
@@ -211,8 +212,17 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
 
     `create`, `grade` and `anchor` sit on the existing Cobra root and call `internal/grade`.
   - **The directions.** `collect` imports `observe`, `plan` and `decide`, and never `store` or `judge`. Only two files under `cmd/pql` choose between `scripted` and `confine`.
-  - **The precedence table.** `decide` holds `collection-rules.md` §2's order as one table, one level per step, and QS5's final override. The loop records only facts such as "skipped after step N"; `decide` alone assigns a reason.
-  - **Unbuilt levels.** A level not yet built ends the run with exit 70 and names its rule whenever a check reaches it, so an unbuilt rule is an engine fault, never a pass. A test at the close asserts that no such level remains.
+  - **The precedence table.** `decide` holds `collection-rules.md` §2's order as one table, one level per step and one file per level, and QS5's final override. The loop records only facts such as "skipped after step N"; `decide` alone assigns a reason. A check that no earlier level decides passes through every later level, in order.
+  - **Unbuilt levels.** Each level names a trigger: a fact that holds whenever the level could apply. A level not yet built ends the run with exit 70, naming its rule, when a check reaches it and its trigger holds or cannot be ruled out; otherwise the check passes on. So an unbuilt rule is an engine fault, never a pass. The triggers:
+    - level 2: the check depends on a placeholder (from the required set);
+    - level 3: the check runs a declared command;
+    - level 4: the check is a runbook step with an earlier step;
+    - level 5: always, since any private copy can change;
+    - level 6: the check has a computation or a capture;
+    - level 7: always, for any check with an invocation;
+    - level 8: always.
+
+    A test at the close asserts that no unbuilt level remains.
   - These are the collection specification's evidence rules, not verdicts: the judge still decides requiredness, rollups, comparison and every verdict.
 - KTD12. **The gate checks tagged and macOS code on Linux, within its time limit.**
   - **Tagged passes.** `gate.sh` adds `-tags scripted` passes of vet, staticcheck, errcheck and exhaustive across the module, and of test across the packages with tagged files.
@@ -222,7 +232,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
     - Cobra only under `cmd/`;
     - `golang.org/x/sys` only in darwin builds;
     - KTD11's directions;
-    - the tagged and untagged dependency lists of `cmd/pql` differing by exactly `internal/scripted`.
+    - the tagged and untagged dependency lists of `cmd/pql` differing by at most `internal/scripted`, and by exactly that package once U6 lands.
 
     Its classifier is also tested on synthetic `go list` output.
   - **Other checks.** No scripted-only or test-only symbol may be in the released binary, and no `func init` may appear in the module. `GOFLAGS` keeps `-mod=readonly` beside each tag.
@@ -272,7 +282,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
   - **Signals.** SIGINT, SIGTERM, SIGHUP and SIGQUIT end every live process group, then clean up, and the run exits as Open Questions settles.
   - **The funnel.** It ends live groups (QH23) and runs QE20's cleanup on every exit.
 - KTD18. **macOS evidence runs on 27.2 with automatic updates off (GKD9).**
-  - **The evidence script.** It runs exactly the rule ledger's macOS list (KTD22) with `go test -json` and the `macos_evidence` tag. It fails if any listed test did not run, skipped or was not evaluated, or if the system is not 27.2.
+  - **The evidence script.** It runs every `macos_evidence` test with `go test -json`. It fails if any test the rule ledger (KTD22) names did not run, skipped or was not evaluated, or if the system is not 27.2.
   - **What a run records:** the commit, the version and build, the command and the log's SHA-256.
   - **What the pull request carries:** the summary and the log's SHA-256. A log attached in full first passes `scan.sh`'s home-path and secret rules and has the host name removed.
   - **When it is taken:** once per pull request, on its head after every unit lands.
@@ -297,10 +307,12 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
   - **Where it is tested.** The walk is untagged and tested in CI; the flag and access-control half is tested on macOS (GR16).
 - KTD21. **Until slice d end to end, the released real path never starts a subject or a computation.** From the thin slice, a released `grade` or `anchor` gives every subject-running and computation-running check `network_unverifiable` (QO1) and still reaches the judge, as it must on any system QH1 does not name. U35 replaces this with the real verifier.
 - KTD22. **A rule ledger maps every binding rule to its proof.**
-  - **The ledger test.** It is written in the style of `internal/docrefs`. It extracts every binding rule id, QS1 to QT6, from the sealed files, and requires each to map to exactly one of:
+  - **The ledger test.** It is written in the style of `internal/docrefs`. It extracts every binding rule id, QS1 to QT6, from the sealed files, and requires each to map to one or more of:
     - a named test function;
     - a named `macos_evidence` test;
     - a stated limit with its proof route, from `CASES.md`'s list of rules that are not expressible or not cited.
+
+    Every rule GR15 covers, each rule a scripted run cannot break, needs a `macos_evidence` entry, whatever else it maps to.
   - **The list of unmapped rules.** A checked-in list names the rules not yet mapped. It can only shrink, under the same growth check as the pending cases, and it is empty at the close.
   - **Its control.** Removing one mapping is its planted-defect control.
   - **Per pull request.** Each pull request records, for each rule it maps, the mutation that broke the rule and the test that failed (`CODING_STANDARDS.md`, Tests).
@@ -311,7 +323,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
 flowchart TB
   P[PR1 plan and errata] --> J[PR2 strict JSON leaf]
   P --> K[PR3 confinement core]
-  P --> H[PR5 corpus harness]
+  K --> H[PR5 corpus harness]
   K --> S1[PR4 hostile-home spike]
   J --> T[PR6 thin end-to-end slice]
   K --> T
@@ -319,20 +331,20 @@ flowchart TB
   T --> U[PR7 unconfined safety]
   S1 --> U
   T --> A[PR8 slice a]
-  T --> B1[PR9 slice b1]
-  B1 --> C[PR10 slice c]
-  K --> ST[PR11 self-test and necessity]
+  A --> B1[PR9 slice b1]
+  K --> ST[PR11 self-test track]
   T --> ST
-  B1 --> B2[PR12 slice b2]
+  B1 --> B2[PR10 slice b2]
   U --> B2
+  B2 --> C[PR12 slice c]
   C --> DS[PR13 slice d, scripted half]
   T --> F[PR14 slice f]
+  DS --> F
   C --> RP[PR15 real producer and parity]
   ST --> RP
-  U --> RP
+  B2 --> RP
   DS --> D[PR16 slice d end to end]
   RP --> D
-  B2 --> D
   D --> E[PR17 slice e]
   F --> E
   O[Owner decision on E-3] --> E
@@ -412,12 +424,12 @@ Waits on: PR1, merge order only. Runs beside PR2 and PR5. The launcher stop rule
 - **Goal:** the gate checks tagged and darwin code before any of it lands.
 - **Requirements:** GR7, GR15.
 - **Dependencies:** none.
-- **Files:** `gate.sh`, `internal/importguard/importguard_test.go`, the checked-in darwin dependency and initialisation lists.
-- **Approach:** KTD12 and KTD14.2; KTD19's `macos_evidence` tag; the module-wide ban on `func init`.
+- **Files:** `gate.sh`, `internal/importguard/importguard_test.go`, the checked-in darwin dependency list.
+- **Approach:** KTD12 and KTD14.2's dependency list; KTD19's `macos_evidence` tag; the module-wide ban on `func init`.
 - **Test scenarios:**
   - each of these fails the gate in Linux CI: a planted unvetted line in a tagged file and in a darwin-only file; a cgo file under darwin; a Cobra import in a darwin file; a `func init`; a `macos_evidence` test that does not compile;
   - the `x/sys` rule fires on synthetic `go list` output;
-  - a changed darwin dependency list and a changed initialisation list each fail the gate.
+  - a changed darwin dependency list fails the gate.
 - **Verification:** the gate's tagged and darwin passes run within its limit, and each planted defect turns them red.
 
 ### U21. The launcher core on macOS
@@ -425,11 +437,12 @@ Waits on: PR1, merge order only. Runs beside PR2 and PR5. The launcher stop rule
 - **Goal:** the full `pql` binary's launcher mode starts under the unchanged QH11 template, and its known-fast control and clean programs show their outputs.
 - **Requirements:** GR11, GR15.
 - **Dependencies:** U42.
-- **Files:** `cmd/pql/main.go` (the hidden-mode branch at the top of `main`), `cmd/pql/hidden.go` (new), `internal/confine/` (new; darwin files and untagged builders), `go.mod`, `go.sum`, their tests.
+- **Files:** `cmd/pql/main.go` (the hidden-mode branch at the top of `main`), `cmd/pql/hidden.go` (new), `internal/confine/` (new; darwin files and untagged builders), a shared test helper that builds a synthetic form and checks its source digest, the checked-in initialisation list (KTD14.2), `go.mod`, `go.sum`, their tests.
 - **Approach:**
   - **Launcher.** KTD14's launcher mode and markers, and the known-fast control mode.
   - **Profile.** QH11's template as one literal for both variants, with paths only as `-D` parameters, canonical with every link resolved (`docs/solutions/best-practices/sandbox-profile-later-rule-decides.md`).
   - **Dependency.** `golang.org/x/sys` added to `go.mod`.
+  - **Form builds.** One test helper builds a synthetic form and checks it against `form_sha256`, as `internal/collectionkit/subject_test.go` does; U15, U8 and U32 reuse it.
   - **If the launcher needs an allowance the template lacks:** first rebuild with a minimal import graph to tell the runtime's needs from `pql`'s imports. If it still does, the stop condition fires.
 - **Test scenarios:**
   - on Linux:
@@ -480,7 +493,7 @@ Waits on: PR3, needed before this group can start. It merges the spike's record 
 
 ### PR5: the corpus harness and the ledgers
 
-Waits on: PR1, merge order only. Runs beside PR2 and PR3. Every case starts on the pending list, and every rule on KTD22's list.
+Waits on: PR3, merge order only, since the runner needs the gate's tagged pass. Written beside PR2 and PR3. Every case starts on the pending list, and every rule on KTD22's list.
 
 ### U34. Case assembly for tests
 
@@ -512,7 +525,7 @@ Waits on: PR1, merge order only. Runs beside PR2 and PR3. Every case starts on t
     - a trace serving a key outside the case's `invocations`;
     - a derivation-only case whose trace shows a home made.
   - **Validation step:** fewer records than its own count fails it.
-  - two cases run back to back never share a store.
+  - two cases run back to back never share a store, switched on in PR6 once the store exists.
 - **Verification:** the runner runs in the gate and in `check.sh` with every case pending, and each planted defect turns it red.
 
 ### U45. The rule ledger
@@ -572,6 +585,7 @@ Waits on: PR2, PR3 and PR5, needed before this group can start. Each stage is on
   - the preimage kinds `case-003` and `case-004` need;
   - the seed digest, and the `files` digests over the assembled directory;
   - the bare binary's defaults, and QS7's offline arguments in preimages;
+  - each invocation's key in QT5's shape, with QS7's appended arguments and environment, for every generated probe and runbook step; the loop uses only these keys;
   - the rest come with U39.
 - **Test scenarios:** QE2's worked ids; for `case-003` and `case-004`, each preimage equals `preimages.json`.
 - **Verification:** `go test -tags scripted ./internal/plan` passes.
@@ -620,7 +634,7 @@ Waits on: PR2, PR3 and PR5, needed before this group can start. Each stage is on
   - every corpus host and recording reads, and the projection test holds for each;
   - each `examples/invalid/` host and behaviour example exits 2, and so does a host or recording that is unreadable, refused under §3, or breaks QT4 or QT5;
   - a missing invocation exits 70;
-  - the trace lists the required set, each served key and each home.
+  - the trace lists the required set, once it is fixed and before any baseline or anchor input is handled, then each served key and each home.
 - **Verification:** every scripted case's host and recording load.
 
 ### U46. The throwaway package
@@ -693,7 +707,7 @@ Waits on: PR2, PR3 and PR5, needed before this group can start. Each stage is on
   - a panic on the main goroutine and one in a collector goroutine each exit 70;
   - a released `grade` on any system starts no subject or computation process (KTD21). A sentinel `bin/subject` writes a file when run, and a positive control runs it directly and sees the file;
   - an error carrying a control sequence from a subject file reaches standard error escaped.
-- **Verification:** `case-003`, `case-004` and `case-129` leave the pending list, and the rules they prove leave KTD22's list.
+- **Verification:** `case-003`, `case-004` and `case-129` leave the pending list, with the derivation-only cases whose rule U4's checks name, among them `case-100`, `case-101`, `case-102` and `case-136`; the design note lists them. The rules they prove leave KTD22's list.
 
 ### PR7: unconfined safety
 
@@ -728,7 +742,7 @@ Waits on: PR6, merge order only.
 - **Dependencies:** U33.
 - **Files:** `internal/plan/`, its tests, the corpus runner's `required` layer (KTD2.7).
 - **Approach:**
-  - every preimage kind, and QS5's candidate checks;
+  - every preimage kind and every invocation key, and QS5's candidate checks;
   - QA7's exclusion of destructive runbooks outside that scope;
   - QA3's crediting, with `credit-and-routes.md` §2's credit conditions;
   - QA9's `empty_satisfiable` and `asserts_emptiness`.
@@ -752,7 +766,7 @@ Waits on: PR6, merge order only.
   - QS8's containment and QS9's seed-link rejection;
   - a literal near QS11's 64 KiB in RFC 8785 form, on each side;
   - the QA5 warning's text.
-- **Verification:** the derivation-only cases leave the pending list, each rejected by the rule its case names.
+- **Verification:** the derivation-only cases still pending leave the pending list, each rejected by the rule its case names.
 
 ### U10. Placeholders and `pql create`
 
@@ -762,13 +776,13 @@ Waits on: PR6, merge order only.
 - **Files:** `cmd/pql/main.go`, `internal/subject/`, `internal/decide/`, their tests.
 - **Approach:** level 2 of the precedence table (QS5) and QS5's final override. What `create` takes as input is not specified (Open Questions); the slice's design note fixes the smallest input QS5 needs before the brief is written.
 - **Test scenarios:**
-  - through the scripted build with a passing host and a recording, `create` then `grade` on its output gives `placeholder_unfilled` exactly where QS5 says. The expected side is written from QS5, never from `create`'s code (AE20);
+  - through the scripted build with a passing host and a recording, `create` then `grade` on its output gives `placeholder_unfilled` exactly where QS5 says. The expected side is written from QS5, never from `create`'s code (AE20). If `create`'s output has checks that pass level 2, this test moves to the slice that builds their later levels (Open Questions);
   - each kind of placeholder gives QS5's outcomes in a unit test where its corpus case needs a later slice.
-- **Verification:** `case-060` leaves the pending list; `case-061` to `case-066` carry runbooks and pass from U27.
+- **Verification:** `case-060` leaves the pending list; the other placeholder cases leave it where their later levels land, as each design note computes.
 
 ### PR9: slice b1, discovery and the invocation outcome rules
 
-Waits on: PR6, merge order only.
+Waits on: PR8, merge order only.
 
 ### U11. Command discovery
 
@@ -787,7 +801,7 @@ Waits on: PR6, merge order only.
   - a missing declared command (AE27);
   - help on stderr;
   - a hidden command.
-- **Verification:** unit tests cover QD1 to QD6. Every discovery case carries runbooks, so those cases pass from U27.
+- **Verification:** unit tests cover QD1 to QD6. Every discovery case carries runbooks and probe checks, so those cases pass from slice c.
 
 ### U44. The invocation outcome rules
 
@@ -797,17 +811,169 @@ Waits on: PR6, merge order only.
 - **Files:** `internal/decide/`, `internal/observe/`, their tests.
 - **Approach:**
   - level 5: QH8, a changed private copy giving `harness_fault`;
-  - level 7: QO2 to QO5, from KTD13's raw end and attribution, with QO4's known-fast condition from the host (QH24).
+  - level 7: QO2 to QO5, from KTD13's raw end and attribution, with QO4's known-fast condition from the host (QH24). This unit owns QO5.
 - **Test scenarios:**
   - a changed copy;
   - a binary that could not start;
   - a kill by the confinement, a budget kill and a crash told apart from raw facts;
   - a timeout with the known-fast control within and outside its bound.
-- **Verification:** the cases the slice's design note predicts leave the pending list; `case-005` (QH8) and `case-095` (QO2) are the candidates, if their other checks need no later level.
+- **Verification:** unit tests cover QH8 and QO2 to QO5. `case-005` also needs level 4 and passes from slice c; `case-095` needs the probes' invocations and passes from slice b2.
 
-### PR10: slice c, authored checks
+### PR10: slice b2, probes, the leak scan and masking
 
-Waits on: PR9, merge order only.
+Waits on: PR7 and PR9, needed before this group can start. Its predicted ratchet set, among them `case-012` to `case-015`, `case-074`, `case-088`, `case-095`, `case-096` and `case-151`, holds once all its units land.
+
+### U12. The bare, byte-bound and exit-code probes
+
+- **Goal:** these probes decide as QP1 to QP5 say.
+- **Requirements:** GR9.
+- **Dependencies:** U44.
+- **Files:** `internal/collect/`, `internal/decide/`, their tests.
+- **Approach:**
+  - QP1 to QP5's selection and decisions in the loop, invoking through U5's and U39's keys;
+  - QE8's targets, with errata E-1;
+  - QE10's stream bounds.
+- **Test scenarios:** a 17 MB stream, invalid UTF-8 and a 33-digit number.
+- **Verification:** unit tests cover QP1 to QP5; the cases come off at the pull request's level.
+
+### U36. The fresh-state and store-unchanged probes
+
+- **Goal:** these probes collect as QP6 to QP9 say, and QH25's inspection reports what changed.
+- **Requirements:** GR9, GR16.
+- **Dependencies:** U12, U40.
+- **Files:** `internal/collect/`, `internal/decide/`, `internal/throwaway/`, their tests.
+- **Approach:** QP6 to QP9, with QP9's control copy and QP8's side files; QH25's inspection through KTD20's walk.
+- **Test scenarios:**
+  - a store-unchanged check that runs no command has no artifact target (E-1);
+  - QP7's and QP8's exclusions;
+  - a link or FIFO the subject made is reported as a change, without being followed or opened;
+  - a mode-0000 file in the store-unchanged comparison is read, or never ends as unchanged.
+- **Verification:** unit tests cover QP6 to QP9; the cases come off at the pull request's level.
+
+### U38. The leak scan
+
+- **Goal:** one §4 encoder finds a canary or declared value in every encoding `credit-and-routes.md` §4 lists.
+- **Requirements:** GR9.
+- **Dependencies:** U23.
+- **Files:** `internal/record/`, its tests.
+- **Approach:** the §4 table, shared with U24's masking (KTD16).
+- **Test scenarios:** one test per §4 encoding, written from the table.
+- **Verification:** unit tests cover every row of §4.
+
+### U37. The planted-secret probe
+
+- **Goal:** the planted-secret probe collects as QP10 to QP13 say.
+- **Requirements:** GR9, GR16.
+- **Dependencies:** U12, U38, U40.
+- **Files:** `internal/collect/`, `internal/decide/`, their tests.
+- **Approach:** QP10's per-invocation canary planted by the loop; QP11 to QP13, and QO7's combination with the read proof's facts.
+- **Test scenarios:**
+  - each QP11 to QP13 outcome from raw facts;
+  - a mode-0000 file holding the canary is found, or never ends as held;
+  - a scan mutated to skip unreadable files turns that test red.
+- **Verification:** unit tests cover QP10 to QP13; the cases come off at the pull request's level.
+
+### U24. Masking
+
+- **Goal:** the store, the streams and every scorecard carry no canary or declared value QE18 masks.
+- **Requirements:** GR3.
+- **Dependencies:** U7, U38.
+- **Files:** `internal/record/`, `internal/grade/`, their tests.
+- **Approach:**
+  - QE18 with KTD16's order and one §4 encoder;
+  - a process-wide masking writer over standard output and error that knows each invocation's canary and the declared values, and masks across write boundaries;
+  - the planted file and QA4's capture files are the only places a plain value may sit, and QE20 removes them.
+- **Test scenarios:**
+  - a fresh random canary and a declared value of 8 bytes or more are injected at the seam: into stream heads, home-change paths, error text and a computation's standard error, with one copy straddling the 64 KiB head edge and one QE10's digest cut;
+  - each injected value is shown present before masking, and absent afterwards from the store, the streams and the scorecard, in each §4 encoding;
+  - a declared value holding a character the escaper rewrites is masked;
+  - the per-run directory holding the planted file is gone after the run.
+- **Verification:** the test finds no unmasked value, and QE18 leaves KTD22's list.
+
+### PR11: the macOS self-test track
+
+Waits on: PR3 and PR6, needed before this group can start. Draining and the environment land first, so the self-test and the necessity evidence run on the path that grades the subject.
+
+### U30. Draining and the raw ends
+
+- **Goal:** the darwin source drains each invocation's streams as QE10 says and reports the budget's raw facts.
+- **Requirements:** GR11, GR15.
+- **Dependencies:** U15.
+- **Files:** `internal/confine/` (darwin files), their tests.
+- **Approach:**
+  - the budget timer, and whether the program was still running at it;
+  - non-blocking draining, with the byte count past 1 MiB and the cut flag (QE10).
+
+  Attribution stays KTD13's untagged function.
+- **Test scenarios,** behind KTD19's tag: a budget kill gives its raw facts; the `huge-output` form is drained and cut.
+- **Verification:** these tests pass on macOS 27.2.
+
+### U28. Environment, descriptors and home
+
+- **Goal:** the subject and each computation run with exactly QH12 to QH15's environment, descriptors and home.
+- **Requirements:** GR11, GR15.
+- **Dependencies:** U15.
+- **Files:** `internal/confine/` (darwin files and untagged builders), their tests.
+- **Approach:** QH12 to QH15; the lines added to the profile per invocation.
+- **Test scenarios:**
+  - the lines added per invocation (`PLANTED_DIR_n`, QH27's control line, `DECLARED_n`, `SEED_n`) in count and order, and paths under a symlinked temporary root made canonical;
+  - with sentinel variables (`PQL_SENTINEL`, `DYLD_X`, `XDG_CONFIG_HOME`) in the engine's environment:
+    - the built environment equals QH12's table plus the declared values, in order;
+    - stdin is `/dev/null`;
+    - a new session is set;
+    - `__CF_USER_TEXT_ENCODING` is the uid in uppercase hex;
+  - on macOS, behind KTD19's tag: with a descriptor opened without close-on-exec and sentinels in `pql`'s own environment, a probe program under the real launcher sees neither. A knock-out run with the closing disabled fails.
+- **Verification:** the builder tests pass in CI, and the probe passes on macOS 27.2.
+
+### U31. Computation confinement
+
+- **Goal:** each computation runs under its own profile as QH16 to QH20 say.
+- **Requirements:** GR11, GR15.
+- **Dependencies:** U15.
+- **Files:** `internal/confine/` (darwin files), their tests.
+- **Approach:** QH16 to QH20's computation variant, tested with a fixture scratch directory as working directory and home. QA4's substitutions join it in U35.
+- **Test scenarios,** behind KTD19's tag:
+  - a computation's child runs, and its `setsid` or `setpgid` is killed (QH18);
+  - a computation that runs the subject;
+  - a QH19 survivor cannot reach a later computation's sandbox, which is the plan's reading. If the run shows otherwise, the finding goes to the owner (GR6) rather than being built around.
+
+  Survivors outliving the grade are QH19's stated limit, named in the pull request and the ledger.
+- **Verification:** these tests pass on macOS 27.2.
+
+### U29. Self-test, calibration and the known-fast control
+
+- **Goal:** the self-test programs run as QH9 says, for both profiles, with the calibration and the known-fast control.
+- **Requirements:** GR11, GR15.
+- **Dependencies:** U28, U30, U31.
+- **Files:** `internal/confine/` (darwin files), `cmd/pql/hidden.go`, their tests.
+- **Approach:** QH9's programs for both profiles as hidden modes with raw calls (KTD14), clean programs judged by their output (`docs/solutions/best-practices/clean-control-must-assert-on-output.md`); QH24; QH26's calibration, which this unit owns.
+- **Test scenarios,** behind KTD19's tag:
+  - every self-test program, with a clean program whose wrong output fails the self-test;
+  - a failed self-test gives every subject check `network_unverifiable`.
+- **Verification:** the self-test passes on macOS 27.2.
+
+### U16. The necessity and allowance evidence
+
+- **Goal:** a local macOS suite proves each self-test program's necessity and each allowance's role, with no vacuous pass.
+- **Requirements:** GR14, GR15.
+- **Dependencies:** U29.
+- **Files:** a darwin test behind KTD7's and KTD19's tags.
+- **Approach:**
+  1. **Necessity.** For each self-test program, a profile granting only that program's operation, appended last because the later rule decides, makes the self-test fail. The granted program completes its operation as its output shows, and the self-test's problem list names exactly that program (GR14).
+  2. **Allowances.** Each allowance removed in turn breaks the clean program's own operation at the step that allowance governs, judged by its output, never an incidental failure.
+  3. **Runs that should start** show the launcher's marker and then the expected end. A run with no marker there is not evaluated.
+  4. **Runs that should not start** show no marker and the expected exit or kill. These are `sandbox-exec` exiting before the marker, a profile it rejects, and a run with an allowance the launcher needs to start removed. Each sits beside a control in the same session whose unmodified profile does write the marker (QH6).
+  5. **Not evaluated.** Any run not evaluated, and any repeat under KTD18 not evaluated, fails the suite.
+  6. **The old spike.** Commit 490d650's spike suite is reference only; nothing is copied without checking it against the sealed text.
+- **Test scenarios:**
+  - each program's one-grant profile fails the self-test while the granted program succeeds;
+  - each allowance's removal breaks its own step;
+  - a run with no marker where one was due fails the suite.
+- **Verification:** the suite passes on macOS 27.2 as KTD18 says, and is taken again after PR15. QH9 leaves KTD22's list after that second run.
+
+### PR12: slice c, authored checks
+
+Waits on: PR10, merge order only. Every check in a runbook case also passes the probes' levels, so slice c follows slice b2.
 
 ### U13. Predicates
 
@@ -855,133 +1021,11 @@ Waits on: PR9, merge order only.
 - **Test scenarios:**
   - a runbook's second step failing, and every later step `earlier_step_failed` (AE22);
   - a known defect's marker giving exit 3.
-- **Verification:** the runbook cases whose levels exist leave the pending list, including `case-001` green with exit 0 (GR2, AE8), the discovery cases, `case-061` to `case-066` and `case-092`.
-
-### PR11: self-test and necessity
-
-Waits on: PR3 and PR6, needed before this group can start.
-
-### U31. Computation confinement
-
-- **Goal:** each computation runs under its own profile as QH16 to QH20 say.
-- **Requirements:** GR11, GR15.
-- **Dependencies:** U15.
-- **Files:** `internal/confine/` (darwin files), their tests.
-- **Approach:** QH16 to QH20's computation variant, tested with a fixture scratch directory as working directory and home. QA4's substitutions join it in U35.
-- **Test scenarios,** behind KTD19's tag:
-  - a computation's child runs, and its `setsid` or `setpgid` is killed (QH18);
-  - a computation that runs the subject;
-  - a QH19 survivor cannot reach a later computation's sandbox, which is the plan's reading. If the run shows otherwise, the finding goes to the owner (GR6) rather than being built around.
-
-  Survivors outliving the grade are QH19's stated limit, named in the pull request and the ledger.
-- **Verification:** these tests pass on macOS 27.2.
-
-### U29. Self-test, calibration and the known-fast control
-
-- **Goal:** the self-test programs run as QH9 says, for both profiles, with the calibration and the known-fast control.
-- **Requirements:** GR11, GR15.
-- **Dependencies:** U15, U31.
-- **Files:** `internal/confine/` (darwin files), `cmd/pql/hidden.go`, their tests.
-- **Approach:** QH9's programs for both profiles as hidden modes with raw calls (KTD14), clean programs judged by their output (`docs/solutions/best-practices/clean-control-must-assert-on-output.md`); QH24; QH26's calibration.
-- **Test scenarios,** behind KTD19's tag:
-  - every self-test program, with a clean program whose wrong output fails the self-test;
-  - a failed self-test gives every subject check `network_unverifiable`.
-- **Verification:** the self-test passes on macOS 27.2.
-
-### U16. The necessity and allowance evidence
-
-- **Goal:** a local macOS suite proves each self-test program's necessity and each allowance's role, with no vacuous pass.
-- **Requirements:** GR14, GR15.
-- **Dependencies:** U29.
-- **Files:** a darwin test behind KTD7's and KTD19's tags.
-- **Approach:**
-  1. **Necessity.** For each self-test program, a profile granting only that program's operation, appended last because the later rule decides, makes the self-test fail. The granted program completes its operation as its output shows, and the self-test's problem list names exactly that program (GR14).
-  2. **Allowances.** Each allowance removed in turn breaks the clean program's own operation at the step that allowance governs, judged by its output, never an incidental failure.
-  3. **Runs that should start** show the launcher's marker and then the expected end. A run with no marker there is not evaluated.
-  4. **Runs that should not start** show no marker and the expected exit or kill. These are `sandbox-exec` exiting before the marker, a profile it rejects, and a run with an allowance the launcher needs to start removed. Each sits beside a control in the same session whose unmodified profile does write the marker (QH6).
-  5. **Not evaluated.** Any run not evaluated, and any repeat under KTD18 not evaluated, fails the suite.
-  6. **The old spike.** Commit 490d650's spike suite is reference only; nothing is copied without checking it against the sealed text.
-- **Test scenarios:**
-  - each program's one-grant profile fails the self-test while the granted program succeeds;
-  - each allowance's removal breaks its own step;
-  - a run with no marker where one was due fails the suite.
-- **Verification:** the suite passes on macOS 27.2 as KTD18 says, and QH9 leaves KTD22's list.
-
-### PR12: slice b2, probes, the leak scan and masking
-
-Waits on: PR7 and PR9, needed before this group can start.
-
-### U12. The bare, byte-bound and exit-code probes
-
-- **Goal:** these probes decide as QP1 to QP5 say.
-- **Requirements:** GR9.
-- **Dependencies:** U44.
-- **Files:** `internal/collect/`, `internal/decide/`, their tests.
-- **Approach:**
-  - QP1 to QP5 in the loop, with QS7's appended arguments and environment;
-  - QO5's exit-code rules;
-  - QE8's targets, with errata E-1;
-  - QE10's stream bounds.
-- **Test scenarios:** a 17 MB stream, invalid UTF-8 and a 33-digit number.
-- **Verification:** `case-096` leaves the pending list, with the others the slice's design note predicts.
-
-### U36. The fresh-state and store-unchanged probes
-
-- **Goal:** these probes collect as QP6 to QP9 say, and QH25's inspection reports what changed.
-- **Requirements:** GR9, GR16.
-- **Dependencies:** U12, U40.
-- **Files:** `internal/collect/`, `internal/decide/`, `internal/throwaway/`, their tests.
-- **Approach:** QP6 to QP9, with QP9's control copy and QP8's side files; QH25's inspection through KTD20's walk.
-- **Test scenarios:**
-  - a store-unchanged check that runs no command has no artifact target (E-1);
-  - QP7's and QP8's exclusions;
-  - a link or FIFO the subject made is reported as a change, without being followed or opened;
-  - a mode-0000 file in the store-unchanged comparison is read, or never ends as unchanged.
-- **Verification:** `case-012` to `case-015`, `case-074` and `case-088` leave the pending list, with the others the slice's design note predicts.
-
-### U38. The leak scan
-
-- **Goal:** one §4 encoder finds a canary or declared value in every encoding `credit-and-routes.md` §4 lists.
-- **Requirements:** GR9.
-- **Dependencies:** U23.
-- **Files:** `internal/record/`, its tests.
-- **Approach:** the §4 table, shared with U24's masking (KTD16).
-- **Test scenarios:** one test per §4 encoding, written from the table.
-- **Verification:** unit tests cover every row of §4.
-
-### U37. The planted-secret probe
-
-- **Goal:** the planted-secret probe collects as QP10 to QP13 say.
-- **Requirements:** GR9, GR16.
-- **Dependencies:** U12, U38, U40.
-- **Files:** `internal/collect/`, `internal/decide/`, their tests.
-- **Approach:** QP10's per-invocation canary planted by the loop; QP11 to QP13, and QO7's combination with the read proof's facts.
-- **Test scenarios:**
-  - each QP11 to QP13 outcome from raw facts;
-  - a mode-0000 file holding the canary is found, or never ends as held;
-  - a scan mutated to skip unreadable files turns that test red.
-- **Verification:** `case-151` leaves the pending list, with the others the slice's design note predicts.
-
-### U24. Masking
-
-- **Goal:** the store, the streams and every scorecard carry no canary or declared value QE18 masks.
-- **Requirements:** GR3.
-- **Dependencies:** U7, U38.
-- **Files:** `internal/record/`, `internal/grade/`, their tests.
-- **Approach:**
-  - QE18 with KTD16's order and one §4 encoder;
-  - a process-wide masking writer over standard output and error that knows each invocation's canary and the declared values, and masks across write boundaries;
-  - the planted file and QA4's capture files are the only places a plain value may sit, and QE20 removes them.
-- **Test scenarios:**
-  - a fresh random canary and a declared value of 8 bytes or more are injected at the seam: into stream heads, home-change paths, error text and a computation's standard error, with one copy straddling the 64 KiB head edge and one QE10's digest cut;
-  - each injected value is shown present before masking, and absent afterwards from the store, the streams and the scorecard, in each §4 encoding;
-  - a declared value holding a character the escaper rewrites is masked;
-  - the per-run directory holding the planted file is gone after the run.
-- **Verification:** the test finds no unmasked value, and QE18 leaves KTD22's list.
+- **Verification:** the runbook cases leave the pending list, as the slice's design note computes, including `case-001` green with exit 0 (GR2, AE8), the discovery cases, `case-005`, `case-061` to `case-066` and `case-092`.
 
 ### PR13: slice d, the scripted half
 
-Waits on: PR10, merge order only.
+Waits on: PR12, merge order only.
 
 ### U14. Scope, safety classes and outcomes
 
@@ -997,7 +1041,7 @@ Waits on: PR10, merge order only.
 
 ### PR14: slice f, the scorecard
 
-Waits on: PR6, merge order only; it merges after PR12 and PR13.
+Waits on: PR6, merge order only; it merges after PR13.
 
 ### U18. The scorecard and the agreement check
 
@@ -1021,52 +1065,21 @@ Waits on: PR6, merge order only; it merges after PR12 and PR13.
   - each escaped character class has a fixture.
 - **Verification:**
   - the agreement check passes for every case off the pending list;
-  - the first private scoring round, on 2026-12-18, shows zero wrong records. It covers every private case that needs no baseline and no real verifier, a non-empty set the scoring party fixes before the run. It is reported as scored out of that set's total, with mistakes evaluated out of the catalogue's total.
+  - the first private scoring round, on 2026-12-23, shows zero wrong records. It covers every private case that needs no baseline and no real verifier, a non-empty set the scoring party fixes before the run. It is reported as scored out of that set's total, with mistakes evaluated out of the catalogue's total.
 
 ### PR15: the real producer and parity
 
-Waits on: PR7, PR10 and PR11, needed before this group can start.
-
-### U30. Draining and the raw ends
-
-- **Goal:** the darwin source drains each invocation's streams as QE10 says and reports the budget's raw facts.
-- **Requirements:** GR11, GR15.
-- **Dependencies:** U15.
-- **Files:** `internal/confine/` (darwin files), their tests.
-- **Approach:**
-  - the budget timer, and whether the program was still running at it;
-  - non-blocking draining, with the byte count past 1 MiB and the cut flag (QE10).
-
-  Attribution stays KTD13's untagged function.
-- **Test scenarios,** behind KTD19's tag: a budget kill gives its raw facts; the `huge-output` form is drained and cut.
-- **Verification:** these tests pass on macOS 27.2.
-
-### U28. Environment, descriptors and home
-
-- **Goal:** the subject and each computation run with exactly QH12 to QH15's environment, descriptors and home.
-- **Requirements:** GR11, GR15.
-- **Dependencies:** U15.
-- **Files:** `internal/confine/` (darwin files and untagged builders), their tests.
-- **Approach:** QH12 to QH15; the lines added to the profile per invocation.
-- **Test scenarios:**
-  - the lines added per invocation (`PLANTED_DIR_n`, QH27's control line, `DECLARED_n`, `SEED_n`) in count and order, and paths under a symlinked temporary root made canonical;
-  - with sentinel variables (`PQL_SENTINEL`, `DYLD_X`, `XDG_CONFIG_HOME`) in the engine's environment:
-    - the built environment equals QH12's table plus the declared values, in order;
-    - stdin is `/dev/null`;
-    - a new session is set;
-    - `__CF_USER_TEXT_ENCODING` is the uid in uppercase hex;
-  - on macOS, behind KTD19's tag: with a descriptor opened without close-on-exec and sentinels in `pql`'s own environment, a probe program under the real launcher sees neither. A knock-out run with the closing disabled fails.
-- **Verification:** the builder tests pass in CI, and the probe passes on macOS 27.2.
+Waits on: PR10, PR11 and PR12, needed before this group can start. After it lands, U16's and U29's macOS evidence is taken again on its head.
 
 ### U41. The read proof, the real controls and inspection
 
 - **Goal:** the darwin source produces the read proof's raw facts, the real controls and QH25's snapshot, in QT5's and QT4's shapes.
 - **Requirements:** GR11, GR15.
-- **Dependencies:** U15, U46.
+- **Dependencies:** U15, U29, U38, U46.
 - **Files:** `internal/confine/` (darwin files), their tests.
 - **Approach:**
   - the planted file's access time and inode before and after;
-  - QH26's calibration, QH27's read control and QP9's control copy;
+  - QH27's read control and QP9's control copy, with QH26's calibration from U29;
   - QH25's snapshot and the leak scan through `internal/throwaway`.
 
   The decisions stay U36's and U37's.
@@ -1077,7 +1090,7 @@ Waits on: PR7, PR10 and PR11, needed before this group can start.
 
 - **Goal:** the real producer is shown to observe what the sealed recordings hold, on violating forms as well as clean ones.
 - **Requirements:** GR15.
-- **Dependencies:** U27, U28, U30, U41.
+- **Dependencies:** U12, U27, U28, U30, U36, U37, U41.
 - **Files:** a darwin test behind KTD7's and KTD19's tags, with a decoy harness.
 - **Approach:**
   1. **Build.** Each form is built and its source digest checked against `form_sha256`, and the build is recorded beside the recordings' 27.2 build.
@@ -1096,7 +1109,7 @@ Waits on: PR7, PR10 and PR11, needed before this group can start.
 
 ### PR16: slice d end to end
 
-Waits on: PR12, PR13 and PR15, needed before this group can start.
+Waits on: PR13 and PR15, needed before this group can start.
 
 ### U35. The real verifier in `grade`
 
@@ -1114,7 +1127,6 @@ Waits on: PR12, PR13 and PR15, needed before this group can start.
   - a sentinel `bin/subject`, with its positive control, shows the subject never started on those systems;
   - QE9's tiers on a record built from real-verifier observations.
 - **Verification:**
-  - the violator and kill cases leave the pending list;
   - `case-069` and `case-070` pass through the runner's macOS mode 25 times out of 25 (KTD6, KTD18);
   - KTD22's list holds only slice e's rules.
 
@@ -1157,7 +1169,7 @@ Waits on: PR17, merge order only.
 - **Approach:**
   - **Feedback.** Each rule id from the second private scoring round becomes rule tests. The round's counts are reported only as counts: cases scored out of 72, and mistakes evaluated out of 40.
   - **The final check.** A test asserts that no unbuilt level remains (KTD11).
-  - **Evidence.** KTD18's full re-run of the rule ledger's macOS list, on the commit phase 4 will use. It covers U16, U32, U40's macOS tests, the self-test and the three real-verifier cases.
+  - **Evidence.** KTD18's full re-run of every `macos_evidence` test, on the commit phase 4 will use. It covers U16, U32, U40's macOS tests, the self-test and the three real-verifier cases.
   - **27.0.1** is stated as unverified (GKD9).
 - **Test expectation:** none -- a status edit with the tests the feedback calls for; the scoring and the macOS run are its evidence.
 - **Verification:**
@@ -1178,10 +1190,10 @@ Waits on: PR17, merge order only.
 | the corpus runner | which cases pass, with KTD2's guards and the served-invocation check; each slice moves cases off the pending list and none back |
 | the rule ledger | every binding rule mapped to its proof; each pull request moves rules off its list and none back |
 | mutation evidence per rule test | each new rule test fails when its rule breaks, through `mutation-verify.sh` with a knock-out, recorded in the review log (`CODING_STANDARDS.md`, Tests) |
-| a local macOS 27.2 run of the evidence script | <ul><li>the rule ledger's macOS list: the launcher core, the hostile home, self-test and necessity, the real producer, parity, and the real-verifier cases</li><li>run by the main session with the tool sandbox disabled, and stated as KTD18 says</li></ul> |
+| a local macOS 27.2 run of the evidence script | <ul><li>every `macos_evidence` test: the launcher core, the hostile home, self-test and necessity, the real producer, parity, and the real-verifier cases</li><li>run by the main session with the tool sandbox disabled, and stated as KTD18 says</li></ul> |
 | the peer-review gate per pull request | a design-mode measurement review of each slice's design note before its build; code and test lenses always; security for the confinement and anything public; the measurement lens on every evidence rule |
-| one different-model review | this plan, before slice work starts (`AGENTS.md`, Review); done, recorded in `docs/agent-reviews/2026-11-24-phase3-plan-reviews.md`, with the bake-off's Gemini and GPT candidates |
-| private scoring | <ul><li>GR5: a first round on 2026-12-18 on a fixed subset, and a second in full on 2027-01-08</li><li>phase 1's judge scoring after U3, and after any later change under `internal/strictjson`</li></ul> |
+| one different-model review | this plan, before slice work starts (`AGENTS.md`, Review): an agy review of its first version (rows 12 to 19), and Gemini and GPT approaches in the bake-off; the rebuilt order itself has had Claude review only, and the owner decides whether a different-model pass on it runs before PR1 |
+| private scoring | <ul><li>GR5: a first round on 2026-12-23 on a fixed subset, and a second in full on 2027-01-08</li><li>phase 1's judge scoring after U3, and after any later change under `internal/strictjson`</li></ul> |
 
 ---
 
@@ -1206,7 +1218,7 @@ Waits on: PR17, merge order only.
   - If it does, slice e waits for its seal and builds against it, with a new `spec_version`.
   - If not, slice e proves what 1.0 reaches, and the pull request names what stays unproved.
 
-**Before the thin slice's design note**
+**Before the thin slice's design note (asked on 2026-11-25)**
 
 - When the store write fails after the judge has decided, does the engine exit 70 (QE16) or with the judge's code (QE14)? The plan's reading is 70, since the run did not complete; the owner confirms or corrects (GR6).
 - QE15 keeps a rejected record, and `record.schema.json` nests the judge input's schema, so a record the judge rejected as schema-invalid cannot validate. The plan's reading is that QE15 wins and the stored record need not validate (KTD15). The owner confirms, and the reading goes in the errata (GR6).
