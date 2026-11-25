@@ -18,9 +18,9 @@ After this slice, `pql grade` runs end to end:
 - **A key gap.** An invocation key, in QT5's shape, is needed only when the loop serves that invocation: at level 6 for a computation, at level 7 for the subject. A check meets a missing key kind, such as a computation's key, only if it gets that far. A check decided at level 1 never needs a key.
 - **A record gap.** A step used after collection, when the record is built, judged and stored, that the slice does not build ends the run there, naming that rule.
 
-Either way, an unbuilt rule is an engine fault and never a pass.
+In every case, an unbuilt rule is an engine fault and never a pass. A rule part such as `QE2.placeholders` is named on the rejection line by its rule id, and the runner drops the suffix when it compares, for every kind of case.
 
-A released `grade` gives every subject-running and computation-running check `network_unverifiable` and still reaches the judge (KTD21).
+A released `grade` gives every required check `network_unverifiable`, starts no subject and no computation, and still reaches the judge (KTD21, errata E-15).
 
 ## Evidence rules
 
@@ -105,7 +105,6 @@ For this slice:
 | `QA3.capture_crediting`, `QA9.preconditions`, `QE2.captures`, `QE7.asserts_emptiness` | 2 |
 | `QE4.anchor` | 1 |
 
-A part such as `QE2.placeholders` is named on the rejection line by its rule id, QE2.
 
 ## Rules this slice moves off KTD22's list
 

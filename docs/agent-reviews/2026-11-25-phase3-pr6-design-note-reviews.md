@@ -67,3 +67,16 @@ Both reproduced the nine predicted cases. The measurement reviewer found the com
 | 27 | The schema-label test skipped labels with no part | measurement (Nit) | Confirmed | Fixed |
 | 28 | Wording: "every invocation key"; QS2's "no named rule"; QH6 misquoted | measurement (Nit), agy (Nit) | Confirmed | Fixed. The QH6 quote went with the rewritten paragraph |
 | 29 | The agy reviewer could not run the script | agy (Minor) | Tool error on its side | No change. The measurement reviewer and `check.sh` ran it |
+
+## Round 3 (confirmation, measurement lens)
+
+**Range:** 7ae392c to d47984e.
+
+**Verdict:** no Blocker or Major remains. Every round-2 disposition, #18 to #29, holds. E-15 and E-16 match the owner's rulings and change no case's record. Every subject file in the corpus has a string version, and the only level-1 hosts, `case-003`, `case-004` and `case-090`, have no check that runs nothing. Three Minors and three Nits remain, none able to produce a false green. **The design gate is passed.**
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 30 | E-15 named two of QO1's grade-wide conditions, while the amended KTD21 relies on the third, a system QH1 does not name. The note still said "every subject-running and computation-running check" | measurement (Minor) | Confirmed. The owner's ruling read "when QO1 holds for the grade", which covers all three | Fixed: E-15 names the system clause and quotes the ruling, and the note matches KTD21 |
+| 31 | The pending derivation-only ending is a fixed list of 40 entries, which includes built rules, subject-file rules and strings that are not rule ids | measurement (Minor) | Reproduced for `case-104` | Fixed in the script: the set is computed from `built` |
+| 32 | E-15 and E-16 sat under a second 2026-11-25 heading, without that section's opening statement that they record the owner's reading for a later version to state | measurement (Minor) | Confirmed against QE1 and the file | Fixed: both now sit under the existing 2026-11-25 section |
+| 33 | "Either way" after four kinds of fault; a broken comment in the script; the suffix rule stated once only | measurement (Nit) | Confirmed | Fixed |
