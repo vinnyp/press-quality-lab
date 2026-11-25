@@ -23,11 +23,11 @@ class PredictorTests(unittest.TestCase):
     def test_level_two_is_required_and_changes_prediction(self):
         built = copy.deepcopy(BUILT)
         # U39's construction capabilities are supplied independently of levels.
-        built['builds'] += ['QE2.placeholders', 'QE3.placeholder_candidates']
+        built['builds'] += ['QE2.placeholders', 'QE3.placeholder_candidates', 'QT5.computation_keys']
         before = self.case(60, built)
         self.assertFalse(before['predicted'])
         self.assertEqual(before['levels'], [2])
-        self.assertIn('deciding level 2 (QS5) unbuilt', before['blockers'][0])
+        self.assertEqual(before['ending'], {'exit_code': 70, 'rules': ['QS5'], 'phase': 'sentinel'})
         built['levels'] = [1, 2]
         after = self.case(60, built)
         self.assertEqual((after['predicted'], after['blockers']), (True, []))
@@ -131,6 +131,127 @@ class PredictorTests(unittest.TestCase):
                 json.loads((KIT / 'behaviour' / (case['input']['form'] + '.json')).read_text()),
                 doc['evidence'], preimages)
         self.assertEqual(level, 3)
+
+    def test_build_tokens_are_classified(self):
+        self.assertEqual(predictor.names(BUILT['builds']) - set(predictor.BUILD_PHASE), set())
+        with patch.dict(predictor.BUILD_PHASE, clear=True):
+            with self.assertRaisesRegex(ValueError, 'unclassified builds token:'):
+                predictor.predict(BUILT)
+
+    def test_level_one_does_not_reach_computation_key(self):
+        for number in (3, 4):
+            row = self.case(number)
+            self.assertTrue(row['predicted'])
+            self.assertEqual(row['levels'], [1])
+            self.assertEqual(row['ending'], {'exit_code': 4, 'rules': [], 'phase': 'deciding'})
+            self.assertTrue(any(c['expected'] and 'computation' in c['expected']
+                                for c in predictor.load(KIT / 'cases' / f'case-{number:03d}' /
+                                                        'preimages.json').values()))
+
+    def computation_ending(self, levels):
+        p = {'probe': None, 'words': ['list'], 'earlier': [],
+             'expected': {'computation': {'captures': []}}}
+        subject = {'binary': 'bin/subject', 'seed': None, 'store': None, 'commands': []}
+        return predictor.check_ending(8, {'levels': levels}, subject, p,
+                                      ['QT5.computation_keys'])
+
+    def test_reached_computation_key_precedes_level_six_sentinel(self):
+        for levels in ([1, 2, 3, 4, 5], list(range(1, 9))):
+            with self.subTest(levels=levels):
+                self.assertEqual(self.computation_ending(levels),
+                                 {'exit_code': 70, 'rules': ['QT5.computation_keys'],
+                                  'phase': 'observation'})
+
+    def test_earlier_trigger_precedes_computation_key(self):
+        self.assertEqual(self.computation_ending([1, 2, 3, 4]),
+                         {'exit_code': 70, 'rules': ['QH8'], 'phase': 'sentinel'})
+
+    def test_planning_precedes_collection_and_check_order(self):
+        built = copy.deepcopy(BUILT)
+        built['builds'] = [r for r in built['builds'] if r['rule'] != 'QE2.slice']
+        row = self.case(3, built)
+        self.assertEqual(row['ending'], {'exit_code': 70,
+                         'rules': ['QE2.slice'], 'phase': 'planning'})
+        original = predictor.load
+        def reversed_evidence(path):
+            value = original(path)
+            if path.name == 'input.json':
+                value['evidence'].reverse()
+            return value
+        with patch.object(predictor, 'load', side_effect=reversed_evidence):
+            self.assertEqual(self.case(3, built), row)
+
+    def test_case_ending_collects_first_sentinels_only(self):
+        self.assertEqual(self.case(59)['ending'], {'exit_code': 70,
+                         'rules': ['QA7', 'QD4', 'QH8'], 'phase': 'sentinel'})
+        self.assertEqual(self.case(156)['ending'], {'exit_code': 70,
+                         'rules': ['QD4', 'QH8'], 'phase': 'sentinel'})
+
+    def test_unbuilt_derivation_is_not_refused(self):
+        self.assertEqual(self.case(114)['ending'],
+                         {'exit_code': 'not exit 2', 'rules': [], 'phase': 'unrefused'})
+
+    def test_qe6_requires_required_set_and_precheck(self):
+        for rule in ('QE2.slice', 'QE3.scope', 'QE7.slice', 'QE5', 'QE6'):
+            built = copy.deepcopy(BUILT)
+            built['builds'] = [r for r in built['builds'] if r['rule'] != rule]
+            self.assertEqual(self.case(136, built)['ending'],
+                             {'exit_code': 70, 'rules': [rule], 'phase': 'planning'})
+
+    def test_unknown_rules_fail_closed(self):
+        for group in ('rejects', 'builds'):
+            built = copy.deepcopy(BUILT)
+            built[group].append('QE999.part')
+            with self.assertRaisesRegex(ValueError, '^unknown rule: QE999.part$'):
+                predictor.predict(built)
+
+    def test_marker_requires_subject_and_qh6_end(self):
+        d = KIT / 'cases/case-003'
+        case = predictor.load(d / 'case.json')
+        doc = predictor.load(d / 'input.json')
+        ps = predictor.load(d / 'preimages.json')
+        e = doc['evidence'][0]
+        p = ps[e['check_id']]
+        subject = predictor.load(d / 'subject.json')
+        host = case['input']['host']
+        host['confinement']['applied'] = True
+        host['self_test'] = 'passed'
+        for computation, end, expected in [
+                (None, {'kind': 'exit', 'code': 65}, 1),
+                (None, {'kind': 'signal', 'signal': 'SIGKILL', 'by': 'before_marker'}, 1),
+                (None, {'kind': 'signal', 'signal': 'SIGKILL', 'by': 'confinement'}, 7),
+                ('expected', {'kind': 'exit', 'code': 65}, 7)]:
+            run = ({'computation': computation}, {'markers': {'confinement': False}, 'end': end})
+            with patch.object(predictor, 'runs_for', return_value=[run]):
+                self.assertEqual(predictor.deciding_level(e, p, subject, host, {}, doc['evidence'], ps), expected)
+
+    def test_reason_table_covers_corpus(self):
+        observed = set()
+        for d in sorted((KIT / 'cases').iterdir()):
+            if not (d / 'input.json').exists():
+                continue
+            case = predictor.load(d / 'case.json')
+            doc = predictor.load(d / 'input.json')
+            ps = predictor.load(d / 'preimages.json')
+            subject = predictor.load(d / 'subject.json')
+            recording = predictor.load(KIT / 'behaviour' / (case['input']['form'] + '.json'))
+            for e in doc['evidence']:
+                reason = e['reason'] or e['failure_kind'] or e['outcome']
+                key = 'held/predicate/input_missing/empty_target' if reason in ('held', 'predicate', 'input_missing', 'empty_target') else reason
+                level = predictor.deciding_level(e, ps[e['check_id']], subject, case['input']['host'], recording, doc['evidence'], ps)
+                self.assertIn(level, predictor.REASON_LEVELS[key]['levels'])
+                observed.add(key)
+        self.assertEqual(observed, set(predictor.REASON_LEVELS))
+
+    def test_out_is_deterministic_json(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            out = Path(temporary) / 'prediction.json'
+            subprocess.run([sys.executable, '-I', '-B', str(Path(__file__).with_name('predict-ratchet.py')),
+                            '--built', str(Path(__file__).with_name('ratchet') / 'pr6.json'),
+                            '--out', str(out), '--json'], check=True, capture_output=True)
+            data = out.read_bytes()
+            self.assertEqual(data, (json.dumps(json.loads(data), indent=2, sort_keys=True) + '\n').encode())
+            self.assertEqual(data, Path(__file__).with_name('ratchet').joinpath('pr6-prediction.json').read_bytes())
 
     def test_cli_json(self):
         completed = subprocess.run([sys.executable, '-I', '-B', str(Path(__file__).with_name('predict-ratchet.py')),

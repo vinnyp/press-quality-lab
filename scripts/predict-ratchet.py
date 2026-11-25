@@ -8,6 +8,7 @@ Reason mapping citations are lines of collection-rules.md in the sealed kit.
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +35,24 @@ LEVEL_RULE = {1: 'QO1', 2: 'QS5', 3: 'QD4', 4: 'QA7', 5: 'QH8',
               6: 'QA6/QA4', 7: 'QO2-QO5', 8: 'probe/predicate'}
 RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
     'QP7', 'QP10', 'QA4', 'QA9', 'QS2', 'QE6']
+
+# None means pre-collection construction/pre-check/record support; an integer
+# means observation support, needed only at that invocation's serving level.
+BUILD_PHASE = {
+    'QE2.slice': None, 'QE2.placeholders': None, 'QE2.captures': None,
+    'QE3.declared_commands': None, 'QE3.runbooks': None, 'QE3.scope': None,
+    'QE3.placeholder_candidates': None, 'QP1': None,
+    'QA9.empty_satisfiable': None, 'QA9.preconditions': None,
+    'QE7.slice': None, 'QE7.asserts_emptiness': None,
+    'QE8': None, 'QE9': None, 'QE10.record': None, 'QE11': None,
+    'QS4': None, 'QT2': None, 'QT3': None, 'QT4': None,
+    'QT5.recording_reads': None, 'QT5.subject_keys': 7,
+    'QT5.computation_keys': 6, 'QS7.invocation_keys': 7,
+    'QE14': None, 'QE16': None, 'QE17': None, 'QE20.portable': None,
+    'QE5': None, 'QE6': None, 'QA3.slice': None,
+    'QA3.capture_crediting': None, 'QA7.destructive_exclusion': None,
+    'QE4': None, 'QE4.anchor': None,
+}
 
 # Each audit lists ALL violated named rules, plus QS2 if the schema also
 # rejects. A semantic part is not covered by a schema-only implementation.
@@ -139,7 +158,9 @@ def deciding_level(evidence, preimage, subject, host, recording, all_evidence, p
     runs = runs_for(preimage, recording)
     if reason == 'network_unverifiable':
         if (not host['confinement']['applied'] or host['self_test'] == 'failed' or
-                any(not r['markers']['confinement'] for _, r in runs)):
+                any(key['computation'] is None and not r['markers']['confinement']
+                    and (r['end']['kind'] == 'exit' or
+                         r['end'].get('by') == 'before_marker') for key, r in runs)):
             return 1
         return 7
     if reason == 'placeholder_unfilled':
@@ -171,14 +192,12 @@ def deciding_level(evidence, preimage, subject, host, recording, all_evidence, p
                    for a in host['kill_attribution']):
                 return 7
         return 8
-    if reason == 'earlier_step_failed':
-        return 4
-    if reason == 'computation_failed':
-        return 6
-    if reason in ('could_not_start', 'over_budget', 'crashed', 'wrong_exit'):
-        return 7
-    if reason in ('held', 'predicate', 'input_missing', 'empty_target'):
-        return 8
+    table_reason = ('held/predicate/input_missing/empty_target'
+                    if reason in ('held', 'predicate', 'input_missing', 'empty_target') else reason)
+    if table_reason in REASON_LEVELS:
+        levels = REASON_LEVELS[table_reason]['levels']
+        if len(levels) == 1:
+            return levels[0]
     raise ValueError('unmapped evidence reason: ' + str(reason))
 
 
@@ -205,11 +224,33 @@ def dependencies(subject, document, preimages):
     U5/U33 promise the kinds in 003/004. Named extra parts identify features
     explicitly left to U39; outcome levels cannot provide these capabilities.
     """
-    required = {'QE2.slice', 'QE3.declared_commands', 'QE3.runbooks', 'QE3.scope',
-                'QP1', 'QA9.empty_satisfiable', 'QE7.slice', 'QE8', 'QE9',
-                'QE10.record', 'QE11', 'QS4', 'QT2', 'QT3', 'QT4', 'QT5.recording_reads',
-                'QT5.subject_keys', 'QS7.invocation_keys', 'QE14', 'QE16',
-                'QE17', 'QE20.portable', 'QE5', 'QE6', 'QA3.slice'}
+    required = {
+        'QE2.slice',
+        'QE3.declared_commands',
+        'QE3.runbooks',
+        'QE3.scope',
+        'QP1',
+        'QA9.empty_satisfiable',
+        'QE7.slice',
+        'QE8',
+        'QE9',
+        'QE10.record',
+        'QE11',
+        'QS4',
+        'QT2',
+        'QT3',
+        'QT4',
+        'QT5.recording_reads',
+        'QT5.subject_keys',
+        'QS7.invocation_keys',
+        'QE14',
+        'QE16',
+        'QE17',
+        'QE20.portable',
+        'QE5',
+        'QE6',
+        'QA3.slice',
+    }
     if contains_placeholder(subject):
         required.add('QE2.placeholders')
         required.add('QE3.placeholder_candidates')
@@ -258,43 +299,100 @@ def derivation(case, directory, built):
             'detail': audit['citation'] + '; violations: ' + ', '.join(violations)}
 
 
+def ending(exit_code, rules=(), phase='deciding'):
+    return {'exit_code': exit_code, 'rules': sorted(set(rules)), 'phase': phase}
+
+
+def check_ending(level, built, subject, preimage, gaps):
+    planning = {r for r in gaps if BUILD_PHASE[r] is None}
+    if planning:
+        return ending(70, planning, 'planning')
+    for current in range(1, level + 1):
+        keys = {r for r in gaps if BUILD_PHASE[r] == current}
+        if keys:
+            return ending(70, keys, 'observation')
+        applies = current == 1 or trigger(current, subject, preimage)
+        if current not in built['levels'] and applies:
+            return ending(70, [LEVEL_RULE[current]], 'sentinel')
+    return ending(None, [LEVEL_RULE[level]])
+
+
+def required_dependencies(subject, document, preimages):
+    # Required-set construction and pre-check, before collection or recording.
+    return {r for r in dependencies(subject, document, preimages)
+            if BUILD_PHASE[r] is None and r.split('.')[0] in {
+                'QE2', 'QE3', 'QE4', 'QE5', 'QE6', 'QE7', 'QP1', 'QA9', 'QA3', 'QA7'}}
+
+
 def predict_case(directory, built):
     case = load(directory / 'case.json')
     row = {'case': case['id'], 'kind': case['kind'], 'predicted': False}
     if case['input']['verifier'] == 'real' or case['id'] in ('case-069', 'case-070', 'case-143'):
-        return dict(row, levels=[], blockers=['real verifier excluded'], detail='')
+        return dict(row, levels=[], blockers=['real verifier excluded'], detail='',
+                    ending=ending(None, phase='excluded'), checks=[])
     if case['kind'] == 'derivation-only':
         result = derivation(case, directory, built)
+        gaps = []
+        if case['expect']['rule'] == 'QE6':
+            subject = load(directory / case['input']['subject_file'])
+            preimages = {str(i): c for i, c in enumerate(
+                c for rb in subject['runbooks'] for st in rb['steps'] for c in st['checks'])}
+            gaps = sorted(r for r in required_dependencies(subject, case['input'], preimages)
+                          if not supports(names(built['builds']), r))
+            result['blockers'] += ['builds lacks ' + r for r in gaps]
+        result['ending'] = (ending(70, gaps, 'planning') if gaps else
+                            ending(2, [case['expect']['rule']]) if not result['blockers'] else
+                            ending('not exit 2', phase='unrefused'))
     else:
         document = load(directory / 'input.json')
         preimages = load(directory / 'preimages.json')
         subject = load(directory / case['input']['subject_file'])
         recording = load(KIT / 'behaviour' / (case['input']['form'] + '.json'))
-        blockers = []
-        levels = []
-        for evidence in document['evidence']:
+        common_gaps = {r for r in dependencies(subject, document, preimages)
+                       if not supports(names(built['builds']), r)}
+        checks = []
+        for evidence in sorted(document['evidence'], key=lambda e: e['check_id']):
             check = evidence['check_id']
             preimage = preimages[check]
             level = deciding_level(evidence, preimage, subject, case['input']['host'],
                                    recording, document['evidence'], preimages)
-            levels.append(level)
-            if level >= 6 and has_computation(preimage):
-                if not supports(names(built['builds']), 'QT5.computation_keys'):
-                    blockers.append(check + ': builds lacks QT5.computation_keys (U39)')
-            if (evidence['reason'] == 'placeholder_unfilled' and level == 8
-                    and 2 not in built['levels']):
-                blockers.append(check + ': QS5 final override requires level 2')
-            block = check_block(level, built['levels'], subject, preimage)
-            if block:
-                blockers.append(check + ': ' + block)
-        for rule in sorted(dependencies(subject, document, preimages)):
-            if not supports(names(built['builds']), rule):
-                blockers.append('builds lacks ' + rule)
-        result = {'levels': sorted(set(levels)), 'blockers': blockers, 'detail': ''}
+            gaps = {r for r in common_gaps if BUILD_PHASE[r] is None or
+                    (BUILD_PHASE[r] == 7 and has_invocation(preimage))}
+            if has_computation(preimage) and not supports(names(built['builds']), 'QT5.computation_keys'):
+                gaps.add('QT5.computation_keys')
+            check_end = check_ending(level, built, subject, preimage, gaps)
+            if (check_end['phase'] == 'deciding' and level == 8 and
+                    evidence['reason'] == 'placeholder_unfilled' and 2 not in built['levels']):
+                check_end = ending(70, ['QS5'], 'sentinel')
+            checks.append({'id': check, 'deciding_level': level, 'ending': check_end})
+        planning = {r for c in checks if c['ending']['phase'] == 'planning'
+                    for r in c['ending']['rules']}
+        sentinels = {r for c in checks if c['ending']['phase'] in ('sentinel', 'observation')
+                     for r in c['ending']['rules']}
+        case_end = (ending(70, planning, 'planning') if planning else
+                    ending(70, sentinels, 'sentinel') if sentinels else
+                    ending(case['expect']['exit_code'], [case['expect'].get('rule')]
+                           if case['expect'].get('rule') else []))
+        blockers = (['builds lacks ' + r for r in sorted(planning)] if planning else
+                    ['first sentinel: ' + r for r in sorted(sentinels)])
+        result = {'levels': sorted({c['deciding_level'] for c in checks}),
+                  'blockers': blockers, 'detail': '', 'checks': checks, 'ending': case_end}
     return dict(row, **result, predicted=not result['blockers'])
 
 
+def validate_rules(built):
+    valid = set((ROOT / 'internal/docrefs/unmapped-rules.txt').read_text().splitlines())
+    valid.update(load(ROOT / 'internal/docrefs/rule-ledger.json')['rules'])
+    for group in ('rejects', 'builds'):
+        for rule in names(built[group]):
+            if not re.fullmatch(r'Q[A-Z][0-9]+(?:\.[A-Za-z0-9_]+)?', rule) or rule.split('.')[0] not in valid:
+                raise ValueError('unknown rule: ' + rule)
+            if group == 'builds' and rule not in BUILD_PHASE:
+                raise ValueError('unclassified builds token: ' + rule)
+
+
 def predict(built, cases=None):
+    validate_rules(built)
     levels = built['levels']
     if any(type(n) is not int or n not in range(1, 9) for n in levels):
         raise ValueError('levels must be integers from 1 to 8')
@@ -308,8 +406,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--built', required=True, type=Path)
     parser.add_argument('--json', action='store_true')
+    parser.add_argument('--out', type=Path)
     args = parser.parse_args()
     result = predict(load(args.built))
+    if args.out:
+        args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
         return

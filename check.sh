@@ -113,6 +113,13 @@ step ids-tests 'test canonical JSON and collection check ids'
 PYTHONDONTWRITEBYTECODE=1 python3 -I -B scripts/test_collection_ids.py
 step ratchet-prediction 'test the ratchet-set prediction script'
 PYTHONDONTWRITEBYTECODE=1 python3 -I -B scripts/test_predict_ratchet.py
+step ratchet-prediction-file 'verify committed ratchet prediction'
+(
+ prediction_tmp=$(mktemp "${TMPDIR:-/tmp}/pql-prediction.XXXXXX")
+ trap 'rm -f "$prediction_tmp"' EXIT
+ PYTHONDONTWRITEBYTECODE=1 python3 -I -B scripts/predict-ratchet.py --built scripts/ratchet/pr6.json --out "$prediction_tmp" >/dev/null
+ cmp scripts/ratchet/pr6-prediction.json "$prediction_tmp"
+)
 step behaviour 'validate behaviour schemas and agreement'
 PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I -B scripts/check-behaviour.py docs/specs/conformance-collection-1.0
 step ids-cross-check 'cross-check collection case ids and recordings'
@@ -131,6 +138,8 @@ else
 fi
 step corpus-schema-controls 'exercise schema validation with sealed examples'
 PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I -B scripts/test_corpus_schema.py
+step ratchet-audit-schema 'cross-check derivation audit labels'
+PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I -B scripts/test_ratchet_audit_schema.py
 step corpus-records 'run scripted corpus and validate stored copies'
 (
  corpus_copies=$(mktemp -d "${TMPDIR:-/tmp}/pql-corpus-records.XXXXXX")
