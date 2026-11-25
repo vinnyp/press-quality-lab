@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
-	"math/big"
 	"reflect"
 	"sort"
 	"strconv"
@@ -154,32 +153,6 @@ func appendValue(dst []byte, v any, active map[identity]bool) ([]byte, error) {
 	}
 }
 
-// decimalKey compares decimal values without allocating powers of ten. The
-// exponent remains arbitrary precision even for manually constructed Numbers.
-func decimalKey(s string) string {
-	negative := strings.HasPrefix(s, "-")
-	s = strings.TrimPrefix(s, "-")
-	exponent := new(big.Int)
-	if p := strings.IndexAny(s, "eE"); p >= 0 {
-		exponent.SetString(strings.TrimPrefix(s[p+1:], "+"), 10)
-		s = s[:p]
-	}
-	if p := strings.IndexByte(s, '.'); p >= 0 {
-		exponent.Sub(exponent, big.NewInt(int64(len(s)-p-1)))
-		s = s[:p] + s[p+1:]
-	}
-	s = strings.TrimLeft(s, "0")
-	if s == "" {
-		return "0"
-	}
-	digits := strings.TrimRight(s, "0")
-	exponent.Add(exponent, big.NewInt(int64(len(s)-len(digits))))
-	if negative {
-		digits = "-" + digits
-	}
-	return digits + "e" + exponent.String()
-}
-
 func number(n strictjson.Number) (string, error) {
 	raw := string(n)
 	// Read validates the grammar, including manually constructed Number values.
@@ -210,7 +183,7 @@ func number(n strictjson.Number) (string, error) {
 			result = result[:p+1] + sign + strconv.Itoa(power)
 		}
 	}
-	if decimalKey(raw) != decimalKey(result) {
+	if strictjson.Normalize(n) != strictjson.Normalize(strictjson.Number(result)) {
 		return "", fmt.Errorf("number does not round-trip through binary64: %q", raw)
 	}
 	return result, nil

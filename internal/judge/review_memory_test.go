@@ -108,14 +108,16 @@ func TestReviewRetainedFields(t *testing.T) {
 }
 
 func TestFreeStringMemory(t *testing.T) {
-	for _, field := range []string{"precondition", "model"} {
+	for _, field := range []string{"precondition", "model", "expected"} {
 		for _, encoding := range []string{"plain", "escaped"} {
-			t.Run(field+"/"+encoding, func(t *testing.T) {
+			t.Run(field+"_"+encoding, func(t *testing.T) {
 				f := conformanceFixture()
-				// Both fields are free strings; precondition records only non-null presence.
+				// Free strings include discarded wildcard evidence; precondition notes presence.
 				var node object
 				if field == "precondition" {
 					node = obj(arr(f.in["required"])[0])
+				} else if field == "expected" {
+					node = f.e("execution")
 				} else {
 					node = obj(f.e("execution")["evaluator"])
 				}

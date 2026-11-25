@@ -249,3 +249,52 @@ func TestStandardLibraryOnly(t *testing.T) {
 		}
 	}
 }
+
+func TestHugeExponent(t *testing.T) {
+	for _, row := range []struct {
+		name  string
+		a, b  Number
+		want  string
+		equal bool
+	}{
+		{"positive", "1e99999999999999999999", "10e99999999999999999998", "1e99999999999999999999", true},
+		{"negative", "1e-99999999999999999999", "10e-100000000000000000000", "1e-99999999999999999999", true},
+		{"distinct", "1e99999999999999999999", "1e99999999999999999998", "1e99999999999999999999", false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			if got := Normalize(row.a); got != row.want {
+				t.Fatalf("Normalize=%q want %q", got, row.want)
+			}
+			if got := EqualJSON(row.a, row.b); got != row.equal {
+				t.Fatalf("EqualJSON=%v want %v", got, row.equal)
+			}
+		})
+	}
+}
+
+func TestUnwritableValue(t *testing.T) {
+	for _, row := range []struct {
+		name  string
+		value any
+	}{
+		{"float", 1.5}, {"uint8", uint8(1)}, {"nested_struct", Object{"x": struct{}{}}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Fatal("unwritable value did not panic")
+				}
+			}()
+			Write(row.value)
+		})
+	}
+}
+
+func TestInvalidComparison(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("invalid comparison did not panic")
+		}
+	}()
+	EqualJSON(float64(1), float64(1))
+}

@@ -3,6 +3,7 @@ package strictjson
 
 import (
 	"fmt"
+	"math/big"
 	"reflect"
 	"sort"
 	"strconv"
@@ -492,29 +493,25 @@ func Normalize(n Number) string {
 	s := string(n)
 	negative := strings.HasPrefix(s, "-")
 	s = strings.TrimPrefix(s, "-")
-	exponent := 0
+	exponent := new(big.Int)
 	if p := strings.IndexAny(s, "eE"); p >= 0 {
-		var e error
-		exponent, e = strconv.Atoi(s[p+1:])
-		if e != nil {
-			panic(e)
-		}
+		exponent.SetString(strings.TrimPrefix(s[p+1:], "+"), 10)
 		s = s[:p]
 	}
 	if p := strings.IndexByte(s, '.'); p >= 0 {
-		exponent -= len(s) - p - 1
+		exponent.Sub(exponent, big.NewInt(int64(len(s)-p-1)))
 		s = s[:p] + s[p+1:]
 	}
 	s = strings.TrimLeft(s, "0")
 	if s == "" {
 		return "0"
 	}
-	trim := strings.TrimRight(s, "0")
-	exponent += len(s) - len(trim)
+	digits := strings.TrimRight(s, "0")
+	exponent.Add(exponent, big.NewInt(int64(len(s)-len(digits))))
 	if negative {
-		trim = "-" + trim
+		digits = "-" + digits
 	}
-	return trim + "e" + strconv.Itoa(exponent)
+	return digits + "e" + exponent.String()
 }
 
 // EqualJSON compares decoded JSON values using exact decimal number equality.
