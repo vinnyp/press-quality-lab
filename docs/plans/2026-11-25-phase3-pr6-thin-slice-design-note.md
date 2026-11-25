@@ -193,6 +193,15 @@ None of the six is a GR15 rule.
 
 The owner ruled on two readings before this build, now errata E-15 (QO1 covers every check under a grade-wide condition) and E-16 (a version that is not the string `1.0` is QS1's). The design review's log, `docs/agent-reviews/2026-11-25-phase3-pr6-design-note-reviews.md`, records how each was raised.
 
+### Readings the build settled from the text
+
+The build met three more questions. The sealed text answers each, so none went to the owner. They are listed here for the build review to check:
+- **QE10, the order within a check.** `expected` and `observed` are "the collector's choice within QE10's bounds" (`collection-contract.md`, QE19), and no judge rule reads them (`judge-contract.md` line 26). So the 4 MiB cap takes `expected` before `observed` within a check, in check-id order.
+- **QE10 at the 4 MiB boundary.** A digest object can be larger than the value it replaces. The engine keeps the longest run of values, in that order, whose sum plus the digest objects of every other value fits within 4 MiB. This meets the strictest reading of "held to 4 MiB". The 15 MiB pass replaces values from the end until the record fits.
+- **QT5's provenance fields.** QT1 rejects a recording "that its schema rejects", and the schema requires the digests' and the commit's hex shape. QT5's "rejects no recording on their values" means the values are never compared with anything. The sealed valid examples `examples/behaviour-01.json` and `-02.json` carry fake values of the right shape. So a wrong shape exits 2, and a fake value of the right shape is accepted.
+
+**Where files are read.** Two packages first opened files themselves, and the KTD20 guard caught both: `internal/subject` (the subject file) and `internal/scripted` (the host, the recording and the trace). Both now take bytes, or a writer, from the caller. `internal/grade` reads the subject file, and the scripted build's wiring file in `cmd/pql` reads the host and the recording and opens the trace. That follows KTD16: a run's bytes take one path.
+
 ## Limits the script carries into later slices
 
 - **Several invocations.** Discovery and planted-secret checks combine their invocations by QO7, through their own rules (U11, U37). The script treats them only as far as level 7. Slice b2 extends it before it predicts them.
