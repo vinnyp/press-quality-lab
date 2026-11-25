@@ -4,6 +4,8 @@ package main
 
 import (
 	"errors"
+	"github.com/vinnyp/press-quality-lab/internal/grade"
+	"github.com/vinnyp/press-quality-lab/internal/observe"
 
 	"github.com/spf13/cobra"
 )
@@ -22,4 +24,8 @@ func validateTestEntry(command *cobra.Command, options commandOptions) error {
 		return &rejectionError{2, "QT1", "test entry unavailable"}
 	}
 	return nil
+}
+
+func buildGradeSource(commandOptions) (observe.Source, func() error, error) {
+	return grade.ReleasedSource{}, func() error { return nil }, nil
 }

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/vinnyp/press-quality-lab/internal/grade"
 	"github.com/vinnyp/press-quality-lab/internal/judge"
 
 	"github.com/spf13/cobra"
@@ -108,6 +109,16 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if err == nil {
 		return resultCode
 	}
+	var collection *collectionExit
+	if errors.As(err, &collection) {
+		if collection.err == nil {
+			return collection.code
+		}
+		if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", collection.err); writeErr != nil {
+			return exitSoftware
+		}
+		return collection.code
+	}
 	code := exitSoftware
 	var rejection *rejectionError
 	if errors.As(err, &rejection) {
@@ -117,7 +128,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if errors.As(err, &usage) {
 		code = exitUsage
 	}
-	if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", err); writeErr != nil {
+	if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", grade.Escape(err.Error())); writeErr != nil {
 		return exitSoftware
 	}
 	if code == exitUsage {

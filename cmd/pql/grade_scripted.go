@@ -4,6 +4,8 @@ package main
 
 import (
 	"errors"
+	"github.com/vinnyp/press-quality-lab/internal/grade"
+	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"io"
 	"os"
 
@@ -81,4 +83,18 @@ func readScriptedInput(file io.ReadCloser) ([]byte, error) {
 
 func scriptedInputError(err error) error {
 	return errors.Join(&scripted.Error{Code: 2, Rule: "QT1", Detail: "scripted input unreadable"}, err)
+}
+
+func buildGradeSource(o commandOptions) (observe.Source, func() error, error) {
+	if o.Verifier != "scripted" {
+		return grade.ReleasedSource{}, func() error { return nil }, nil
+	}
+	source, close, err := buildScriptedSource(o)
+	if err != nil {
+		var e *scripted.Error
+		if errors.As(err, &e) {
+			err = &grade.Error{Code: e.Code, Rule: e.Rule, Cause: e.Detail}
+		}
+	}
+	return source, close, err
 }

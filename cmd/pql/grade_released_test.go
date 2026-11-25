@@ -8,6 +8,7 @@ import (
 )
 
 func TestReleasedTestFlags(t *testing.T) {
+	stubCollection(t)
 	// QT1: released commands parse test flags but reject their use.
 	for _, command := range []string{"grade", "anchor"} {
 		for i, tail := range [][]string{

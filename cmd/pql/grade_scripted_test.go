@@ -8,6 +8,7 @@ import (
 )
 
 func TestScriptedIncompleteFlags(t *testing.T) {
+	stubCollection(t)
 	// QT1: all three test-entry flags are required together.
 	flags := [][]string{{"--verifier", "scripted"}, {"--host", "host"}, {"--behaviour", "recording"}}
 	for _, command := range []string{"grade", "anchor"} {
