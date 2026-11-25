@@ -105,3 +105,47 @@ Rows 11 and 18 above are superseded: masking is now U24, and `check.sh` gains th
 | 81 | Case predictions off by two units | plan | Confirmed from the corpus | Fixed: those cases pass from U27. |
 | 82 | Record field owners | plan | Confirmed | Fixed: U7 and U17. |
 | 83 | Smaller items: QA5 on `anchor`, test seams, the hidden-mode selector, `x/sys` in `go.mod`, absolute `sandbox-exec`, an over-long argument list, decoy directory safety, host name in logs, 25 of 25, ratchet divergence, the manifest count, the assembled directory's contents, Python-free vectors, stated limits | all lenses | Confirmed or agreed | Fixed in the units and KTDs named in each. |
+
+## The peer-review gate, third pass
+
+Reviewed at commit `2183ef4` by the same five lenses, runtime claude, each in its own clone with unchanged repository-state snapshots: staff engineer (no Blocker, six Major), plan (no Blocker, seven Major), architecture (no Blocker, three Major), security (no Critical or High, four Medium) and measurement (no Blocker, two Major). Every lens confirmed the second pass's fixes present. These claims were reproduced on go1.27.4 before acting:
+
+- `os.RemoveAll` fails on a mode-0000 directory, plain and through `os.Root`.
+- A walk with `Root.Lstat` and `Root.Chmod`, followed by `Root.RemoveAll` on each child entry, empties such a directory and leaves an outside directory reached by a link unchanged. `Root.RemoveAll(".")` is refused, so the directory itself is removed from its parent.
+- darwin's standard `syscall` package has no `Openat` or `Unlinkat`.
+- The judge's writer writes an input `-0` integer as `0`, and the baseline echo in `internal/judge/baseline.go` passes untouched entries through it.
+
+The owner chose to split the end-to-end slice and keep it thin (row 95).
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 84 | The darwin track builds spawn, waits and draining last, after the units that need them | architecture | Confirmed from the units' tests | Fixed: U30 moves into PR8 before U28; U29 is the last darwin unit, depending on U30, U31 and U41. |
+| 85 | `strictjson` cannot take the judge's shape-guided reader as it is | architecture | Confirmed from `json.go` and `review_memory_test.go` | Fixed: KTD3 states the leaf's exports and leaves `shape` and the retention table in the judge; any change under `strictjson` re-runs private judge scoring. |
+| 86 | KTD20's mechanism cannot remove a mode-0000 directory, and darwin lacks the `*at` calls | architecture, security, staff | Reproduced | Fixed: KTD20 is built on `os.Root`; U40's tests include a swap between `Lstat` and the mode change, and a mutation to `os.Chmod(path)`. |
+| 87 | The total writer would write `-0` | staff, architecture | Reproduced | Fixed: KTD3 keeps 64-bit integers on today's path; U3's `k: -0` test. |
+| 88 | U2 and U21 both claim `hidden.go`; the spike lands darwin code before the darwin gate | architecture, plan, staff | Confirmed | Fixed: U2 creates the dispatch; PR4 merges the spike's record and evidence only; `x/sys` enters `go.mod` with U15; the import guard's `x/sys` rule is tested on synthetic output first. |
+| 89 | U31 and U30 depend on slice b and c code that PR9 does not wait for | plan, staff | Confirmed | Fixed: U31 tests with a fixture scratch directory and joins QA4 in U35; U41 records the read proof's raw facts and U37 decides. |
+| 90 | Tests that start `sandbox-exec` run in a default `go test` on a Mac | plan, staff | Confirmed: only three units were tagged | Fixed: KTD19's `macos_evidence` tag on every such test; an evidence run fails on a skip. |
+| 91 | An unbuilt resolver step, read literally, gives `harness_fault` for every check | plan | Confirmed against U12's and U27's predictions | Fixed: KTD11, an unbuilt step acts only when its condition is in the raw facts; the QH8 step and QO3 move to U12. |
+| 92 | U12 is too large for one brief | plan | Agreed | Fixed: U12, U36, U37 and U38. |
+| 93 | "No invocation requested" cannot be observed after cleanup | plan, measurement | Confirmed | Fixed: KTD2.4-5's scripted-only trace and U8's planted cases. |
+| 94 | The growth check has no rule for the first list or a local run | plan, staff, measurement | Confirmed | Fixed: KTD2.6. |
+| 95 | PR2 is no longer the thin slice GKD1 approved | staff | Confirmed: fourteen units | Owner decided: split and stay thin. PR2 is the strict JSON leaf; PR3 is the end-to-end slice for `case-003`, `case-004` and `case-129`; U39 completes the required set in slice a; masking and unconfined safety move to slice b. |
+| 96 | A seeded mistake caught only by a lint counts as caught | measurement | Confirmed from KTD12 | Fixed: the mutant must build and pass every lint, and a catch is a named test failure. |
+| 97 | U3's re-run of the judge catalogue has no not-evaluated rule | measurement | Agreed | Fixed: U3 reports evaluated out of total, and a mistake not placed blocks unless waived. |
+| 98 | Private-case denominators are unstated | measurement | Agreed | Fixed: U18's subset criterion and U20's scored out of 72. |
+| 99 | KTD15's validation count comes from the runner it checks | measurement | Agreed | Fixed: a fresh directory, `-count=1`, and a count `check.sh` takes from the corpus and the list. |
+| 100 | The comparator is tested only for false passes; input lists have no order | measurement | Confirmed from the judge contract | Fixed: KTD2.3 compares input lists as multisets; U8's allowed-variation tests. |
+| 101 | The form replay drops unnamed invocations and lacks a context rule | measurement | Confirmed: 209 of 1,415 recorded invocations are named by no case | Fixed: U32 replays each context, drives the KTD13 driver, compares through the projection serialiser and reports coverage for the owner. |
+| 102 | The real-verifier cases run once | measurement | Agreed | Fixed: 25 of 25 under KTD18. |
+| 103 | A subject can make files undeletable with flags or access-control entries | security | Not verified on 27.2; needs a run | Fixed: KTD20's darwin half and U40's macOS tests; a failed cleanup goes to the owner (Open Questions). |
+| 104 | The leak scan and inspection can skip an unreadable file | security | Agreed | Fixed: KTD20's file mode change, U36's and U37's fixtures; the outcome goes to the owner. |
+| 105 | base64 forms miss a canary at an unaligned offset | security | Confirmed from §4 | To the owner (Open Questions); the engine does not work around it. |
+| 106 | A subject keeps running after `pql` dies, and the sweep races it | security | Agreed | Fixed: KTD5's recorded groups, KTD17's SIGHUP and SIGQUIT, U40's tests; the exit code goes to the owner. |
+| 107 | Escaping misses error paths and masking runs after escaping and head cuts | security | Agreed | Fixed: KTD16 and U24's edge cases. |
+| 108 | The macOS re-check trigger misses transitive imports | staff, architecture, security | Confirmed | Fixed: KTD14.2's checked-in darwin dependency list, owned by U2. |
+| 109 | The scripted invoker must read attribution strings the guard forbids | architecture | Confirmed | Fixed: KTD13's guard excludes the scripted reader; the projection test proves the mapping. |
+| 110 | The driver could assign `earlier_step_failed` ahead of earlier §2 steps | architecture | Agreed | Fixed: KTD11, the driver records facts and the resolver assigns reasons. |
+| 111 | Stored-record fields without an owner | plan, staff | Confirmed from `record.schema.json` | Fixed: U17. |
+| 112 | Real-path evidence lands last | staff | Agreed | Fixed: U16 and U32 move into the darwin track before slice d. |
+| 113 | Smaller items: U4's schema-detectable rules, U10's build, QO2's two owners, U23's verification, U25's dependency on U2, U18's agreement wording, the descriptor loop, the random copy folder, exact version matching, U32's decoy and environment controls, U31's survivor assertion, the two-rule question at run time, the main session's sandbox, and test commands with `-tags scripted` | all lenses | Confirmed or agreed | Fixed in the units, KTDs and Open Questions named in each. |
