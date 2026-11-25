@@ -162,7 +162,8 @@ func findRootPaths(text string) ([]citation, []problem) {
 				delimiter := strings.Repeat("`", width)
 				end := strings.Index(line[start+width:], delimiter)
 				if end < 0 {
-					break
+					pos = start + width
+					continue
 				}
 				end += start + width
 				span := line[start+width : end]
@@ -345,7 +346,7 @@ func TestRootDocFixtures(t *testing.T) {
 		{name: "clean", counts: rootCounts{1, 1, 3, 1}},
 		{name: "undefined_collection", text: "text\nQH99", want: []string{"REVIEW.md:2: QH99 is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 1, 3, 1}},
 		{name: "undefined_judge", text: "text\nE99", want: []string{"REVIEW.md:2: E99 is not defined in its specification; correct the cited id"}, counts: rootCounts{1, 2, 3, 1}},
-		{name: "boundaries", text: "AQH8 E9a QH8x", want: []string{"REVIEW.md:1: QH8x is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 2, 3, 1}},
+		{name: "boundaries", text: "AQH8 E9a QH8x Q1", want: []string{"REVIEW.md:1: QH8x is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 2, 3, 1}},
 		{name: "unbounded_ids", text: "QH1234 E1234", want: []string{"REVIEW.md:1: E1234 is not defined in its specification; correct the cited id", "REVIEW.md:1: QH1234 is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 2, 3, 1}},
 		{name: "collection_suffix", text: "QH8a", want: []string{"REVIEW.md:1: QH8a is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 1, 3, 1}},
 		{name: "subfolder", text: "P4", change: func(f fstest.MapFS) {
@@ -383,6 +384,9 @@ func TestRootDocFixtures(t *testing.T) {
 		{name: "every_span", text: "`docs/exists.md` `docs/later.md`", want: []string{"REVIEW.md:1: docs/later.md repository path does not resolve: open docs/later.md: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 3}},
 		{name: "fenced_skip", text: "```sh\n`docs/missing`\n```\n~~~\n`docs/also-missing`\n~~~\n", counts: rootCounts{1, 1, 3, 1}},
 		{name: "fence_closer", text: "````sh\n```\n`docs/hidden`\n`````\n`docs/exists.md`\n", counts: rootCounts{1, 1, 3, 2}},
+		{name: "fence_closer_text", text: "```\n```go\n`docs/hidden`\n```\n`docs/exists.md`", counts: rootCounts{1, 1, 3, 2}},
+		{name: "indented_fence", text: "    ```\n`docs/missing.md`", want: []string{"REVIEW.md:2: docs/missing.md repository path does not resolve: open docs/missing.md: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 2}},
+		{name: "unpaired_backtick", text: "the ``` mark and `docs/missing.md`", want: []string{"REVIEW.md:1: docs/missing.md repository path does not resolve: open docs/missing.md: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 2}},
 		{name: "fence_character", text: "```\n~~~\n`docs/hidden`\n```\n~~~\n```\n`docs/also-hidden`\n~~~\n`docs/exists.md`", counts: rootCounts{1, 1, 3, 2}},
 		{name: "unclosed_fence", text: "text\n```sh\n`docs/hidden`", want: []string{"REVIEW.md:2: unclosed fence; close the fence so following paths are checked"}, counts: rootCounts{1, 1, 3, 1}},
 		{name: "invalid_opener", text: "```x```\n`docs/exists.md`", counts: rootCounts{1, 1, 3, 2}},
