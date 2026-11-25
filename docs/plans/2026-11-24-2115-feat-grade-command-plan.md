@@ -159,7 +159,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
      - That field also names invocations a not-observed check would have used (QE8), so the subset alone cannot catch a run that should not have started. The runner therefore also requires, from the case's host and subject file:
        - zero served keys and zero homes when confinement was not applied, the self-test failed, the private copy changed, or the binary is a placeholder;
        - only discovery's help requests when the seed or the store is a placeholder (QS5);
-       - no key served only for checks the case expects as `earlier_step_failed` or `placeholder_unfilled`;
+       - no key served only for checks the case expects as `earlier_step_failed` or as `placeholder_unfilled` because QS5’s level-2 dependency rule stops them from running, excluding QS5’s final override;
        - no computation served whose capture the case's evidence shows cut (QA4).
      - KTD12's symbol check keeps the trace out of the released binary.
   7. **The pending list.** A checked-in list names the cases not yet expected to pass. Every case off it must pass, and every case on it must still fail.

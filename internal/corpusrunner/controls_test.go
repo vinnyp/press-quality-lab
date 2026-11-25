@@ -1,0 +1,643 @@
+//go:build scripted
+
+package corpusrunner
+
+import (
+	"encoding/json"
+	"errors"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"reflect"
+	"strings"
+	"testing"
+
+	"github.com/vinnyp/press-quality-lab/internal/caseassembly"
+)
+
+func read(t *testing.T, path string, v any) {
+	t.Helper()
+	if err := caseassembly.Read(path, v); err != nil {
+		t.Fatal(err)
+	}
+}
+func fixture(t *testing.T, id string) (caseassembly.Case, map[string]any, map[string]any, map[string]any) {
+	t.Helper()
+	source := filepath.Join(kit, "cases", id)
+	var c caseassembly.Case
+	var input, subject, pre map[string]any
+	read(t, filepath.Join(source, "case.json"), &c)
+	read(t, filepath.Join(source, c.Input.SubjectFile), &subject)
+	if c.Kind == "judge-checked" {
+		read(t, filepath.Join(source, "input.json"), &input)
+		read(t, filepath.Join(source, "preimages.json"), &pre)
+	}
+	return c, input, subject, pre
+}
+func clone(t *testing.T, m map[string]any) map[string]any {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "fixture.json")
+	b, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, b, 0600); err != nil {
+		t.Fatal(err)
+	}
+	var out map[string]any
+	read(t, path, &out)
+	return out
+}
+func assertError(t *testing.T, err error, want string) {
+	t.Helper()
+	got := ""
+	if err != nil {
+		got = err.Error()
+	}
+	if got != want {
+		t.Fatalf("error %q, want %q", got, want)
+	}
+}
+func TestComparatorMutations(t *testing.T) {
+	_, want, _, _ := fixture(t, "case-001")
+	assertError(t, compareInput(clone(t, want), want), "")
+	for _, field := range []string{"check_id", "outcome", "reason", "failure_kind", "target_size", "precondition_observed", "tier"} {
+		t.Run(field, func(t *testing.T) {
+			got := clone(t, want)
+			object(list(got["evidence"])[0])[field] = "mutated"
+			expected := "field " + field + " differs or is absent"
+			if field == "check_id" {
+				expected = "missing evidence"
+			}
+			assertError(t, compareInput(got, want), expected)
+		})
+	}
+	for _, field := range []string{"kind", "id", "tier"} {
+		t.Run("target/"+field, func(t *testing.T) {
+			got := clone(t, want)
+			object(list(object(list(got["evidence"])[0])["targets"])[0])[field] = "mutated"
+			assertError(t, compareInput(got, want), "target fields differ")
+		})
+	}
+	for _, mutation := range []string{"required", "extra", "missing", "renamed", "absent-both", "target-absent-both", "duplicate"} {
+		t.Run(mutation, func(t *testing.T) {
+			got := clone(t, want)
+			expected := clone(t, want)
+			message := "evidence count differs or absent"
+			switch mutation {
+			case "required":
+				got["required"] = []any{}
+				message = "field required differs or is absent"
+			case "extra":
+				got["evidence"] = append(list(got["evidence"]), list(got["evidence"])[0])
+			case "missing":
+				got["evidence"] = list(got["evidence"])[1:]
+			case "renamed":
+				got["renamed"] = got["required"]
+				delete(got, "required")
+				message = "field required differs or is absent"
+			case "absent-both":
+				delete(object(list(got["evidence"])[0]), "reason")
+				delete(object(list(expected["evidence"])[0]), "reason")
+				message = "field reason differs or is absent"
+			case "target-absent-both":
+				delete(object(list(object(list(got["evidence"])[0])["targets"])[0]), "tier")
+				delete(object(list(object(list(expected["evidence"])[0])["targets"])[0]), "tier")
+				message = "target field tier absent"
+			case "duplicate":
+				list(got["evidence"])[1] = list(got["evidence"])[0]
+				message = "missing or repeated check_id"
+			}
+			assertError(t, compareInput(got, expected), message)
+		})
+	}
+	for _, variation := range []string{"evidence-order", "content", "top-level-lists"} {
+		t.Run(variation, func(t *testing.T) {
+			got := clone(t, want)
+			switch variation {
+			case "evidence-order":
+				a := list(got["evidence"])
+				a[0], a[len(a)-1] = a[len(a)-1], a[0]
+			case "content":
+				e := object(list(got["evidence"])[0])
+				e["expected"] = "collector choice"
+				e["observed"] = nil
+			case "top-level-lists":
+				for k, v := range got {
+					if a, ok := v.([]any); ok && k != "evidence" && len(a) > 1 {
+						a[0], a[len(a)-1] = a[len(a)-1], a[0]
+					}
+				}
+			}
+			assertError(t, compareInput(got, want), "")
+		})
+	}
+	// Duplicate list elements are not collapsed into sets.
+	assertError(t, sameFields(map[string]any{"scope": []any{"a", "a"}}, map[string]any{"scope": []any{"a", "b"}}, []string{"scope"}), "field scope differs or is absent")
+}
+func TestResultAndRatchet(t *testing.T) {
+	c, input, _, _ := fixture(t, "case-001")
+	r := result{Exit: expectedExit(t, c), Record: map[string]any{"judge_input": input, "judge_output": c.Expect["judge_output"], "judge_rejected": false}}
+	assertError(t, compareResult(c, input, r), "")
+	r.Record = nil
+	assertError(t, compareResult(c, input, r), "stored record missing")
+	d, _, _, _ := fixture(t, "case-100")
+	r = result{Exit: expectedExit(t, d), Rule: "wrong"}
+	assertError(t, compareResult(d, nil, r), "rejection rule differs")
+	rule, ok := d.Expect["rule"].(string)
+	if !ok {
+		t.Fatal("fixture rule missing")
+	}
+	r.Rule = rule
+	assertError(t, compareResult(d, nil, r), "")
+	r.Record = map[string]any{}
+	assertError(t, compareResult(d, nil, r), "derivation stored a record")
+	r.Record = nil
+	r.Exit = 70
+	assertError(t, compareResult(d, nil, r), "exit code differs")
+	for _, row := range []struct {
+		pending bool
+		failure error
+		message string
+	}{
+		{true, errors.New("not built"), ""}, {false, nil, ""}, {true, nil, "pending case passed; remove it from pending"}, {false, errors.New("not built"), "required case failed: not built"},
+	} {
+		assertError(t, ratchet(row.pending, row.failure), row.message)
+	}
+}
+func TestTraceGuards(t *testing.T) {
+	c, input, subject, pre := fixture(t, "case-001")
+	tr := trace{Required: []any{}, Served: []any{}, Homes: []string{}}
+	assertError(t, checkTrace(c, subject, input, pre, tr), "")
+	tr.Served = []any{map[string]any{"words": []any{"unknown"}}}
+	assertError(t, checkTrace(c, subject, input, pre, tr), "served key outside invocations")
+	for _, id := range []string{"case-003", "case-004", "case-060"} {
+		t.Run(strings.ReplaceAll(id, "-", "_"), func(t *testing.T) {
+			c, in, s, p := fixture(t, id)
+			tr := trace{Required: []any{}, Served: []any{c.Invocations[0]}}
+			assertError(t, checkTrace(c, s, in, p, tr), "collection before host/subject guard")
+		})
+	}
+	for _, id := range []string{"case-061", "case-062"} {
+		t.Run(strings.ReplaceAll(id, "-", "_"), func(t *testing.T) {
+			c, in, s, p := fixture(t, id)
+			var ordinary, help any
+			for _, k := range c.Invocations {
+				if discovery(object(k)) {
+					help = k
+				} else {
+					ordinary = k
+				}
+			}
+			if ordinary == nil || help == nil {
+				t.Fatal("fixture lacks keys")
+			}
+			assertError(t, checkTrace(c, s, in, p, trace{Required: []any{}, Served: []any{ordinary}}), "non-discovery invocation with placeholder seed/store")
+			assertError(t, checkTrace(c, s, in, p, trace{Required: []any{}, Served: []any{help}}), "")
+		})
+	}
+	d, _, s, p := fixture(t, "case-100")
+	assertError(t, checkTrace(d, s, nil, p, trace{Required: []any{}, Homes: []string{"made"}}), "derivation collected")
+	// A fixture key associated only with a stopped check must not be served.
+	key := map[string]any{"words": []any{"list"}, "runbook": "book", "step": "second", "computation": nil, "home": "runbook", "offline_args": nil, "env": []any{}}
+	c.Invocations = []any{key}
+	for _, reason := range []string{"earlier_step_failed"} {
+		input = map[string]any{"evidence": []any{map[string]any{"check_id": "id", "reason": reason}}}
+		pre = map[string]any{"id": map[string]any{"words": []any{"list"}, "runbook": "book", "step": "second"}}
+		assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Served: []any{key}}), "served only for blocked checks")
+	}
+}
+func TestIndependentReaders(t *testing.T) {
+	for _, row := range []struct {
+		data  string
+		valid bool
+	}{
+		{`{"kind":"required","value":[]}`, true},
+		{`{"kind":"required","value":[]} {"kind":"served","value":{"words":[]}} {"kind":"home","value":"made"}`, true},
+		{`{"kind":"home","value":"made"}`, false},
+		{`{"kind":"required","value":[]} {"kind":"required","value":[]}`, false},
+		{`{"kind":"required","value":[]} {"kind":"unknown","value":[]}`, false},
+		{`{"kind":"required","value":[]} {"kind":"served","value":null}`, false},
+		{`{"kind":"required","value":[]} {"kind":"home","value":null}`, false},
+		{``, false},
+		{`{"kind":"required","value":[]} {}`, false},
+		{`{`, false},
+	} {
+		path := filepath.Join(t.TempDir(), "trace.json")
+		if err := os.WriteFile(path, []byte(row.data), 0600); err != nil {
+			t.Fatal(err)
+		}
+		_, err := readTrace(path)
+		if (err == nil) != row.valid {
+			t.Fatalf("trace %s: %v", row.data, err)
+		}
+	}
+	tracePath := filepath.Join(t.TempDir(), "trace.json")
+	if err := os.WriteFile(tracePath, []byte(`{"kind":"required","value":[9007199254740993]} {"kind":"served","value":{"words":["list"]}} {"kind":"home","value":"made"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	got, err := readTrace(tracePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := trace{Required: []any{json.Number("9007199254740993")}, Served: []any{map[string]any{"words": []any{"list"}}}, Homes: []string{"made"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("trace %+v want %+v", got, want)
+	}
+	path := filepath.Join(t.TempDir(), "number.json")
+	if err := os.WriteFile(path, []byte(`{"n":9007199254740993}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var m map[string]any
+	read(t, path, &m)
+	if !reflect.DeepEqual(m["n"], json.Number("9007199254740993")) {
+		t.Fatalf("number lost: %v", m)
+	}
+	if err := caseassembly.Read(filepath.Join(t.TempDir(), "case.json"), &m); err == nil {
+		t.Fatal("empty case directory accepted")
+	}
+}
+func TestPythonControls(t *testing.T) {
+	cmd := exec.Command("python3", "-I", "-B", "../../scripts/test_corpus_controls.py")
+	cmd.Env = append(os.Environ(), "PYTHONDONTWRITEBYTECODE=1")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("Python controls: %v\n%s", err, out)
+	}
+}
+
+func TestRecordOutputAndExports(t *testing.T) {
+	c, input, _, _ := fixture(t, "case-001")
+	for _, row := range []struct {
+		output   any
+		rejected any
+		message  string
+	}{
+		{nil, false, "judge output differs"},
+		{c.Expect["judge_output"], true, "judge rejected or missing rejection flag"},
+		{c.Expect["judge_output"], nil, "judge rejected or missing rejection flag"},
+	} {
+		r := result{Exit: expectedExit(t, c), Record: map[string]any{"judge_input": input, "judge_output": row.output, "judge_rejected": row.rejected}}
+		assertError(t, compareResult(c, input, r), row.message)
+	}
+	dir := t.TempDir()
+	record := map[string]any{"record_version": "fixture"}
+	baseline := map[string]any{"baseline_version": "fixture"}
+	assertError(t, exportCopies(dir, "case-001", record, baseline), "")
+	for suffix, want := range map[string]map[string]any{".record.json": record, ".baseline.json": baseline} {
+		path := filepath.Join(dir, "case-001"+suffix)
+		var got map[string]any
+		read(t, path, &got)
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("export %s: %v want %v", suffix, got, want)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0600 {
+			t.Fatalf("export mode %v", info.Mode())
+		}
+	}
+	assertError(t, exportCopies(dir, "case-001", nil, baseline), "missing export .record.json")
+	assertError(t, exportCopies("relative", "case-001", record, baseline), "copy directory must be absolute")
+	// A deleted stored file is a reading failure, before any comparison can pass.
+	path := filepath.Join(t.TempDir(), "deleted.record.json")
+	if err := os.WriteFile(path, []byte(`{}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := caseassembly.Read(path, &got); err == nil {
+		t.Fatal("deleted record accepted")
+	}
+}
+
+func TestCutComputationTrace(t *testing.T) {
+	c, input, subject, pre := fixture(t, "case-139")
+	var computation any
+	for _, key := range c.Invocations {
+		if object(key)["computation"] != nil {
+			computation = key
+			break
+		}
+	}
+	if computation == nil {
+		t.Fatal("fixture lacks computation")
+	}
+	tr := trace{Required: []any{}, Served: []any{computation}}
+	assertError(t, checkTrace(c, subject, input, pre, tr), "")
+	changed := false
+	for _, value := range list(input["evidence"]) {
+		ev := object(value)
+		id, ok := ev["check_id"].(string)
+		if !ok {
+			t.Fatal("fixture id missing")
+		}
+		p := object(pre[id])
+		if p["runbook"] == "self agreement" && p["step"] == "first" {
+			object(object(ev["observed"])["stdout"])["cut"] = true
+			changed = true
+		}
+	}
+	if !changed {
+		t.Fatal("fixture lacks captured stdout")
+	}
+	assertError(t, checkTrace(c, subject, input, pre, tr), "computation capture was cut")
+}
+
+func TestEachHostGuard(t *testing.T) {
+	for _, name := range []string{"confinement", "self_test", "private_copy", "binary"} {
+		t.Run(name, func(t *testing.T) {
+			c, input, subject, pre := fixture(t, "case-001")
+			switch name {
+			case "confinement":
+				object(c.Input.Host["confinement"])["applied"] = false
+			case "self_test":
+				c.Input.Host["self_test"] = "failed"
+			case "private_copy":
+				c.Input.Host["private_copy"] = "changed"
+			case "binary":
+				subject["binary"] = map[string]any{"placeholder": "fill"}
+			}
+			assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}}), "")
+			assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Homes: []string{"made"}}), "collection before host/subject guard")
+			assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Served: []any{c.Invocations[0]}}), "collection before host/subject guard")
+		})
+	}
+}
+
+func expectedExit(t *testing.T, c caseassembly.Case) int {
+	t.Helper()
+	n, ok := c.Expect["exit_code"].(json.Number)
+	if !ok {
+		t.Fatal("fixture exit absent")
+	}
+	value, err := n.Int64()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return int(value)
+}
+
+func TestReviewControls(t *testing.T) {
+	t.Run("zero_trace", func(t *testing.T) {
+		c, in, s, p := fixture(t, "case-001")
+		assertError(t, checkTrace(c, s, in, p, trace{}), "trace not read")
+	})
+	t.Run("real_pending", func(t *testing.T) {
+		assertError(t, realPending("case-069", nil), "real-verifier case must remain pending: case-069")
+	})
+	t.Run("rejudge_placeholder", func(t *testing.T) {
+		assertError(t, rejudgeNotBuilt(nil), "pql judge re-judge not built")
+	})
+	t.Run("top_level_extra", func(t *testing.T) {
+		_, want, _, _ := fixture(t, "case-001")
+		got := clone(t, want)
+		got["extra"] = nil
+		assertError(t, compareInput(got, want), "input field set differs")
+	})
+	t.Run("exit_absent", func(t *testing.T) {
+		c, in, _, _ := fixture(t, "case-001")
+		delete(c.Expect, "exit_code")
+		assertError(t, compareResult(c, in, result{}), "exit code differs")
+	})
+	t.Run("exit_invalid", func(t *testing.T) {
+		c, in, _, _ := fixture(t, "case-001")
+		c.Expect["exit_code"] = json.Number("0.5")
+		assertError(t, compareResult(c, in, result{}), "exit code differs")
+	})
+	t.Run("output_absent_both", func(t *testing.T) {
+		c, in, _, _ := fixture(t, "case-001")
+		delete(c.Expect, "judge_output")
+		r := result{Exit: expectedExit(t, c), Record: map[string]any{"judge_input": in, "judge_rejected": false}}
+		assertError(t, compareResult(c, in, r), "judge output differs")
+	})
+	t.Run("record_without_baseline", func(t *testing.T) {
+		assertError(t, exportCopies(t.TempDir(), "case-001", map[string]any{}, nil), "")
+	})
+	for _, row := range []struct{ name, data, want string }{
+		{"home_before_required", `{"kind":"home","value":"made"} {"kind":"required","value":[]}`, "trace required event missing"},
+		{"three_fields", `{"kind":"required","value":[],"extra":null}`, "trace event fields differ"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "trace.json")
+			if err := os.WriteFile(path, []byte(row.data), 0600); err != nil {
+				t.Fatal(err)
+			}
+			_, err := readTrace(path)
+			assertError(t, err, row.want)
+		})
+	}
+	for _, home := range []string{"seed", "runbook"} {
+		t.Run("placeholder_"+home, func(t *testing.T) {
+			c, _, subject, _ := fixture(t, "case-001")
+			words := []any{"list"}
+			if home == "runbook" {
+				words = []any{"list", "--help"}
+			}
+			key := map[string]any{"words": words, "offline_args": []any{}, "env": []any{}, "runbook": nil, "step": nil, "home": home, "computation": nil}
+			if home == "runbook" {
+				key["runbook"] = "book"
+				key["step"] = "first"
+			}
+			c.Invocations = []any{key}
+			subject["seed"] = map[string]any{"placeholder": "fill"}
+			in := map[string]any{"evidence": []any{map[string]any{"check_id": "id", "reason": nil}}}
+			pre := map[string]any{"id": map[string]any{"words": words, "offline_args": []any{}, "env": map[string]any{}}}
+			if home == "runbook" {
+				object(pre["id"])["runbook"] = "book"
+				object(pre["id"])["step"] = "first"
+			}
+			assertError(t, checkTrace(c, subject, in, pre, trace{Required: []any{}, Served: []any{key}}), "non-discovery invocation with placeholder seed/store")
+		})
+	}
+	for _, field := range []string{"home", "offline_args", "env"} {
+		t.Run("blocked_full_key_"+field, func(t *testing.T) {
+			c, _, s, _ := fixture(t, "case-001")
+			key := map[string]any{"words": []any{"list"}, "offline_args": []any{"--offline"}, "env": []any{"MODE"}, "runbook": "book", "step": "second", "computation": nil, "home": "runbook"}
+			blocked := map[string]any{"words": []any{"list"}, "offline_args": []any{"--offline"}, "env": map[string]any{"MODE": "x"}, "runbook": "book", "step": "second"}
+			runnable := clone(t, blocked)
+			switch field {
+			case "home":
+				runnable["probe"] = "planted_secret"
+				runnable["parameters"] = map[string]any{"commands": []any{map[string]any{"words": runnable["words"], "offline_args": runnable["offline_args"], "env": runnable["env"]}}}
+			case "offline_args":
+				runnable[field] = []any{}
+			case "env":
+				runnable[field] = map[string]any{}
+			}
+			if field == "home" {
+				key["runbook"] = nil
+				key["step"] = nil
+				key["home"] = "seed"
+				blocked["runbook"] = nil
+				blocked["step"] = nil
+				runnable["runbook"] = nil
+				runnable["step"] = nil
+			}
+			c.Invocations = []any{key}
+			in := map[string]any{"evidence": []any{map[string]any{"check_id": "blocked", "reason": "earlier_step_failed"}, map[string]any{"check_id": "runnable", "reason": nil}}}
+			pre := map[string]any{"blocked": blocked, "runnable": runnable}
+			assertError(t, checkTrace(c, s, in, pre, trace{Required: []any{}, Served: []any{key}}), "served only for blocked checks")
+		})
+	}
+}
+
+func TestListGrammar(t *testing.T) {
+	got := pendingSet("  # comment\n\n  QH1  \nQH2\n")
+	want := map[string]bool{"QH1": true, "QH2": true}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("entries %v, want %v", got, want)
+	}
+}
+
+func TestPlaceholderCorpus(t *testing.T) {
+	entries, err := os.ReadDir(filepath.Join(kit, "cases"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantCounts := map[string][2]int{
+		"case-022": {0, 18}, "case-060": {29, 0}, "case-061": {28, 1}, "case-062": {28, 1}, "case-063": {4, 17}, "case-064": {1, 18}, "case-065": {1, 18}, "case-066": {0, 19}, "case-091": {1, 12},
+	}
+	cases := 0
+	for _, entry := range entries {
+		c, input, subject, pre := fixture(t, entry.Name())
+		counts := map[string]int{}
+		for _, value := range list(input["evidence"]) {
+			ev := object(value)
+			if ev["reason"] != "placeholder_unfilled" {
+				continue
+			}
+			id, ok := ev["check_id"].(string)
+			if !ok {
+				t.Fatal("check_id absent")
+			}
+			class, err := placeholderClass(subject, object(pre[id]), c.Invocations)
+			if err != nil {
+				t.Fatalf("%s: %v", c.ID, err)
+			}
+			counts[class]++
+		}
+		if len(counts) != 0 {
+			cases++
+			if got := [2]int{counts["level_two"], counts["override"]}; got != wantCounts[c.ID] {
+				t.Fatalf("%s classification got %v want %v", c.ID, got, wantCounts[c.ID])
+			}
+			t.Logf("%s level_two=%d override=%d", c.ID, counts["level_two"], counts["override"])
+		}
+	}
+	if cases != 9 {
+		t.Fatalf("placeholder cases %d, want 9", cases)
+	}
+}
+
+func TestPlaceholderTraceClasses(t *testing.T) {
+	for _, row := range []struct {
+		name             string
+		blocked, trigger bool
+		want             string
+	}{
+		{"level_two", true, false, "served only for blocked checks"},
+		{"override", false, true, ""},
+		{"neither", false, false, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_bounding", false, true, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_idempotency", false, true, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_destructive_guard", false, true, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_side_effect_integrity", false, true, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_flag_conformance", false, true, "placeholder check has neither level-two dependency nor override"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			c, _, subject, _ := fixture(t, "case-001")
+			subject["commands"] = []any{map[string]any{"words": []any{"list"}, "class": "safe", "writes": false}}
+			if row.blocked {
+				object(list(subject["commands"])[0])["class"] = map[string]any{"placeholder": "safety"}
+			}
+			if row.trigger {
+				subject["declared_count"] = map[string]any{"placeholder": "count"}
+			}
+			key := map[string]any{"words": []any{"list"}, "offline_args": nil, "env": []any{}, "runbook": nil, "step": nil, "computation": nil, "home": "seed"}
+			c.Invocations = []any{key}
+			pre := map[string]any{"id": map[string]any{"words": []any{"list"}, "dimension": "execution"}}
+			if strings.HasPrefix(row.name, "excluded_") {
+				object(pre["id"])["dimension"] = strings.ReplaceAll(strings.TrimPrefix(row.name, "excluded_"), "_", "-")
+			}
+			input := map[string]any{"evidence": []any{map[string]any{"check_id": "id", "reason": "placeholder_unfilled"}}}
+			assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Served: []any{key}}), row.want)
+		})
+	}
+}
+
+// Discovery keys end with --help; an earlier occurrence does not qualify.
+func TestDiscoveryLastWord(t *testing.T) {
+	for _, row := range []struct {
+		name  string
+		words []any
+		want  bool
+	}{
+		{"last_help", []any{"list", "--help"}, true},
+		{"earlier_help", []any{"--help", "list"}, false},
+		{"no_help", []any{"list"}, false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			got := discovery(map[string]any{"words": row.words, "home": "empty", "computation": nil})
+			if got != row.want {
+				t.Fatalf("discovery = %v, want %v", got, row.want)
+			}
+		})
+	}
+}
+
+func TestBlockedDiscoveryExemption(t *testing.T) {
+	for _, row := range []struct{ name, home, want string }{
+		{"discovery", "empty", ""},
+		{"non_discovery", "seed", "served only for blocked checks"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			c, _, subject, _ := fixture(t, "case-001")
+			key := map[string]any{"words": []any{"list", "--help"}, "offline_args": nil, "env": []any{}, "runbook": nil, "step": nil, "computation": nil, "home": row.home}
+			c.Invocations = []any{key}
+			if got := servedOnlyForBlockedChecks(true, false, key); got != (row.want != "") {
+				t.Fatalf("servedOnlyForBlockedChecks = %v, want %v", got, row.want != "")
+			}
+			pre := map[string]any{"id": map[string]any{"words": key["words"]}}
+			input := map[string]any{"evidence": []any{map[string]any{"check_id": "id", "reason": "earlier_step_failed"}}}
+			assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Served: []any{key}}), row.want)
+		})
+	}
+}
+
+func TestSecretCommandPlaceholder(t *testing.T) {
+	for _, row := range []struct {
+		name  string
+		class any
+		want  bool
+	}{
+		{"concrete", "safe", false},
+		{"placeholder", map[string]any{"placeholder": "class"}, true},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			subject := map[string]any{
+				"commands": []any{map[string]any{"words": []any{"secret"}, "class": row.class, "writes": false}},
+				"secret":   map[string]any{"commands": []any{[]any{"secret"}}},
+			}
+			if got := levelTwoPlaceholder(subject, map[string]any{"probe": "planted_secret"}); got != row.want {
+				t.Fatalf("levelTwoPlaceholder = %v, want %v", got, row.want)
+			}
+		})
+	}
+}
+
+func TestPreconditionComputationKey(t *testing.T) {
+	pre := map[string]any{"words": []any{"list"}, "runbook": "book", "step": "second", "expected": map[string]any{
+		"precondition": map[string]any{"computation": map[string]any{"argv": []any{"compute", "precondition"}}},
+	}}
+	want := []map[string]any{
+		{"words": []any{"list"}, "offline_args": nil, "env": []any{}, "runbook": "book", "step": "second", "computation": nil, "home": "runbook"},
+		{"words": nil, "offline_args": []any{}, "env": []any{}, "runbook": "book", "step": "second", "computation": []any{"compute", "precondition"}, "home": "scratch"},
+	}
+	if got := preimageKeys(pre); !reflect.DeepEqual(got, want) {
+		t.Fatalf("keys = %v, want %v", got, want)
+	}
+}
