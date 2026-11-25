@@ -202,6 +202,15 @@ The build met three more questions. The sealed text answers each, so none went t
 
 **A planning gap before the pre-check (an engine choice, not a reading).** A subject that needs an unbuilt preimage ends at that planning gap, exit 70, before the pre-check, even when the request also has an unknown scope token that the judge would reject under X1 (errata E-7). QE5's pre-check sends the required set, which the slice cannot build. Ending at the gap fails closed, and once the gap is built the judge's X1 decides. No corpus case has an unknown scope. `internal/plan` no longer refuses an unknown scope itself; the token reaches the judge unchanged.
 
+**The host fields on Linux (an engine choice under KTD8).** The record schema caps `os_version`, `os_build` and `arch` at 32 characters each, and the contract says nothing more about them. A scripted run on Linux records:
+- `os_version`: the kernel release (`uname -r`);
+- `os_build`: the first word of `uname -v`;
+- `arch`: the machine.
+
+On darwin it records `kern.osproductversion`, `kern.osversion` and `hw.machine`. A value longer than 32 characters is never shortened; the run ends with exit 70, naming QE9.
+
+**`internal/grade`'s input reads.** One allow-list entry in the KTD20 guard covers one file, `internal/grade/inputs.go`. It reads the subject file and the files QE2's digests cover, and nothing else in the package may open a file.
+
 **Where files are read.** Two packages first opened files themselves, and the KTD20 guard caught both: `internal/subject` (the subject file) and `internal/scripted` (the host, the recording and the trace). Both now take bytes, or a writer, from the caller. `internal/grade` reads the subject file, and the scripted build's wiring file in `cmd/pql` reads the host and the recording and opens the trace. That follows KTD16: a run's bytes take one path.
 
 ## Limits the script carries into later slices
