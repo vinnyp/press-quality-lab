@@ -19,3 +19,9 @@ The dated note kept beside a sealed specification's folder, holding editorial co
 The part of the engine that decides every verdict, by the rules of its own sealed specification.
 
 The project's rule, quoted in full: "The judge decides every verdict. Code that collects evidence reports what it saw for one check or one trial and nothing above that: no requiredness, no rollups, no comparison, no verdict." `AGENTS.md` and `CODING_STANDARDS.md` hold the same rule; change every copy together.
+
+## Checks
+
+### Coverage floor
+
+The least a check must have evaluated before its result counts: below the floor the check fails, so a check that found nothing to look at never reports a pass.
