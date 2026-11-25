@@ -63,3 +63,45 @@ Reviewed at commit `2344678` by five lenses, runtime claude, each in its own clo
 | 48 | The ratchet's "none back" is not enforced | measurement | Confirmed | Fixed: KTD2's growth check. |
 | 49 | Readings the text leaves open: store write after the judge, QE15 against the record schema, QS8's home, QA6's depth, an unbounded home | staff, architecture, security | Confirmed as two-way readings or gaps | Sent to the owner in Open Questions (GR6). |
 | 50 | Gate run time | staff, architecture, plan | Not measured | KTD12: measured in PR2. |
+
+## The peer-review gate, second pass
+
+Reviewed at commit `4940a80` by the same five lenses, runtime claude, each in its own clone with unchanged repository-state snapshots: staff engineer (no Blocker, eight Major), plan (no Blocker, eight Major), architecture (no Blocker, six Major), security (one High, five Medium) and measurement (no Blocker, six Major). The first pass's fixes were confirmed present; these rows record what was still wrong or newly wrong. Two claims were reproduced before acting: the judge's writer panics on an integer beyond 64 bits (`internal/judge/json.go`), and a Linux cross-build drops a darwin cgo file instead of listing it.
+
+Rows 11 and 18 above are superseded: masking is now U24, and `check.sh` gains the validation and growth-check steps (KTD2, KTD15).
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 51 | The could-not-start marker cannot be on the first line | staff, plan, architecture, security | Confirmed from QH5, QH7 and `behaviour/not-executable.json` | Fixed: KTD14.4; it carries the per-invocation value and is honoured only directly after the marker. |
+| 52 | Go runs every package's initialisation before `main` | staff, plan, architecture, security | Confirmed | Fixed: KTD14.2's initialisation list and dependency guard, and a launcher re-check on import changes. |
+| 53 | Unconfined cleanup can follow a link a subject or a surviving child made | security (High) | Confirmed from the profile's `file-write*` on the home | Fixed: GR16, KTD20 and U17's tests. |
+| 54 | The seam leaves marker, attribution and control logic behind the darwin tag | architecture, staff, measurement | Confirmed | Fixed: KTD13's untagged driver and `Invoker`, raw end facts, a type-based guard and a projection test. |
+| 55 | The judge's writer panics on integers beyond 64 bits | staff | Reproduced from the code | Fixed: KTD3's total writer and U3's test. |
+| 56 | The cgo check passes vacuously on Linux | plan, staff | Reproduced | Fixed: KTD12 sets cgo on and searches darwin files. |
+| 57 | The import guard never sees tagged or darwin code | staff, security | Confirmed | Fixed: the guard enumerates systems and tag sets itself. |
+| 58 | The pending-list growth check has no base in the `cases` job | staff, plan, architecture, measurement | Confirmed from `ci.yml` | Fixed: KTD2.5, U8's `ci.yml` change, a missing base a failure. |
+| 59 | The judge's tables are switches no unit exports | architecture, plan, staff | Confirmed from `requests.go` and `results.go` | Fixed: U3 exports `ScopeIncludes` and `AlwaysApplicable`. |
+| 60 | The darwin work all lands in slice d | architecture | Agreed | Fixed: the darwin track, PR3 and PR7 to PR9. |
+| 61 | The launcher spike shares a pull request with the pipeline | staff, architecture, plan | Agreed | Fixed: PR3 on its own. |
+| 62 | Go's `net` package sets socket options the profile kills | staff | Not verified; needs a run | Fixed by design: KTD14.5's raw calls, and U21 checks three programs' necessity. |
+| 63 | The real path is undefined before slice d | security, architecture | Confirmed | Fixed: KTD21 from PR2. |
+| 64 | The form replay cannot fail and lacks context | measurement | Confirmed: half the invocations need runbook context | Fixed: U32's context from the cases, five runs, and no escape to the owner without a diagnosis. |
+| 65 | U16's not-evaluated rule has no failing aggregate and conflicts with its own steps | measurement | Confirmed | Fixed: U16 steps 2 to 6. |
+| 66 | No test sees whether the subject ran | measurement | Confirmed | Fixed: KTD2.4's invocation count and U14's sentinel subject. |
+| 67 | The private scoring can shrink its own denominator | measurement | Confirmed | Fixed: Open Questions, a mistake not evaluated blocks GR5. |
+| 68 | A resolver step not yet built has no stated output | plan | Confirmed | Fixed: KTD11, it gives `harness_fault`. |
+| 69 | U5 needs case assembly and is too large | plan | Confirmed | Fixed: U34, and U5 split into U5 and U33. |
+| 70 | Coding agents cannot run macOS tests inside their sandbox | plan | Confirmed from QH6's exit 71 | Fixed: KTD19. |
+| 71 | The masking test can pass vacuously and contradicts the planted file | security, staff | Confirmed: the recordings are already masked | Fixed: U24's injected values, positive control and scope. |
+| 72 | The environment and descriptor probe can pass vacuously | security | Confirmed | Fixed: U28's inherited descriptor, real sentinels and knock-out. |
+| 73 | Subject-controlled text reaches the terminal unescaped | security | Agreed | Fixed: KTD16's escaping and U18's fixtures. |
+| 74 | A forged could-not-start through the launcher copy | security | Confirmed from GKD6 | Fixed: U15's test. |
+| 75 | The rejection line's rule for `case-136` and for schema-detectable files | measurement, plan | Confirmed from QT6 | Fixed: QE6 with the judge's rule in the cause; a named rule wins over QS2; a two-rule tie goes to the owner. |
+| 76 | Workspace and store mixed; sweep race; root before the sweep | architecture, security | Agreed | Fixed: KTD5. |
+| 77 | Main-goroutine panics and interruptions | staff, security | Confirmed | Fixed: KTD17. |
+| 78 | Slice e's scope contradicted itself | staff | Confirmed | Fixed: a 1.1 is the owner's work; if adopted, slice e waits for it and the date moves. |
+| 79 | Real-path draining, budget timing, QA4 substitution, QP9's control and QP10's canary had no owner | plan, staff | Confirmed | Fixed: U30, U26 and U12. |
+| 80 | The acceptance examples' naming halves are scorecard behaviour | staff | Confirmed | Fixed: GR13 and U18. |
+| 81 | Case predictions off by two units | plan | Confirmed from the corpus | Fixed: those cases pass from U27. |
+| 82 | Record field owners | plan | Confirmed | Fixed: U7 and U17. |
+| 83 | Smaller items: QA5 on `anchor`, test seams, the hidden-mode selector, `x/sys` in `go.mod`, absolute `sandbox-exec`, an over-long argument list, decoy directory safety, host name in logs, 25 of 25, ratchet divergence, the manifest count, the assembled directory's contents, Python-free vectors, stated limits | all lenses | Confirmed or agreed | Fixed in the units and KTDs named in each. |
