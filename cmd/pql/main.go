@@ -24,7 +24,7 @@ func (e *usageError) Unwrap() error { return e.err }
 
 var judging = judge.Judge
 
-func main() { os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
+func main() { os.Exit(entry()) }
 
 // stdout carries help, except under pql judge, whose stdout is reserved for the judge's document.
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {

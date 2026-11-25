@@ -263,7 +263,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
   2. **Initialisation.** No package in `pql`'s import graph does work at initialisation that the frozen profile kills.
      - A checked-in list of `GOOS=darwin go list -deps ./cmd/pql` fails the gate on any change.
      - A Linux gate test compares the package names in `GODEBUG=inittrace=1` output for the launcher mode with a checked-in list.
-     - A guard fails if `net`, `crypto/x509`, `crypto/tls` or `net/http` enter `cmd/pql`'s darwin dependencies.
+     - A guard fails if `crypto/x509`, `crypto/tls` or `net/http` enter `cmd/pql`'s darwin dependencies; `net` is allowed because Cobra's pflag imports it; on darwin it has no `func init`, and macOS launcher evidence covers its initialisation, while the inittrace list covers Linux.
      - Any pull request that changes either list re-runs U21's launcher check on macOS.
   3. **The marker and the exec.** The marker is drawn from `crypto/rand` per invocation and passed in the arguments, since QH12 allows nothing else through the environment.
      - The launcher writes the marker as the first line of standard error and strips its own arguments.
