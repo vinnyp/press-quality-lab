@@ -31,14 +31,58 @@ REASON_LEVELS = {
     'held/predicate/input_missing/empty_target': {
         'levels': [8], 'lines': '129,158,165-170', 'when': 'probe or predicate'},
 }
-LEVEL_RULE = {1: 'QO1', 2: 'QS5', 3: 'QD4', 4: 'QA7', 5: 'QH8',
-              6: 'QA6/QA4', 7: 'QO2-QO5', 8: 'probe/predicate'}
+# collection-rules.md §2: levels 1–5 at lines 122–126;
+# level 6: QO6 at 159–161 (order at 127);
+# level 7: QO2 at 141, QO3 at 142, QO4 at 146, QO5 at 151;
+# level 8 (order at 129): discovery QD2/QD3/QD5 at 177/185/189;
+# probes QP1/QP2/QP3/QP4 at 198/202/203/204, store QP6–QP9
+# at 209/210/213/217, secret QO7/QP10–QP13 at 162/225/237/249/252;
+# authored predicates QA9 at 292.
+LEVEL_RULE = {
+    1: 'QO1',
+    2: 'QS5',
+    3: 'QD4',
+    4: 'QA7',
+    5: 'QH8',
+    6: 'QO6',
+    7: (
+        'QO2',
+        'QO3',
+        'QO4',
+        'QO5',
+    ),
+    8: (
+        'QD2',
+        'QD3',
+        'QD5',
+        'QP1',
+        'QP2',
+        'QP3',
+        'QP4',
+        'QP6',
+        'QP7',
+        'QP8',
+        'QP9',
+        'QO7',
+        'QP10',
+        'QP11',
+        'QP12',
+        'QP13',
+        'QA9',
+    ),
+}
+
+
+def level_rules(level):
+    rules = LEVEL_RULE[level]
+    return (rules,) if isinstance(rules, str) else rules
+
+
 RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
     'QP7', 'QP10', 'QA4', 'QA9', 'QS2', 'QE6']
 
 # None means pre-collection construction/pre-check; record means after collection.
-# An integer
-# means observation support, needed only at that invocation's serving level.
+# An integer means observation support, needed only at that invocation's serving level.
 BUILD_PHASE = {
     'QE2.slice': None, 'QE2.placeholders': None, 'QE2.captures': None,
     'QE3.declared_commands': None, 'QE3.runbooks': None, 'QE3.scope': None,
@@ -308,8 +352,16 @@ def ending(exit_code, rules=(), phase='deciding'):
 
 def pending_rules(built):
     # A missing refusal may proceed only to an engine fault, never a verdict.
-    return set(LEVEL_RULE.values()) | {'QE6'} | {
-        r for r, phase in BUILD_PHASE.items() if phase in (None, 'record')}
+    capabilities = names(built['builds']) | names(built['rejects'])
+    candidates = {rule for level in LEVEL_RULE if level not in built['levels']
+                  for rule in level_rules(level)}
+    candidates.update(rule for rule, phase in BUILD_PHASE.items()
+                      if phase in (None, 'record'))
+    candidates.add('QE6')
+    gaps = {rule for rule in candidates if not supports(capabilities, rule)}
+    partial = {rule.split('.')[0] for rule in capabilities}
+    return {rule if rule.split('.')[0] in partial else rule.split('.')[0]
+            for rule in gaps}
 
 
 def check_ending(level, built, subject, preimage, gaps):
@@ -322,8 +374,8 @@ def check_ending(level, built, subject, preimage, gaps):
             return ending(70, keys, 'observation')
         applies = current == 1 or trigger(current, subject, preimage)
         if current not in built['levels'] and applies:
-            return ending(70, [LEVEL_RULE[current]], 'sentinel')
-    return ending(None, [LEVEL_RULE[level]])
+            return ending(70, level_rules(current), 'sentinel')
+    return ending(None, level_rules(level))
 
 
 def required_dependencies(subject, document, preimages):

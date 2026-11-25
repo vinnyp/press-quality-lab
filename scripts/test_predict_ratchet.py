@@ -188,20 +188,83 @@ class PredictorTests(unittest.TestCase):
                          'rules': ['QD4', 'QH8'], 'phase': 'sentinel'})
 
     def test_unbuilt_derivation_is_not_refused(self):
-        allowed = {'QO1', 'QS5', 'QD4', 'QA7', 'QH8', 'QA6/QA4',
-                   'QO2-QO5', 'probe/predicate', 'QE6'}
-        allowed.update({'QE2.placeholders', 'QE2.captures',
-                        'QE3.placeholder_candidates', 'QA9.preconditions',
-                        'QE7.asserts_emptiness', 'QA3.capture_crediting',
-                        'QA7.destructive_exclusion', 'QE4', 'QE4.anchor'})
-        served_at_observation = {
-            'QT5.subject_keys',
-            'QS7.invocation_keys',
+        pending = {
+            'QA3.capture_crediting',
+            'QA7',
+            'QA9',
+            'QA9.preconditions',
+            'QD2',
+            'QD3',
+            'QD4',
+            'QD5',
+            'QE2.captures',
+            'QE2.placeholders',
+            'QE3.placeholder_candidates',
+            'QE4',
+            'QE7.asserts_emptiness',
+            'QH8',
+            'QO2',
+            'QO3',
+            'QO4',
+            'QO5',
+            'QO6',
+            'QO7',
+            'QP10',
+            'QP11',
+            'QP12',
+            'QP13',
+            'QP2',
+            'QP3',
+            'QP4',
+            'QP6',
+            'QP7',
+            'QP8',
+            'QP9',
+            'QS5',
         }
-        allowed.update(r['rule'] for r in BUILT['builds']
-                       if r['rule'] not in served_at_observation)
         self.assertEqual(self.case(114)['ending'],
-                         {'exit_code': 70, 'rules': sorted(allowed), 'phase': 'unrefused'})
+                         {'exit_code': 70, 'rules': sorted(pending), 'phase': 'unrefused'})
+
+    def test_pending_uses_built_levels(self):
+        built = {'levels': [], 'builds': [], 'rejects': []}
+        self.assertIn('QO1', predictor.pending_rules(built))
+        built['levels'] = [1]
+        pending = predictor.pending_rules(built)
+        self.assertIn('QO6', pending)
+        self.assertNotIn('QO1', pending)
+
+    def test_pending_excludes_builds_and_rejects(self):
+        built = {'levels': [], 'builds': [], 'rejects': []}
+        self.assertIn('QE8', predictor.pending_rules(built))
+        built['rejects'] = ['QE8']
+        pending = predictor.pending_rules(built)
+        self.assertIn('QO1', pending)
+        self.assertNotIn('QE8', pending)
+        built['rejects'] = []
+        built['builds'] = ['QE8']
+        self.assertNotIn('QE8', predictor.pending_rules(built))
+
+    def test_pending_preserves_only_partial_rule_suffixes(self):
+        built = {'levels': [], 'builds': [], 'rejects': []}
+        pending = predictor.pending_rules(built)
+        self.assertIn('QE2', pending)
+        self.assertNotIn('QE2.captures', pending)
+        built['builds'] = ['QE2.slice']
+        pending = predictor.pending_rules(built)
+        self.assertIn('QE2.captures', pending)
+        self.assertNotIn('QE2', pending)
+        self.assertNotIn('QE2.slice', pending)
+
+    def test_pending_tokens_are_real_rules(self):
+        rules = predictor.load(KIT.parents[2] / 'internal/docrefs/rule-ledger.json')['rules']
+        valid = set(rules)
+        valid.update((KIT.parents[2] / 'internal/docrefs/unmapped-rules.txt').read_text().splitlines())
+        for built in (BUILT, {'levels': [], 'builds': [], 'rejects': []}):
+            pending = predictor.pending_rules(built)
+            self.assertTrue(pending)
+            for rule in pending:
+                self.assertRegex(rule, r'^Q[A-Z][0-9]+(?:\.[A-Za-z0-9_]+)?$')
+                self.assertIn(rule.split('.')[0], valid)
 
     def test_qe6_requires_required_set_and_precheck(self):
         for rule in ('QE2.slice', 'QE3.scope', 'QE7.slice', 'QE5', 'QE6'):
