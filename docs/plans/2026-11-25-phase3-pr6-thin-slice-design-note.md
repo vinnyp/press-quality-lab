@@ -164,7 +164,7 @@ None of the six is a GR15 rule.
    - **The in-process test.** A tagged test builds each scripted case's facts through the real path: `internal/subject`, `internal/plan`, `internal/scripted` and the loop's own gathering. It then runs `decide`, which returns an unbuilt level as a value rather than exiting, so every check is evaluated. What it asserts depends on the case's predicted phase in `pr6-prediction.json`:
      - **The 94 judge-checked cases that reach `decide`** (2 predicted, 92 ending at an unbuilt level): the check ids equal the prediction's, and each check's ending equals its entry, with a part's suffix dropped.
      - **The 24 judge-checked cases with a planning gap:** `plan` returns a planning gap whose rule is in the case's predicted set, and `decide` is not called.
-     - **The derivation-only cases:** `subject` or `plan` returns a rule in the case's predicted ending.
+     - **The derivation-only cases:** a predicted one is refused by `subject` or `plan` (for `case-136`, the pre-check) with its expected rule. A pending one is followed as far as it goes, exactly as a judge-checked case is. Its first ending must be in its allowed set, and is never a refusal naming another rule. A violation that waits for U9, such as `case-107`'s, passes `subject` and `plan` and stops at an unbuilt level.
 
      A check decided wrongly inside a pending case is therefore seen, even though that case's run stops early. QO1 firing on a passing host turns this test red on every case that reaches `decide` with a passing host.
    - **The corpus runner.** It requires each pending case's actual exit code and named rule to match its predicted ending. It reads the rule from the GKD8 line, as it already does for derivation-only cases.
