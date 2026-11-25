@@ -7,7 +7,7 @@ import sys
 
 
 def expected_cases(cases, pending):
-    excluded = {line.strip() for line in pending.read_text().splitlines() if line.strip()}
+    excluded = {line.strip() for line in pending.read_text().splitlines() if line.strip() and not line.strip().startswith('#')}
     expected = set()
     found = set()
     for directory in sorted(cases.iterdir()):
@@ -25,13 +25,21 @@ def expected_cases(cases, pending):
 
 def validate(kit, cases, pending, copies):
     # Import only in validation, so count controls run with plain isolated Python.
-    import jsonschema
     expected = expected_cases(cases, pending)
-    wanted = {name + suffix for name in expected for suffix in ('.record.json', '.baseline.json')}
+    wanted = {name + suffix for name in expected for suffix in ('.record.json',)}
     actual = {p.name for p in copies.iterdir()}
+    # Baselines are validated only when a real path stores one.
+    baselines = {name + '.baseline.json' for name in expected} & actual
+    wanted |= baselines
     if actual != wanted:
         raise ValueError('export file set differs: missing=' + repr(sorted(wanted - actual))
                          + ' extra=' + repr(sorted(actual - wanted)))
+    if not expected:
+        count = len({line.strip() for line in pending.read_text().splitlines()
+                     if line.strip() and not line.strip().startswith('#')})
+        print(f'nothing to validate: {count} pending')
+        return
+    import jsonschema
     from referencing import Registry, Resource
     # Resolve only resources in the sealed schema directory; never fetch refs.
     registry = Registry()
@@ -46,11 +54,13 @@ def validate(kit, cases, pending, copies):
         validator = jsonschema.Draft202012Validator(
             schema, registry=registry)
         for name in sorted(expected):
+            if schema_name == 'baseline' and name + suffix not in baselines:
+                continue
             document = json.loads((copies / (name + suffix)).read_text())
             validator.validate(document)
             if schema_name == 'record' and document['judge_rejected']:
                 raise ValueError('corpus record was judge rejected: ' + name)
-    print(f'corpus exports: {len(expected)} records and {len(expected)} baselines validated')
+    print(f'corpus exports: {len(expected)} records and {len(baselines)} baselines validated')
 
 
 def main():

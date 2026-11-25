@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/build/constraint"
 	"go/parser"
 	"go/token"
@@ -91,9 +92,38 @@ func evidenceOnly(source string) bool {
 	return false
 }
 
-func proofExists(root, cases string, p ruleProof) bool {
+// GR15: derive the not-cited list from the sealed text. These six additional
+// ids come from the process/profile/system-version limits in Not expressible.
+var gr15Additional = []string{"QH1", "QH2", "QH11", "QH13", "QH18", "QH23"}
+
+func gr15Rules(cases string) map[string]bool {
+	out := map[string]bool{}
+	parts := strings.SplitN(cases, "and the cases do not cite them:", 2)
+	if len(parts) == 2 {
+		for _, m := range regexp.MustCompile(`(?m)^- (Q[A-Z]+[0-9]+):`).FindAllStringSubmatch(parts[1], -1) {
+			out[m[1]] = true
+		}
+	}
+	for _, id := range gr15Additional {
+		out[id] = true
+	}
+	return out
+}
+
+func listEntries(data string) map[string]bool {
+	out := map[string]bool{}
+	for _, line := range strings.Split(data, "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" && !strings.HasPrefix(line, "#") {
+			out[line] = true
+		}
+	}
+	return out
+}
+
+func proofExists(root, cases, id string, p ruleProof) bool {
 	if p.Kind == "limit" {
-		if p.Section != "Stated limits" && p.Section != "Not expressible as a case" {
+		if p.Section != "Not expressible as a case" {
 			return false
 		}
 		section := strings.SplitN(cases, "## "+p.Section+"\n", 2)
@@ -118,10 +148,26 @@ func proofExists(root, cases string, p ruleProof) bool {
 	if err != nil {
 		return false
 	}
+	if p.Kind == "test" {
+		builds := false
+		for _, tags := range [][]string{nil, {"scripted"}} {
+			ctx := build.Default
+			ctx.GOOS = "linux"
+			ctx.GOARCH = "amd64"
+			ctx.CgoEnabled = false
+			ctx.BuildTags = tags
+			ok, err := ctx.MatchFile(filepath.Join(root, filepath.Dir(p.File)), filepath.Base(p.File))
+			builds = builds || (err == nil && ok)
+		}
+		if !builds {
+			return false
+		}
+	}
 	if p.Kind == "macos_evidence" && !evidenceOnly(string(data)) {
 		return false
 	}
-	file, err := parser.ParseFile(token.NewFileSet(), p.File, data, 0)
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, p.File, data, parser.ParseComments)
 	if err != nil {
 		return false
 	}
@@ -140,7 +186,41 @@ func proofExists(root, cases string, p ruleProof) bool {
 		}
 		pkg, ok := sel.X.(*ast.Ident)
 		if ok && pkg.Name == "testing" && sel.Sel.Name == "T" {
-			return true
+			cites := func(text string) bool {
+				for _, cited := range clauseToken.FindAllString(text, -1) {
+					if cited == id {
+						return true
+					}
+				}
+				return false
+			}
+			if cites(f.Name.Name) {
+				return true
+			}
+			for _, group := range file.Comments {
+				if group == f.Doc || (group.Pos() >= f.Pos() && group.End() <= f.End()) {
+					if cites(group.Text()) {
+						return true
+					}
+				}
+			}
+			citedSubtest := false
+			ast.Inspect(f.Body, func(node ast.Node) bool {
+				call, ok := node.(*ast.CallExpr)
+				if !ok || len(call.Args) == 0 {
+					return true
+				}
+				selector, ok := call.Fun.(*ast.SelectorExpr)
+				if !ok || selector.Sel.Name != "Run" {
+					return true
+				}
+				name, ok := call.Args[0].(*ast.BasicLit)
+				if ok && name.Kind == token.STRING && cites(name.Value) {
+					citedSubtest = true
+				}
+				return true
+			})
+			return citedSubtest
 		}
 	}
 	return false
@@ -148,6 +228,7 @@ func proofExists(root, cases string, p ruleProof) bool {
 
 func ledgerProblems(root, cases string, rules map[string]bool, mapping map[string][]ruleProof, pending map[string]bool) []string {
 	var problems []string
+	gr15 := gr15Rules(cases)
 	for id := range rules {
 		proofs := mapping[id]
 		if len(proofs) == 0 && !pending[id] {
@@ -156,6 +237,15 @@ func ledgerProblems(root, cases string, rules map[string]bool, mapping map[strin
 		if len(proofs) > 0 && pending[id] {
 			problems = append(problems, id+": mapped and listed")
 		}
+		if gr15[id] && !pending[id] {
+			evidence := false
+			for _, p := range proofs {
+				evidence = evidence || (p.Kind == "macos_evidence" && proofExists(root, cases, id, p))
+			}
+			if !evidence {
+				problems = append(problems, id+": macos_evidence required")
+			}
+		}
 		for _, p := range proofs {
 			namesRule := false
 			for _, token := range clauseToken.FindAllString(p.Route, -1) {
@@ -163,7 +253,7 @@ func ledgerProblems(root, cases string, rules map[string]bool, mapping map[strin
 					namesRule = true
 				}
 			}
-			if !proofExists(root, cases, p) || (p.Kind == "limit" && !namesRule) {
+			if !proofExists(root, cases, id, p) || (p.Kind == "limit" && !namesRule) {
 				problems = append(problems, id+": invalid proof")
 			}
 		}
@@ -182,6 +272,7 @@ func ledgerProblems(root, cases string, rules map[string]bool, mapping map[strin
 	return problems
 }
 
+// QS1: ledger control fixture cites a binding rule without claiming its proof.
 func TestRuleLedger(t *testing.T) {
 	root := "../.."
 	rules, err := ledgerRules(root)
@@ -205,15 +296,21 @@ func TestRuleLedger(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pending := map[string]bool{}
-	for _, line := range strings.Split(string(data), "\n") {
-		if line != "" && !strings.HasPrefix(line, "#") {
-			pending[line] = true
-		}
-	}
+	pending := listEntries(string(data))
 	cases, err := os.ReadFile(filepath.Join(root, "docs/specs/conformance-collection-1.0/CASES.md"))
 	if err != nil {
 		t.Fatal(err)
+	}
+	gr15 := gr15Rules(string(cases))
+	checked, err := os.ReadFile("gr15-rules.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(gr15) != 13 || !reflect.DeepEqual(gr15, listEntries(string(checked))) {
+		t.Fatalf("GR15 set differs: %v", gr15)
+	}
+	if len(pending)+len(ledger.Rules) != 103 {
+		t.Fatal("ledger must account for all 103 rules")
 	}
 	if ps := ledgerProblems(root, string(cases), rules, ledger.Rules, pending); len(ps) != 0 {
 		t.Fatalf("%v", ps)
@@ -221,21 +318,54 @@ func TestRuleLedger(t *testing.T) {
 }
 
 func TestLedgerControls(t *testing.T) {
-	proof := ruleProof{Kind: "test", File: "internal/docrefs/ledger_test.go", Function: "TestRuleLedger"}
+	root := t.TempDir()
+	for name, source := range map[string]string{
+		"valid_test.go":    "package fixture\nimport \"testing\"\n// QS1 QH13\nfunc TestProof(t *testing.T) {}\n",
+		"uncited_test.go":  "package fixture\nimport \"testing\"\nfunc TestProof(t *testing.T) { _ = \"QS1\" }\n",
+		"hidden_test.go":   "//go:build never_ci\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
+		"named_test.go":    "package fixture\nimport \"testing\"\nfunc TestQS1(t *testing.T) {}\n",
+		"subtest_test.go":  "package fixture\nimport \"testing\"\nfunc TestProof(t *testing.T) { t.Run(\"QS1\",func(t *testing.T){}) }\n",
+		"scripted_test.go": "//go:build scripted\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
+
+		"evidence_test.go": "//go:build macos_evidence\n\npackage fixture\nimport \"testing\"\n// QH13\nfunc TestProof(t *testing.T) {}\n",
+	} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(source), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	cases := "## Stated limits\n- QS1: stated\n## Not expressible as a case\n- QS1: valid\n- QH13: starts no process\n"
+	proof := ruleProof{Kind: "test", File: "valid_test.go", Function: "TestProof"}
 	for _, tc := range []struct {
-		name    string
-		mapping map[string][]ruleProof
-		pending map[string]bool
-		want    []string
+		name, id string
+		proofs   []ruleProof
+		pending  map[string]bool
+		want     []string
 	}{
-		{"existing", map[string][]ruleProof{"QS1": {proof}}, nil, nil},
-		{"missing test", map[string][]ruleProof{"QS1": {{Kind: "test", File: proof.File, Function: "TestAbsent"}}}, nil, []string{"QS1: invalid proof"}},
-		{"removed mapping", nil, nil, []string{"QS1: neither mapped nor listed"}},
-		{"both", map[string][]ruleProof{"QS1": {proof}}, map[string]bool{"QS1": true}, []string{"QS1: mapped and listed"}},
-		{"unknown", nil, map[string]bool{"QS1": true, "QZ99": true}, []string{"QZ99: unknown listed rule"}},
+		{"existing", "QS1", []ruleProof{proof}, nil, nil},
+		{"missing_test", "QS1", []ruleProof{{Kind: "test", File: proof.File, Function: "TestAbsent"}}, nil, []string{"QS1: invalid proof"}},
+		{"removed_mapping", "QS1", nil, nil, []string{"QS1: neither mapped nor listed"}},
+		{"both", "QS1", []ruleProof{proof}, map[string]bool{"QS1": true}, []string{"QS1: mapped and listed"}},
+		{"unknown", "QS1", nil, map[string]bool{"QS1": true, "QZ99": true}, []string{"QZ99: unknown listed rule"}},
+		{"gr15_limit", "QH13", []ruleProof{{Kind: "limit", Section: "Not expressible as a case", Route: "- QH13: starts no process"}}, nil, []string{"QH13: macos_evidence required"}},
+		{"route_not_line", "QS1", []ruleProof{{Kind: "limit", Section: "Not expressible as a case", Route: "QS1: valid"}}, nil, []string{"QS1: invalid proof"}},
+		{"stated_limit", "QS1", []ruleProof{{Kind: "limit", Section: "Stated limits", Route: "- QS1: stated"}}, nil, []string{"QS1: invalid proof"}},
+		{"route_other_rule", "QS1", []ruleProof{{Kind: "limit", Section: "Not expressible as a case", Route: "- QH13: starts no process"}}, nil, []string{"QS1: invalid proof"}},
+		{"untagged_evidence", "QS1", []ruleProof{{Kind: "macos_evidence", File: proof.File, Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
+		{"hidden_test", "QS1", []ruleProof{{Kind: "test", File: "hidden_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
+		{"uncited_test", "QS1", []ruleProof{{Kind: "test", File: "uncited_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
+		{"named_test", "QS1", []ruleProof{{Kind: "test", File: "named_test.go", Function: "TestQS1"}}, nil, nil},
+		{"subtest", "QS1", []ruleProof{{Kind: "test", File: "subtest_test.go", Function: proof.Function}}, nil, nil},
+		{"scripted_test", "QS1", []ruleProof{{Kind: "test", File: "scripted_test.go", Function: proof.Function}}, nil, nil},
+
+		{"valid_evidence", "QH13", []ruleProof{{Kind: "macos_evidence", File: "evidence_test.go", Function: proof.Function}}, nil, nil},
+		{"valid_limit", "QS1", []ruleProof{{Kind: "limit", Section: "Not expressible as a case", Route: "- QS1: valid"}}, nil, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := ledgerProblems("../..", "", map[string]bool{"QS1": true}, tc.mapping, tc.pending)
+			mapping := map[string][]ruleProof{}
+			if tc.proofs != nil {
+				mapping[tc.id] = tc.proofs
+			}
+			got := ledgerProblems(root, cases, map[string]bool{tc.id: true}, mapping, tc.pending)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("got %v, want %v", got, tc.want)
 			}
@@ -244,7 +374,7 @@ func TestLedgerControls(t *testing.T) {
 }
 
 func TestRuleGrowthControls(t *testing.T) {
-	cmd := exec.Command("python3", "-I", "../../scripts/test_rule_growth.py")
+	cmd := exec.Command("python3", "-I", "-B", "../../scripts/test_rule_growth.py")
 	cmd.Env = append(os.Environ(), "PYTHONDONTWRITEBYTECODE=1")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("%s: %v", output, err)
@@ -265,5 +395,13 @@ func TestEvidenceConstraint(t *testing.T) {
 		if got := evidenceOnly(tc.source); got != tc.want {
 			t.Errorf("%q: got %v, want %v", tc.source, got, tc.want)
 		}
+	}
+}
+
+func TestListGrammar(t *testing.T) {
+	got := listEntries("  # comment\n\n  QH1  \nQH2\n")
+	want := map[string]bool{"QH1": true, "QH2": true}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("entries %v, want %v", got, want)
 	}
 }

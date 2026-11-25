@@ -13,7 +13,7 @@ RUNNER = 'internal/corpusrunner/runner_test.go'
 
 def entries(text):
     return {line.strip() for line in text.splitlines()
-            if line.strip() and not line.startswith('#')}
+            if line.strip() and not line.strip().startswith('#')}
 
 
 def compare(base, current, base_has_ledger):
@@ -48,7 +48,7 @@ def resolve_base():
 
 
 def git(*args):
-    return subprocess.check_output(['git', *args], text=True).strip()
+    return subprocess.check_output(['git', '-C', str(Path.cwd()), *args], text=True).strip()
 
 
 def at_base(base, path):

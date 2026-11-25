@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"syscall"
 	"testing"
 )
 
@@ -98,8 +98,8 @@ func Assemble(t *testing.T, kit, source string, c Case) Layout {
 				t.Fatal(err)
 			}
 		case "special_file":
-			if out, err := exec.Command("mkfifo", path).CombinedOutput(); err != nil {
-				t.Fatalf("mkfifo: %v: %s", err, out)
+			if err := syscall.Mkfifo(path, 0600); err != nil {
+				t.Fatal(err)
 			}
 		case "oversized_output", "invalid_bytes", "planted_secret":
 		default:

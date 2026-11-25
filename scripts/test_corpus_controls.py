@@ -1,5 +1,7 @@
 """Fixture controls for pending growth and the independent export count."""
 import importlib.util
+import contextlib
+import io
 import json
 import os
 from pathlib import Path
@@ -64,10 +66,17 @@ class CorpusControls(unittest.TestCase):
             copies.mkdir()
             # Counting must fail before schema files or validators are consulted.
             with patch.dict('sys.modules', {'jsonschema': object()}):
-                with self.assertRaisesRegex(ValueError, "^export file set differs: missing=\\['case-001.baseline.json', 'case-001.record.json'\\] extra=\\[\\]$"):
+                with self.assertRaisesRegex(ValueError, "^export file set differs: missing=\\['case-001.record.json'\\] extra=\\[\\]$"):
                     validation.validate(root, cases, pending, copies)
-            pending.write_text('case-001\n')
+            pending.write_text('  # comment\n\n  case-001  \n')
             self.assertEqual(validation.expected_cases(cases, pending), set())
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                validation.validate(root, cases, pending, copies)
+            self.assertEqual(output.getvalue(), 'nothing to validate: 1 pending\n')
+            pending.write_text('case-999\n')
+            with self.assertRaisesRegex(ValueError, '^unknown pending cases$'):
+                validation.expected_cases(cases, pending)
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -22,7 +23,7 @@ func TestEveryCaseAssembles(t *testing.T) {
 		t.Fatalf("case count %d", len(entries))
 	}
 	for _, entry := range entries {
-		t.Run(entry.Name(), func(t *testing.T) {
+		t.Run(strings.ReplaceAll(entry.Name(), "-", "_"), func(t *testing.T) {
 			source := filepath.Join(kit, "cases", entry.Name())
 			var c Case
 			if err := Read(filepath.Join(source, "case.json"), &c); err != nil {
@@ -179,5 +180,17 @@ func TestFixtureKinds(t *testing.T) {
 		if _, err := os.Lstat(filepath.Join(l.Subject, name)); !os.IsNotExist(err) {
 			t.Fatalf("descriptive fixture materialized: %s (%v)", name, err)
 		}
+	}
+}
+
+func TestTrailingJSON(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "input.json")
+	if err := os.WriteFile(path, []byte(`{"n":1} {}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var value map[string]any
+	err := Read(path, &value)
+	if err == nil || err.Error() != "trailing JSON: <nil>" {
+		t.Fatalf("got %v, want trailing JSON: <nil>", err)
 	}
 }

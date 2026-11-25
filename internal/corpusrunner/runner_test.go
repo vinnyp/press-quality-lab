@@ -219,6 +219,9 @@ func discovery(k map[string]any) bool {
 	return words[len(words)-1] == "--help"
 }
 func checkTrace(c caseassembly.Case, subject, input, preimages map[string]any, tr trace) error {
+	if tr.Required == nil {
+		return errors.New("trace not read")
+	}
 	if c.Kind == "derivation-only" && (len(tr.Served) > 0 || len(tr.Homes) > 0) {
 		return errors.New("derivation collected")
 	}
@@ -252,13 +255,10 @@ func checkTrace(c caseassembly.Case, subject, input, preimages map[string]any, t
 				return errors.New("evidence without check_id")
 			}
 			p := object(preimages[id])
-			match := reflect.DeepEqual(k["words"], p["words"]) && reflect.DeepEqual(k["runbook"], p["runbook"]) && reflect.DeepEqual(k["step"], p["step"]) && k["computation"] == nil
-			if k["computation"] != nil {
-				expected := object(p["expected"])
-				for _, source := range []map[string]any{expected, object(expected["precondition"])} {
-					if reflect.DeepEqual(k["computation"], object(source["computation"])["argv"]) && reflect.DeepEqual(k["runbook"], p["runbook"]) && reflect.DeepEqual(k["step"], p["step"]) {
-						match = true
-					}
+			match := false
+			for _, expectedKey := range preimageKeys(p) {
+				if reflect.DeepEqual(k, expectedKey) {
+					match = true
 				}
 			}
 			if match {
@@ -318,7 +318,7 @@ func computationCaptureCut(key, subject, input, preimages map[string]any) bool {
 }
 
 type result struct {
-	Exit     any
+	Exit     int
 	Record   map[string]any
 	Baseline map[string]any
 	Rule     string
@@ -326,7 +326,9 @@ type result struct {
 }
 
 func compareResult(c caseassembly.Case, want map[string]any, r result) error {
-	if !reflect.DeepEqual(r.Exit, c.Expect["exit_code"]) {
+	n, ok := c.Expect["exit_code"].(json.Number)
+	expected, err := n.Int64()
+	if !ok || err != nil || int64(r.Exit) != expected {
 		return errors.New("exit code differs")
 	}
 	if c.Kind == "derivation-only" {
@@ -347,7 +349,9 @@ func compareResult(c caseassembly.Case, want map[string]any, r result) error {
 	if err := compareInput(object(r.Record["judge_input"]), want); err != nil {
 		return err
 	}
-	if !reflect.DeepEqual(r.Record["judge_output"], c.Expect["judge_output"]) {
+	output, present := r.Record["judge_output"]
+	expectedOutput, expectedPresent := c.Expect["judge_output"]
+	if !present || !expectedPresent || !reflect.DeepEqual(output, expectedOutput) {
 		return errors.New("judge output differs")
 	}
 	return nil
@@ -375,7 +379,11 @@ func exportCopies(directory, id string, record, baseline map[string]any) error {
 	if !filepath.IsAbs(directory) {
 		return errors.New("copy directory must be absolute")
 	}
+	// Baselines are validated when the real path stores one. Scripted grades store records only.
 	for suffix, document := range map[string]map[string]any{".record.json": record, ".baseline.json": baseline} {
+		if document == nil && suffix == ".baseline.json" {
+			continue
+		}
 		if document == nil {
 			return fmt.Errorf("missing export %s", suffix)
 		}
@@ -392,8 +400,11 @@ func exportCopies(directory, id string, record, baseline map[string]any) error {
 
 func pendingSet(data string) map[string]bool {
 	m := map[string]bool{}
-	for _, s := range strings.Fields(data) {
-		m[s] = true
+	for _, line := range strings.Split(data, "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" && !strings.HasPrefix(line, "#") {
+			m[line] = true
+		}
 	}
 	return m
 }
@@ -424,6 +435,9 @@ func TestCorpus(t *testing.T) {
 		}
 		found[c.ID] = true
 		if c.Input.Verifier == "real" {
+			if err := realPending(c.ID, pending); err != nil {
+				t.Fatal(err)
+			}
 			real = append(real, c.ID)
 			continue
 		}
@@ -451,13 +465,18 @@ func TestCorpus(t *testing.T) {
 					failure = checkTrace(c, subject, want, preimages, r.Trace)
 				}
 				if failure == nil && c.Kind == "judge-checked" {
-					failure = exportCopies(os.Getenv("PQL_CORPUS_COPIES"), c.ID, r.Record, r.Baseline)
+					failure = rejudgeNotBuilt(r.Record)
+					if failure == nil {
+						failure = exportCopies(os.Getenv("PQL_CORPUS_COPIES"), c.ID, r.Record, r.Baseline)
+					}
 				}
 			}
 			if err := ratchet(pending[c.ID], failure); err != nil {
 				t.Fatal(err)
 			}
-			t.Logf("pending: %v", failure)
+			if pending[c.ID] {
+				t.Logf("pending: %v", failure)
+			}
 		})
 	}
 	if !reflect.DeepEqual(real, []string{"case-069", "case-070", "case-143"}) {
@@ -468,4 +487,49 @@ func TestCorpus(t *testing.T) {
 			t.Fatalf("unknown pending case %s", id)
 		}
 	}
+}
+
+// KTD2.4: PR6 must invoke pql judge on the stored input and compare its output.
+func rejudgeNotBuilt(_ map[string]any) error { return errors.New("pql judge re-judge not built") }
+
+func realPending(id string, pending map[string]bool) error {
+	if !pending[id] {
+		return fmt.Errorf("real-verifier case must remain pending: %s", id)
+	}
+	return nil
+}
+
+// preimageKeys follows QT6's full key, including environment names in byte order.
+func preimageKeys(p map[string]any) []map[string]any {
+	home := "seed"
+	if p["runbook"] != nil {
+		home = "runbook"
+	} else if p["probe"] == "planted_secret" {
+		home = "planted"
+	}
+	commands := []any{p}
+	if p["probe"] == "planted_secret" {
+		commands = list(object(p["parameters"])["commands"])
+	}
+	var keys []map[string]any
+	for _, command := range commands {
+		c := object(command)
+		env := []string{}
+		for name := range object(c["env"]) {
+			env = append(env, name)
+		}
+		slices.Sort(env)
+		names := []any{}
+		for _, name := range env {
+			names = append(names, name)
+		}
+		keys = append(keys, map[string]any{"words": c["words"], "offline_args": c["offline_args"], "env": names, "runbook": p["runbook"], "step": p["step"], "computation": nil, "home": home})
+	}
+	expected := object(p["expected"])
+	for _, source := range []map[string]any{expected, object(expected["precondition"])} {
+		if argv := object(source["computation"])["argv"]; argv != nil {
+			keys = append(keys, map[string]any{"words": nil, "offline_args": []any{}, "env": []any{}, "runbook": p["runbook"], "step": p["step"], "computation": argv, "home": "scratch"})
+		}
+	}
+	return keys
 }
