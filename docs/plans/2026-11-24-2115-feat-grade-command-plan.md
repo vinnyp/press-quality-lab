@@ -18,7 +18,7 @@ This plan covers phase 3 of the [engine plan](2026-11-21-engine-plan.md). Its ow
 - **Means:** six slices on a thin end-to-end slice, each its own pull request, with a corpus runner that drives every case through the real `grade` command (KTD1, KTD2).
 - **Authority:** the sealed judge specification 1.0 and conformance collection specification 1.0 with its errata note, then `AGENTS.md` and `CODING_STANDARDS.md`, then this plan. An input the sealed text can honestly read two ways goes to the owner with both readings (GR6).
 - **Stop conditions:** a change that would need judge 1.1 or collection 1.1; a corpus case the engine cannot meet without departing from the text; a confinement rule that fails on both supported macOS versions.
-- **Execution profile:** Deep. Nine pull requests: this plan with its errata entries, the end-to-end slice, slices a, b, c, d and f, slice e, and the phase close. Slice e waits on the owner's decision in Open Questions. A coding agent writes the code from a brief per unit; the main session writes briefs and reviews.
+- **Execution profile:** Deep. Nine pull requests: this plan with its errata entries, the end-to-end slice with the store's run records, slices a, b, c, d and f, slice e, and the phase close. Slice e waits on the owner's decision in Open Questions. A coding agent writes the code from a brief per unit; the main session writes briefs and reviews.
 - **Who finishes:** the executing session opens each pull request and stops. The owner merges, or the session merges on the owner's say-so.
 - **Dates:** phase 3 done by 2027-01-16, ahead of the halfway check on 2027-01-25 (engine plan §6).
 
@@ -42,7 +42,7 @@ The judge decides a finished evidence record, and phase 2 sealed how that record
 - GR2. The known-good synthetic subject grades green and exits zero (`case-001` scripted, `case-069` real).
 - GR3. The exit code, the scorecard and the stored record of every run are read from the judge's one output document, through the bytes-in, bytes-out function `pql judge` exposes (engine plan §4 rule 1, QE14, AE21).
 - GR4. A record the judge rejects ends the run with exit 70 and is kept (QE15).
-- GR5. The build is scored against the private half of the corpus with zero wrong records, and no seeded collection mistake survives CI. Feedback to the builder names a rule id only.
+- GR5. The build is scored against the private half of the corpus with zero wrong records, and, as the private harness measures it, no seeded collection mistake survives the build's own CI tests. Feedback to the builder names a rule id only.
 
 **Specification authority**
 
@@ -91,24 +91,24 @@ The judge decides a finished evidence record, and phase 2 sealed how that record
 
 ### Key Technical Decisions
 
-- KTD1. **Pull requests in dependency order: end-to-end slice, a, b, c, d, f, e, then the close.** Slice b can prove only the 21 judge-checked cases without runbooks; the other 100 pass once slice c's authored checks work, so each slice is proved by the cases the corpus runner newly passes. Slice f takes the store's run records (QE17), which the engine plan's table puts in slice e, because slice e waits on the owner (GKD4) and slice f's agreement check needs a stored record. The engine plan requires a separate pull request per slice.
-- KTD2. **The corpus runner is a Go test behind the `scripted` tag, with a two-sided ratchet.** It assembles each case as QT6 and E-2 say, runs the built scripted `pql grade` on it, and compares the QE19 fields, the judge input's top-level fields, the exit code and the whole judge output. A checked-in list names the cases not yet expected to pass: every case off the list must pass, and every case on it must still fail, so a slice cannot pass a case without removing it. The list is empty when phase 3 is done. A mismatch is first a hypothesis about the case: re-derive the record from the text, the recording and the case's preimages before changing code (`docs/solutions/best-practices/judge-agreement-does-not-validate-a-case-record.md`). The gate's tagged test pass runs it, and `check.sh` runs the gate, so it reaches the `cases` job (GKD2).
-- KTD3. **One strict reader and one writer for the judge contract's §3 grammar, owned by `internal/judge`.** The judge's reader and writer are unexported today. They are exported through a small, grammar-only API, and the subject file (QS2), host and recording (QT1), computation output (QA6) and the predicates that read under §3 all use it. Each input kind keeps its own shape in its own package. Only the judge's 383 cases and its private scoring guard the move, so the export changes no judge behaviour and adds no second reader (`CODING_STANDARDS.md`, Judge and evidence code).
+- KTD1. **Pull requests in dependency order: end-to-end slice, a, b, c, d, f, e, then the close.** A case leaves the pending list when the last rule it needs lands, and 100 of the 121 judge-checked cases carry runbooks, so most cases pass only from slice c on. The plan names only cases whose rules it is sure of; each pull request lists the exact set its ratchet moves. The store's run records (QE17), which the engine plan's table puts in slice e, come with the end-to-end slice: the stored record is the only place `grade` exposes a case's judge input and output, so the corpus runner needs it from the start, and slice e waits on the owner (GKD4). The engine plan requires a separate pull request per slice.
+- KTD2. **The corpus runner is a Go test behind the `scripted` tag, with a two-sided ratchet.** It assembles each case as QT6 and E-2 say, runs the built scripted `pql grade` on it, reads the judge input, judge output and exit code from the run's stored record, and compares the QE19 fields, the judge input's top-level fields, the exit code and the whole judge output. `case-069`, `case-070` and `case-143` are outside the CI ratchet by name; the same runner runs them in a local macOS mode against the released build (KTD6). A checked-in list names the cases not yet expected to pass: every case off the list must pass, and every case on it must still fail, so a slice cannot pass a case without removing it. The list is empty when phase 3 is done, with the three real-verifier cases passed on macOS. A mismatch is first a hypothesis about the case: re-derive the record from the text, the recording and the case's preimages before changing code (`docs/solutions/best-practices/judge-agreement-does-not-validate-a-case-record.md`). The gate's tagged test pass runs it, and `check.sh` runs the gate, so it reaches the `cases` job (GKD2).
+- KTD3. **One strict reader and one writer for the judge contract's §3 grammar, owned by `internal/judge`.** The judge's reader and writer are unexported today. They are exported through a small API that takes each caller's own size and depth bounds, gives access to the parsed values, and exposes the canonical form, so the subject file (QS2, QS11), host and recording (QT1), computation output (QA6) and the predicates that read under §3 (QA9) all use it without a second number parser. Each input kind keeps its own shape in its own package. The export changes no judge behaviour and adds no second reader (`CODING_STANDARDS.md`, Judge and evidence code); the judge's published cases and a re-run of its private scoring guard the move (U3).
 - KTD4. **A stdlib RFC 8785 canonicaliser in `internal/record` builds the check ids (QE2).** Its oracles are the four worked ids in QE2, each case's `preimages.json`, and `scripts/collection_ids.py`, never the code under test.
-- KTD5. **The store's root is the user's configuration directory as Go reports it, and tests isolate it through the home directory.** On macOS that is the application-support directory QE17 names. The harness gives each case its own home, which also keeps `case-143`'s real baseline from attaching to a later `case-069` run.
+- KTD5. **The store's root is the user's configuration directory as Go reports it, and tests isolate it through the home directory.** On macOS that is the application-support directory QE17 names. The harness gives each run its own home and sets `XDG_CONFIG_HOME` inside it, since Go reads that variable first on Linux; this also keeps `case-143`'s real baseline from attaching to a later `case-069` run. A record is stored only once one exists, so a run that ends at the subject-file rules or the pre-check stores nothing.
 - KTD6. **The real-verifier cases run on the released build.** QT1 puts the scripted verifier only in a scripted build, and the real path is the released build's.
 - KTD7. **The necessity demonstration renders its one-grant profiles behind a separate test-only build tag.** `grade` uses only QH11's fixed template; no released or scripted build can render another profile.
 - KTD8. **A scripted run records the host it actually ran on.** `record.schema.json` requires the host fields and QT3 checks no version, so a Linux run writes Linux's values.
 - KTD9. **A pre-check refusal does not stop collection; a rejection does.** QE5 stops a run on a rejection, and `case-071` fixes that an anchor's refusal (judge rule N1) still gives full evidence and exit 5.
 - KTD10. **A scripted run's tiers are all `scripted` (QT2), so QE9's offline and live tiers are proved by unit tests and the real-verifier cases.** `case-148` fixes that QT2 takes precedence.
 - KTD11. **Packages follow engine plan §4:** `internal/subject`, `internal/record`, `internal/collect`, `internal/store`, `internal/scorecard`, with `create`, `grade` and `anchor` on the existing Cobra root in `cmd/pql`.
-- KTD12. **The gate checks tagged code.** `gate.sh` adds `-tags scripted` passes for vet, staticcheck, errcheck, exhaustive and test, and the import guard lists packages under the tag too. The new `check.sh` step stays outside the span `scripts/check-draft.py` reads, between `step collection-kit` and `step collection-schemas`.
+- KTD12. **The gate checks tagged and macOS code on Linux.** `gate.sh` adds `-tags scripted` passes for vet, staticcheck, errcheck, exhaustive and test, and `GOOS=darwin` passes of build, vet, staticcheck, errcheck and exhaustive, with and without KTD7's test-only tag, so the confinement code is compiled and linted in CI though it runs only on macOS. The import guard lists packages under each tag. `check.sh` needs no new step, because it runs the gate; any step added later stays outside the span `scripts/check-draft.py` reads, between `step collection-kit` and `step collection-schemas`.
 
 ### Sequencing
 
 ```mermaid
 flowchart TB
-  P[PR1 plan and errata] --> S[PR2 end-to-end slice]
+  P[PR1 plan and errata] --> S[PR2 end-to-end slice and run records]
   S --> A[PR3 slice a]
   A --> B[PR4 slice b]
   B --> C[PR5 slice c]
@@ -158,7 +158,7 @@ Waits on: PR1, merge order only.
 - **Test scenarios:**
   - a released build given any of the three scripted flags exits 2, and an unknown `--verifier` value exits 64 (QT1);
   - a scripted build given one or two of the three exits 2;
-  - a deliberately unvetted line in a tagged file fails the gate.
+  - a deliberately unvetted line in a tagged file, and one in a darwin-only file, each fail the gate.
 - **Verification:** the gate's tagged passes run, and a planted defect in tagged code turns them red.
 
 ### U3. The shared §3 reader and writer
@@ -170,8 +170,9 @@ Waits on: PR1, merge order only.
 - **Approach:** KTD3; the judge's own calls go through the exported entry, so there is still one path.
 - **Test scenarios:**
   - a document over the size bound, with a repeated key, a lone surrogate, too deep, or with trailing content is refused through the exported entry exactly as `pql judge` refuses it;
+  - a caller's own bounds apply: a value over QS11's size or depth limit, or computation output over QA6's, is refused at that caller's bound;
   - the judge's published cases still pass unchanged.
-- **Verification:** the `cases` step and the judge's tests pass with no judge output changed.
+- **Verification:** the `cases` step and the judge's tests pass with no judge output changed, and phase 1's private judge scoring and seeded-mistake catalogue, re-run on this build, show zero wrong outputs and no surviving mistake; the pull request reports counts only.
 
 ### U4. Subject file model and parse
 
@@ -209,15 +210,26 @@ Waits on: PR1, merge order only.
   - a missing invocation exits 70.
 - **Verification:** every scripted case's host and recording load.
 
+### U17. The store's run records
+
+- **Goal:** every run's record is stored as QE17 says, and the engine cleans up after itself.
+- **Requirements:** GR3, GR4, GR13.
+- **Dependencies:** U3.
+- **Files:** `internal/store/` (new), its tests.
+- **Approach:** QE17's location (KTD5), modes and R27; `record.schema.json`; a rejected record kept (QE15); QE20's per-run directories and startup sweep; a record is stored only once one exists (KTD5).
+- **Test scenarios:** a stored record validates against `record.schema.json`; file and directory modes; a stale run directory swept at start.
+- **Verification:** every run the corpus runner makes that reaches a record leaves a stored record.
+
 ### U7. Record builder, pre-check, judge call and exit code
 
 - **Goal:** `pql grade` builds the record, runs the pre-check, calls the judge and exits with QE16's code.
 - **Requirements:** GR3, GR4.
-- **Dependencies:** U5, U6.
+- **Dependencies:** U5, U6, U17.
 - **Files:** `cmd/pql/main.go`, `internal/record/`, `internal/collect/`, their tests.
-- **Approach:** QE5 and QE6 with KTD9; QE8 to QE10 targets, tiers and bounds with KTD10; the judge called through `judge.Safe(judge.Judge, …)`; QE14 and QE16; QO1's path for a failed self-test or unapplied confinement; QH3's root refusal (exit 70).
+- **Approach:** QE5 and QE6 with KTD9; QE8 to QE10 targets, tiers and bounds with KTD10; QE18's masking of the canary and of declared values in every record, a rejected one included; the judge called through `judge.Safe(judge.Judge, …)`; QE14 and QE16; QO1's path for a failed self-test or unapplied confinement; QH3's root refusal (exit 70).
 - **Test scenarios:**
-  - a rejected record exits 70 and is kept (QE15), shown by a record the test makes the judge reject;
+  - a rejected record exits 70 and is stored (QE15), shown by a record the test makes the judge reject;
+  - the canary and a declared value are masked in a stored record in each encoding QE18 covers, with the expected side written from QE18;
   - a pre-check rejection caused by the user exits 2 and one caused by the engine exits 70 (QE6);
   - running as root exits 70.
 - **Verification:** `case-003` and `case-004` pass through `grade`.
@@ -226,14 +238,14 @@ Waits on: PR1, merge order only.
 
 - **Goal:** every corpus case runs through the scripted `grade`, with the ratchet in KTD2.
 - **Requirements:** GR1, GR2.
-- **Dependencies:** U2, U7.
+- **Dependencies:** U2, U7, U17.
 - **Files:** a new test package behind the `scripted` tag, its pending-case list.
 - **Approach:** KTD2 and KTD5; assembly as QT6 and E-2 describe, including `seed/`, `computations/` and `case-112`'s fixture; derivation-only cases compare the exit code.
 - **Test scenarios:**
   - a case off the pending list that fails, and a case on it that passes, each fail the runner;
   - a planted wrong `target_size`, wrong tier, missing target and wrong exit code are each caught;
-  - two cases run back to back never share a store.
-- **Verification:** `case-129`, `case-003` and `case-004` pass, every other case is pending, and the runner runs in the gate and in `check.sh`.
+  - two cases run back to back never share a store, and each stored record lies under that case's own home.
+- **Verification:** `case-129`, `case-003` and `case-004` pass, with any other case whose rules this slice completes (`case-090` is likely); every other case is pending; the runner runs in the gate and in `check.sh`.
 
 ### PR3: slice a, the subject file and placeholders
 
@@ -247,7 +259,7 @@ Waits on: PR2, merge order only.
 - **Files:** `internal/subject/`, its tests.
 - **Approach:** QS1 to QS12, QS7's names with QH12's, QP7's and QP10's rejections, QA4's capture names, QA9's type and path rules, and QA5's warning.
 - **Test scenarios:** one fixture per rejecting rule, each exiting 2 with the rule's cause, from the specification's text; QS8's containment and QS9's seed link rejection.
-- **Verification:** derivation-only cases `case-100` to `case-129` and `case-136` leave the pending list.
+- **Verification:** derivation-only cases `case-100` to `case-128` and `case-136` leave the pending list.
 
 ### U10. Placeholders and `pql create`
 
@@ -258,8 +270,8 @@ Waits on: PR2, merge order only.
 - **Approach:** QS5's skip, nothing-runs, candidate and override rules. What `create` takes as input is not specified; the plan's choice is the smallest input QS5 needs, stated in the pull request.
 - **Test scenarios:**
   - `create` then `grade` on its output gives `placeholder_unfilled` exactly where QS5 says, the expected side written from QS5, never from `create`'s code (AE20);
-  - each single-placeholder case exits 4.
-- **Verification:** `case-060` to `case-066` leave the pending list.
+  - a subject file with each kind of placeholder gives the outcomes QS5 states, checked in a unit test where the corpus case needs a later slice.
+- **Verification:** `case-060` leaves the pending list. `case-061` and `case-062` wait for discovery (U11), and `case-063` to `case-066` for authored checks (U13).
 
 ### PR4: slice b, discovery and probes
 
@@ -273,7 +285,7 @@ Waits on: PR3, merge order only.
 - **Files:** `internal/collect/`, its tests.
 - **Approach:** QD2's walk, bounds and order; QD3 and QD4's comparison; QD5; `credit-and-routes.md` §5's section headings for each framework; QO7's combination for discovery.
 - **Test scenarios:** each framework's headings; the depth and cycle bounds; a missing declared command (AE27); help on stderr; a hidden command.
-- **Verification:** the discovery cases without runbooks leave the pending list.
+- **Verification:** `case-061` and `case-062` leave the pending list, and unit tests cover QD1 to QD6. Every discovery case in the corpus carries runbooks, so those cases pass from U13 on.
 
 ### U12. The six probes
 
@@ -281,12 +293,12 @@ Waits on: PR3, merge order only.
 - **Requirements:** GR9.
 - **Dependencies:** U7.
 - **Files:** `internal/collect/`, its tests.
-- **Approach:** QP1 to QP13, QO7, QE8's targets with errata E-1, and QE10's stream bounds. A scripted run takes its leaks and home changes from the recording, so `credit-and-routes.md` §4's encoding scanner and QH25's inspection get their own unit tests.
+- **Approach:** QP1 to QP13, QO2 for a binary that could not start, QO7, QE8's targets with errata E-1, and QE10's stream bounds. A scripted run takes its leaks and home changes from the recording, so `credit-and-routes.md` §4's encoding scanner and QH25's inspection get their own unit tests.
 - **Test scenarios:**
   - one test per §4 encoding, written from the table;
   - a store-unchanged check that runs no command has no artifact target (E-1);
   - QP7's and QP8's exclusions; a 17 MB stream, invalid UTF-8 and a 33-digit number.
-- **Verification:** the 21 cases without runbooks that this slice's rules reach leave the pending list (AE8's red half for those cases, AE30).
+- **Verification:** the runbook-free cases this slice's rules complete leave the pending list, among them `case-012` to `case-015`, `case-074`, `case-088`, `case-095`, `case-096` and `case-151`. The runbook-free cases that time out or end by a signal wait for U13 and U14.
 
 ### PR5: slice c, authored checks
 
@@ -339,27 +351,25 @@ Waits on: PR5, merge order only.
 
 ### U16. The confinement evidence suite
 
-- **Goal:** a local macOS suite proves what a scripted run cannot: the rules QH10, QH12, QH15, QH16, QH20, QH22 and QE18, and each self-test program's necessity.
+- **Goal:** a local macOS suite proves every rule a scripted run cannot break (GR15), among them QH6, QH10, QH12, QH13, QH15, QH16, QH20, QH22, QH23 and QE18, and each self-test program's necessity.
 - **Requirements:** GR14, GR15.
 - **Dependencies:** U15.
 - **Files:** a new darwin test behind a test-only tag (KTD7).
-- **Approach:** for each self-test program, a profile granting only that program's operation makes the self-test fail (GR14); each allowance removed in turn breaks a clean run; violators and their twins. Commit 490d650's spike suite is reference only; nothing is copied without checking it against the sealed text.
-- **Test scenarios:** each program's one-grant profile fails the self-test; each allowance's removal breaks the clean program.
+- **Approach:**
+  1. For each self-test program, a profile granting only that program's operation makes the self-test fail, the granted program completes its operation as its output shows, and no other program's result changes (GR14).
+  2. Each allowance removed in turn breaks a clean run; violators and their twins.
+  3. Every form of the synthetic subject is built, and each invocation in its recording runs through the released build's real verifier; the markers, ends, streams, leaks and home changes observed agree with the recording, so the real observation path is proved on defective forms as well as the known-good one.
+  4. `sandbox-exec` exiting before the marker, and a profile it rejects, each leave the subject never started and its checks not observed (QH6); descriptors and the terminal are as QH13 says; the process group is ended (QH23).
+  5. Commit 490d650's spike suite is reference only; nothing is copied without checking it against the sealed text.
+- **Test scenarios:**
+  - each program's one-grant profile fails the self-test while the granted program succeeds and the others are unchanged;
+  - each allowance's removal breaks the clean program;
+  - a form's observed invocation that differs from its recording fails the suite.
 - **Verification:** the suite passes on macOS 27.0.1 or 27.2, and the pull request states the commit, the version and build, the command, the result and the log's SHA-256.
 
-### PR7: slice f, run records and the scorecard
+### PR7: slice f, the scorecard
 
 Waits on: PR6, merge order only.
-
-### U17. The store's run records
-
-- **Goal:** every run's record is stored as QE17 says, and the engine cleans up after itself.
-- **Requirements:** GR3, GR4, GR13.
-- **Dependencies:** U7.
-- **Files:** `internal/store/` (new), its tests.
-- **Approach:** QE17's location (KTD5), modes and R27; `record.schema.json`; a rejected record kept (QE15); QE20's per-run directories and startup sweep.
-- **Test scenarios:** a stored record validates against `record.schema.json`; file and directory modes; a stale run directory swept at start.
-- **Verification:** every run the corpus runner makes leaves a stored record.
 
 ### U18. The scorecard and the agreement check
 
@@ -369,7 +379,7 @@ Waits on: PR6, merge order only.
 - **Files:** `internal/scorecard/` (new), the corpus runner, their tests.
 - **Approach:** everything QE12, QE18, QE21 and the subject rules ask the scorecard to show; the judge errata's display rules where conformance reaches them. The runner reads all three for each case and checks them against `expect.judge_output`.
 - **Test scenarios:** a scorecard that recomputes a verdict instead of reading it is caught; each display item has a fixture.
-- **Verification:** the agreement check passes for every case.
+- **Verification:** the agreement check passes for every case, and a private scoring run on the build so far shows zero wrong records, reported as counts only.
 
 ### PR8: slice e, baselines and anchoring
 
@@ -405,7 +415,7 @@ Waits on: PR8, merge order only.
 
 | Gate | What it proves |
 |---|---|
-| `./gate.sh` with its tagged passes | build, vet, staticcheck, errcheck, exhaustive and every test, the corpus runner included, on released and scripted code, network off |
+| `./gate.sh` with its tagged passes | build, vet, staticcheck, errcheck, exhaustive and every test, the corpus runner included, on released and scripted code; build and lints on darwin code; network off |
 | `./check.sh` | the gate, the binaries, the sealed kits, the judge's published cases and the corpus checks, in the `cases` job |
 | `./scan.sh` | no home path, email or secret in the diff or commit messages |
 | the corpus runner's ratchet | which cases pass; each slice moves cases off the pending list and none back |
@@ -413,13 +423,13 @@ Waits on: PR8, merge order only.
 | a local macOS run | the real-verifier cases and the evidence suite, stated in the pull request as `AGENTS.md` requires |
 | the peer-review gate per pull request | code and test lenses always; security for the confinement and anything public; the measurement lens on every evidence rule, with a design-mode round on the slice's design note before its build |
 | one different-model review | this plan, before slice work starts (`AGENTS.md`, Review) |
-| private scoring | GR5, at the phase close |
+| private scoring | GR5, after slice f and at the phase close; phase 1's judge scoring again after U3 |
 
 ---
 
 ## Definition of Done
 
-- Every public case passes through `grade`: the scripted ones in CI, `case-069`, `case-070` and `case-143` on local macOS, and the pending list is empty (GR1).
+- Every public case passes through `grade`: the scripted ones in CI with the pending list empty, and `case-069`, `case-070` and `case-143` on local macOS (GR1).
 - The known-good synthetic subject is green and exits zero (GR2).
 - The private scoring shows zero wrong records and no surviving seeded mistake (GR5).
 - Each slice's pull request has passed the peer-review gate with every Blocker and Major resolved or accepted by the owner, and records its mutation evidence and any macOS evidence.
