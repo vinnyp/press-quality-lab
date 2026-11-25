@@ -1,0 +1,141 @@
+//go:build darwin && macos_evidence
+
+package hostilehome_test
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/vinnyp/press-quality-lab/internal/confine"
+	"github.com/vinnyp/press-quality-lab/internal/spike/hostilehome"
+)
+
+func build(t *testing.T, target string) string {
+	t.Helper()
+	binary := filepath.Join(t.TempDir(), "program")
+	cmd := exec.Command("go", "build", "-o", binary, target)
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+	if b, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("build: %v %s", err, b)
+	}
+	return binary
+}
+
+func TestHostileHomeConfined(t *testing.T)   { evidence(t, true) }
+func TestHostileHomeUnconfined(t *testing.T) { evidence(t, false) }
+
+func evidence(t *testing.T, confined bool) {
+	t.Helper()
+	if os.Geteuid() == 0 {
+		t.Fatal("evidence requires an ordinary user")
+	}
+	program := build(t, "./testdata/hostile")
+	var copies *confine.Copies
+	if confined {
+		launcher := build(t, "../../../cmd/pql")
+		var err error
+		copies, err = confine.NewCopies(t.TempDir(), launcher, program)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Independent literal inventory: dropping a production probe is observable.
+	for _, item := range []string{"file-uchg", "dir-uchg", "file-uappnd", "dir-uappnd", "file-acl", "dir-acl", "file-xattr", "dir-xattr", "file-mode", "dir-mode", "fifo", "socket", "file-combined", "dir-combined"} {
+		t.Run(item, func(t *testing.T) {
+			home, err := filepath.EvalSymlinks(t.TempDir())
+			if err != nil {
+				t.Fatal(err)
+			}
+			env := []string{"HOME=" + home, "TMPDIR=" + home, fmt.Sprintf("__CF_USER_TEXT_ENCODING=0x%X:0:0", os.Getuid())}
+			var out []byte
+			killed := false
+			if confined {
+				values := map[string]string{"ROOT": "/", "RUNTIME": "/System/Volumes/Preboot/Cryptexes", "VOLUME": "/System/Volumes/Data", "HOME": home, "TRACE_DEVICE": "/dev/dtracehelper", "NULL_DEVICE": "/dev/null", "RANDOM_DEVICE": "/dev/urandom", "ZERO_DEVICE": "/dev/zero", "STDOUT_DEVICE": "/dev/fd/1", "STDERR_DEVICE": "/dev/fd/2", "ZONEFILE": "/usr/share/zoneinfo/UTC", "ZONE_RULES": "/usr/share/zoneinfo/posixrules", "SERVICES": "/etc/services", "PROTOCOLS": "/etc/protocols", "PLANTED": filepath.Join(home, "planted")}
+				p, e := copies.Start(confine.Invocation{Paths: confine.Paths{Values: values}, Words: []string{item}, Env: env, Directory: home})
+				if e != nil {
+					t.Fatal(e)
+				}
+				timer := time.AfterFunc(10*time.Second, func() {
+					if e := p.Kill(); e != nil {
+						t.Errorf("timeout kill: %v", e)
+					}
+				})
+				run, e := p.Wait()
+				timer.Stop()
+				t.Logf("run %s marker=%+v end=%+v error=%v stderr=%q", item, run.Markers, run.End, e, run.Stderr)
+				out = run.Stdout
+				killed = run.End.Signal != 0
+				if e != nil {
+					t.Error(e)
+				}
+				if !run.Markers.Confinement {
+					t.Error("confinement not applied; no behavioural evidence")
+				}
+			} else {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				cmd := exec.CommandContext(ctx, program, item)
+				cmd.Dir = home
+				cmd.Env = env
+				out, err = cmd.CombinedOutput()
+				t.Logf("unconfined end=%v", err)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			t.Logf("%s", out)
+			// A killed syscall has no return value: retain the end and partial output,
+			// never invent an errno or pretend that missing output was a refusal.
+			if !bytes.Contains(out, []byte("attempt "+item+" ")) {
+				t.Error("missing attempt line")
+			}
+			if !killed {
+				steps := map[string][]string{
+					"file-uchg": {"chflags-uchg"}, "dir-uchg": {"chflags-uchg"},
+					"file-uappnd": {"chflags-uappnd"}, "dir-uappnd": {"chflags-uappnd"},
+					"file-acl": {"setattrlist-deny"}, "dir-acl": {"setattrlist-deny"},
+					"file-xattr": {"setxattr"}, "dir-xattr": {"setxattr"},
+					"file-mode": {"chmod-0000"}, "dir-mode": {"chmod-0000"},
+					"fifo": {"mkfifo"}, "socket": {"socket", "bind", "close"},
+					"file-combined": {"setattrlist-deny", "chmod-0000", "chflags-uchg"},
+					"dir-combined":  {"setattrlist-deny", "chmod-0000", "chflags-uchg"},
+				}
+				for _, step := range steps[item] {
+					if !bytes.Contains(out, []byte("attempt "+item+" "+step+"=")) {
+						t.Errorf("missing syscall result: %s", step)
+					}
+				}
+			}
+			var cleanup bytes.Buffer
+			if err := hostilehome.Cleanup(&cleanup, home, item); err != nil {
+				t.Error(err)
+			}
+			t.Log(cleanup.String())
+			if !strings.Contains(cleanup.String(), "cleanup "+item+" ") {
+				t.Error("missing cleanup line")
+			}
+		})
+	}
+}
+
+func TestHostileHomeSocketOptions(t *testing.T) {
+	var b bytes.Buffer
+	if err := hostilehome.SocketOptions(&b); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(b.String())
+	for _, kind := range []string{"listen", "dial"} {
+		for _, name := range []string{"SO_REUSEADDR", "SO_REUSEPORT", "SO_KEEPALIVE", "SO_NOSIGPIPE", "SO_BROADCAST", "SO_LINGER", "TCP_NODELAY", "TCP_KEEPALIVE", "TCP_KEEPINTVL", "TCP_KEEPCNT"} {
+			if !strings.Contains(b.String(), "socket "+kind+" "+name+" ") {
+				t.Errorf("missing %s %s", kind, name)
+			}
+		}
+	}
+}
