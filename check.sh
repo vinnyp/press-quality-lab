@@ -8,6 +8,9 @@ fail() { trap - EXIT; echo "CHECK FAILED at step: $STEP ($1)" >&2; exit 1; }
 trap 'status=$?; if (( status != 0 )); then echo "CHECK FAILED at step: $STEP (exit $status)" >&2; fi' EXIT
 step() { STEP="$1"; echo "==> [$STEP] $2"; }
 need() { command -v "$1" >/dev/null || fail "$1 not found on PATH"; }
+step rule-growth 'check unmapped rule ratchet'
+need python3
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-rule-growth.py
 step gate './gate.sh'
 ./gate.sh
 step build 'build pql'
