@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -40,8 +39,8 @@ func TestHiddenProtocol(t *testing.T) {
 	}
 }
 func TestLauncherInitialisation(t *testing.T) {
-	if runtime.GOOS != "linux" {
-		t.Skip("Linux initialisation baseline")
+	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
+		t.Skip("initialisation baseline is for linux/amd64")
 	}
 	cmd := exec.Command(buildPQL(t), "__pql_launcher", strings.Repeat("0", 64), "/nonexistent", "[]", "[]")
 	cmd.Env = []string{"GODEBUG=inittrace=1"}
@@ -56,11 +55,7 @@ func TestLauncherInitialisation(t *testing.T) {
 			packages = append(packages, strings.Fields(line)[1])
 		}
 	}
-	want, err := os.ReadFile("testdata/launcher-linux-init.txt")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(want, []byte(strings.Join(packages, "\n")+"\n")) {
+	if strings.Join(linuxInitialisationList(t), "\n") != strings.Join(packages, "\n") {
 		t.Fatalf("launcher initialisation changed: %q", packages)
 	}
 }

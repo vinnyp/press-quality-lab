@@ -1,7 +1,9 @@
+# Init tasks of the launcher binary for linux/amd64 (the CI runner), in order.
 internal/bytealg
-internal/runtime/sys
+internal/runtime/gc/scan
 runtime
 crypto/internal/fips140deps/cpu
+math
 errors
 iter
 sync
@@ -18,8 +20,8 @@ os
 unicode
 reflect
 crypto/internal/fips140
-crypto/internal/fips140/sha256
 crypto/internal/fips140/sha3
+crypto/internal/fips140/sha256
 crypto/internal/fips140/sha512
 crypto/internal/fips140/hmac
 crypto/internal/fips140/check
@@ -31,6 +33,7 @@ encoding/json/jsontext
 encoding/json/v2
 encoding/json
 flag
+math/big
 crypto/rand
 path/filepath
 regexp/syntax

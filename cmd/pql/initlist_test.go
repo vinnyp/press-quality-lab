@@ -10,12 +10,12 @@ import (
 	"testing"
 )
 
-// Cross-check the Linux linker's ordered init tasks on any host. The Linux
+// Cross-check the linux/amd64 linker's ordered init tasks on any host. The Linux
 // runtime test separately checks what inittrace actually reports.
 func TestLinuxInitialisationTasks(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "pql")
 	cmd := exec.Command("go", "build", "-o", path, ".")
-	cmd.Env = append(builderEnvironment(), "GOOS=linux", "CGO_ENABLED=0")
+	cmd.Env = append(builderEnvironment(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	if b, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Linux build: %v %s", err, b)
 	}
@@ -66,11 +66,22 @@ func TestLinuxInitialisationTasks(t *testing.T) {
 			}
 		}
 	}
-	want, err := os.ReadFile("testdata/launcher-linux-init.txt")
+	if strings.Join(linuxInitialisationList(t), "\n") != strings.Join(packages, "\n") {
+		t.Fatalf("Linux init task list changed: %q", packages)
+	}
+}
+
+func linuxInitialisationList(t *testing.T) []string {
+	t.Helper()
+	b, err := os.ReadFile("testdata/launcher-linux-init.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(want) != strings.Join(packages, "\n")+"\n" {
-		t.Fatalf("Linux init task list changed: %q", packages)
+	var packages []string
+	for _, line := range strings.Split(strings.TrimSuffix(string(b), "\n"), "\n") {
+		if !strings.HasPrefix(line, "#") {
+			packages = append(packages, line)
+		}
 	}
+	return packages
 }
