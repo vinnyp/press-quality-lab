@@ -74,7 +74,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		},
 	}
 	judgeCmd.SetOut(stderr)
-	root.AddCommand(judgeCmd)
+	root.AddCommand(judgeCmd, newCollectionCommand("grade"), newCollectionCommand("anchor"))
 	root.SetHelpCommand(&cobra.Command{
 		Use: "help [command]", Short: "Help about any command",
 		Args: func(_ *cobra.Command, args []string) error {
@@ -109,6 +109,10 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return resultCode
 	}
 	code := exitSoftware
+	var rejection *rejectionError
+	if errors.As(err, &rejection) {
+		code = rejection.code
+	}
 	var usage *usageError
 	if errors.As(err, &usage) {
 		code = exitUsage
