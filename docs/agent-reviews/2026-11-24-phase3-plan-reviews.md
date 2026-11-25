@@ -196,3 +196,21 @@ Reviewed at commit `1e8c501` by the staff engineer and plan lenses, runtime clau
 | 132 | The corpus runner could land before the gate runs tagged tests | staff | Confirmed: `gate.sh` has no tagged pass today | Fixed: PR5 waits on PR3. |
 | 133 | The thin slice has no room if the confinement core runs to its stop date | plan, staff | Agreed | Fixed: dates move to 2026-12-08 for the thin slice and 2026-12-30 for slice d end to end, the readings are asked for on 2026-11-25, and the first week's holiday is named. |
 | 134 | Smaller items: the derivation-only cases U4 already catches, "still pending" in U9, U10's AE20 test against `create`'s input, the `internal/scripted` difference before U6, single owners for QH26 and QO5, a shared form-build helper, the store test before PR6, U35's leftover violator prediction, the different-model review's wording, and missing diagram edges | plan, staff | Confirmed | Fixed in the units, KTDs and Verification Contract named in each. |
+
+## The different-model review of the rebuilt plan
+
+Reviewed at commit `283d74f` by agy with gemini-4-argon-high, as the staff engineer lens, in a review clone. The clone's path held no personal name, and its repository-state snapshot was unchanged. The first attempt timed out and agy's one retry completed. Verdict: ready to execute with adjustments, with no Blocker, three Majors, two Minors and one Nit. Each claim below was checked against the sealed text and the corpus:
+- QD4 governs generated checks only (`collection-rules.md`, QD4).
+- QO7 orders discovery's and the planted-secret probe's invocations.
+- `case-003` lists 17 invocations though none may run.
+- 7 of `case-003`'s 29 required checks carry `empty_satisfiable`.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 135 | Level 3's trigger contradicts QD4, and a flat level 7 contradicts QO7 for discovery and the planted-secret probe | agy | Confirmed from QD4 and QO7 | Fixed: KTD11's level-3 trigger is "a generated check"; level 7's per-invocation helper is called in QO7's order by U11 and U37. |
+| 136 | The served-invocation subset cannot catch a run that should not have started, because QE8 names invocations a not-observed check would have used | agy | Confirmed: `case-003` lists 17 | Fixed: KTD2.6's host and placeholder rules, and U8's mutated-loop test. |
+| 137 | The thin slice needs computation preimages, `earlier` lists and `empty_satisfiable` | agy | Confirmed | Fixed: U5 and U33. |
+| 138 | Ratchet predictions: `case-090` at slice a, `case-061` and `case-062` at slice b1, and the destructive-scope cases passing before slice d's scripted half | agy | Agreed | Fixed: U10, U44 and U27; a destructive runbook runs only from U14, which takes QA8. |
+| 139 | Mode 0000 combined with `uchg` on one entry leaves no descriptor to clear the flag | agy | Not verified; needs the spike | Fixed: U43 measures it, and U40 tests it. |
+| 140 | Errata E-9 placed QS2 second, though QT6 names a specific rule over QS2 | agy | Confirmed from QT6 | Fixed: E-9 and U9. |
+| 141 | Missing cross-PR unit dependencies and a duplicate owner for QE11 | agy | Confirmed | Fixed: U11, U12, U27. |

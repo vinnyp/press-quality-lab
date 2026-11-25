@@ -63,7 +63,7 @@ QS8 rejects a subject directory that is "the user's home directory" or above it.
 
 ### E-9. A subject file that breaks two named rules
 
-QT6 names the deciding rule of a derivation-only case, and no case breaks two at once. **The engine checks the rules in the specification's order, QS1 to QS12, then QP7, QP10, QA4 and QA9, and names the first that fails.**
+QT6 names the deciding rule of a derivation-only case, and no case breaks two at once. **The engine checks the named rules in this order, QS1, then QS3 to QS12, then QP7, QP10, QA4 and QA9, and names the first that fails.** QS2 is named only when none of these is broken, since QT6 names the rule whose condition the file breaks even when the file's schema also rejects it.
 
 ### E-10. An entry the engine cannot read
 

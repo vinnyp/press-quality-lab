@@ -156,6 +156,11 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
   6. **The trace and the served-invocation check.**
      - The scripted build reads a trace path from an environment variable only it knows, outside the workspace. It appends the required set before collection, each invocation key the scripted source serves, and each home the workspace creates.
      - For every case, the served keys must be a subset of the case's `invocations` field. QT6 defines that field as every invocation the record names or implies, runbook steps included, and as empty for a derivation-only case. A derivation-only case must also show no home made.
+     - That field also names invocations a not-observed check would have used (QE8), so the subset alone cannot catch a run that should not have started. The runner therefore also requires, from the case's host and subject file:
+       - zero served keys and zero homes when confinement was not applied, the self-test failed, the private copy changed, or the binary is a placeholder;
+       - only discovery's help requests when the seed or the store is a placeholder (QS5);
+       - no key served only for checks the case expects as `earlier_step_failed` or `placeholder_unfilled`;
+       - no computation served whose capture the case's evidence shows cut (QA4).
      - KTD12's symbol check keeps the trace out of the released binary.
   7. **The pending list.** A checked-in list names the cases not yet expected to pass. Every case off it must pass, and every case on it must still fail.
      - From slice a on, a separate layer requires every judge-checked case's required set, read from the trace, to equal `input.json`'s `required`.
@@ -217,12 +222,14 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
   - **The precedence table.** `decide` holds `collection-rules.md` §2's order as one table, one level per step and one file per level, and QS5's final override. The loop records only facts such as "skipped after step N"; `decide` alone assigns a reason. A check that no earlier level decides passes through every later level, in order.
   - **Unbuilt levels.** Each level names a trigger: a fact that holds whenever the level could apply. A level not yet built ends the run with exit 70, naming its rule, when a check reaches it and its trigger holds or cannot be ruled out; otherwise the check passes on. So an unbuilt rule is an engine fault, never a pass. The triggers:
     - level 2: the check depends on a placeholder (from the required set);
-    - level 3: the check runs a declared command;
+    - level 3: the check is a generated check, since QD4 governs no authored check;
     - level 4: the check is a runbook step with an earlier step;
     - level 5: always, since any private copy can change;
     - level 6: the check has a computation or a capture;
     - level 7: always, for any check with an invocation;
     - level 8: always.
+
+    Level 7 decides a check with one invocation directly. Discovery and the planted-secret probe have several, and QO7 orders them: their own rules in U11 and U37 call level 7's per-invocation helper (QO1 to QO4, and an engine kill as `harness_fault`), in QO7's order. A crash or an unsuccessful exit there is QD5's or proves no read, never QO5's.
 
     A test at the close asserts that no unbuilt level remains.
   - These are the collection specification's evidence rules, not verdicts: the judge still decides requiredness, rollups, comparison and every verdict.
@@ -488,7 +495,7 @@ Waits on: PR3, needed before this group can start. It merges the spike's record 
 - **Requirements:** GR16.
 - **Dependencies:** U15.
 - **Files:** `docs/spikes/` (the spike's record); the spike's code on its branch, which the record names by commit.
-- **Approach:** a confined program tries each of these and the record says which succeed: `uchg` and `uappnd` flags, access-control deny entries, extended attributes, mode 0000 on files and directories, FIFOs, and socket files. For each that succeeds, the record says whether the `x/sys` calls on a descriptor opened with `O_NOFOLLOW` can undo it. The spike also probes which socket options Go's `net` package sets.
+- **Approach:** a confined program tries each of these and the record says which succeed: `uchg` and `uappnd` flags, access-control deny entries, extended attributes, mode 0000 on files and directories, FIFOs, and socket files, and mode 0000 combined with `uchg` and a deny entry on one file and on one directory, where no descriptor can be opened to clear the flag. For each that succeeds, the record says whether the `x/sys` calls on a descriptor opened with `O_NOFOLLOW` can undo it. The spike also probes which socket options Go's `net` package sets.
 - **Test expectation:** none -- a time-boxed spike; its record is the evidence.
 - **Verification:** the record exists, states the macOS build, and scopes U40's darwin half.
 
@@ -524,6 +531,7 @@ Waits on: PR3, merge order only, since the runner needs the gate's tagged pass. 
     - an empty case directory, a deleted stored record and a renamed field;
     - a wrong rejection rule;
     - a trace serving a key outside the case's `invocations`;
+    - a loop mutated to call the source before levels 1, 2 and 5, so `case-003`, `case-060` or `case-061` serves keys its host or subject file forbids;
     - a derivation-only case whose trace shows a home made.
   - **Validation step:** fewer records than its own count fails it.
   - two cases run back to back never share a store, switched on in PR6 once the store exists.
@@ -583,7 +591,7 @@ Waits on: PR2, PR3 and PR5, needed before this group can start. Each stage is on
 - **Dependencies:** U4, U22, U34.
 - **Files:** `internal/plan/` (new), its tests.
 - **Approach:**
-  - the preimage kinds `case-003` and `case-004` need;
+  - the preimage kinds `case-003` and `case-004` need, computation preimages with their `files` digests and multi-step `earlier` lists among them;
   - the seed digest, and the `files` digests over the assembled directory;
   - the bare binary's defaults, and QS7's offline arguments in preimages;
   - each invocation's key in QT5's shape, with QS7's appended arguments and environment, for every generated probe and runbook step; the loop uses only these keys;
@@ -599,7 +607,7 @@ Waits on: PR2, PR3 and PR5, needed before this group can start. Each stage is on
 - **Files:** `internal/plan/`, its tests.
 - **Approach:**
   - QP1's probes and their placement;
-  - the declared commands those cases carry;
+  - the declared commands and runbooks those cases carry, with QA9's `empty_satisfiable`;
   - scope through `ScopeIncludes`;
   - the other required-set rules come with U39.
 - **Test scenarios:** for `case-003` and `case-004`, the required set equals `input.json`'s `required`.
@@ -730,7 +738,7 @@ Waits on: PR4 and PR6, needed before this group can start.
   - a cleanup that cannot remove an entry exits 70, names the directory, and the next sweep removes it (errata E-11);
   - SIGINT, SIGTERM, SIGHUP and SIGQUIT each end the live group and clean up;
   - a sweep after a killed `pql` ends the recorded group before removing its home;
-  - on macOS, behind KTD19's tag, every hazard U43 found possible is removed, among them `uchg`, `uappnd` and a deny-delete access-control entry where U43 shows them.
+  - on macOS, behind KTD19's tag, every hazard U43 found possible is removed, among them `uchg`, `uappnd`, a deny-delete access-control entry, and mode 0000 combined with `uchg` on one entry, where U43 shows them.
 - **Verification:** the Linux tests pass in CI, and the macOS tests pass on 27.2 as KTD18 says.
 
 ### PR8: slice a, the subject file and placeholders
@@ -747,7 +755,7 @@ Waits on: PR6, merge order only.
   - every preimage kind and every invocation key, and QS5's candidate checks;
   - QA7's exclusion of destructive runbooks outside that scope;
   - QA3's crediting, with `credit-and-routes.md` §2's credit conditions;
-  - QA9's `empty_satisfiable` and `asserts_emptiness`.
+  - QA9's `asserts_emptiness` and preconditions.
 - **Test scenarios:** for every judge-checked case, each preimage equals `preimages.json` and the required set equals `input.json`'s `required`.
 - **Verification:** `go test -tags scripted ./internal/plan` passes on all 121 cases, and the runner's `required` layer is on.
 
@@ -762,7 +770,7 @@ Waits on: PR6, merge order only.
   - QS7's names with QH12's, QP7's and QP10's rejections, QA4's capture names, and QA9's type and path rules;
   - QA5's warning on the terminal, in the help of `grade` and `anchor`, and in the README.
 
-  A file that breaks two named rules names the first in the specification's order (errata E-9). QS8's home is the account's home from the system's user record (errata E-8).
+  A file that breaks two named rules names the first in the order errata E-9 gives, with QS2 named only when no other rule is broken (QT6). QS8's home is the account's home from the system's user record (errata E-8).
 - **Test scenarios:**
   - one fixture per rejecting rule, from the specification's text. Each exits 2 with GKD8's line naming that rule, and quotes no subject-file value in the cause;
   - QS8's containment and QS9's seed-link rejection;
@@ -780,7 +788,7 @@ Waits on: PR6, merge order only.
 - **Test scenarios:**
   - through the scripted build with a passing host and a recording, `create` then `grade` on its output gives `placeholder_unfilled` exactly where QS5 says. The expected side is written from QS5, never from `create`'s code (AE20). If `create`'s output has checks that pass level 2, this test moves to the slice that builds their later levels;
   - each kind of placeholder gives QS5's outcomes in a unit test where its corpus case needs a later slice.
-- **Verification:** `case-060` leaves the pending list; the other placeholder cases leave it where their later levels land, as each design note computes.
+- **Verification:** `case-060` and `case-090` leave the pending list; the other placeholder cases leave it where their later levels land, as each design note computes.
 
 ### PR9: slice b1, discovery and the invocation outcome rules
 
@@ -790,7 +798,7 @@ Waits on: PR8, merge order only.
 
 - **Goal:** the discovery check walks help as QD1 to QD6 say.
 - **Requirements:** GR9.
-- **Dependencies:** U23.
+- **Dependencies:** U10, U23.
 - **Files:** `internal/collect/`, `internal/decide/`, their tests.
 - **Approach:**
   - QD2's walk in the loop, with its bounds and order;
@@ -819,7 +827,7 @@ Waits on: PR8, merge order only.
   - a binary that could not start;
   - a kill by the confinement, a budget kill and a crash told apart from raw facts;
   - a timeout with the known-fast control within and outside its bound.
-- **Verification:** unit tests cover QH8 and QO2 to QO5. `case-005` also needs level 4 and passes from slice c; `case-095` needs the probes' invocations and passes from slice b2.
+- **Verification:** unit tests cover QH8 and QO2 to QO5. `case-061` and `case-062` leave the pending list with this pull request, since every check in them stops at level 2 or is discovery. `case-005` also needs level 4 and passes from slice c; `case-095` needs the probes' invocations and passes from slice b2.
 
 ### PR10: slice b2, probes, the leak scan and masking
 
@@ -829,7 +837,7 @@ Waits on: PR7 and PR9, needed before this group can start. Its predicted ratchet
 
 - **Goal:** these probes decide as QP1 to QP5 say.
 - **Requirements:** GR9.
-- **Dependencies:** U44.
+- **Dependencies:** U11, U39, U44.
 - **Files:** `internal/collect/`, `internal/decide/`, their tests.
 - **Approach:**
   - QP1 to QP5's selection and decisions in the loop, invoking through U5's and U39's keys;
@@ -868,7 +876,7 @@ Waits on: PR7 and PR9, needed before this group can start. Its predicted ratchet
 - **Requirements:** GR9, GR16.
 - **Dependencies:** U12, U38, U40.
 - **Files:** `internal/collect/`, `internal/decide/`, their tests.
-- **Approach:** QP10's per-invocation canary planted by the loop; QP11 to QP13, and QO7's combination with the read proof's facts.
+- **Approach:** QP10's per-invocation canary planted by the loop; QP11 to QP13; and QO7's combination with the read proof's facts, calling level 7's per-invocation helper after the leak scan and the read control (KTD11).
 - **Test scenarios:**
   - each QP11 to QP13 outcome from raw facts;
   - a mode-0000 file holding the canary is found, or never ends as held;
@@ -1013,17 +1021,18 @@ Waits on: PR10, merge order only. Every check in a runbook case also passes the 
 
 - **Goal:** ordered runbooks with their budgets and markers collect as QA7, QO4 and QE11 say, with level 4 of the precedence table.
 - **Requirements:** GR2, GR10.
-- **Dependencies:** U26, U44.
+- **Dependencies:** U11, U12, U24, U26, U36, U37, U44.
 - **Files:** `internal/collect/`, `internal/decide/`, their tests.
 - **Approach:**
   - QA7's shared home in the loop, which records where a runbook stopped;
   - level 4's `earlier_step_failed`;
-  - QA8;
-  - QE11's markers.
+  - QE11's markers on runbook outcomes, which U7 already writes (AE22).
+
+  A destructive runbook is not run until U14.
 - **Test scenarios:**
   - a runbook's second step failing, and every later step `earlier_step_failed` (AE22);
   - a known defect's marker giving exit 3.
-- **Verification:** the runbook cases leave the pending list, as the slice's design note computes, including `case-001` green with exit 0 (GR2, AE8), the discovery cases, `case-005`, `case-061` to `case-066` and `case-092`.
+- **Verification:** the runbook cases leave the pending list, as the slice's design note computes, including `case-001` green with exit 0 (GR2, AE8), the discovery cases, `case-005`, `case-063` to `case-066` and `case-092`.
 
 ### PR13: slice d, the scripted half
 
@@ -1035,11 +1044,11 @@ Waits on: PR12, merge order only.
 - **Requirements:** GR11.
 - **Dependencies:** U27.
 - **Files:** `internal/plan/`, `internal/collect/`, `internal/decide/`, their tests.
-- **Approach:** QS6, QA7, QA8 and QE3 for scope; QE12 and QE13.
+- **Approach:** QS6, QA7's destructive runbooks, QA8 and QE3 for scope, with the loop running a destructive runbook only from this unit on; QE12 and QE13.
 - **Test scenarios:**
   - a destructive command runs only with `destructive` in scope (AE30 with `case-001`);
   - an unclassified command is never invoked (AE24), shown by KTD2.6's served keys.
-- **Verification:** the scope cases leave the pending list.
+- **Verification:** `case-002` and `case-059` leave the pending list, with the QE13 cases the design note computes.
 
 ### PR14: slice f, the scorecard
 
