@@ -149,3 +149,34 @@ The owner chose to split the end-to-end slice and keep it thin (row 95).
 | 111 | Stored-record fields without an owner | plan, staff | Confirmed from `record.schema.json` | Fixed: U17. |
 | 112 | Real-path evidence lands last | staff | Agreed | Fixed: U16 and U32 move into the darwin track before slice d. |
 | 113 | Smaller items: U4's schema-detectable rules, U10's build, QO2's two owners, U23's verification, U25's dependency on U2, U18's agreement wording, the descriptor loop, the random copy folder, exact version matching, U32's decoy and environment controls, U31's survivor assertion, the two-rule question at run time, the main session's sandbox, and test commands with `-tags scripted` | all lenses | Confirmed or agreed | Fixed in the units, KTDs and Open Questions named in each. |
+
+## The bake-off: four approaches to the whole build
+
+After the third pass, the owner asked for competing approaches to phase 3's whole build, within GR1 to GR16 and GKD1 to GKD9. Three bakers each wrote an approach from a common brief, without seeing the plan or this log:
+- Baker A, a fresh Claude agent;
+- Baker B, Gemini 4 Argon High through agy;
+- Baker C, GPT-6.1 Sol through codex.
+
+The brief held the requirements, the owner's decisions and the facts the three passes had verified. Each baker read a copy of the repository without the plan or this log. A fresh Claude judge ranked the three approaches and the plan at commit `e80c7bd` under neutral labels, without the coordinator's ranking. A judge from another model family could not run the comparison skill, and the review records that fallback.
+
+The judge ranked Baker A first, the plan second, Baker C third and Baker B last.
+- **Why B ranks last.** Baker B builds on one reading of a two-way question before the owner rules, which GR6 forbids. It also treats `gate.sh` as already compiling darwin code, which it does not.
+- **Why A beats the plan.** The plan left slices f and e, full private scoring and the close for the last week. Baker A front-loads the macOS work, lands slice d by 2026-12-23, and scores twice.
+- **Two judge findings were dismissed.** "U1 is stale" was an artefact of the bake-off's copy. "Narrows GKD8" compared the plan with the brief's paraphrase.
+
+The owner chose to rewrite the plan around Baker A's approach (GKD10).
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 114 | The order leaves no slack for owner rulings or macOS diagnosis | judge | Confirmed from the dates | Fixed: KTD1's risk-first order, eighteen pull requests, slice d by 2026-12-23, two private scoring rounds, 2027-01-16 spare. |
+| 115 | A served-invocation check would show every case requested only what it implies | Baker A | Confirmed: QT6 defines `invocations` as every invocation the record names or implies, and none for a derivation-only case | Added: KTD2.6, on the binary through the scripted trace. |
+| 116 | An unbuilt rule should be a loud engine fault, not a quiet record | Baker A | Agreed; `case-003` and `case-004` resolve at level 1, so the thin slice still passes | Adopted: KTD11's exit-70 level, replacing row 91's conditional `harness_fault`, with a close-time test that none remains. |
+| 117 | Every binding rule should map to its proof | Bakers A and C | Agreed | Added: KTD22 and U45. |
+| 118 | All unconfined file work in one package with a guard | Baker A | Agreed | Added: KTD20's `internal/throwaway` and its AST guard (U46). |
+| 119 | Measure what a subject can leave in its home before designing cleanup | Baker A | Agreed: earlier rows rested on "probably" | Added: U43, the hostile-home spike. |
+| 120 | The comparator should not use the engine's reader | Baker A | Agreed | Added: KTD2.3. |
+| 121 | The judge output's `exit_code` field should be cross-checked against the returned code | Baker A | Agreed | Added: KTD16 and U25. |
+| 122 | An unknown `--scope` token is a two-way reading | Baker A | Confirmed: GKD8's exit 64 against QE6's X1 user rejection | To the owner (Open Questions). |
+| 123 | The standard error line for a judge-rejected record is not fixed | judge | Confirmed from GKD8's wording | To the owner (Open Questions). |
+| 124 | Steps 5 and 7 of §2 apply to every invocation, so they cannot wait for slice d's scripted half | coordinator | Confirmed from `collection-rules.md` §2 | Fixed: U44 in slice b1. |
+| 125 | A collection 1.1 changes the record schema's fixed `spec_version` | Baker A | Confirmed: `record.schema.json` fixes it at `"1.0"` | Noted in Scope Boundaries and Open Questions. |
