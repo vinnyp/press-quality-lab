@@ -1,203 +1,111 @@
-# Hostile home: cleanup feasibility
+# Hostile home: what a confined subject can leave, and how to remove it
 
-Draft U43 record. Results await an owner-controlled macOS run. This experiment
-scopes the Darwin half of U40 and KTD20; it does not implement cleanup or change
-the sealed subject profile.
+**Unit:** U43 of `docs/plans/2026-11-24-2115-feat-grade-command-plan.md`. The spike scopes the darwin half of U40 and KTD20. It changes neither the sealed subject profile nor any engine code.
+
+**Result in one line:** under the unchanged subject profile, a subject can leave entries that no descriptor on the entry itself can undo: a deny ACL, or mode 0000 combined with `uchg` and a deny ACL. Every tested case can be undone without following a link, by calls relative to the **parent** directory's descriptor:
+
+1. `setattrlistat` with `FSOPT_NOFOLLOW` to clear the flags, then the ACL;
+2. `fchmodat`;
+3. `unlinkat`.
+
+That holds even for an ACL entry that also denies `writesecurity`, `writeattr` and `chown` (see the supplementary check). So KTD20's walk works only if it uses parent-relative calls, not descriptors on the hostile entries.
 
 ## Run identity
 
 | Field | Value |
 |---|---|
-| Spike branch commit (code remains on the branch) | TBD |
-| Exact commit tested | TBD |
-| macOS version and build | TBD |
-| Go version and architecture | TBD |
-| Home volume and filesystem | TBD |
-| Ordinary-user run, outside tool sandbox | TBD |
-| Log location and SHA-256 | TBD |
+| Spike code (stays on the branch) | commit bf34a7d87d78bc38fd1e4028dbdb555918c5ec40, package `internal/spike/hostilehome` |
+| Engine under test | `main` at 203a4e2 (#19): the real `pql` launcher, `confine.NewCopies`, `Copies.Start`, QH11's subject variant unchanged |
+| System | macOS 27.2 (26B123), Apple silicon, APFS, an ordinary user, outside any tool sandbox |
+| Go | go1.27.4 darwin/arm64 |
+| Command | `CGO_ENABLED=0 go test -tags macos_evidence -count=1 -v -timeout 10m ./internal/spike/hostilehome` |
+| Result | `TestHostileHomeConfined`, `TestHostileHomeUnconfined` and `TestHostileHomeSocketOptions` pass. They assert that every probe line was produced; the findings are the lines themselves. |
+| Log SHA-256 | dd92d10f75c30ea04b7d34141f63732731b85d2acc5f36c072293c57a068985c. The log is kept locally and contains no home paths. |
 
-Run from the repository root, outside any sandbox:
+An earlier run of the first probe alone (descriptor strategy only) left eight entries the test could not remove: the four ACL and combined items, confined and unconfined. The coordinator removed them by path as the owner: `chmod -N` removed the ACL, `chflags nouchg` the flag, then `rm -rf`. That observation led to the second probe. Its log is not part of this record.
 
-```sh
-CGO_ENABLED=0 go test -tags macos_evidence -count=1 -v -timeout 10m ./internal/spike/hostilehome
-```
+## Method
 
-## Method and line format
+- Each hostile item runs in its own fresh home, as its own confined invocation, so a kill cannot hide a later item. The same synthetic program also runs unconfined as a positive control.
+- The hostile program makes raw `golang.org/x/sys/unix` and `syscall` calls and prints each call's exact result.
+- After the program has exited, two cleanup strategies run, each on its own independent fixture:
+  - **Descriptor:** open the entry with `O_NOFOLLOW|O_NONBLOCK` (then `O_EVTONLY` if that fails), then `Fchflags`, ACL removal by `fsetattrlist`, `Fchmod`, `Root.Chmod` and `Root.RemoveAll`.
+  - **Parent:** open only the parent with `O_DIRECTORY|O_NOFOLLOW`, then on the entry by name: `setattrlistat(..., ATTR_CMN_FLAGS = 0, FSOPT_NOFOLLOW)`, `setattrlistat(..., ATTR_CMN_EXTENDED_SECURITY = KAUTH_FILESEC_NOACL, FSOPT_NOFOLLOW)`, `fchmodat(..., 0700, AT_SYMLINK_NOFOLLOW)`, `fstatat` with no-follow, and recursion through no-follow directory descriptors, then `unlinkat`.
+- **Link safety:** the hostile program replaces an entry with a symlink to `../outside`, a file the test made beside the home with a deny ACL and `uchg`. The test compares that file's mode, flags and ACL bytes before and after cleanup.
+- FIFOs and sockets are never opened for data.
+- `golang.org/x/sys/unix` (the pinned version) wraps `Setattrlist`, `Fchflags`, `Fchmod`, `Fchmodat`, `Fstatat`, `Unlinkat` and the descriptor xattr calls. It has no wrapper for `setattrlistat`, `fgetattrlist`, `fsetattrlist` or the `acl_*` calls, so the spike used raw syscalls for those.
 
-The synthetic executable is built in a temporary directory. The confined test
-uses the real `cmd/pql` launcher, `confine.NewCopies` and `Copies.Start` with the
-unchanged QH11 subject variant. Every item gets a separate invocation and home,
-so a kill does not suppress later items. The positive control runs the same
-executable unconfined. Neither program invokes external utilities. The evidence
-tests check that probe lines exist, not whether a mutation or cleanup succeeded.
-A missing launcher marker is an infrastructure failure, not a refusal result.
+## What a confined subject can leave
 
-`attempt ITEM STEP=success` or `errno=N(TEXT)` gives the exact syscall result.
-Creation and close calls also appear. A kill before a call returns has no errno;
-record the run end and last completed step, and leave the next result unknown.
-A line from creation alone does not establish that a later mutation ran.
+| Item | Under the subject profile | Unconfined control |
+|---|---|---|
+| `uchg` on a file and a directory | succeeds | succeeds |
+| `uappnd` on a file and a directory | succeeds | succeeds |
+| Deny ACL (`everyone deny read,delete`) on a file and a directory | succeeds. The spike's entry deliberately did not deny `writesecurity`; the supplementary check covers that case | succeeds |
+| Extended attribute | succeeds | succeeds. On this system every file created, confined or not, also carries `com.apple.provenance` |
+| `chmod 0000` on a file and a directory | succeeds | succeeds |
+| Mode 0000 + `uchg` + deny ACL on a file and a directory | all three calls succeed | succeeds |
+| FIFO (`mkfifo`) | succeeds | succeeds |
+| Unix socket (`socket` then `bind`) | `socket` succeeds. No `bind` result line is printed, and the program ends by signal 9 after the marker, so the kill came at or right after `bind` (QO3). No socket file is left | `bind` succeeds |
+| Symlink pointing out of the home | succeeds. The sealed profile kills `file-link` (hard links); this spike tested only symlinks | succeeds |
 
-`cleanup ITEM` records `Root.Lstat` mode and flags, descriptor open results,
-`Fstat` mode and flags, ACL presence/count (or unknown), the raw extended-security
-attribute bytes, and xattr names. It then records flag clearing, descriptor ACL
-removal, mode restoration, close, a `Root.Chmod` fallback, the directory child's
-`Root.Lstat` and `Root.RemoveAll`, final `Root.RemoveAll`, and final absence.
-The first open uses `Openat` with `O_RDONLY|O_NOFOLLOW|O_NONBLOCK`; on failure,
-the probe also measures `O_EVTONLY|O_NOFOLLOW|O_NONBLOCK`. This distinguishes a
-failed read-open from inability to obtain any useful descriptor. FIFOs and
-sockets are never opened for data. The directories contain one synthetic child.
-The process has ended before cleanup; this bounded, fixed-child experiment is
-not the racing-tree safety implementation required of U40.
+## How each is removed
 
-The deny ACE targets everyone and denies delete and read-data/list-directory. The
-combined items apply the ACE, mode 0000, then `uchg`, closing creation descriptors
-first. Record each step separately: a refused earlier call means the resulting
-entry is not the full combination. The descriptor strategy does not clear flags by path.
+| Item | Descriptor strategy | Parent strategy |
+|---|---|---|
+| `uchg`, `uappnd` | removed (`openat`, `Fchflags`, then removal) | removed |
+| Extended attribute | removed (the descriptor strategy removed both attributes, including `com.apple.provenance`, then the entry) | removed |
+| Mode 0000 | removed (no descriptor; `Root.Chmod` then removal) | removed |
+| Deny ACL, file and directory | **left behind**: no descriptor (`EACCES` for both open modes); `Root.Chmod` succeeds but removal fails `EACCES` | removed |
+| 0000 + `uchg` + deny ACL, file and directory | **left behind**: no descriptor; `Root.Chmod` fails `EPERM` (the flag); removal fails | removed (flags cleared first, then the ACL, then mode, then `unlinkat`) |
+| FIFO | removed without opening it | removed |
+| Symlink out of the home (a leaf link to a file) | the link is removed | the link is removed; the outside file's mode, `uchg` flag and ACL bytes are unchanged (`unchanged=true` in all four checks) |
 
-The pinned `golang.org/x/sys/unix` provides `Setattrlist`, `Openat`, `Fstat`,
-`Fchflags`, `Fchmod`, `Flistxattr` and `Setxattr` on Darwin. It has no `acl_*`,
-`Fgetattrlist` or `Fsetattrlist` wrappers. The experiment encodes Darwin's
-`attrreference_t` and `kauth_filesec` (SDK `sys/attr.h` and `sys/kauth.h`), sets
-`ATTR_CMN_EXTENDED_SECURITY` with `Setattrlist`, and tests descriptor removal
-using `syscall.Syscall6` with `SYS_FSETATTRLIST` and `KAUTH_FILESEC_NOACL`.
-Descriptor inspection uses `SYS_FGETATTRLIST`. Success of these raw calls is
-TBD; API constants alone do not establish feasibility. `Fchmod` is measured
-separately and is not presumed to remove an ACL.
+Every test tree in the second run was fully removed by the parent strategy at teardown; the teardown asserts it.
 
-## Second probe method (results TBD)
+The evidence tests assert four things:
+- that each probe line was produced;
+- `Confinement:true` on every confined run;
+- the outside file unchanged;
+- the teardown.
 
-Each item runs twice in separate fresh homes, under subtests named
-`ITEM/descriptor` and `ITEM/parent`. Thus the descriptor strategy cannot remove
-or soften the parent strategy's fixture. Both confined runs and unconfined
-controls keep every syscall result; a refusal is evidence, not a pass.
+They do not assert each step's result, so the tables above come from reading the log lines. The log's SHA-256 is given above.
 
-The parent strategy opens only the parent with `O_DIRECTORY|O_NOFOLLOW`.
-`cleanup-parent ITEM setattrlistat-clear-flags=RESULT` clears `ATTR_CMN_FLAGS`
-with a zero buffer, then `setattrlistat-clear-acl=RESULT` clears
-`ATTR_CMN_EXTENDED_SECURITY` with `KAUTH_FILESEC_NOACL`. Both calls use
-`FSOPT_NOFOLLOW`. Flags go first so an immutable entry need not accept an ACL
-change before its flag is cleared. `fchmodat-nofollow=RESULT` measures
-`Fchmodat(..., 0700, AT_SYMLINK_NOFOLLOW)` support.
-`fstatat-nofollow=RESULT` inspects the entry without following it.
-`parent-walk` lines report directory open, enumeration and close; only a
-no-follow directory descriptor is used for recursion. The final
-`cleanup-parent ITEM unlinkat=RESULT gone=BOOL final-fstatat=RESULT` reports
-removal (with `AT_REMOVEDIR` for directories) and independent absence checking.
-`parent-open` and `parent-close` report the parent descriptor's lifetime.
-No FIFO or socket is opened for data by this strategy.
+## Supplementary check: an entry that also denies `writesecurity`
 
-The pinned `x/sys/unix` has no `Setattrlistat` wrapper; the spike uses
-`syscall.Syscall6` with `SYS_SETATTRLISTAT`. It does wrap `Fchmodat`, `Fstatat`
-and `Unlinkat`. Local SA1019 suppressions name the spike at the raw syscall
-and the two deprecated descriptor syscall constants. These are experimental
-calls whose runtime results remain TBD.
+The spike's entry denied only read and delete. A subject could instead deny everything, including `writesecurity`, `writeattr` and `chown`. The coordinator checked that case unconfined, as the file's owner, on the same system:
+- a file with `everyone deny read,write,append,delete,writeattr,writeextattr,writesecurity,chown`;
+- a directory with the matching directory rights denied, plus `uchg`.
 
-The `symlink` item creates and removes an ordinary entry, then attempts to
-replace it with `../outside`. The test creates that outside file beside the
-home, sets its deny ACL and `uchg` unconfined, and retains a descriptor from
-before hardening. `link-control` reports whether replacement produced a link;
-the unconfined control requires one. `outside before` and `outside after`
-print mode, flags and extended-security bytes through the retained descriptor;
-`unchanged=true` requires exact equality. A confined kill before replacement
-is recorded, not treated as link-safety evidence.
+The results:
+- `chmod -N` removed the file's ACL; the owner keeps the right to change it.
+- On the directory, `chmod -N` failed `EPERM` while `uchg` was set. After `chflags nouchg` (which the deny entry did not block), the ACL removal and the deletion succeeded.
 
-Every test-created temporary tree registers a `t.Cleanup` that uses the parent
-strategy recursively, including the outside control, then asserts the tree is
-gone. This runs even after a failed probe. It is fixture teardown, not evidence
-that an earlier cleanup attempt succeeded. The fixed trees are finite and the
-subject has exited before either strategy runs; race safety remains U40 work.
-
-| Second probe observation | Result |
-|---|---|
-| Parent-relative flags, ACL, mode and removal per item | TBD |
-| Outside ACL, flags and mode unchanged | TBD |
-| Both strategies compared on independent fixtures | TBD |
-| Temporary trees fully removed | TBD |
-
-## User immutable flags (`uchg`)
-
-| Item | Confined syscall result | Unconfined control | Descriptor open | Clear flags | ACL removal | Mode restore | Finally gone |
-|---|---|---|---|---|---|---|---|
-| File | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| Directory | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-
-## User append flags (`uappnd`)
-
-| Item | Confined syscall result | Unconfined control | Descriptor open | Clear flags | Finally gone |
-|---|---|---|---|---|---|
-| File | TBD | TBD | TBD | TBD | TBD |
-| Directory | TBD | TBD | TBD | TBD | TBD |
-
-## Access-control deny entries
-
-| Item | Confined syscall result | Unconfined control | ACL observed | Descriptor removal | Fchmod result | Finally gone |
-|---|---|---|---|---|---|---|
-| File | TBD | TBD | TBD | TBD | TBD | TBD |
-| Directory | TBD | TBD | TBD | TBD | TBD | TBD |
-
-## Extended attributes
-
-| Item | Confined syscall result | Unconfined control | Observed names | Finally gone |
-|---|---|---|---|---|
-| File | TBD | TBD | TBD | TBD |
-| Directory | TBD | TBD | TBD | TBD |
-
-## Mode 0000
-
-| Item | Confined syscall result | Unconfined control | Read-open | Event-only open | Fchmod | Root.Chmod | Finally gone |
-|---|---|---|---|---|---|---|---|
-| File | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| Directory | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-
-## FIFO
-
-| Confined mkfifo | Unconfined control | Lstat mode | Removal without data open | Finally gone |
-|---|---|---|---|---|
-| TBD | TBD | TBD | TBD | TBD |
-
-## Unix socket file
-
-| Confined socket/bind | Unconfined control | Lstat mode | Removal without data open | Finally gone |
-|---|---|---|---|---|
-| TBD | TBD | TBD | TBD | TBD |
-
-## Combined mode 0000, `uchg`, and deny entry
-
-| Item | Confined results of all three calls | Unconfined control | Read-open | Event-only open | Clear flags | Remove ACL | Restore mode | Finally gone |
-|---|---|---|---|---|---|---|---|---|
-| File | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| Directory | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-
-Question: can the subject produce the full combination, and can an ordinary
-engine user obtain a descriptor capable of clearing it? If both opens fail,
-record the `Root.Chmod` result and remaining entry; do not infer cleanup works.
+So the owner can always clear the flag, then the ACL, then delete. The order is required: an ACL change is refused while `uchg` is set. A subject setting this broader entry under confinement was not itself tested; the confined program set the narrower entry with the same call (`setattrlist`), which the profile allowed.
 
 ## Go socket options
 
-The unconfined probe listens and dials TCP over IPv4 loopback only.
-`socket ROLE OPTION value=VALUE result=RESULT` reports effective values after
-`net.Listen` or `net.DialTimeout`. Readback alone cannot distinguish a kernel
-default from an explicit Go setsockopt call. For attribution, inspect the tested
-Go version's `net/sockopt_bsd.go`, `net/sockopt_posix.go`, `net/tcpsockopt_posix.go`
-and `net/tcpsockopt_darwin.go`. IPv6, UDP, multicast, accepted sockets, and
-caller-selected options are outside this probe's scope.
+These were read back after `net.Listen` and `net.Dial` on IPv4 loopback, unconfined. Readback alone cannot tell an explicit Go `setsockopt` from a kernel default.
 
-| Option | Listening value/result | Dialing value/result | Explicit Go setter or kernel default |
-|---|---|---|---|
-| SO_REUSEADDR | TBD | TBD | TBD |
-| SO_REUSEPORT | TBD | TBD | TBD |
-| SO_KEEPALIVE | TBD | TBD | TBD |
-| SO_NOSIGPIPE | TBD | TBD | TBD |
-| SO_BROADCAST | TBD | TBD | TBD |
-| SO_LINGER | TBD | TBD | TBD |
-| TCP_NODELAY | TBD | TBD | TBD |
-| TCP_KEEPALIVE | TBD | TBD | TBD |
-| TCP_KEEPINTVL | TBD | TBD | TBD |
-| TCP_KEEPCNT | TBD | TBD | TBD |
+| Option | Listening | Dialing |
+|---|---|---|
+| `SO_REUSEADDR` | 4 (set) | 0 |
+| `SO_REUSEPORT` | 0 | 0 |
+| `SO_KEEPALIVE` | 0 | 8 (set) |
+| `SO_NOSIGPIPE` | 0 | 0 |
+| `SO_BROADCAST` | 0 | 0 |
+| `SO_LINGER` | off | off |
+| `TCP_NODELAY` | 0 | 4 (set) |
+| `TCP_KEEPALIVE` | 7200 | 15 |
+| `TCP_KEEPINTVL` | 75 | 15 |
+| `TCP_KEEPCNT` | 8 | 9 |
 
-## Consequences for U40
+A Go listening socket shows `SO_REUSEADDR` on, and a dialing socket shows keep-alive and `TCP_NODELAY` on; whether Go or the kernel set each is not attributed here (see Go's `net/sockopt_*.go`). Under the subject profile the network calls are killed anyway (QH15), so these values matter only for how QO3 reads such a kill.
 
-TBD from the measured confined results and their positive controls. Name each
-reachable hazard, the descriptor call that removed it, and each remaining
-failure requiring an owner decision before cleanup is designed. Do not widen
-the subject profile to make this experiment pass.
+## Consequences for U40 and KTD20
+
+1. **KTD20's cleanup must be parent-relative.** "Clear user flags with `Fchflags` on a descriptor opened `O_NOFOLLOW`" cannot work for an entry with a deny ACL, because no descriptor can be opened on it. The walk should open each directory with `O_DIRECTORY|O_NOFOLLOW` and act on its entries by name: `setattrlistat` with `FSOPT_NOFOLLOW` to clear the flags, then the ACL, then `fchmodat` with `AT_SYMLINK_NOFOLLOW`, then `unlinkat`. The order matters: an ACL change and a mode change are refused (`EPERM`) while `uchg` is set, so clear the flags first.
+2. **`internal/throwaway` needs one raw syscall.** `golang.org/x/sys` v0.38.0 defines `SYS_SETATTRLISTAT` but has no `setattrlistat` wrapper, so the package will carry `syscall.Syscall6(SYS_SETATTRLISTAT, ...)` with a documented lint exception, plus an evidence test. Adding a dependency is not needed.
+3. **The no-follow calls do not leak through a planted leaf symlink to a file.** The outside file was untouched. A symlink to a directory, or one swapped in for an intermediate directory, was not tested; U40's tests should add both. The spike does not test a subject racing the walk; U40 still owns the time-of-check race once the subject has exited (the group is ended first, QH23).
+4. **The system adds `com.apple.provenance` to new files, confined or not.** It does not block removal, though removing it by descriptor fails `EPERM` while `uchg` is set.
+5. **No sealed rule needs to change** and no owner decision is needed. The profile stays as sealed; the engine's cleanup carries the burden.
