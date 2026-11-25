@@ -221,26 +221,6 @@ func TestSchemaBounds(t *testing.T) {
 	}
 }
 
-func TestRead(t *testing.T) {
-	// QS2: file reads use exactly the same strict grammar as byte reads.
-	path := filepath.Join(t.TempDir(), "subject.json")
-	if err := os.WriteFile(path, baseline(t), 0600); err != nil {
-		t.Fatal(err)
-	}
-	got, err := Read(path)
-	if err != nil || got == nil {
-		t.Fatalf("read: %v", err)
-	}
-	if err := os.WriteFile(path, []byte(`{"x":0,"x":1}`), 0600); err != nil {
-		t.Fatal(err)
-	}
-	_, err = Read(path)
-	refusal, ok := err.(*Error)
-	if !ok {
-		t.Fatalf("got %v", err)
-	}
-	assertRule(t, refusal, "QS2")
-}
 func TestRuleOrder(t *testing.T) {
 	// QS1, QS3, QS4, QS5, QS6, QS7, QS9, QS11, QP10, QA4, QA9:
 	// E-9 orders named failures ahead of the QS2 fallback.

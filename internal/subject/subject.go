@@ -1,9 +1,7 @@
-// Package subject reads subject files without deriving checks or inspecting files.
+// Package subject parses subject-file bytes without deriving checks or inspecting files.
 package subject
 
 import (
-	"io"
-	"os"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -19,28 +17,6 @@ type File = strictjson.Object
 type Error struct{ Rule string }
 
 func (e *Error) Error() string { return e.Rule + ": invalid subject file" }
-
-// Read reads a file with the same byte bound as Parse.
-func Read(path string) (File, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	// Read one extra byte so oversized documents cannot be silently truncated.
-	data, err := io.ReadAll(io.LimitReader(f, (16<<20)+1))
-	closeErr := f.Close()
-	if err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		return nil, err
-	}
-	result, refusal := Parse(data)
-	if refusal != nil {
-		return nil, refusal
-	}
-	return result, nil
-}
 
 // Parse checks strict reading and only the schema-detectable parts of named rules.
 func Parse(data []byte) (File, *Error) {
