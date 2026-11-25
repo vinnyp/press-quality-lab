@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -16,7 +17,7 @@ import (
 var rootDocuments = []string{"AGENTS.md", "CODING_STANDARDS.md", "REVIEW.md", "CONCEPTS.md"}
 var collectionDefinition = regexp.MustCompile(`(?m)^- \*\*(Q[A-Z]+[0-9]+[a-z]?)\. `)
 var judgeDefinition = regexp.MustCompile(`(?m)^- \*\*([A-Z][0-9]+[a-z]?)\.`)
-var clauseToken = regexp.MustCompile(`Q[A-Z]+[0-9]+|[A-Z][0-9]+[a-z]?`)
+var clauseToken = regexp.MustCompile(`Q[A-Z]+[0-9]+[a-z]?|[A-Z][0-9]+[a-z]?`)
 var clauseFamily = regexp.MustCompile(`^[A-Z]+`)
 
 type clauseLocation struct {
@@ -38,7 +39,7 @@ func rootCoverage(c rootCounts) []string {
 		{"path", c.paths},                  // Repository paths in AGENTS.md and CODING_STANDARDS.md.
 	} {
 		if floor.count == 0 {
-			ps = append(ps, "AGENTS.md:1: no "+floor.name+" references found across the four root docs; restore citation coverage")
+			ps = append(ps, "root docs:1: no "+floor.name+" references found across the four root docs; restore citation coverage")
 		}
 	}
 	return ps
@@ -49,7 +50,7 @@ func specificationDefinitions(fsys fs.FS, prefix string, pattern *regexp.Regexp)
 	var ps []string
 	entries, err := fs.ReadDir(fsys, "docs/specs")
 	if err != nil {
-		return definitions, []string{"docs/specs:1: read specification directories: " + err.Error()}
+		return definitions, []string{"docs/specs:1: read specification directories: " + err.Error() + "; restore the specification directories"}
 	}
 	var folders []string
 	for _, entry := range entries {
@@ -58,17 +59,17 @@ func specificationDefinitions(fsys fs.FS, prefix string, pattern *regexp.Regexp)
 		}
 	}
 	if len(folders) != 1 {
-		return definitions, []string{fmt.Sprintf("docs/specs:1: %s root docs' ids name no version; need exactly one version directory (found %d)", prefix, len(folders))}
+		return definitions, []string{fmt.Sprintf("docs/specs:1: %s root docs' ids name no version; need exactly one version directory (found %d)", strings.TrimSuffix(prefix, "-"), len(folders))}
 	}
 	folder := path.Join("docs/specs", folders[0])
 	files, err := fs.Glob(fsys, folder+"/*.md")
 	if err != nil {
-		return definitions, []string{folder + ":1: list definitions: " + err.Error()}
+		return definitions, []string{folder + ":1: list definitions: " + err.Error() + "; correct specification directory names"}
 	}
 	for _, name := range files {
 		data, readErr := fs.ReadFile(fsys, name)
 		if readErr != nil {
-			ps = append(ps, name+":1: read definitions: "+readErr.Error())
+			ps = append(ps, name+":1: read definitions: "+readErr.Error()+"; restore the definition file")
 			continue
 		}
 		text := string(data)
@@ -102,24 +103,37 @@ func findClauseCitations(text string) []citation {
 	return found
 }
 
+var repositoryExtension = regexp.MustCompile(`\.(?:md|sh|go|mod|sum|json|yaml|yml|py)$`)
+var hostLabel = regexp.MustCompile(`^[A-Za-z]{2,}$`)
+
 func repositoryPath(span string) bool {
-	if !strings.Contains(span, "/") || strings.ContainsAny(span, "<>*{}") || strings.ContainsAny(span[:1], "$~/") || strings.IndexFunc(span, unicode.IsSpace) >= 0 {
+	if span == "" || strings.ContainsAny(span, "<>*{}@:") || strings.ContainsAny(span[:1], "$~/") || strings.IndexFunc(span, unicode.IsSpace) >= 0 {
 		return false
 	}
+	hasSlash := strings.Contains(span, "/")
+	if !hasSlash {
+		return repositoryExtension.MatchString(span)
+	}
 	first := strings.SplitN(span, "/", 2)[0]
-	if strings.Contains(first, ".") && !strings.HasPrefix(first, ".") {
+	labels := strings.Split(first, ".")
+	if !strings.HasPrefix(first, ".") && len(labels) > 1 && hostLabel.MatchString(labels[len(labels)-1]) {
 		return false
 	}
 	return true
 }
 
-func findRootPaths(text string) []citation {
+func findRootPaths(text string) ([]citation, []problem) {
+	var problems []problem
+	fenceLine := 0
 	var found []citation
 	fence := byte(0)
 	fenceLength := 0
 	offset := 0
 	for _, line := range strings.SplitAfter(text, "\n") {
 		trimmed := strings.TrimLeft(line, " ")
+		if len(line)-len(trimmed) > 3 {
+			trimmed = ""
+		}
 		run := 0
 		if len(trimmed) > 0 && (trimmed[0] == '`' || trimmed[0] == '~') {
 			for run < len(trimmed) && trimmed[run] == trimmed[0] {
@@ -130,7 +144,8 @@ func findRootPaths(text string) []citation {
 			if run >= fenceLength && trimmed[0] == fence && strings.TrimSpace(trimmed[run:]) == "" {
 				fence = 0
 			}
-		} else if run >= 3 {
+		} else if run >= 3 && !strings.Contains(trimmed[run:], "`") {
+			fenceLine = lineAt(text, offset)
 			fence = trimmed[0]
 			fenceLength = run
 		} else {
@@ -159,7 +174,59 @@ func findRootPaths(text string) []citation {
 		}
 		offset += len(line)
 	}
+	if fence != 0 {
+		problems = append(problems, problem{fenceLine, "unclosed fence; close the fence so following paths are checked"})
+	}
+	return found, problems
+}
+
+// Translating a family lets the shared range parser apply exactly the R rules.
+// Mask R and AE tokens without changing byte offsets, then restore the family.
+func findActorFlowCitations(text string) []citation {
+	var found []citation
+	for _, family := range []string{"A", "F"} {
+		masked := []byte(strings.Map(func(r rune) rune {
+			if r == 'R' || r == 'A' {
+				return '#'
+			}
+			return r
+		}, text))
+		pattern := regexp.MustCompile(`(?:^|[^A-Za-z0-9])(` + family + `[0-9]+)(?:[^A-Za-z0-9]|$)`)
+		for offset := 0; offset < len(text); {
+			m := pattern.FindStringSubmatchIndex(text[offset:])
+			if m == nil {
+				break
+			}
+			start, end := offset+m[2], offset+m[3]
+			copy(masked[start:end], text[start:end])
+			masked[start] = 'R'
+			offset = end
+		}
+		for _, c := range findCitations(string(masked)) {
+			c.id = family + strings.TrimPrefix(c.id, "R")
+			found = append(found, c)
+		}
+	}
 	return found
+}
+
+func unresolvedActorFlows(definitions map[string]int, refs []citation) []problem {
+	var ps []problem
+	for _, c := range refs {
+		family := c.id[:1]
+		translated := make(map[string]int)
+		for id, line := range definitions {
+			if strings.HasPrefix(id, family) {
+				translated["R"+id[1:]] = line
+			}
+		}
+		c.id = "R" + c.id[1:]
+		for _, p := range unresolved(translated, []citation{c}) {
+			p.message = regexp.MustCompile(`R([0-9]+)`).ReplaceAllString(p.message, family+"${1}")
+			ps = append(ps, p)
+		}
+	}
+	return ps
 }
 
 // checkRootDocs proves that a cited reference exists, not that it is the right
@@ -173,25 +240,34 @@ func checkRootDocs(fsys fs.FS) ([]string, rootCounts) {
 	families := make(map[string]bool)
 	for id := range judge {
 		family := clauseFamily.FindString(id)
-		if family != "R" {
+		if family != "R" && family != "A" && family != "F" {
 			families[family] = true
 		}
 	}
 	req := make(map[string]int)
 	data, err := fs.ReadFile(fsys, requirements)
 	if err != nil {
-		ps = append(ps, requirements+":1: read requirements: "+err.Error())
+		ps = append(ps, requirements+":1: read requirements: "+err.Error()+"; restore docs/requirements.md")
 	} else {
 		var problems []problem
 		req, problems = parseDefinitions(string(data))
 		for _, p := range problems {
-			ps = append(ps, fmt.Sprintf("%s:%d: %s", requirements, p.line, p.message))
+			ps = append(ps, fmt.Sprintf("%s:%d: %s; correct the requirement definitions", requirements, p.line, p.message))
+		}
+	}
+	actors := make(map[string]int)
+	for _, match := range actorFlowPattern.FindAllStringSubmatchIndex(string(data), -1) {
+		id := string(data[match[2]:match[3]])
+		if first, ok := actors[id]; ok {
+			ps = append(ps, fmt.Sprintf("%s:%d: %s is defined twice (first at line %d); make definitions unique", requirements, lineAt(string(data), match[0]), id, first))
+		} else {
+			actors[id] = lineAt(string(data), match[0])
 		}
 	}
 	for _, name := range rootDocuments {
 		data, err := fs.ReadFile(fsys, name)
 		if err != nil {
-			ps = append(ps, name+":1: read root doc: "+err.Error())
+			ps = append(ps, name+":1: read root doc: "+err.Error()+"; restore the root doc")
 			continue
 		}
 		text := string(data)
@@ -213,9 +289,16 @@ func checkRootDocs(fsys fs.FS) ([]string, rootCounts) {
 		refs := findCitations(text)
 		counts.requirements += len(refs)
 		for _, p := range unresolved(req, refs) {
+			ps = append(ps, fmt.Sprintf("%s:%d: %s; correct the cited id or range", name, p.line, p.message))
+		}
+		for _, p := range unresolvedActorFlows(actors, findActorFlowCitations(text)) {
+			ps = append(ps, fmt.Sprintf("%s:%d: %s; correct the cited id or range", name, p.line, p.message))
+		}
+		paths, fenceProblems := findRootPaths(text)
+		for _, p := range fenceProblems {
 			ps = append(ps, fmt.Sprintf("%s:%d: %s", name, p.line, p.message))
 		}
-		for _, c := range findRootPaths(text) {
+		for _, c := range paths {
 			counts.paths++
 			if _, err := fs.Stat(fsys, strings.TrimSuffix(c.id, "/")); err != nil {
 				ps = append(ps, fmt.Sprintf("%s:%d: %s repository path does not resolve: %v; correct the cited path", name, c.line, c.id, err))
@@ -240,91 +323,172 @@ func TestRootDocsReferencesResolve(t *testing.T) {
 }
 
 func rootFixture() fstest.MapFS {
-	fixture := fstest.MapFS{
+	return fstest.MapFS{
 		"docs/specs/conformance-collection-1.0/rules.md": {Data: []byte("- **QH8. text\n")},
-		"docs/specs/judge-1.0/rules.md":                  {Data: []byte("- **E9a. title** text\n- **P3.** text\n- **R1. result**\n")},
-		"docs/requirements.md":                           {Data: []byte("- R1. one\n- R2. two\n- R4. four\n- R42. last\n- AE36. last\n")},
+		"docs/specs/judge-1.0/rules.md":                  {Data: []byte("- **E9a. title** text\n- **P3.** text\n- **R1. result**\n- **A1. judge**\n- **F1. judge**\n")},
+		"docs/requirements.md":                           {Data: []byte("- R1. one\n- R2. two\n- R4. four\n- R42. last\n- AE36. last\n- A1. actor\n- A3. actor\n- F1. flow\n- F2. flow\n- F3. flow\n")},
 		"docs/exists.md":                                 {Data: []byte("exists")},
+		"gate.sh":                                        {},
+		"AGENTS.md":                                      {Data: []byte("QH8 E9a R42 AE36 R2 `docs/exists.md`\n")},
+		"CODING_STANDARDS.md":                            {}, "REVIEW.md": {}, "CONCEPTS.md": {},
 	}
-	for _, name := range rootDocuments {
-		fixture[name] = &fstest.MapFile{Data: []byte("")}
-	}
-	fixture["AGENTS.md"].Data = []byte("QH8 E9a R42 AE36 R2 `docs/exists.md`\n")
-	return fixture
 }
 
 func TestRootDocFixtures(t *testing.T) {
 	tests := []struct {
 		name   string
+		text   string
 		change func(fstest.MapFS)
-		want   string
+		want   []string
+		counts rootCounts
 	}{
-		{"clean", func(fstest.MapFS) {}, ""},
-		{"undefined_collection", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("text\nQH99") }, "REVIEW.md:2: QH99 is not defined"},
-		{"undefined_judge", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("text\nE99") }, "REVIEW.md:2: E99 is not defined"},
-		{"boundaries", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("AQH8 QH8x A3 F2") }, ""},
-		{"subfolder", func(f fstest.MapFS) {
+		{name: "clean", counts: rootCounts{1, 1, 3, 1}},
+		{name: "undefined_collection", text: "text\nQH99", want: []string{"REVIEW.md:2: QH99 is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 1, 3, 1}},
+		{name: "undefined_judge", text: "text\nE99", want: []string{"REVIEW.md:2: E99 is not defined in its specification; correct the cited id"}, counts: rootCounts{1, 2, 3, 1}},
+		{name: "boundaries", text: "AQH8 E9a QH8x", want: []string{"REVIEW.md:1: QH8x is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 2, 3, 1}},
+		{name: "unbounded_ids", text: "QH1234 E1234", want: []string{"REVIEW.md:1: E1234 is not defined in its specification; correct the cited id", "REVIEW.md:1: QH1234 is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 2, 3, 1}},
+		{name: "collection_suffix", text: "QH8a", want: []string{"REVIEW.md:1: QH8a is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 1, 3, 1}},
+		{name: "subfolder", text: "P4", change: func(f fstest.MapFS) {
 			f["docs/specs/judge-1.0/cases/case-001/README.md"] = &fstest.MapFile{Data: []byte("- **P4.** text")}
-			f["REVIEW.md"].Data = []byte("P4")
-		}, "REVIEW.md:1: P4 is not defined"},
-		{"line_anchor", func(f fstest.MapFS) {
-			f["docs/specs/judge-1.0/rules.md"].Data = append(f["docs/specs/judge-1.0/rules.md"].Data, []byte("mid-line **P4.** example\n")...)
-			f["REVIEW.md"].Data = []byte("P4")
-		}, "REVIEW.md:1: P4 is not defined"},
-		{"duplicate", func(f fstest.MapFS) {
+		}, want: []string{"REVIEW.md:1: P4 is not defined in its specification; correct the cited id"}, counts: rootCounts{1, 2, 3, 1}},
+		{name: "judge_anchor", text: "P4", change: func(f fstest.MapFS) {
+			f["docs/specs/judge-1.0/rules.md"].Data = append(f["docs/specs/judge-1.0/rules.md"].Data, []byte("inline **P3.**\n  - **P4. title\nsee - **P4.** here\n")...)
+		}, want: []string{"REVIEW.md:1: P4 is not defined in its specification; correct the cited id"}, counts: rootCounts{1, 2, 3, 1}},
+		{name: "collection_anchor", text: "QH9", change: func(f fstest.MapFS) {
+			f["docs/specs/conformance-collection-1.0/rules.md"].Data = append(f["docs/specs/conformance-collection-1.0/rules.md"].Data, []byte("  - **QH9. text\nsee - **QH9. text\n")...)
+		}, want: []string{"REVIEW.md:1: QH9 is not defined in its specification; correct the cited id"}, counts: rootCounts{2, 1, 3, 1}},
+		{name: "duplicate", change: func(f fstest.MapFS) {
 			f["docs/specs/judge-1.0/second.md"] = &fstest.MapFile{Data: []byte("- **P3.** duplicate")}
-		}, "docs/specs/judge-1.0/second.md:1: P3 is defined twice"},
-		{"requirements", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("R43 AE37") }, "REVIEW.md:1: R43 is not defined in docs/requirements.md"},
-		{"range", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("R1 to R4") }, "REVIEW.md:1: R3 is not defined in docs/requirements.md"},
-		{"no_collection", func(f fstest.MapFS) { delete(f, "docs/specs/conformance-collection-1.0/rules.md") }, "conformance-collection- root docs' ids name no version; need exactly one version directory (found 0)"},
-		{"two_collections", func(f fstest.MapFS) { f["docs/specs/conformance-collection-2.0/rules.md"] = &fstest.MapFile{} }, "conformance-collection- root docs' ids name no version; need exactly one version directory (found 2)"},
-		{"no_judge", func(f fstest.MapFS) { delete(f, "docs/specs/judge-1.0/rules.md") }, "judge- root docs' ids name no version; need exactly one version directory (found 0)"},
-		{"two_judges", func(f fstest.MapFS) { f["docs/specs/judge-2.0/rules.md"] = &fstest.MapFile{} }, "judge- root docs' ids name no version; need exactly one version directory (found 2)"},
-		{"directory_lookup", func(f fstest.MapFS) {
+		}, want: []string{"docs/specs/judge-1.0/second.md:1: P3 is defined twice (first at docs/specs/judge-1.0/rules.md:2); make definitions unique"}, counts: rootCounts{1, 1, 3, 1}},
+		{name: "R_resolution", text: "R43", want: []string{"REVIEW.md:1: R43 is not defined in docs/requirements.md; correct the cited id or range"}, counts: rootCounts{1, 1, 4, 1}},
+		{name: "AE_resolution", text: "AE37", want: []string{"REVIEW.md:1: AE37 is not defined in docs/requirements.md; correct the cited id or range"}, counts: rootCounts{1, 1, 4, 1}},
+		{name: "R_exclusion", text: "R2", counts: rootCounts{1, 1, 4, 1}},
+		{name: "range", text: "R1 to R4", want: []string{"REVIEW.md:1: R3 is not defined in docs/requirements.md; correct the cited id or range"}, counts: rootCounts{1, 1, 7, 1}},
+		{name: "actors_flows", text: "A3 F2", counts: rootCounts{1, 1, 3, 1}},
+		{name: "A_resolution", text: "A9", want: []string{"REVIEW.md:1: A9 is not defined in docs/requirements.md; correct the cited id or range"}, counts: rootCounts{1, 1, 3, 1}},
+		{name: "F_resolution", text: "F9", want: []string{"REVIEW.md:1: F9 is not defined in docs/requirements.md; correct the cited id or range"}, counts: rootCounts{1, 1, 3, 1}},
+		{name: "actor_range", text: "A1 to A3", want: []string{"REVIEW.md:1: A2 is not defined in docs/requirements.md; correct the cited id or range"}, counts: rootCounts{1, 1, 3, 1}},
+		{name: "flow_range", text: "F1 to F3", counts: rootCounts{1, 1, 3, 1}},
+		{name: "directory_lookup", change: func(f fstest.MapFS) {
 			f["docs/specs/judge-1.0-errata.md"] = &fstest.MapFile{}
 			f["docs/specs/conformance-collection-1.0-seal.md"] = &fstest.MapFile{}
-		}, ""},
-		{"directories", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("`docs/specs` `docs/specs/`") }, ""},
-		{"missing_path", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("text\n`docs/missing.md`") }, "REVIEW.md:2: docs/missing.md repository path does not resolve"},
-		{"host_skip", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("`github.com/a/b`") }, ""},
-		{"path_exclusions", func(f fstest.MapFS) {
-			f["REVIEW.md"].Data = []byte("`$HOME/x/y` `~/x/y` `/abs/x` `docs/<name>/x` `docs/*/x` `docs/{x}/y` `docs/a b` `file.md`")
-		}, ""},
-		{"dot_directory", func(f fstest.MapFS) { f["REVIEW.md"].Data = []byte("`.github/workflows`") }, "REVIEW.md:1: .github/workflows repository path does not resolve"},
-		{"fenced_skip", func(f fstest.MapFS) {
-			f["REVIEW.md"].Data = []byte("```sh\n`docs/missing`\n```\n~~~\n`docs/also-missing`\n~~~\n")
-		}, ""},
-		{"missing_doc", func(f fstest.MapFS) { delete(f, "REVIEW.md") }, "REVIEW.md:1: read root doc"},
+		}, counts: rootCounts{1, 1, 3, 1}},
+		{name: "directories", text: "`docs/specs` `docs/specs/`", counts: rootCounts{1, 1, 3, 3}},
+		{name: "missing_path", text: "text\n`docs/missing.md`", want: []string{"REVIEW.md:2: docs/missing.md repository path does not resolve: open docs/missing.md: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 2}},
+		{name: "host_rule", text: "`judge-1.0/x`", want: []string{"REVIEW.md:1: judge-1.0/x repository path does not resolve: open judge-1.0/x: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 2}},
+		{name: "root_files", text: "`gate.sh` `scann.sh` `pql`", want: []string{"REVIEW.md:1: scann.sh repository path does not resolve: open scann.sh: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 3}},
+		{name: "path_exclusions", text: "`$HOME/x/y` `~/x/y` `/abs/x` `github.com/a/b` `users.noreply.github.com` `docs/<name>/x` `docs/*/x` `docs/{x}/y` `docs/a b` `a@b/x` `a:b/x`", counts: rootCounts{1, 1, 3, 1}},
+		{name: "dot_directory", text: "`.github/workflows`", want: []string{"REVIEW.md:1: .github/workflows repository path does not resolve: open .github/workflows: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 2}},
+		{name: "parent_segment", text: "`docs/../AGENTS.md`", want: []string{"REVIEW.md:1: docs/../AGENTS.md repository path does not resolve: open docs/../AGENTS.md: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 2}},
+		{name: "every_span", text: "`docs/exists.md` `docs/later.md`", want: []string{"REVIEW.md:1: docs/later.md repository path does not resolve: open docs/later.md: file does not exist; correct the cited path"}, counts: rootCounts{1, 1, 3, 3}},
+		{name: "fenced_skip", text: "```sh\n`docs/missing`\n```\n~~~\n`docs/also-missing`\n~~~\n", counts: rootCounts{1, 1, 3, 1}},
+		{name: "fence_closer", text: "````sh\n```\n`docs/hidden`\n`````\n`docs/exists.md`\n", counts: rootCounts{1, 1, 3, 2}},
+		{name: "fence_character", text: "```\n~~~\n`docs/hidden`\n```\n~~~\n```\n`docs/also-hidden`\n~~~\n`docs/exists.md`", counts: rootCounts{1, 1, 3, 2}},
+		{name: "unclosed_fence", text: "text\n```sh\n`docs/hidden`", want: []string{"REVIEW.md:2: unclosed fence; close the fence so following paths are checked"}, counts: rootCounts{1, 1, 3, 1}},
+		{name: "invalid_opener", text: "```x```\n`docs/exists.md`", counts: rootCounts{1, 1, 3, 2}},
+		{name: "concepts_path", change: func(f fstest.MapFS) { f["CONCEPTS.md"].Data = []byte("`docs/exists.md`") }, counts: rootCounts{1, 1, 3, 2}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := rootFixture()
-			tt.change(f)
-			ps, counts := checkRootDocs(f)
-			if tt.name == "boundaries" && counts.collection != 1 {
-				t.Errorf("boundaries: collection citations = %d, want 1", counts.collection)
+			f["REVIEW.md"].Data = []byte(tt.text)
+			if tt.change != nil {
+				tt.change(f)
 			}
-			got := strings.Join(ps, "\n")
-			if tt.want == "" {
-				if len(ps) != 0 {
-					t.Errorf("%s: unexpected problems: %s", tt.name, got)
-				}
-			} else if !strings.Contains(got, tt.want) {
-				t.Errorf("%s: missing expected diagnostic %q; got %s", tt.name, tt.want, got)
+			ps, counts := checkRootDocs(f)
+			if !reflect.DeepEqual(ps, tt.want) {
+				t.Errorf("%s: problems = %#v, want %#v", tt.name, ps, tt.want)
+			}
+			if counts != tt.counts {
+				t.Errorf("%s: counts = %+v, want %+v", tt.name, counts, tt.counts)
 			}
 		})
 	}
 }
 
 func TestRootDocFloors(t *testing.T) {
-	for _, name := range []string{"collection id", "judge id", "requirement id", "path"} {
-		t.Run(strings.ReplaceAll(name, " ", "_"), func(t *testing.T) {
+	for _, tt := range []struct {
+		name, text string
+		counts     rootCounts
+	}{
+		{"collection_id", "E9a R42 AE36 R2 `docs/exists.md`", rootCounts{0, 1, 3, 1}},
+		{"judge_id", "QH8 R42 AE36 R2 `docs/exists.md`", rootCounts{1, 0, 3, 1}},
+		{"requirement_id", "QH8 E9a `docs/exists.md`", rootCounts{1, 1, 0, 1}},
+		{"path", "QH8 E9a R42 AE36 R2", rootCounts{1, 1, 3, 0}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
 			f := rootFixture()
+			f["AGENTS.md"].Data = []byte(tt.text)
+			ps, counts := checkRootDocs(f)
+			want := []string{"root docs:1: no " + strings.ReplaceAll(tt.name, "_", " ") + " references found across the four root docs; restore citation coverage"}
+			if !reflect.DeepEqual(ps, want) {
+				t.Errorf("%s: problems = %#v, want %#v", tt.name, ps, want)
+			}
+			if counts != tt.counts {
+				t.Errorf("%s: counts = %+v, want %+v", tt.name, counts, tt.counts)
+			}
+		})
+	}
+}
+
+func TestRootDocSet(t *testing.T) {
+	want := []string{"AGENTS.md", "CODING_STANDARDS.md", "REVIEW.md", "CONCEPTS.md"}
+	if !reflect.DeepEqual(rootDocuments, want) {
+		t.Errorf("checked docs = %#v, want %#v", rootDocuments, want)
+	}
+	for _, name := range want {
+		t.Run(strings.TrimSuffix(name, ".md"), func(t *testing.T) {
+			f := rootFixture()
+			// Keep coverage independent of the missing document.
 			f["AGENTS.md"].Data = nil
-			ps, _ := checkRootDocs(f)
-			want := "no " + name + " references found"
-			if !strings.Contains(strings.Join(ps, "\n"), want) {
-				t.Errorf("%s: missing floor diagnostic %q; got %v", name, want, ps)
+			other := "AGENTS.md"
+			if name == other {
+				other = "REVIEW.md"
+			}
+			f[other].Data = []byte("QH8 E9a R42 AE36 R2 `docs/exists.md`")
+			delete(f, name)
+			ps, counts := checkRootDocs(f)
+			want := []string{name + ":1: read root doc: open " + name + ": file does not exist; restore the root doc"}
+			if !reflect.DeepEqual(ps, want) {
+				t.Errorf("%s: problems = %#v, want %#v", name, ps, want)
+			}
+			if counts != (rootCounts{1, 1, 3, 1}) {
+				t.Errorf("%s: counts = %+v, want {1 1 3 1}", name, counts)
+			}
+		})
+	}
+}
+
+func TestRootDocVersions(t *testing.T) {
+	for _, tt := range []struct {
+		name, prefix, text string
+		two                bool
+		counts             rootCounts
+		extra              []string
+	}{
+		{"no_collection", "conformance-collection", "E9a R42 `docs/exists.md`", false, rootCounts{0, 1, 1, 1}, []string{"root docs:1: no collection id references found across the four root docs; restore citation coverage"}},
+		{"two_collections", "conformance-collection", "QH8 E9a R42 `docs/exists.md`", true, rootCounts{1, 1, 1, 1}, []string{"AGENTS.md:1: QH8 is not defined in its specification; correct the cited id"}},
+		{"no_judge", "judge", "QH8 R42 `docs/exists.md`", false, rootCounts{1, 0, 1, 1}, []string{"root docs:1: no judge id references found across the four root docs; restore citation coverage"}},
+		{"two_judges", "judge", "QH8 R42 `docs/exists.md`", true, rootCounts{1, 0, 1, 1}, []string{"root docs:1: no judge id references found across the four root docs; restore citation coverage"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			f := rootFixture()
+			f["AGENTS.md"].Data = []byte(tt.text)
+			n := 0
+			if tt.two {
+				f["docs/specs/"+tt.prefix+"-2.0/rules.md"] = &fstest.MapFile{}
+				n = 2
+			} else {
+				delete(f, "docs/specs/"+tt.prefix+"-1.0/rules.md")
+			}
+			want := append([]string{fmt.Sprintf("docs/specs:1: %s root docs' ids name no version; need exactly one version directory (found %d)", tt.prefix, n)}, tt.extra...)
+			sort.Strings(want)
+			ps, counts := checkRootDocs(f)
+			if !reflect.DeepEqual(ps, want) {
+				t.Errorf("%s: problems = %#v, want %#v", tt.name, ps, want)
+			}
+			if counts != tt.counts {
+				t.Errorf("%s: counts = %+v, want %+v", tt.name, counts, tt.counts)
 			}
 		})
 	}
