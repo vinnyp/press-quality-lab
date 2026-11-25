@@ -54,7 +54,7 @@ The first attempt at #8 also cross-checked each class against the evidence's `ob
 
 | # | finding | raised-by | verify | disposition |
 |---|---|---|---|---|
-| 11 | The trace guard accepts a discovery walk when `declared_count` is a placeholder (`case-064`) | correctness, raised to P0 under REVIEW.md | Validator rejected: `case-064`'s sealed record lists the six help keys among its invocations | No change. QS5's "with `declared_count` a placeholder, discovery is not observed" can honestly be read as "the walk does not run"; the corpus reads it as "the walk runs and its check is not observed". The runner accepts both, so it decides nothing here. PR6, where the engine must choose, raises the reading with the owner |
+| 11 | The trace guard accepts a discovery walk when `declared_count` is a placeholder (`case-064`) | correctness, raised to P0 under REVIEW.md | Validator rejected: `case-064`'s sealed record lists the six help keys among its invocations | No change. QS5's "with `declared_count` a placeholder, discovery is not observed" (`collection-rules.md` line 71) names the check's result, not whether the walk runs; line 163 settles that: "Discovery makes every help request QD2 reaches … and whatever `declared_count` holds". The sealed case agrees, so the walk runs and the guard is right to allow its keys |
 | 12 | The dimensions QS5's override can never reach had no control | testing (P2) | Validator confirmed | Fixed: `excluded_*` rows |
 | 13 | A rule citation outside the proof function was accepted | testing (P2) | Validator confirmed | Fixed: `outside_comment` |
 | 14 | The export check's extra-file branch and the record schema pass had no control | project-standards (P2) | Validator confirmed | Fixed |
