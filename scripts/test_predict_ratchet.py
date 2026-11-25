@@ -197,6 +197,8 @@ class PredictorTests(unittest.TestCase):
             'QD3',
             'QD4',
             'QD5',
+            'QE2',
+            'QE6',
             'QE2.captures',
             'QE2.placeholders',
             'QE3.placeholder_candidates',
@@ -252,8 +254,21 @@ class PredictorTests(unittest.TestCase):
         built['builds'] = ['QE2.slice']
         pending = predictor.pending_rules(built)
         self.assertIn('QE2.captures', pending)
-        self.assertNotIn('QE2', pending)
+        self.assertIn('QE2', pending)
         self.assertNotIn('QE2.slice', pending)
+
+    def test_unrefused_always_allows_engine_faults(self):
+        # QE2: canonicalization; QE6: engine-caused X10 pre-check rejection.
+        for built in (BUILT, {'levels': list(range(1, 9)),
+                              'builds': [
+                                  'QE2',
+                                  'QE6',
+                              ], 'rejects': ['QE6']}):
+            with self.subTest(built=built):
+                self.assertTrue({
+                    'QE2',
+                    'QE6',
+                } <= predictor.pending_rules(built))
 
     def test_pending_tokens_are_real_rules(self):
         rules = predictor.load(KIT.parents[2] / 'internal/docrefs/rule-ledger.json')['rules']

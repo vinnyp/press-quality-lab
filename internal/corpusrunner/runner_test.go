@@ -9,14 +9,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/vinnyp/press-quality-lab/internal/caseassembly"
+	"github.com/vinnyp/press-quality-lab/internal/scripted"
 )
 
 const kit = "../../docs/specs/conformance-collection-1.0"
@@ -465,12 +469,86 @@ func compareResult(c caseassembly.Case, want map[string]any, r result) error {
 	return nil
 }
 
-// runGradeNotBuilt is the only missing integration. PR6 replaces this with
-// grade/anchor, stored-file reads, trace reads, re-judging, and export copies.
-// Returning an error is intentional: a case removed from pending fails closed.
-func runGradeNotBuilt(_ caseassembly.Case, _ caseassembly.Layout) (result, error) {
-	return result{}, errors.New("grade/anchor not built")
+func runGrade(binary string, c caseassembly.Case, l caseassembly.Layout) (result, error) {
+	host, err := json.Marshal(c.Input.Host)
+	if err != nil {
+		return result{}, err
+	}
+	hp := filepath.Join(l.Work, "host.json")
+	if err := os.WriteFile(hp, host, 0600); err != nil {
+		return result{}, err
+	}
+	recording, err := filepath.Abs(filepath.Join(kit, "behaviour", c.Input.Form+".json"))
+	if err != nil {
+		return result{}, err
+	}
+	args := []string{c.Input.Request, filepath.Join(l.Subject, c.Input.SubjectFile), "--verifier", "scripted", "--host", hp, "--behaviour", recording}
+	if c.Input.Request == "grade" {
+		args = append(args, "--scope", strings.Join(c.Input.Scope, ","))
+	}
+	if l.Baseline != "" {
+		args = append(args, "--baseline", l.Baseline)
+	}
+	cmd := exec.Command(binary, args...)
+	cmd.Dir = l.Work
+	// Both platform config locations stay inside the fixture's ambient home.
+	if err := os.MkdirAll(filepath.Join(l.Home, "Library", "Application Support"), 0700); err != nil {
+		return result{}, err
+	}
+	cmd.Env = append(os.Environ(), "HOME="+l.Home, "XDG_CONFIG_HOME="+l.Config, scripted.TraceEnv+"="+l.Trace)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	_, runErr := cmd.Output()
+	r := result{}
+	if runErr != nil {
+		var exit *exec.ExitError
+		if !errors.As(runErr, &exit) {
+			return r, runErr
+		}
+		r.Exit = exit.ExitCode()
+	}
+	match := regexp.MustCompile(`(?m)^pql: rejected: (Q[A-Z]+[0-9]+): [^\n]+$`).FindStringSubmatch(stderr.String())
+	if len(match) > 0 {
+		r.Rule = match[1]
+	}
+	r.Trace, err = readTrace(l.Trace)
+	if errors.Is(err, os.ErrNotExist) && r.Rule != "" {
+		r.Trace = trace{Required: []any{}, Served: []any{}, Homes: []string{}}
+		err = nil
+	}
+	if err != nil {
+		return r, err
+	}
+	err = filepath.WalkDir(l.Home, func(path string, d fs.DirEntry, e error) error {
+		if e != nil {
+			return e
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".json") {
+			return nil
+		}
+		if r.Record != nil {
+			return errors.New("multiple stored records")
+		}
+		return caseassembly.Read(path, &r.Record)
+	})
+	if err != nil {
+		return r, err
+	}
+	err = filepath.WalkDir(l.Config, func(path string, d fs.DirEntry, e error) error {
+		if e != nil {
+			return e
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".json") {
+			return nil
+		}
+		if r.Record != nil {
+			return errors.New("multiple stored records")
+		}
+		return caseassembly.Read(path, &r.Record)
+	})
+	return r, err
 }
+
 func ratchet(pending bool, failure error) error {
 	if pending && failure == nil {
 		return errors.New("pending case passed; remove it from pending")
@@ -518,6 +596,14 @@ func pendingSet(data string) map[string]bool {
 }
 
 func TestCorpus(t *testing.T) {
+	// QT6, QE19, QO1: execute the real command and independently compare its record and trace.
+	binary := filepath.Join(t.TempDir(), "pql")
+	build := exec.Command("go", "build", "-tags", "scripted", "-o", binary, "../../cmd/pql")
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build: %s: %v", output, err)
+	}
+	predictions := readPredictions(t)
+
 	entries, err := os.ReadDir(filepath.Join(kit, "cases"))
 	if err != nil {
 		t.Fatal(err)
@@ -549,16 +635,32 @@ func TestCorpus(t *testing.T) {
 		if c.Input.Verifier != "scripted" {
 			t.Fatalf("unknown verifier %s", c.Input.Verifier)
 		}
-		t.Run(c.ID, func(t *testing.T) {
+		t.Run(strings.ReplaceAll(c.ID, "-", "_"), func(t *testing.T) {
 			layout := caseassembly.Assemble(t, kit, source, c)
-			r, failure := runGradeNotBuilt(c, layout)
+			r, failure := runGrade(binary, c, layout)
+			if failure != nil {
+				t.Fatal(failure)
+			}
+			if pending[c.ID] {
+				if err := checkEnding(predictions[c.ID].Ending, r.Exit, r.Rule); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := checkTrace(c, subject, want, preimages, r.Trace); err != nil {
+				t.Fatal(err)
+			}
+			if c.ID == "case-003" || c.ID == "case-004" {
+				if err := checkRequired(r.Trace, want); err != nil {
+					t.Fatal(err)
+				}
+			}
 			if failure == nil {
 				failure = compareResult(c, want, r)
 				if failure == nil {
 					failure = checkTrace(c, subject, want, preimages, r.Trace)
 				}
 				if failure == nil && c.Kind == "judge-checked" {
-					failure = rejudgeNotBuilt(r.Record)
+					failure = rejudge(binary, r.Record)
 					if failure == nil {
 						failure = exportCopies(os.Getenv("PQL_CORPUS_COPIES"), c.ID, r.Record, r.Baseline)
 					}
@@ -568,7 +670,7 @@ func TestCorpus(t *testing.T) {
 				t.Fatal(err)
 			}
 			if pending[c.ID] {
-				t.Logf("pending: %v", failure)
+				t.Logf("pending: exit=%d rule=%s comparison=%v", r.Exit, r.Rule, failure)
 			}
 		})
 	}
@@ -583,7 +685,38 @@ func TestCorpus(t *testing.T) {
 }
 
 // KTD2.4: PR6 must invoke pql judge on the stored input and compare its output.
-func rejudgeNotBuilt(_ map[string]any) error { return errors.New("pql judge re-judge not built") }
+func rejudge(binary string, record map[string]any) error {
+	input, err := json.Marshal(record["judge_input"])
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(binary, "judge")
+	cmd.Stdin = bytes.NewReader(input)
+	output, runErr := cmd.Output()
+	code := 0
+	if runErr != nil {
+		var exit *exec.ExitError
+		if !errors.As(runErr, &exit) {
+			return runErr
+		}
+		code = exit.ExitCode()
+	}
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	decoder.UseNumber()
+	var got any
+	if err := decoder.Decode(&got); err != nil {
+		return err
+	}
+	if !reflect.DeepEqual(got, record["judge_output"]) {
+		return errors.New("re-judged output differs")
+	}
+	n, ok := object(record["judge_output"])["exit_code"].(json.Number)
+	expected, err := n.Int64()
+	if !ok || err != nil || int64(code) != expected {
+		return errors.New("re-judged exit code differs")
+	}
+	return nil
+}
 
 func realPending(id string, pending map[string]bool) error {
 	if !pending[id] {
