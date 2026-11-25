@@ -5,17 +5,21 @@ import "bytes"
 
 // End records the system's end and the engine's own actions, before attribution.
 type End struct {
-	Code            int
-	Signal          int
-	ExitDetail      uint32
-	EngineKilled    bool
-	BudgetExpired   bool
-	RunningAtBudget bool
+	AfterMarker                     bool
+	SignalName                      string
+	MemoryKilled, CodeSigningKilled bool
+	Code                            int
+	Signal                          int
+	ExitDetail                      uint32
+	EngineKilled                    bool
+	BudgetExpired                   bool
+	RunningAtBudget                 bool
 }
 
 // Run holds invocation facts after protocol removal. Seen counts exclude
 // protocol bytes; Cut records whether the interim capture discarded bytes.
 type Run struct {
+	Details        RunDetails
 	End            End
 	Stdout, Stderr []byte
 	Markers        Markers
