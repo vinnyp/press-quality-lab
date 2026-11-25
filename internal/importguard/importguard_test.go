@@ -627,9 +627,12 @@ func TestGateExecutionControls(t *testing.T) {
 		t.Fatal(err)
 	}
 	gate := string(b)
-	for _, kind := range []string{"test", "evidence"} {
+	for _, kind := range []string{"plain", "test", "evidence"} {
 		t.Run(kind, func(t *testing.T) {
 			prefix := `step "test-$tags" `
+			if kind == "plain" {
+				prefix = `step test `
+			}
 			if kind == "evidence" {
 				prefix = `step "darwin-evidence-compile-$label" `
 			}
@@ -648,6 +651,9 @@ tags=scripted
 label=scripted
 `
 			tag := "scripted"
+			if kind == "plain" {
+				tag = ""
+			}
 			if kind == "evidence" {
 				start := strings.Index(gate, "compile_evidence() {")
 				end := strings.Index(gate[start:], "\n}\n")
@@ -667,7 +673,7 @@ label=scripted
 				body := `t.Log("clean")`
 				diagnostic := ""
 				if defect {
-					if kind == "test" {
+					if kind != "evidence" {
 						body = `t.Fatal("planted test failure")`
 						diagnostic = "planted test failure"
 					} else {
@@ -675,7 +681,11 @@ label=scripted
 						diagnostic = "undefined: missingEvidenceSymbol"
 					}
 				}
-				source := "//go:build " + tag + "\n\npackage probe\nimport \"testing\"\nfunc TestProbe(t *testing.T){" + body + "}\n"
+				constraint := ""
+				if tag != "" {
+					constraint = "//go:build " + tag + "\n\n"
+				}
+				source := constraint + "package probe\nimport \"testing\"\nfunc TestProbe(t *testing.T){" + body + "}\n"
 				if err := os.WriteFile(filepath.Join(root, "probe_test.go"), []byte(source), 0600); err != nil {
 					t.Fatal(err)
 				}
@@ -687,7 +697,7 @@ label=scripted
 					}
 				}
 				target, arch := "darwin", "arm64"
-				if kind == "test" {
+				if kind != "evidence" {
 					target, arch = runtime.GOOS, runtime.GOARCH
 				}
 				cmd.Env = append(cmd.Env, "GOOS="+target, "GOARCH="+arch)

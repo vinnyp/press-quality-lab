@@ -35,6 +35,8 @@ func TestPipeCapture(t *testing.T) {
 	if err := p.Kill(); err != nil {
 		t.Fatalf("Kill after reap: %v", err)
 	}
+	// Without the reaped guard, kern.proc.pid lookup after reap returns an error;
+	// the Kill error assertion above catches that regression, not p.killed.
 	if !p.reaped || p.killed {
 		t.Fatal("Kill after reap sent a signal")
 	}
@@ -64,8 +66,17 @@ func TestEngineKill(t *testing.T) {
 }
 func TestGroupEnd(t *testing.T) {
 	p := shellProcess(t, "sleep 60 & exit 0")
+	t.Cleanup(func() {
+		if err := unix.Kill(-p.pid, unix.SIGKILL); err != nil && err != unix.ESRCH && err != unix.EPERM {
+			t.Error(err)
+		}
+	})
+	start := time.Now()
 	if _, err := p.Wait(); err != nil {
 		t.Fatal(err)
+	}
+	if time.Since(start) > time.Second {
+		t.Fatal("group ending exceeded bound")
 	}
 	procs, err := unix.SysctlKinfoProcSlice("kern.proc.pgrp", p.pid)
 	if err != nil {
@@ -305,6 +316,8 @@ func TestDrainPanic(t *testing.T) {
 }
 func TestNewSession(t *testing.T) {
 	p := shellProcess(t, "if ( : </dev/tty ) 2>/dev/null; then printf tty_open; else printf tty_closed; fi; sleep 60")
+	// Let the shell report its tty before ending it.
+	time.Sleep(50 * time.Millisecond)
 	sid, err := unix.Getsid(p.pid)
 	if err != nil {
 		t.Fatal(err)
@@ -312,7 +325,10 @@ func TestNewSession(t *testing.T) {
 	if err := p.Kill(); err != nil {
 		t.Fatal(err)
 	}
-	_, err = p.Wait()
+	run, err := p.Wait()
+	if string(run.Stdout) != "tty_closed" {
+		t.Fatalf("controlling tty: %q", run.Stdout)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -326,5 +342,90 @@ func TestGroupEndRepeats(t *testing.T) {
 	err := endGroupWith(func() (bool, error) { signals++; return true, nil }, func() ([]groupMember, error) { lookups++; return []groupMember{{pid: 1, zombie: lookups >= 2}}, nil })
 	if err != nil || signals != 2 || lookups != 2 {
 		t.Fatalf("group kill did not repeat until zombie-only: signals=%d lookups=%d error=%v", signals, lookups, err)
+	}
+}
+
+func TestGroupEndEPERM(t *testing.T) {
+	calls := 0
+	err := endGroupWith(func() (bool, error) {
+		calls++
+		if calls == 1 {
+			return false, unix.EPERM
+		}
+		return true, nil
+	}, func() ([]groupMember, error) { return []groupMember{{pid: 1, zombie: calls > 1}}, nil })
+	if err != nil || calls != 2 {
+		t.Fatalf("transient EPERM not retried: calls=%d err=%v", calls, err)
+	}
+}
+
+func TestConsecutiveKill(t *testing.T) {
+	p := shellProcess(t, "sleep 60")
+	first, second := p.Kill(), p.Kill()
+	_, waitErr := p.Wait()
+	if first != nil || second != nil || waitErr != nil {
+		t.Fatalf("consecutive kills: %v %v %v", first, second, waitErr)
+	}
+}
+
+func TestConcurrentKillWait(t *testing.T) {
+	p := shellProcess(t, "sleep 0.02")
+	done := make(chan error, 1)
+	go func() { _, err := p.Wait(); done <- err }()
+	killErr := p.Kill()
+	if err := <-done; err != nil || killErr != nil {
+		t.Fatalf("concurrent Kill Wait: %v %v", killErr, err)
+	}
+}
+
+func TestEscapedWriter(t *testing.T) {
+	p := shellProcess(t, "set -m; sleep 2 & exit 0")
+	start := time.Now()
+	run, err := p.Wait()
+	if err != nil || time.Since(start) > time.Second || !run.OutputCutAfterExit {
+		t.Fatalf("escaped writer drain not bounded or recorded: elapsed=%v cut=%v error=%v", time.Since(start), run.OutputCutAfterExit, err)
+	}
+}
+
+func TestWaitCached(t *testing.T) {
+	p := shellProcess(t, "printf cached")
+	first, err := p.Wait()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A closed queue must never be read again, even if its fd is reused.
+	p.queue = -1
+	second, err := p.Wait()
+	if err != nil || string(second.Stdout) != "cached" || second.End != first.End {
+		t.Fatalf("second Wait did not return cached result: %+v %v", second, err)
+	}
+}
+
+func TestDecodeEvent(t *testing.T) {
+	detail, err := decodeEvent(unix.Kevent_t{Fflags: 0x10000, Data: 0x20009})
+	if err != nil || detail != 0x20000 {
+		t.Fatalf("event data misrouted: %#x %v", detail, err)
+	}
+}
+
+func TestStartEnvironment(t *testing.T) {
+	c, err := NewCopies(t.TempDir(), "/usr/bin/true", "/usr/bin/true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	values := map[string]string{}
+	for _, name := range commonNames {
+		values[name] = "/"
+	}
+	called := false
+	_, err = c.startWith(Invocation{Paths: Paths{Values: values}, Env: []string{"SUBJECT=private"}}, func(_ string, _ []string, _ string, env []string, _ string) (Process, error) {
+		called = true
+		if len(env) != 0 {
+			t.Fatalf("spawn inherited program environment: %q", env)
+		}
+		return &process{changed: true}, nil
+	})
+	if err != nil || !called {
+		t.Fatalf("spawn seam not reached: %v", err)
 	}
 }

@@ -16,10 +16,12 @@ type End struct {
 // Run holds invocation facts after protocol removal. Seen counts exclude
 // protocol bytes; Cut records whether the interim capture discarded bytes.
 type Run struct {
-	End                    End
-	Stdout, Stderr         []byte
-	Markers                Markers
-	CopyChanged            bool
+	End            End
+	Stdout, Stderr []byte
+	Markers        Markers
+	CopyChanged    bool
+	// OutputCutAfterExit records a drain deadline with inherited writers still open.
+	OutputCutAfterExit     bool
 	StdoutSeen, StderrSeen int64
 	StdoutCut, StderrCut   bool
 }

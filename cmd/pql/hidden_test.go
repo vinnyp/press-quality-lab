@@ -24,7 +24,11 @@ func buildPQL(t *testing.T) string {
 }
 func TestHiddenProtocol(t *testing.T) {
 	binary := buildPQL(t)
-	for i, args := range [][]string{{"__pql_unknown"}, {"__pql_unknown", strings.Repeat("a", 64), "program", "[]", "[]"}, {"__pql_fast", strings.Repeat("a", 63)}, {"__pql_fast", strings.Repeat("A", 64)}, {"__pql_fast", strings.Repeat("g", 64)}, {"__pql_fast"}, {"__pql_launcher"}, {"__pql_fast", strings.Repeat("0", 64), "extra"}, {"__pql_launcher", strings.Repeat("0", 64), "program", "invalid-json", "[]"}} {
+	for i, args := range [][]string{{"__pql_unknown"}, {"__pql_unknown", strings.Repeat("a", 64), "program", "[]", "[]"}, {"__pql_fast", strings.Repeat("a", 63)}, {"__pql_fast", strings.Repeat("A", 64)}, {"__pql_fast", strings.Repeat("g", 64)}, {"__pql_fast"}, {"__pql_launcher"}, {"__pql_fast", strings.Repeat("0", 64), "extra"}, {"__pql_launcher", strings.Repeat("0", 64), "program", "invalid-json", "[]"},
+		{"__pql_launcher", strings.Repeat("0", 64), "program", "[]", "invalid-json"},
+		{"__pql_launcher", strings.Repeat("0", 64), "program", `["\u0000"]`, "[]"},
+		{"__pql_launcher", strings.Repeat("0", 64), "program", "[]", `["A=\u0000"]`},
+		{"__pql_launcher", strings.Repeat("0", 64), "program", "[]", "[\"A=\xff\"]"}} {
 		t.Run(fmt.Sprintf("Row%d", i), func(t *testing.T) {
 			cmd := exec.Command(binary, args...)
 			b, err := cmd.CombinedOutput()

@@ -125,15 +125,24 @@ func (c *Copies) CopyPaths() (launcher, program string) {
 // counts and digests; drains continue consuming every byte beyond this cap.
 const StreamCap = 1 << 20
 
+// PostExitDrainGrace bounds inherited writers after group ending and reap.
+// U30 owns the final draining design.
+const PostExitDrainGrace = 100 * time.Millisecond
+
 type capture struct {
-	head []byte
-	seen int64
-	err  error
-	done chan struct{}
+	head         []byte
+	seen         int64
+	err          error
+	done         chan struct{}
+	reader       *os.File
+	cutAfterExit bool
 }
 
 func drain(r io.ReadCloser) *capture {
 	c := &capture{done: make(chan struct{})}
+	if reader, ok := r.(*os.File); ok {
+		c.reader = reader
+	}
 	go func() {
 		defer close(c.done)
 		defer func() {
@@ -149,7 +158,9 @@ func drain(r io.ReadCloser) *capture {
 			keep := min(n, StreamCap-len(c.head))
 			c.head = append(c.head, buf[:keep]...)
 			if err != nil {
-				if err != io.EOF {
+				if errors.Is(err, os.ErrDeadlineExceeded) {
+					c.cutAfterExit = true
+				} else if err != io.EOF {
 					c.err = err
 				}
 				return
@@ -160,6 +171,10 @@ func drain(r io.ReadCloser) *capture {
 }
 
 type process struct {
+	waitMu                                                 sync.Mutex
+	waited                                                 bool
+	result                                                 observe.Run
+	waitError                                              error
 	pid, queue                                             int
 	stdout, stderr                                         *capture
 	marker                                                 string
@@ -197,6 +212,10 @@ func argumentSize(words, env []string, limit int) error {
 }
 
 func (c *Copies) Start(inv Invocation) (Process, error) {
+	return c.startWith(inv, spawn)
+}
+
+func (c *Copies) startWith(inv Invocation, launch func(string, []string, string, []string, string) (Process, error)) (Process, error) {
 	if !c.launcher.unchanged() || !c.program.unchanged() {
 		return &process{changed: true}, nil
 	}
@@ -229,7 +248,7 @@ func (c *Copies) Start(inv Invocation) (Process, error) {
 	if err := argumentSize(append([]string{c.program.path}, inv.Words...), inv.Env, int(limit)); err != nil {
 		return nil, err
 	}
-	return spawn(SandboxExec, append([]string{SandboxExec}, args...), inv.Directory, EngineEnvironment(), marker)
+	return launch(SandboxExec, append([]string{SandboxExec}, args...), inv.Directory, EngineEnvironment(), marker)
 }
 
 func spawn(path string, args []string, directory string, env []string, marker string) (Process, error) {
@@ -316,13 +335,33 @@ func (p *process) Kill() error {
 	if proc.Proc.P_stat == 5 {
 		p.observed = true
 	}
-	sent, err := killGroup(p.pid)
+	sent := false
+	err := endGroupWith(func() (bool, error) {
+		signaled, killErr := killGroup(p.pid)
+		sent = sent || signaled
+		return signaled, killErr
+	}, func() ([]groupMember, error) { return groupMembers(p.pid) })
 	if sent && !p.observed {
 		p.killed = true
 	}
 	return err
 }
 func (p *process) Wait() (observe.Run, error) {
+	p.waitMu.Lock()
+	defer p.waitMu.Unlock()
+	if p.waited {
+		return p.result, p.waitError
+	}
+	p.result, p.waitError = p.wait()
+	p.waited = true
+	return p.result, p.waitError
+}
+
+func decodeEvent(event unix.Kevent_t) (uint32, error) {
+	return exitDetail(event.Flags, event.Fflags, event.Data)
+}
+
+func (p *process) wait() (observe.Run, error) {
 	if p.changed {
 		return observe.Run{CopyChanged: true}, nil
 	}
@@ -342,7 +381,7 @@ func (p *process) Wait() (observe.Run, error) {
 			if n == 0 {
 				continue
 			}
-			detail, waitErr = exitDetail(events[0].Flags, events[0].Fflags, events[0].Data)
+			detail, waitErr = decodeEvent(events[0])
 			break
 		}
 	}
@@ -372,35 +411,50 @@ func (p *process) Wait() (observe.Run, error) {
 	if status.Signaled() {
 		run.End.Signal = int(status.Signal())
 	}
+	deadline := time.Now().Add(PostExitDrainGrace)
+	var deadlineErr error
+	for _, c := range []*capture{p.stdout, p.stderr} {
+		select {
+		case <-c.done:
+		default:
+			if err := c.reader.SetReadDeadline(deadline); err != nil && !errors.Is(err, os.ErrClosed) {
+				deadlineErr = errors.Join(deadlineErr, err)
+			}
+		}
+	}
 	<-p.stdout.done
 	<-p.stderr.done
+	run.OutputCutAfterExit = p.stdout.cutAfterExit || p.stderr.cutAfterExit
 	run.Stdout = p.stdout.head
 	run.StdoutSeen, run.StderrSeen = p.stdout.seen, p.stderr.seen
 	run.StdoutCut, run.StderrCut = p.stdout.seen > StreamCap, p.stderr.seen > StreamCap
 	run.Markers, run.Stderr = observe.ParseMarkers(p.stderr.head, MarkerPrefix+p.marker, FailurePrefix+p.marker)
 	run.StderrSeen -= int64(len(p.stderr.head) - len(run.Stderr))
-	return run, errors.Join(waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
+	return run, errors.Join(deadlineErr, waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
+}
+
+func groupMembers(pid int) ([]groupMember, error) {
+	procs, err := unix.SysctlKinfoProcSlice("kern.proc.pgrp", pid)
+	if err != nil {
+		return nil, err
+	}
+	members := make([]groupMember, len(procs))
+	for i, proc := range procs {
+		members[i] = groupMember{pid: int(proc.Proc.P_pid), zombie: proc.Proc.P_stat == 5}
+	}
+	return members, nil
 }
 
 func endGroup(pid int) error {
-	return endGroupWith(func() (bool, error) { return killGroup(pid) }, func() ([]groupMember, error) {
-		procs, err := unix.SysctlKinfoProcSlice("kern.proc.pgrp", pid)
-		if err != nil {
-			return nil, err
-		}
-		members := make([]groupMember, len(procs))
-		for i, proc := range procs {
-			members[i] = groupMember{pid: int(proc.Proc.P_pid), zombie: proc.Proc.P_stat == 5}
-		}
-		return members, nil
-	})
+	return endGroupWith(func() (bool, error) { return killGroup(pid) }, func() ([]groupMember, error) { return groupMembers(pid) })
 }
 
 func endGroupWith(kill func() (bool, error), lookup func() ([]groupMember, error)) error {
 	deadline := time.Now().Add(5 * time.Second)
 	for {
-		if _, err := kill(); err != nil {
-			return err
+		_, killErr := kill()
+		if killErr != nil && !errors.Is(killErr, unix.EPERM) {
+			return killErr
 		}
 		members, err := lookup()
 		if err != nil {
@@ -410,7 +464,7 @@ func endGroupWith(kill func() (bool, error), lookup func() ([]groupMember, error
 			return nil
 		}
 		if time.Now().After(deadline) {
-			return fmt.Errorf("process group did not end")
+			return errors.Join(fmt.Errorf("process group did not end"), killErr)
 		}
 		time.Sleep(time.Millisecond)
 	}

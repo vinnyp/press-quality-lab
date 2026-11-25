@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/vinnyp/press-quality-lab/internal/confine"
 )
@@ -29,6 +30,9 @@ func hidden(args []string) (int, bool) {
 	}
 	var words, env []string
 	if n == 5 {
+		if !utf8.ValidString(args[3]) || !utf8.ValidString(args[4]) {
+			return exitUsage, true
+		}
 		if err := json.Unmarshal([]byte(args[3]), &words); err != nil {
 			return exitUsage, true
 		}
