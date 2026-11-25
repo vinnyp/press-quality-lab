@@ -78,7 +78,8 @@ func (f launchFixture) launch(t *testing.T, computation, fast bool, words []stri
 	if err != nil {
 		t.Fatal(err)
 	}
-	hidden, err := confine.LauncherArgs(marker, f.program, words)
+	env := []string{"HOME=" + f.home, "TMPDIR=" + filepath.Join(f.home, ".pql-tmp") + "/", "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", fmt.Sprintf("__CF_USER_TEXT_ENCODING=0x%X:0x0:0x0", os.Getuid())}
+	hidden, err := confine.LauncherArgs(marker, f.program, words, env)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +94,7 @@ func (f launchFixture) launch(t *testing.T, computation, fast bool, words []stri
 	defer cancel()
 	cmd := exec.CommandContext(ctx, confine.SandboxExec, args...)
 	cmd.Dir = f.home
-	cmd.Env = []string{"HOME=" + f.home, "TMPDIR=" + filepath.Join(f.home, ".pql-tmp") + "/", "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", fmt.Sprintf("__CF_USER_TEXT_ENCODING=0x%X:0x0:0x0", os.Getuid())}
+	cmd.Env = confine.EngineEnvironment()
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -210,5 +211,78 @@ func TestMacOSCleanProgram(t *testing.T) {
 				t.Fatalf("clean output=%q", out)
 			}
 		}
+	}
+}
+
+func TestMacOSLauncherClosesDescriptor(t *testing.T) {
+	program := coreProgram(t, `package main
+import("fmt";"syscall")
+func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,3,syscall.F_GETFD,0);fmt.Printf("fd3_closed=%t\n",e==syscall.EBADF)}`)
+	f := fixture(t, program)
+	copies := coreCopies(t, f)
+	launcher, bin := copies.CopyPaths()
+	paths := f.paths(t, false)
+	paths.Values["LAUNCHER"], paths.Values["LAUNCHER_PARENT"] = launcher, filepath.Dir(launcher)
+	paths.Values["BIN"], paths.Values["BIN_PARENT"] = bin, filepath.Dir(bin)
+	marker, err := confine.NewMarker()
+	if err != nil {
+		t.Fatal(err)
+	}
+	hidden, err := confine.LauncherArgs(marker, bin, nil, []string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	args, err := confine.Arguments(false, false, paths, hidden)
+	if err != nil {
+		t.Fatal(err)
+	}
+	null, err := os.Open(os.DevNull)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := null.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+	out, err := os.CreateTemp(t.TempDir(), "out")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := out.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+	stderr, err := os.CreateTemp(t.TempDir(), "err")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := stderr.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+	pid, err := syscall.ForkExec(confine.SandboxExec, append([]string{confine.SandboxExec}, args...), &syscall.ProcAttr{Dir: f.home, Env: confine.EngineEnvironment(), Files: []uintptr{null.Fd(), out.Fd(), stderr.Fd(), null.Fd()}, Sys: &syscall.SysProcAttr{Setsid: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var status syscall.WaitStatus
+	if _, err := syscall.Wait4(pid, &status, 0, nil); err != nil {
+		t.Fatal(err)
+	}
+	if status.ExitStatus() == 71 {
+		t.Fatal("environment fault: nested confinement exited 71")
+	}
+	b, err := os.ReadFile(out.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, err := os.ReadFile(stderr.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status.ExitStatus() != 0 || string(b) != "fd3_closed=true\n" || string(e) != confine.MarkerPrefix+marker+"\n" {
+		t.Fatalf("descriptor closing: status=%v out=%q err=%q", status, b, e)
 	}
 }

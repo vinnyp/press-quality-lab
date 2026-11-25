@@ -15,7 +15,7 @@ import (
 func TestLinuxInitialisationTasks(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "pql")
 	cmd := exec.Command("go", "build", "-o", path, ".")
-	cmd.Env = append(os.Environ(), "GOOS=linux", "CGO_ENABLED=0")
+	cmd.Env = append(builderEnvironment(), "GOOS=linux", "CGO_ENABLED=0")
 	if b, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Linux build: %v %s", err, b)
 	}

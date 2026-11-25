@@ -10,7 +10,7 @@ import (
 
 func TestCouldNotStartProtocol(t *testing.T) {
 	marker := strings.Repeat("a", 64)
-	cmd := exec.Command(buildPQL(t), "__pql_launcher", marker, filepath.Join(t.TempDir(), "absent"), "[]")
+	cmd := exec.Command(buildPQL(t), "__pql_launcher", marker, filepath.Join(t.TempDir(), "absent"), "[]", "[]")
 	out, err := cmd.CombinedOutput()
 	var exit *exec.ExitError
 	want := "pql-launch:" + marker + "\npql-could-not-start:" + marker + "\n"

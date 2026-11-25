@@ -16,7 +16,7 @@ func hidden(args []string) (int, bool) {
 	if args[0] != confine.LauncherMode && args[0] != confine.FastMode {
 		return exitUsage, true
 	}
-	n := 4
+	n := 5
 	if args[0] == confine.FastMode {
 		n = 2
 	}
@@ -27,17 +27,23 @@ func hidden(args []string) (int, bool) {
 	if err != nil || len(marker) != 32 || strings.ToLower(args[1]) != args[1] {
 		return exitUsage, true
 	}
-	var words []string
-	if n == 4 {
+	var words, env []string
+	if n == 5 {
 		if err := json.Unmarshal([]byte(args[3]), &words); err != nil {
 			return exitUsage, true
 		}
-	}
-	return confine.Hidden(args[0], args[1], func() (string, []string) {
-		if n == 2 {
-			return "", nil
+		if err := json.Unmarshal([]byte(args[4]), &env); err != nil {
+			return exitUsage, true
 		}
-		return args[2], words
+		if _, err := confine.LauncherArgs(args[1], args[2], words, env); err != nil {
+			return exitUsage, true
+		}
+	}
+	return confine.Hidden(args[0], args[1], func() (string, []string, []string) {
+		if n == 2 {
+			return "", nil, nil
+		}
+		return args[2], words, env
 	}), true
 }
 

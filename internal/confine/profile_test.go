@@ -42,7 +42,14 @@ func TestSealedProfile(t *testing.T) {
 				var lines []string
 				for _, line := range strings.Split(strings.TrimSuffix(files, "\n"), "\n") {
 					if strings.Contains(line, "_n") {
-						for i := 1; i <= count; i++ {
+						n := count
+						if strings.Contains(line, "DECLARED_n") {
+							n = count + 1
+						}
+						if strings.Contains(line, "SEED_n") {
+							n = count + 2
+						}
+						for i := 1; i <= n; i++ {
 							lines = append(lines, strings.ReplaceAll(line, "_n", "_"+strconv.Itoa(i)))
 						}
 					} else {
@@ -53,7 +60,7 @@ func TestSealedProfile(t *testing.T) {
 					lines = append(lines, strings.TrimSuffix(blocks[3], "\n"))
 				}
 				want := strings.NewReplacer("{{PROCESS_TARGET}}", target, "{{PROCESS_RULES}}", process, "{{FILE_RULES}}", strings.Join(lines, "\n")).Replace(blocks[0])
-				if got := render(computation, control, count, count, count); got != want {
+				if got := render(computation, control, count, count+1, count+2); got != want {
 					t.Errorf("sealed assembly computation=%v control=%v count=%d", computation, control, count)
 				}
 			}
@@ -85,18 +92,22 @@ func TestPathParameters(t *testing.T) {
 		p.Values["PLANTED"] = bad
 		if computation {
 			p.Declared = []string{bad}
-			p.Seed = []string{bad}
+			p.Seed = []string{bad, bad, bad}
+		} else {
+			p.PlantedDirs = []string{bad, bad}
 		}
 		args, err := Arguments(computation, false, p, []string{"hidden"})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if args[0] != "-p" || args[1] != render(computation, false, 0, len(p.Declared), len(p.Seed)) {
+		if args[0] != "-p" || args[1] != render(computation, false, len(p.PlantedDirs), len(p.Declared), len(p.Seed)) {
 			t.Fatal("profile changed")
 		}
 		names := []string{"PLANTED"}
 		if computation {
-			names = append(names, "DECLARED_1", "SEED_1")
+			names = append(names, "DECLARED_1", "SEED_1", "SEED_2", "SEED_3")
+		} else {
+			names = append(names, "PLANTED_DIR_1", "PLANTED_DIR_2")
 		}
 		canonicalPath, err := filepath.EvalSymlinks(bad)
 		if err != nil {
@@ -144,5 +155,38 @@ func TestCanonicalParameters(t *testing.T) {
 	p.Values["HOME"] = filepath.Join(link, "absent")
 	if _, err := Arguments(false, false, p, nil); err == nil {
 		t.Fatal("missing required path accepted")
+	}
+}
+
+func TestInvalidProfileParameters(t *testing.T) {
+	for _, kind := range []string{"unknown", "dangling", "other_values", "other_files", "other_dirs"} {
+		t.Run(kind, func(t *testing.T) {
+			p := testPaths(t)
+			for _, name := range computationNames {
+				delete(p.Values, name)
+			}
+			computation := false
+			switch kind {
+			case "unknown":
+				p.Values["UNKNOWN"] = p.Values["HOME"]
+			case "dangling":
+				path := filepath.Join(t.TempDir(), "link")
+				if err := os.Symlink(filepath.Join(t.TempDir(), "absent"), path); err != nil {
+					t.Fatal(err)
+				}
+				p.Values["PLANTED"] = path
+			case "other_values":
+				p.Values["TTY_DEVICE"] = p.Values["HOME"]
+			case "other_files":
+				p.Declared = []string{p.Values["HOME"]}
+			case "other_dirs":
+				computation = true
+				p = testPaths(t)
+				p.PlantedDirs = []string{p.Values["HOME"]}
+			}
+			if _, err := Arguments(computation, false, p, nil); err == nil {
+				t.Fatal("invalid profile parameters accepted")
+			}
+		})
 	}
 }

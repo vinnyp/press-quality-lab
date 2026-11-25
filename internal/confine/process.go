@@ -1,5 +1,7 @@
 package confine
 
+import "syscall"
+
 import "github.com/vinnyp/press-quality-lab/internal/observe"
 
 // Invocation supplies a resolved profile and the exact program words. The loop
@@ -32,4 +34,15 @@ func groupEnded(members []groupMember) bool {
 		}
 	}
 	return true
+}
+
+// exitDetail decodes Darwin kevent fields without depending on host headers.
+// NOTE_EXIT_DETAIL_MASK is inside NOTE_PDATAMASK, in data, not fflags.
+func exitDetail(flags uint16, fflags uint32, data int64) (uint32, error) {
+	const evError = 0x4000
+	const detailMask = 0x00070000
+	if flags&evError != 0 {
+		return 0, syscall.Errno(data)
+	}
+	return uint32(data) & detailMask, nil
 }

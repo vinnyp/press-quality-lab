@@ -13,13 +13,15 @@ type End struct {
 	RunningAtBudget bool
 }
 
-// Run is the source's facts for one invocation. Streams still contain protocol
-// lines until ParseMarkers is called; no count or digest may precede that call.
+// Run holds invocation facts after protocol removal. Seen counts exclude
+// protocol bytes; Cut records whether the interim capture discarded bytes.
 type Run struct {
-	End            End
-	Stdout, Stderr []byte
-	Markers        Markers
-	CopyChanged    bool
+	End                    End
+	Stdout, Stderr         []byte
+	Markers                Markers
+	CopyChanged            bool
+	StdoutSeen, StderrSeen int64
+	StdoutCut, StderrCut   bool
 }
 
 type Markers struct{ Confinement, CouldNotStart bool }

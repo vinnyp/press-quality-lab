@@ -2,11 +2,10 @@ package confine
 
 import (
 	"golang.org/x/sys/unix"
-	"os"
 )
 
 // Hidden writes only the protocol lines; replacement preserves the process id.
-func Hidden(mode, marker string, program func() (string, []string)) int {
+func Hidden(mode, marker string, program func() (string, []string, []string)) int {
 	if err := writeLine(MarkerPrefix + marker + "\n"); err != nil {
 		return 70
 	}
@@ -15,18 +14,23 @@ func Hidden(mode, marker string, program func() (string, []string)) int {
 	}
 	var limit unix.Rlimit
 	if err := unix.Getrlimit(unix.RLIMIT_NOFILE, &limit); err != nil {
-		return 70
+		return failedStart(marker)
 	}
 	for fd := uint64(3); fd < limit.Cur; fd++ {
 		if err := unix.Close(int(fd)); err != nil && err != unix.EBADF {
-			return 70
+			return failedStart(marker)
 		}
 	}
-	executable, words := program()
-	if err := unix.Exec(executable, append([]string{executable}, words...), os.Environ()); err != nil {
-		if err := writeLine(FailurePrefix + marker + "\n"); err != nil {
-			return 70
-		}
+	executable, words, env := program()
+	if err := unix.Exec(executable, append([]string{executable}, words...), env); err != nil {
+		return failedStart(marker)
+	}
+	return CouldNotStart
+}
+
+func failedStart(marker string) int {
+	if err := writeLine(FailurePrefix + marker + "\n"); err != nil {
+		return CouldNotStart
 	}
 	return CouldNotStart
 }

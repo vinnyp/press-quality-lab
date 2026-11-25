@@ -22,3 +22,16 @@ func TestGroupEnded(t *testing.T) {
 		})
 	}
 }
+
+func TestExitDetail(t *testing.T) {
+	for _, detail := range []uint32{0x10000, 0x20000, 0x40000, 0} {
+		got, err := exitDetail(0, 0x70000, int64(detail|9))
+		if err != nil || got != detail {
+			t.Fatalf("exit detail from data: got %#x error %v want %#x", got, err, detail)
+		}
+	}
+	got, err := exitDetail(0x4000, 0, 3)
+	if got != 0 || err == nil || err.Error() != "no such process" {
+		t.Fatalf("EV_ERROR not decoded: %#x %v", got, err)
+	}
+}

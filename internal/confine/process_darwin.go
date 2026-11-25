@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"golang.org/x/sys/unix"
@@ -23,7 +24,6 @@ type privateCopy struct {
 // Its caller owns removal of the enclosing run directory.
 type Copies struct {
 	launcher, program privateCopy
-	scratch           string
 }
 
 func fingerprintOf(path string) (observe.CopySnapshot, error) {
@@ -57,7 +57,16 @@ func fingerprintOf(path string) (observe.CopySnapshot, error) {
 	return observe.CopySnapshot{Entries: names, Inode: s.Ino, Mode: uint32(s.Mode), Size: s.Size, MtimeSeconds: s.Mtimespec.Sec, MtimeNanos: s.Mtimespec.Nsec, CtimeSeconds: s.Ctimespec.Sec, CtimeNanos: s.Ctimespec.Nsec, Digest: digest}, nil
 }
 func makeCopy(run, source string) (privateCopy, error) {
+	// U40 will move run-directory entry ownership to internal/throwaway.
 	dir, err := os.MkdirTemp(run, "executable-")
+	if err != nil {
+		return privateCopy{}, err
+	}
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return privateCopy{}, err
+	}
+	dir, err = filepath.EvalSymlinks(dir)
 	if err != nil {
 		return privateCopy{}, err
 	}
@@ -103,11 +112,7 @@ func NewCopies(run, launcher, program string) (*Copies, error) {
 	if err != nil {
 		return nil, err
 	}
-	scratch, err := os.MkdirTemp(run, "captures-")
-	if err != nil {
-		return nil, err
-	}
-	return &Copies{l, p, scratch}, nil
+	return &Copies{l, p}, nil
 }
 
 // CopyPaths returns the private launcher and subject paths for inspection.
@@ -116,22 +121,79 @@ func (c *Copies) CopyPaths() (launcher, program string) {
 	return c.launcher.path, c.program.path
 }
 
-func (c *Copies) capture(prefix string) (*os.File, error) {
-	return os.CreateTemp(c.scratch, prefix)
+// StreamCap is an interim per-stream memory cap. U30 owns final heads,
+// counts and digests; drains continue consuming every byte beyond this cap.
+const StreamCap = 1 << 20
+
+type capture struct {
+	head []byte
+	seen int64
+	err  error
+	done chan struct{}
 }
 
-// closeCapture releases a capture and removes its directory entry even if close fails.
-func closeCapture(f *os.File) error {
-	return errors.Join(f.Close(), os.Remove(f.Name()))
+func drain(r io.ReadCloser) *capture {
+	c := &capture{done: make(chan struct{})}
+	go func() {
+		defer close(c.done)
+		defer func() {
+			if v := recover(); v != nil {
+				c.err = errors.Join(c.err, fmt.Errorf("stream drain panic: %v", v))
+			}
+		}()
+		defer func() { c.err = errors.Join(c.err, r.Close()) }()
+		buf := make([]byte, 32*1024)
+		for {
+			n, err := r.Read(buf)
+			c.seen += int64(n)
+			keep := min(n, StreamCap-len(c.head))
+			c.head = append(c.head, buf[:keep]...)
+			if err != nil {
+				if err != io.EOF {
+					c.err = err
+				}
+				return
+			}
+		}
+	}()
+	return c
 }
 
 type process struct {
-	pid, queue     int
-	stdout, stderr *os.File
-	marker         string
-	mu             sync.Mutex
-	killed         bool
-	changed        bool
+	pid, queue                                             int
+	stdout, stderr                                         *capture
+	marker                                                 string
+	mu                                                     sync.Mutex
+	killed, observed, reaped, changed, registrationMissing bool
+}
+
+// registerExit runs immediately after spawn, before handing the process out.
+func (p *process) registerExit() error {
+	change := unix.Kevent_t{Ident: uint64(p.pid), Filter: unix.EVFILT_PROC, Flags: unix.EV_ADD | unix.EV_ONESHOT, Fflags: unix.NOTE_EXIT | unix.NOTE_EXITSTATUS | unix.NOTE_EXIT_DETAIL}
+	for {
+		_, err := unix.Kevent(p.queue, []unix.Kevent_t{change}, nil, nil)
+		if err == unix.EINTR {
+			continue
+		}
+		if err == unix.ESRCH {
+			p.registrationMissing = true
+			return nil
+		}
+		return err
+	}
+}
+
+func argumentSize(words, env []string, limit int) error {
+	size := 0
+	for _, list := range [][]string{words, env} {
+		for _, word := range list {
+			size += len(word) + 1
+		}
+	}
+	if size > limit {
+		return fmt.Errorf("program arguments and environment exceed kern.argmax")
+	}
+	return nil
 }
 
 func (c *Copies) Start(inv Invocation) (Process, error) {
@@ -142,7 +204,7 @@ func (c *Copies) Start(inv Invocation) (Process, error) {
 	if err != nil {
 		return nil, err
 	}
-	hidden, err := LauncherArgs(marker, c.program.path, inv.Words)
+	hidden, err := LauncherArgs(marker, c.program.path, inv.Words, inv.Env)
 	if err != nil {
 		return nil, err
 	}
@@ -160,36 +222,54 @@ func (c *Copies) Start(inv Invocation) (Process, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Regular temporary capture files avoid a blocked pipe while waiting. U29
-	// will supply bounded stream draining at the source seam.
-	stdout, err := c.capture(".stdout-")
+	limit, err := unix.SysctlUint32("kern.argmax")
 	if err != nil {
 		return nil, err
 	}
-	stderr, err := c.capture(".stderr-")
+	if err := argumentSize(append([]string{c.program.path}, inv.Words...), inv.Env, int(limit)); err != nil {
+		return nil, err
+	}
+	return spawn(SandboxExec, append([]string{SandboxExec}, args...), inv.Directory, EngineEnvironment(), marker)
+}
+
+func spawn(path string, args []string, directory string, env []string, marker string) (Process, error) {
+	stdout, outWrite, err := os.Pipe()
 	if err != nil {
-		return nil, errors.Join(err, closeCapture(stdout))
+		return nil, err
+	}
+	stderr, errWrite, err := os.Pipe()
+	if err != nil {
+		return nil, errors.Join(err, stdout.Close(), outWrite.Close())
 	}
 	null, err := os.Open(os.DevNull)
 	if err != nil {
-		return nil, errors.Join(err, closeCapture(stdout), closeCapture(stderr))
+		return nil, errors.Join(err, stdout.Close(), outWrite.Close(), stderr.Close(), errWrite.Close())
 	}
 	queue, err := unix.Kqueue()
 	if err != nil {
-		return nil, errors.Join(err, null.Close(), closeCapture(stdout), closeCapture(stderr))
+		return nil, errors.Join(err, null.Close(), stdout.Close(), outWrite.Close(), stderr.Close(), errWrite.Close())
 	}
 	unix.CloseOnExec(queue)
-	pid, spawnErr := syscall.ForkExec(SandboxExec, append([]string{SandboxExec}, args...), &syscall.ProcAttr{Dir: inv.Directory, Env: inv.Env, Files: []uintptr{null.Fd(), stdout.Fd(), stderr.Fd()}, Sys: &syscall.SysProcAttr{Setpgid: true}})
-	closeErr := null.Close()
-	if spawnErr != nil {
-		return nil, errors.Join(spawnErr, closeErr, unix.Close(queue), closeCapture(stdout), closeCapture(stderr))
+	pid, spawnErr := syscall.ForkExec(path, args, &syscall.ProcAttr{Dir: directory, Env: env, Files: []uintptr{null.Fd(), outWrite.Fd(), errWrite.Fd()}, Sys: &syscall.SysProcAttr{Setsid: true}})
+	p := &process{pid: pid, queue: queue, marker: marker}
+	var registerErr error
+	if spawnErr == nil {
+		registerErr = p.registerExit()
+		if registerErr != nil {
+			p.registrationMissing = true
+		}
 	}
-	p := &process{pid: pid, queue: queue, stdout: stdout, stderr: stderr, marker: marker}
-	if closeErr != nil {
+	closeErr := errors.Join(null.Close(), outWrite.Close(), errWrite.Close())
+	if spawnErr != nil {
+		return nil, errors.Join(spawnErr, closeErr, unix.Close(queue), stdout.Close(), stderr.Close())
+	}
+	p.stdout, p.stderr = drain(stdout), drain(stderr)
+	if err := errors.Join(registerErr, closeErr); err != nil {
 		killErr := p.Kill()
 		_, waitErr := p.Wait()
-		return nil, errors.Join(closeErr, killErr, waitErr)
+		return nil, errors.Join(err, killErr, waitErr)
 	}
+
 	return p, nil
 }
 
@@ -226,11 +306,18 @@ func killGroup(pgid int) (bool, error) {
 func (p *process) Kill() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.changed {
+	if p.changed || p.reaped {
 		return nil
 	}
+	proc, lookupErr := unix.SysctlKinfoProc("kern.proc.pid", p.pid)
+	if lookupErr != nil {
+		return lookupErr
+	}
+	if proc.Proc.P_stat == 5 {
+		p.observed = true
+	}
 	sent, err := killGroup(p.pid)
-	if sent {
+	if sent && !p.observed {
 		p.killed = true
 	}
 	return err
@@ -239,17 +326,10 @@ func (p *process) Wait() (observe.Run, error) {
 	if p.changed {
 		return observe.Run{CopyChanged: true}, nil
 	}
-	change := unix.Kevent_t{Ident: uint64(p.pid), Filter: unix.EVFILT_PROC, Flags: unix.EV_ADD | unix.EV_ONESHOT, Fflags: unix.NOTE_EXIT | unix.NOTE_EXITSTATUS | unix.NOTE_EXIT_DETAIL}
 	events := make([]unix.Kevent_t, 1)
 	var waitErr error
-	for {
-		_, waitErr = unix.Kevent(p.queue, []unix.Kevent_t{change}, nil, nil)
-		if waitErr != unix.EINTR {
-			break
-		}
-	}
 	var detail uint32
-	if waitErr == nil {
+	if !p.registrationMissing {
 		for {
 			n, err := unix.Kevent(p.queue, nil, events, nil)
 			if err == unix.EINTR {
@@ -262,11 +342,7 @@ func (p *process) Wait() (observe.Run, error) {
 			if n == 0 {
 				continue
 			}
-			if events[0].Flags&unix.EV_ERROR != 0 {
-				waitErr = syscall.Errno(events[0].Data)
-			} else {
-				detail = events[0].Fflags & unix.NOTE_EXIT_DETAIL_MASK
-			}
+			detail, waitErr = exitDetail(events[0].Flags, events[0].Fflags, events[0].Data)
 			break
 		}
 	}
@@ -278,8 +354,8 @@ func (p *process) Wait() (observe.Run, error) {
 	}
 	p.mu.Lock()
 	killed := p.killed
-	p.mu.Unlock()
-	_, groupErr := killGroup(p.pid)
+	p.observed = true
+	groupErr := endGroup(p.pid)
 	var status syscall.WaitStatus
 	var reapErr error
 	for {
@@ -288,15 +364,54 @@ func (p *process) Wait() (observe.Run, error) {
 			break
 		}
 	}
+	if reapErr == nil {
+		p.reaped = true
+	}
+	p.mu.Unlock()
 	run := observe.Run{End: observe.End{Code: status.ExitStatus(), ExitDetail: detail, EngineKilled: killed}}
 	if status.Signaled() {
 		run.End.Signal = int(status.Signal())
 	}
-	_, outSeek := p.stdout.Seek(0, 0)
-	_, errSeek := p.stderr.Seek(0, 0)
-	out, outErr := io.ReadAll(p.stdout)
-	stderr, errErr := io.ReadAll(p.stderr)
-	run.Stdout = out
-	run.Markers, run.Stderr = observe.ParseMarkers(stderr, MarkerPrefix+p.marker, FailurePrefix+p.marker)
-	return run, errors.Join(waitErr, groupErr, reapErr, outSeek, errSeek, outErr, errErr, closeCapture(p.stdout), closeCapture(p.stderr), unix.Close(p.queue))
+	<-p.stdout.done
+	<-p.stderr.done
+	run.Stdout = p.stdout.head
+	run.StdoutSeen, run.StderrSeen = p.stdout.seen, p.stderr.seen
+	run.StdoutCut, run.StderrCut = p.stdout.seen > StreamCap, p.stderr.seen > StreamCap
+	run.Markers, run.Stderr = observe.ParseMarkers(p.stderr.head, MarkerPrefix+p.marker, FailurePrefix+p.marker)
+	run.StderrSeen -= int64(len(p.stderr.head) - len(run.Stderr))
+	return run, errors.Join(waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
+}
+
+func endGroup(pid int) error {
+	return endGroupWith(func() (bool, error) { return killGroup(pid) }, func() ([]groupMember, error) {
+		procs, err := unix.SysctlKinfoProcSlice("kern.proc.pgrp", pid)
+		if err != nil {
+			return nil, err
+		}
+		members := make([]groupMember, len(procs))
+		for i, proc := range procs {
+			members[i] = groupMember{pid: int(proc.Proc.P_pid), zombie: proc.Proc.P_stat == 5}
+		}
+		return members, nil
+	})
+}
+
+func endGroupWith(kill func() (bool, error), lookup func() ([]groupMember, error)) error {
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, err := kill(); err != nil {
+			return err
+		}
+		members, err := lookup()
+		if err != nil {
+			return err
+		}
+		if groupEnded(members) {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("process group did not end")
+		}
+		time.Sleep(time.Millisecond)
+	}
 }
