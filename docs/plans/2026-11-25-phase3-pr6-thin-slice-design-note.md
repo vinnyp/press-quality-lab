@@ -28,7 +28,12 @@ The only evidence rule this slice decides is **QO1** (confinement not applied), 
 - **The grade-wide conditions.** The scripted host (QT4) supplies the facts: `confinement.applied` for confinement that could not be applied, and `self_test` for a failed self-test (QH9). When either holds, every required check is not observed with `network_unverifiable`, a check that runs nothing included. That is errata E-15, which the owner ruled on 2026-11-25.
 - **The per-invocation condition.** The engine could not apply confinement to one invocation (QH6). Level 1 reads it from the recording's markers and end for each subject invocation that ran (QT4, "each invocation's markers and end"), since §2 puts QO1 before every other reason. No corpus recording has a run without its marker, so a synthetic recording tests this condition.
 
-**What this slice does not build of QO1:** its system clause (QH1). A scripted run checks no system version (QT3), and the real verifier comes with U35. So QO1 stays on KTD22's list.
+**QO1's system clause (QH1).** Level 1 reads it as a third grade-wide fact from the controls, and the slice tests that branch with injected controls. What the slice does not build is *detecting* the system:
+- the scripted source reports the system as named, since a scripted run checks no version (QT3);
+- KTD21's interim released source reports it as not verified;
+- the real detection comes with U35.
+
+So QO1 stays on KTD22's list.
 
 Every other observation the slice makes feeds the record and the trace, never a resolution:
 - the required set;
