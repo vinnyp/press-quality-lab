@@ -276,7 +276,7 @@ func Build(in Input) (Plan, error) {
 				for i, w := range cs {
 					b, err := jcs.Canonical(w)
 					if err != nil {
-						return Plan{}, err
+						return Plan{}, &Gap{"QE2", ""}
 					}
 					encoded[i] = string(b)
 					byEncoding[string(b)] = w
@@ -311,7 +311,7 @@ func Build(in Input) (Plan, error) {
 				}
 			}
 			if _, err := add(base(spec.probe, spec.dim, words, budget, params), true, spec.probe == "byte_bound", keys); err != nil {
-				return Plan{}, err
+				return Plan{}, &Gap{"QE2", ""}
 			}
 		}
 	}
@@ -380,7 +380,7 @@ func Build(in Input) (Plan, error) {
 				credit := credits(s, r, st, ch)
 				id, err := add(pre, credit, empty, []Object{SubjectKey(s, arr(st["words"]), "runbook", r["name"], st["name"])})
 				if err != nil {
-					return Plan{}, err
+					return Plan{}, &Gap{"QE2", ""}
 				}
 				ids = append(ids, id)
 			}

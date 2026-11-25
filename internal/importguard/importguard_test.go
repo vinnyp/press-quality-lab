@@ -91,7 +91,10 @@ func dependencyProblems(packages []listedPackage, target string) []string {
 			if name == module+"/internal/collect" && (dep == module+"/internal/store" || dep == module+"/internal/judge") {
 				problems = append(problems, name+": forbidden dependency "+dep)
 			}
-			if (dep == module+"/internal/scripted" || dep == module+"/internal/confine") && !strings.HasPrefix(name, module+"/cmd/pql") && name != dep && name != dep+".test" && !strings.HasSuffix(name, "_test") {
+			// go list -test also emits augmented packages whose Imports and
+			// Deps include test files. Only the original package selects the
+			// binary's source; all other rules still inspect test variants.
+			if p.ImportPath == name && (dep == module+"/internal/scripted" || dep == module+"/internal/confine") && !strings.HasPrefix(name, module+"/cmd/pql") && name != dep && name != dep+".test" && !strings.HasSuffix(name, "_test") {
 				problems = append(problems, name+": source selected outside cmd/pql")
 			}
 		}
@@ -430,6 +433,24 @@ func TestDependencyClassifier(t *testing.T) {
 		if _, err := packagesFrom(strings.NewReader(input)); err == nil {
 			t.Errorf("accepted %q", input)
 		}
+	}
+}
+
+func TestSourceSelectionClassifier(t *testing.T) {
+	// KTD11: only production imports choose the binary's source.
+	for _, tc := range []struct {
+		name, path string
+		want       []string
+	}{
+		{"ProductionScripted", module + "/internal/grade", []string{module + "/internal/grade: source selected outside cmd/pql"}},
+		{"TestScripted", module + "/internal/grade [" + module + "/internal/grade.test]", nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			packages := []listedPackage{{ImportPath: tc.path, Imports: []string{module + "/internal/scripted"}, Deps: []string{module + "/internal/scripted"}}}
+			if got := dependencyProblems(packages, "darwin"); !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
 	}
 }
 

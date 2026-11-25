@@ -1,1 +1,46 @@
-{"rules": {}}
+{
+  "rules": {
+    "QE15": [
+      {
+        "kind": "test",
+        "file": "internal/grade/grade_test.go",
+        "function": "TestRejectedRecord"
+      }
+    ],
+    "QE6": [
+      {
+        "kind": "test",
+        "file": "internal/grade/grade_test.go",
+        "function": "TestPrecheckRows"
+      }
+    ],
+    "QH3": [
+      {
+        "kind": "test",
+        "file": "internal/grade/grade_test.go",
+        "function": "TestEffectiveRoot"
+      }
+    ],
+    "QS1": [
+      {
+        "kind": "test",
+        "file": "internal/subject/subject_test.go",
+        "function": "TestVersion"
+      }
+    ],
+    "QS2": [
+      {
+        "kind": "test",
+        "file": "internal/subject/subject_test.go",
+        "function": "TestStrictReading"
+      }
+    ],
+    "QS4": [
+      {
+        "kind": "test",
+        "file": "internal/subject/subject_test.go",
+        "function": "TestFacts"
+      }
+    ]
+  }
+}

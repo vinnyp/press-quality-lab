@@ -5,6 +5,7 @@ package corpusrunner
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -389,9 +390,6 @@ func TestReviewControls(t *testing.T) {
 	t.Run("real_pending", func(t *testing.T) {
 		assertError(t, realPending("case-069", nil), "real-verifier case must remain pending: case-069")
 	})
-	t.Run("rejudge_placeholder", func(t *testing.T) {
-		assertError(t, rejudgeNotBuilt(nil), "pql judge re-judge not built")
-	})
 	t.Run("top_level_extra", func(t *testing.T) {
 		_, want, _, _ := fixture(t, "case-001")
 		got := clone(t, want)
@@ -639,5 +637,28 @@ func TestPreconditionComputationKey(t *testing.T) {
 	}
 	if got := preimageKeys(pre); !reflect.DeepEqual(got, want) {
 		t.Fatalf("keys = %v, want %v", got, want)
+	}
+}
+
+func TestRejudgeControls(t *testing.T) {
+	// QE14, QT6: re-judging compares the whole output and the judge process's exit.
+	record := map[string]any{"judge_input": map[string]any{}, "judge_output": map[string]any{"outcome": "graded", "exit_code": json.Number("4")}}
+	for _, row := range []struct {
+		name, output string
+		exit         int
+		message      string
+	}{
+		{"Match", `{"outcome":"graded","exit_code":4}`, 4, ""},
+		{"Output", `{"outcome":"graded","exit_code":4,"extra":true}`, 4, "re-judged output differs"},
+		{"Exit", `{"outcome":"graded","exit_code":4}`, 0, "re-judged exit code differs"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			binary := filepath.Join(t.TempDir(), "judge")
+			script := fmt.Sprintf("#!/bin/sh\ncat >/dev/null\nprintf '%%s\\n' '%s'\nexit %d\n", row.output, row.exit)
+			if err := os.WriteFile(binary, []byte(script), 0700); err != nil {
+				t.Fatal(err)
+			}
+			assertError(t, rejudge(binary, record), row.message)
+		})
 	}
 }

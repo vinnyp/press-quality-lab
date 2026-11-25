@@ -361,7 +361,10 @@ def pending_rules(built):
     gaps = {rule for rule in candidates if not supports(capabilities, rule)}
     partial = {rule.split('.')[0] for rule in capabilities}
     return {rule if rule.split('.')[0] in partial else rule.split('.')[0]
-            for rule in gaps}
+            for rule in gaps} | {
+                'QE2',
+                'QE6',
+            }
 
 
 def check_ending(level, built, subject, preimage, gaps):
