@@ -28,7 +28,7 @@ func result(err error) string {
 }
 
 // security encodes attrreference_t followed by kauth_filesec (sys/kauth.h).
-// The ACE denies everyone delete and write-data/add-file, without denying
+// The ACE denies everyone delete and read-data/list-directory, without denying
 // write-security, so the descriptor removal experiment remains meaningful.
 func security(deny bool) []byte {
 	n := 44
@@ -59,8 +59,10 @@ func attrs() unix.Attrlist {
 // Fgetattrlist/Fsetattrlist nor acl_get_fd/acl_delete_fd/acl_set_fd wrappers.
 func fdAttrs(fd int, set bool, b []byte) error {
 	a := attrs()
+	//lint:ignore SA1019 U43 spike measures fgetattrlist, missing from x/sys.
 	call := uintptr(unix.SYS_FGETATTRLIST)
 	if set {
+		//lint:ignore SA1019 U43 spike measures fsetattrlist, missing from x/sys.
 		call = unix.SYS_FSETATTRLIST
 	}
 	_, _, errno := syscall.Syscall6(call, uintptr(fd), uintptr(unsafe.Pointer(&a)), uintptr(unsafe.Pointer(&b[0])), uintptr(len(b)), 0, 0)
@@ -73,6 +75,12 @@ func fdAttrs(fd int, set bool, b []byte) error {
 // Hostile attempts one item in its current directory, retaining no descriptor.
 func Hostile(w io.Writer, item string) {
 	step := func(name string, err error) { fmt.Fprintf(w, "attempt %s %s=%s\n", item, name, result(err)) }
+	if item == "symlink" {
+		step("create", os.WriteFile(item, []byte("synthetic"), 0600))
+		step("replace-remove", unix.Unlink(item))
+		step("symlink", unix.Symlink("../outside", item))
+		return
+	}
 	isDir := strings.HasPrefix(item, "dir-")
 	if item == "fifo" {
 		step("mkfifo", unix.Mkfifo(item, 0600))
@@ -206,4 +214,85 @@ func Cleanup(w io.Writer, home, item string) error {
 	_, err = root.Lstat(item)
 	fmt.Fprintf(w, " gone=%t final-lstat=%s\n", os.IsNotExist(err), result(err))
 	return nil
+}
+
+// SetDenyACL prepares the unconfined outside-file control.
+func SetDenyACL(path string) error {
+	a := attrs()
+	return unix.Setattrlist(path, &a, security(true), unix.FSOPT_NOFOLLOW)
+}
+
+// Snapshot inspects a descriptor retained before the outside file is hardened.
+func Snapshot(fd int) (string, error) {
+	var st unix.Stat_t
+	if err := unix.Fstat(fd, &st); err != nil {
+		return "", err
+	}
+	b := make([]byte, 4096)
+	if err := fdAttrs(fd, false, b); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("mode=%#o flags=%#x acl-bytes=%x", st.Mode, st.Flags, b), nil
+}
+
+// parentAttrs never opens or follows the entry itself.
+func parentAttrs(parent int, name string, flags bool) error {
+	p, err := unix.BytePtrFromString(name)
+	if err != nil {
+		return err
+	}
+	a := attrs()
+	b := security(false)
+	if flags {
+		a.Commonattr = unix.ATTR_CMN_FLAGS
+		b = make([]byte, 4)
+	}
+	//lint:ignore SA1019 U43 spike measures setattrlistat, missing from x/sys.
+	_, _, errno := syscall.Syscall6(unix.SYS_SETATTRLISTAT, uintptr(parent), uintptr(unsafe.Pointer(p)), uintptr(unsafe.Pointer(&a)), uintptr(unsafe.Pointer(&b[0])), uintptr(len(b)), unix.FSOPT_NOFOLLOW)
+	if errno != 0 {
+		return errno
+	}
+	return nil
+}
+
+// CleanupParent walks through no-follow directory descriptors and removes the
+// named entry. It is a bounded-fixture spike, not the U40 racing-tree walker.
+func CleanupParent(w io.Writer, home, item string) error {
+	parent, err := unix.Open(home, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+	fmt.Fprintf(w, "parent-open %s=%s\n", item, result(err))
+	if err != nil {
+		return err
+	}
+	defer func() { fmt.Fprintf(w, "parent-close %s=%s\n", item, result(unix.Close(parent))) }()
+	return cleanupAt(w, parent, item)
+}
+
+func cleanupAt(w io.Writer, parent int, name string) error {
+	fmt.Fprintf(w, "cleanup-parent %s setattrlistat-clear-flags=%s", name, result(parentAttrs(parent, name, true)))
+	fmt.Fprintf(w, " setattrlistat-clear-acl=%s", result(parentAttrs(parent, name, false)))
+	fmt.Fprintf(w, " fchmodat-nofollow=%s", result(unix.Fchmodat(parent, name, 0700, unix.AT_SYMLINK_NOFOLLOW)))
+	var st unix.Stat_t
+	err := unix.Fstatat(parent, name, &st, unix.AT_SYMLINK_NOFOLLOW)
+	fmt.Fprintf(w, " fstatat-nofollow=%s\n", result(err))
+	flags := 0
+	if err == nil && st.Mode&unix.S_IFMT == unix.S_IFDIR {
+		flags = unix.AT_REMOVEDIR
+		fd, e := unix.Openat(parent, name, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+		fmt.Fprintf(w, "parent-walk %s openat=%s\n", name, result(e))
+		if e == nil {
+			dir := os.NewFile(uintptr(fd), name)
+			names, re := dir.Readdirnames(-1)
+			fmt.Fprintf(w, "parent-walk %s readdir=%s\n", name, result(re))
+			for _, child := range names {
+				if ce := cleanupAt(w, fd, child); ce != nil {
+					fmt.Fprintf(w, "parent-child %s=%s\n", child, result(ce))
+				}
+			}
+			fmt.Fprintf(w, "parent-walk %s close=%s\n", name, result(dir.Close()))
+		}
+	}
+	removeErr := unix.Unlinkat(parent, name, flags)
+	finalErr := unix.Fstatat(parent, name, &st, unix.AT_SYMLINK_NOFOLLOW)
+	fmt.Fprintf(w, "cleanup-parent %s unlinkat=%s gone=%t final-fstatat=%s\n", name, result(removeErr), errors.Is(finalErr, unix.ENOENT), result(finalErr))
+	return removeErr
 }

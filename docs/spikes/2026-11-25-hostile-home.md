@@ -49,10 +49,10 @@ sockets are never opened for data. The directories contain one synthetic child.
 The process has ended before cleanup; this bounded, fixed-child experiment is
 not the racing-tree safety implementation required of U40.
 
-The deny ACE targets everyone and denies delete and write-data/add-file. The
+The deny ACE targets everyone and denies delete and read-data/list-directory. The
 combined items apply the ACE, mode 0000, then `uchg`, closing creation descriptors
 first. Record each step separately: a refused earlier call means the resulting
-entry is not the full combination. No path-based flag clearing is attempted.
+entry is not the full combination. The descriptor strategy does not clear flags by path.
 
 The pinned `golang.org/x/sys/unix` provides `Setattrlist`, `Openat`, `Fstat`,
 `Fchflags`, `Fchmod`, `Flistxattr` and `Setxattr` on Darwin. It has no `acl_*`,
@@ -63,6 +63,56 @@ using `syscall.Syscall6` with `SYS_FSETATTRLIST` and `KAUTH_FILESEC_NOACL`.
 Descriptor inspection uses `SYS_FGETATTRLIST`. Success of these raw calls is
 TBD; API constants alone do not establish feasibility. `Fchmod` is measured
 separately and is not presumed to remove an ACL.
+
+## Second probe method (results TBD)
+
+Each item runs twice in separate fresh homes, under subtests named
+`ITEM/descriptor` and `ITEM/parent`. Thus the descriptor strategy cannot remove
+or soften the parent strategy's fixture. Both confined runs and unconfined
+controls keep every syscall result; a refusal is evidence, not a pass.
+
+The parent strategy opens only the parent with `O_DIRECTORY|O_NOFOLLOW`.
+`cleanup-parent ITEM setattrlistat-clear-flags=RESULT` clears `ATTR_CMN_FLAGS`
+with a zero buffer, then `setattrlistat-clear-acl=RESULT` clears
+`ATTR_CMN_EXTENDED_SECURITY` with `KAUTH_FILESEC_NOACL`. Both calls use
+`FSOPT_NOFOLLOW`. Flags go first so an immutable entry need not accept an ACL
+change before its flag is cleared. `fchmodat-nofollow=RESULT` measures
+`Fchmodat(..., 0700, AT_SYMLINK_NOFOLLOW)` support.
+`fstatat-nofollow=RESULT` inspects the entry without following it.
+`parent-walk` lines report directory open, enumeration and close; only a
+no-follow directory descriptor is used for recursion. The final
+`cleanup-parent ITEM unlinkat=RESULT gone=BOOL final-fstatat=RESULT` reports
+removal (with `AT_REMOVEDIR` for directories) and independent absence checking.
+`parent-open` and `parent-close` report the parent descriptor's lifetime.
+No FIFO or socket is opened for data by this strategy.
+
+The pinned `x/sys/unix` has no `Setattrlistat` wrapper; the spike uses
+`syscall.Syscall6` with `SYS_SETATTRLISTAT`. It does wrap `Fchmodat`, `Fstatat`
+and `Unlinkat`. Local SA1019 suppressions name the spike at the raw syscall
+and the two deprecated descriptor syscall constants. These are experimental
+calls whose runtime results remain TBD.
+
+The `symlink` item creates and removes an ordinary entry, then attempts to
+replace it with `../outside`. The test creates that outside file beside the
+home, sets its deny ACL and `uchg` unconfined, and retains a descriptor from
+before hardening. `link-control` reports whether replacement produced a link;
+the unconfined control requires one. `outside before` and `outside after`
+print mode, flags and extended-security bytes through the retained descriptor;
+`unchanged=true` requires exact equality. A confined kill before replacement
+is recorded, not treated as link-safety evidence.
+
+Every test-created temporary tree registers a `t.Cleanup` that uses the parent
+strategy recursively, including the outside control, then asserts the tree is
+gone. This runs even after a failed probe. It is fixture teardown, not evidence
+that an earlier cleanup attempt succeeded. The fixed trees are finite and the
+subject has exited before either strategy runs; race safety remains U40 work.
+
+| Second probe observation | Result |
+|---|---|
+| Parent-relative flags, ACL, mode and removal per item | TBD |
+| Outside ACL, flags and mode unchanged | TBD |
+| Both strategies compared on independent fixtures | TBD |
+| Temporary trees fully removed | TBD |
 
 ## User immutable flags (`uchg`)
 
