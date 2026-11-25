@@ -5,7 +5,7 @@ A measurement engine for agent-facing command-line tools, written in Go. The REA
 ## Where things are
 
 - `docs/plans/`: plans. Start with `2026-11-21-engine-plan.md`: the goal, the milestone, the phases and what is not yet specified.
-- `docs/specs/`: specifications. `judge-1.0/` is the judge specification, version 1.0.
+- `docs/specs/`: specifications. `docs/specs/judge-1.0/` is the judge specification, version 1.0.
 - `docs/requirements.md`: the requirements (R1 to R42) and acceptance examples (AE1 to AE36) that the specifications cite. Their numbers and wording do not change, and actors A1 to A4 and flows F1 to F5 keep their ids.
 - The engine's command is `pql`, under `cmd/pql`; the plan's §4 gives the intended package layout.
 - `docs/solutions/`: documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`).
@@ -59,7 +59,7 @@ Test subjects in this repository are synthetic.
 ## Checks
 
 `gate.sh` runs the Go build, lints and tests with pinned tools and the network off.
-The tests include a check that every R and AE number cited under `docs/` resolves to exactly one entry in `docs/requirements.md`.
+The tests check that every R and AE number cited under `docs/` resolves to exactly one entry in `docs/requirements.md`. They also check that the clause ids, requirement ids and repository paths cited in `AGENTS.md`, `CODING_STANDARDS.md`, `REVIEW.md` and `CONCEPTS.md` resolve.
 `gate.sh` uses the `go` first on PATH and requires go1.27.4 (`GOTOOLCHAIN=local`); a machine with another Go puts go1.27.4 first on PATH.
 `check.sh` runs the gate, builds the binary, verifies the kit digest and file set, and runs the published cases.
 `scan.sh` checks tracked files and an optional commit range for home paths, emails and secrets with gitleaks.
