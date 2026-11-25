@@ -1,5 +1,7 @@
 package observe
 
+import "encoding/json"
+
 // Key is QT5's invocation key. A source must not interpret it as a decision.
 type Key = map[string]any
 
@@ -12,6 +14,8 @@ type Spec struct {
 // Controls are grade-wide facts. False SystemNamed includes an unverified
 // system, not just a system detected and found unsupported.
 type Controls struct {
+	SandboxExecExitExact json.Number
+	KillControls         []KillControl
 	ConfinementApplied   bool
 	SandboxExecExit      *int
 	SelfTestPassed       bool
@@ -64,4 +68,10 @@ func ProjectControls(c Controls) map[string]any {
 // ProjectMarkers projects the protocol facts after removal of protocol bytes.
 func ProjectMarkers(m Markers) map[string]any {
 	return map[string]any{"confinement": m.Confinement, "could_not_start": m.CouldNotStart}
+}
+
+// KillControl holds QT4's per-invocation control result without attribution values.
+type KillControl struct {
+	Key                         Key
+	Memory, CodeSigning, Engine bool
 }
