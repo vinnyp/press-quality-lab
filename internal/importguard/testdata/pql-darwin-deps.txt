@@ -127,6 +127,8 @@ crypto/internal/rand
 math/rand
 math/big
 crypto/rand
+crypto/sha256
+github.com/vinnyp/press-quality-lab/internal/observe
 golang.org/x/sys/unix
 github.com/vinnyp/press-quality-lab/internal/confine
 runtime/debug

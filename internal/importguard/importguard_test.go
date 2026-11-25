@@ -62,6 +62,9 @@ func dependencyProblems(packages []listedPackage, target string) []string {
 		}
 		for _, raw := range p.Imports {
 			dep := packageName(raw)
+			if name == module+"/internal/confine" && (dep == "net" || dep == "os/exec") {
+				problems = append(problems, name+": forbidden spawn dependency "+dep)
+			}
 			if (dep == "github.com/spf13/cobra" || strings.HasPrefix(dep, "github.com/spf13/cobra/")) && !strings.HasPrefix(name, module+"/cmd/") {
 				problems = append(problems, name+": Cobra outside cmd")
 			}
@@ -351,6 +354,8 @@ func TestDependencyClassifier(t *testing.T) {
 		want               []string
 	}{
 		{"clean command", `{"ImportPath":"` + module + `/cmd/pql","Imports":["github.com/spf13/cobra"]}`, "linux", nil},
+		{"spawn exec", `{"ImportPath":"` + module + `/internal/confine","Imports":["os/exec"]}`, "darwin", []string{module + "/internal/confine: forbidden spawn dependency os/exec"}},
+		{"spawn net", `{"ImportPath":"` + module + `/internal/confine","Imports":["net"]}`, "darwin", []string{module + "/internal/confine: forbidden spawn dependency net"}},
 		{"darwin cobra", `{"ImportPath":"` + module + `/internal/confine","Imports":["github.com/spf13/cobra"]}`, "darwin", []string{module + "/internal/confine: Cobra outside cmd"}},
 		{"test variant cobra", `{"ImportPath":"` + module + `/internal/a [` + module + `/internal/a.test]","Imports":["github.com/spf13/cobra"]}`, "darwin", []string{module + "/internal/a: Cobra outside cmd"}},
 		{"transitive cobra", `{"ImportPath":"` + module + `/internal/a","Deps":["github.com/spf13/cobra"]}`, "linux", []string{module + "/internal/a: transitive Cobra outside cmd"}},
@@ -494,5 +499,84 @@ func TestToolMutations(t *testing.T) {
 				t.Fatalf("defect was not caught by expected check: %v\n%s", err, out)
 			}
 		})
+	}
+}
+
+// Read the actual gate steps so changes to their flags exercise these controls.
+// Only the step wrapper is replaced; bash expands the gate's command verbatim.
+func TestTaggedLintControls(t *testing.T) {
+	gate, err := os.ReadFile(filepath.Join(moduleRoot(t), "gate.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, variant := range []struct{ target, tags string }{
+		{"linux", "scripted"},
+		{"darwin", ""},
+		{"darwin", "scripted"},
+		{"darwin", "necessity_test"},
+		{"darwin", "scripted,necessity_test"},
+	} {
+		for _, lint := range []struct{ tool, clean, defect, diagnostic string }{
+			{"errcheck", "if err := F(); err != nil { return err }; return nil", "F(); return nil", "F()"},
+			{"staticcheck", "return nil", "if v == v { return nil }; return nil", "SA4000"},
+			{"exhaustive", "switch v { case First, Second: return nil }; return nil", "switch v { case First: return nil }; return nil", "missing cases in expression switch: Second"},
+		} {
+			t.Run(variant.target+"/"+variant.tags+"/"+lint.tool, func(t *testing.T) {
+				prefix := "step \"" + lint.tool + "-$tags\" "
+				if variant.target == "darwin" {
+					prefix = "step \"darwin-" + lint.tool + "-$label\" "
+				}
+				var commands []string
+				for _, line := range strings.Split(string(gate), "\n") {
+					if strings.HasPrefix(strings.TrimSpace(line), prefix) {
+						commands = append(commands, line)
+					}
+				}
+				if len(commands) != 1 {
+					t.Fatalf("want one gate step %q, got %d", prefix, len(commands))
+				}
+				root := t.TempDir()
+				for name, content := range map[string]string{
+					"go.mod":  "module example.invalid/lintprobe\n\ngo 1.27.3\n",
+					"base.go": "package probe\n",
+				} {
+					if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0600); err != nil {
+						t.Fatal(err)
+					}
+				}
+				constraint := strings.ReplaceAll(variant.tags, ",", " && ")
+				if variant.target == "darwin" {
+					constraint = strings.TrimSuffix("darwin && "+constraint, " && ")
+				}
+				header := "//go:build " + constraint + "\n\npackage probe\ntype Value int\nconst (First Value = iota; Second)\nfunc F() error { return nil }\nfunc Probe(v Value) error { "
+				for _, control := range []struct{ name, body string }{{"clean", lint.clean}, {"defect", lint.defect}} {
+					if err := os.WriteFile(filepath.Join(root, "probe.go"), []byte(header+control.body+" }\n"), 0600); err != nil {
+						t.Fatal(err)
+					}
+					cmd := exec.Command("bash", "-eu", "-c", `
+step() { shift; "$@"; }
+flags="-mod=readonly${tags:+ -tags=$tags}"
+label="${tags:-plain}"
+export PATH="${GATE_TOOLS_BIN:-$HOME/.gate-tools/go/bin}:$PATH"
+`+commands[0])
+					cmd.Dir = root
+					for _, e := range os.Environ() {
+						key := strings.SplitN(e, "=", 2)[0]
+						if !slices.Contains([]string{"GOOS", "GOARCH", "CGO_ENABLED", "GOFLAGS", "GOWORK", "GOTOOLCHAIN", "GOPROXY", "tags"}, key) {
+							cmd.Env = append(cmd.Env, e)
+						}
+					}
+					cmd.Env = append(cmd.Env, "GOOS="+variant.target, "GOARCH=arm64", "CGO_ENABLED=0", "GOFLAGS=-mod=readonly", "GOWORK=off", "GOTOOLCHAIN=local", "GOPROXY=off", "tags="+variant.tags)
+					out, err := cmd.CombinedOutput()
+					if control.name == "clean" {
+						if err != nil || len(out) != 0 {
+							t.Fatalf("clean control: %v\n%s", err, out)
+						}
+					} else if err == nil || !strings.Contains(string(out), lint.diagnostic) {
+						t.Fatalf("defect was not caught by %s: %v\n%s", lint.tool, err, out)
+					}
+				}
+			})
+		}
 	}
 }
