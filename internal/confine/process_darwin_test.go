@@ -1,6 +1,7 @@
 package confine
 
 import (
+	"fmt"
 	"golang.org/x/sys/unix"
 	"os"
 	"path/filepath"
@@ -155,7 +156,7 @@ func TestRegistrationESRCH(t *testing.T) {
 	}
 }
 func TestChangedCopies(t *testing.T) {
-	for _, kind := range []string{"digest", "mode", "inode", "launcher_entry", "launcher_bytes"} {
+	for _, kind := range []string{"digest", "size", "mtime", "ctime", "mode", "inode", "launcher_entry", "launcher_bytes"} {
 		t.Run(kind, func(t *testing.T) {
 			c, err := NewCopies(t.TempDir(), "/bin/sh", "/bin/sh")
 			if err != nil {
@@ -182,6 +183,27 @@ func TestChangedCopies(t *testing.T) {
 				if err := os.Chtimes(target, info.ModTime(), info.ModTime()); err != nil {
 					t.Fatal(err)
 				}
+			case "size":
+				b, err := os.ReadFile(target)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(target, append(b, 0), info.Mode()); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Chtimes(target, info.ModTime(), info.ModTime()); err != nil {
+					t.Fatal(err)
+				}
+			case "mtime":
+				changed := info.ModTime().Add(-time.Hour)
+				if err := os.Chtimes(target, changed, changed); err != nil {
+					t.Fatal(err)
+				}
+			case "ctime":
+				if err := os.Chmod(target, info.Mode()); err != nil {
+					t.Fatal(err)
+				}
+
 			case "mode":
 				if err := os.Chmod(target, 0600); err != nil {
 					t.Fatal(err)
@@ -204,7 +226,7 @@ func TestChangedCopies(t *testing.T) {
 				}
 			}
 			// Isolate each fingerprint property: unrelated timestamps must not
-			// make a missing digest, mode or inode comparison appear guarded.
+			// make a missing fingerprint comparison appear guarded.
 			if kind != "launcher_entry" {
 				copy := &c.program
 				if kind == "launcher_bytes" {
@@ -219,6 +241,12 @@ func TestChangedCopies(t *testing.T) {
 				switch kind {
 				case "digest", "launcher_bytes":
 					copy.original.Digest = original.Digest
+				case "size":
+					copy.original.Size = original.Size
+				case "mtime":
+					copy.original.MtimeSeconds, copy.original.MtimeNanos = original.MtimeSeconds, original.MtimeNanos
+				case "ctime":
+					copy.original.CtimeSeconds, copy.original.CtimeNanos = original.CtimeSeconds, original.CtimeNanos
 				case "mode":
 					copy.original.Mode = original.Mode
 				case "inode":
@@ -315,9 +343,30 @@ func TestDrainPanic(t *testing.T) {
 	}
 }
 func TestNewSession(t *testing.T) {
-	p := shellProcess(t, "if ( : </dev/tty ) 2>/dev/null; then printf tty_open; else printf tty_closed; fi; sleep 60")
-	// Let the shell report its tty before ending it.
-	time.Sleep(50 * time.Millisecond)
+	ready := filepath.Join(t.TempDir(), "ready")
+	p := shellProcess(t, fmt.Sprintf("if ( : </dev/tty ) 2>/dev/null; then printf tty_open; else printf tty_closed; fi; : > %q; sleep 60", ready))
+	t.Cleanup(func() {
+		if err := p.Kill(); err != nil {
+			t.Error(err)
+		}
+		if _, err := p.Wait(); err != nil {
+			t.Error(err)
+		}
+	})
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		_, err := os.Stat(ready)
+		if err == nil {
+			break
+		}
+		if !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("shell did not report its tty before the deadline")
+		}
+		time.Sleep(time.Millisecond)
+	}
 	sid, err := unix.Getsid(p.pid)
 	if err != nil {
 		t.Fatal(err)
@@ -427,5 +476,50 @@ func TestStartEnvironment(t *testing.T) {
 	})
 	if err != nil || !called {
 		t.Fatalf("spawn seam not reached: %v", err)
+	}
+}
+
+func TestCaptureBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		size int
+		cut  bool
+	}{
+		{"ExactCap", 1048576, false},
+		{"OverCap", 1048577, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			p := shellProcess(t, fmt.Sprintf("head -c %d /dev/zero; head -c %d /dev/zero >&2", tc.size, tc.size))
+			run, err := p.Wait()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if run.End.Code != 0 || len(run.Stdout) != 1048576 || len(run.Stderr) != 1048576 || run.StdoutSeen != int64(tc.size) || run.StderrSeen != int64(tc.size) || run.StdoutCut != tc.cut || run.StderrCut != tc.cut {
+				t.Fatalf("capture boundary: size=%d out=%d/%d cut=%v stderr=%d/%d cut=%v end=%+v", tc.size, len(run.Stdout), run.StdoutSeen, run.StdoutCut, len(run.Stderr), run.StderrSeen, run.StderrCut, run.End)
+			}
+		})
+	}
+}
+
+func TestStartArgumentLimit(t *testing.T) {
+	limit, err := unix.SysctlUint32("kern.argmax")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := NewCopies(t.TempDir(), "/usr/bin/true", "/usr/bin/true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	values := map[string]string{}
+	for _, name := range commonNames {
+		values[name] = "/"
+	}
+	called := false
+	p, err := c.startWith(Invocation{Paths: Paths{Values: values}, Words: []string{strings.Repeat("a", int(limit)+1)}}, func(string, []string, string, []string, string) (Process, error) {
+		called = true
+		return &process{changed: true}, nil
+	})
+	if called || p != nil || err == nil || err.Error() != "program arguments and environment exceed kern.argmax" {
+		t.Fatalf("argument limit did not fault before launch: called=%v process=%v error=%v", called, p, err)
 	}
 }

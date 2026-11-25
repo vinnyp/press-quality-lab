@@ -423,6 +423,36 @@ func TestSourceMutations(t *testing.T) {
 			}
 		})
 	}
+
+	for _, tc := range []struct {
+		name  string
+		files int
+		want  []string
+	}{
+		{"TwoSelectors", 2, nil},
+		{"ThreeSelectors", 3, []string{"cmd/pql: source selection in more than two files"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			dir := filepath.Join(root, "cmd", "pql")
+			if err := os.MkdirAll(dir, 0700); err != nil {
+				t.Fatal(err)
+			}
+			for i := 0; i < tc.files; i++ {
+				path := filepath.Join(dir, fmt.Sprintf("selector%d.go", i))
+				if err := os.WriteFile(path, []byte("package main\nimport _ \""+module+"/internal/confine\"\n"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			got, err := sourceProblems(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
 }
 
 func TestSourceScope(t *testing.T) {

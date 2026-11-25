@@ -328,6 +328,11 @@ func (p *process) Kill() error {
 	if p.changed || p.reaped {
 		return nil
 	}
+	// A confinement kill between this leader lookup and the group signal can
+	// be attributed to the engine while a descendant is still live. QO4 uses
+	// the running state the engine saw for a budget kill; other engine kills
+	// come from the exit funnel (exit 70). Either leaves the check not observed,
+	// so this window cannot change a held or not-held outcome (QH21).
 	proc, lookupErr := unix.SysctlKinfoProc("kern.proc.pid", p.pid)
 	if lookupErr != nil {
 		return lookupErr

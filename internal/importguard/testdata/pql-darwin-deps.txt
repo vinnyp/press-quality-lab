@@ -131,6 +131,7 @@ crypto/sha256
 github.com/vinnyp/press-quality-lab/internal/observe
 golang.org/x/sys/unix
 github.com/vinnyp/press-quality-lab/internal/confine
+github.com/vinnyp/press-quality-lab/internal/strictjson
 runtime/debug
 github.com/vinnyp/press-quality-lab/internal/judge
 github.com/vinnyp/press-quality-lab/cmd/pql
