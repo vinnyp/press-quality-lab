@@ -2,6 +2,7 @@ package strictjson
 
 import (
 	"bytes"
+	"go/build"
 	"strings"
 	"testing"
 )
@@ -14,6 +15,12 @@ func TestReaderLimits(t *testing.T) {
 		name, raw string
 		ok        bool
 	}{
+		{"escape_x", `"\x"`, false},
+		{"escape_a", `"\a"`, false},
+		{"escape_quote", `"\'"`, false},
+		{"escape_short_unicode", `"\u12"`, false},
+		{"escape_bad_hex", `"\u12g4"`, false},
+		{"escape_unterminated", `"\`, false},
 		{"size_at", "0" + strings.Repeat(" ", (1<<20)-1), true},
 		{"size_over", "0" + strings.Repeat(" ", 1<<20), false},
 		{"duplicate", `{"x":0,"\u0078":1}`, false},
@@ -91,6 +98,7 @@ func TestWriter(t *testing.T) {
 		{Number("123456789012345678901"), "123456789012345678901\n"},
 		{Number("12345678901234567890123456789012"), "12345678901234567890123456789012\n"},
 		{Number("-123456789012345678901"), "-123456789012345678901\n"},
+		{Number("-12345678901234567890123456789012"), "-12345678901234567890123456789012\n"},
 		{Number("-0"), "0\n"}, {Number("1.00e+2"), "1.00e+2\n"},
 		{named("text"), "\"text\"\n"},
 		{Object{"z": Array{true, nil}, "a": "\b\f\n\r\t\"\\"}, "{\"a\":\"\\u0008\\u000c\\n\\r\\t\\\"\\\\\",\"z\":[true,null]}\n"},
@@ -102,7 +110,9 @@ func TestWriter(t *testing.T) {
 		if Length(row.value) != len(row.want) {
 			t.Fatal("length")
 		}
-		v, ok := Read(got, testBounds(), nil)
+		bounds := testBounds()
+		bounds.NumberChars = 33 // A 32-digit negative integer includes its sign.
+		v, ok := Read(got, bounds, nil)
 		if !ok {
 			t.Fatal("writer produced invalid JSON")
 		}
@@ -159,6 +169,65 @@ func TestRetentionHook(t *testing.T) {
 	for _, raw := range []string{`{"discard":{"x":0,"x":1}}`, `{"note":"\ud800"}`} {
 		if _, ok := Read([]byte(raw), testBounds(), retentionHook{}); ok {
 			t.Fatal("discarded grammar accepted")
+		}
+	}
+}
+
+type contractHook struct {
+	retentionHook
+	reject string
+}
+
+func (h contractHook) Valid(any) bool                     { return h.reject != "valid" }
+func (h contractHook) Container(byte) bool                { return h.reject != "container" }
+func (h contractHook) End(int) bool                       { return h.reject != "end" }
+func (h contractHook) Child(k string) (Hook, bool)        { return nil, k != "forbidden" }
+func (h contractHook) Materialize(keep bool, _ byte) bool { return keep && h.reject != "materialize" }
+func TestHookContract(t *testing.T) {
+	for _, row := range []struct {
+		name, raw string
+		ok        bool
+		want      string
+	}{
+		{"valid", "0", false, "null"}, {"container", "[]", false, "null"},
+		{"end", "[]", false, "null"}, {"child", `{"forbidden":0}`, false, "null"},
+		{"materialize", `"contents"`, true, `""`},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			v, ok := Read([]byte(row.raw), testBounds(), contractHook{reject: row.name})
+			if ok != row.ok || ok && string(AppendValue(nil, v)) != row.want {
+				t.Fatalf("value=%v accepted=%v", v, ok)
+			}
+		})
+	}
+}
+func TestInvalidConstructedInteger(t *testing.T) {
+	for _, raw := range []string{"", "-", "+1", "01", "-00", "1x", "123456789012345678901x"} {
+		t.Run(strings.ReplaceAll(strings.ReplaceAll(raw, "-", "minus"), "+", "plus")+"invalid", func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Fatal("invalid integer did not panic")
+				}
+			}()
+			Write(Number(raw))
+		})
+	}
+}
+func TestStandardLibraryOnly(t *testing.T) {
+	p, err := build.Default.ImportDir(".", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(p.Imports) == 0 {
+		t.Fatal("empty imports")
+	}
+	for _, name := range p.Imports {
+		dep, err := build.Default.Import(name, ".", build.FindOnly)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !dep.Goroot {
+			t.Errorf("non-standard dependency %s", name)
 		}
 	}
 }

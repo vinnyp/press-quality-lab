@@ -37,6 +37,10 @@ func quote(dst []byte, s string) ([]byte, error) {
 	if !utf8.ValidString(s) {
 		return nil, fmt.Errorf("invalid UTF-8 string")
 	}
+	return quoteValid(dst, s), nil
+}
+
+func quoteValid(dst []byte, s string) []byte {
 	dst = append(dst, '"')
 	for _, c := range s {
 		switch c {
@@ -61,11 +65,10 @@ func quote(dst []byte, s string) ([]byte, error) {
 			}
 		}
 	}
-	return append(dst, '"'), nil
+	return append(dst, '"')
 }
 
-func less(a, b string) bool {
-	x, y := utf16.Encode([]rune(a)), utf16.Encode([]rune(b))
+func less(x, y []uint16) bool {
 	for i := 0; i < len(x) && i < len(y); i++ {
 		if x[i] != y[i] {
 			return x[i] < y[i]
@@ -77,12 +80,13 @@ func less(a, b string) bool {
 type identity struct {
 	kind    reflect.Kind
 	pointer uintptr
+	length  int
 }
 
 func appendValue(dst []byte, v any, active map[identity]bool) ([]byte, error) {
 	switch v.(type) {
 	case strictjson.Object, strictjson.Array:
-		key := identity{reflect.TypeOf(v).Kind(), uintptr(reflect.ValueOf(v).UnsafePointer())}
+		key := identity{reflect.TypeOf(v).Kind(), uintptr(reflect.ValueOf(v).UnsafePointer()), reflect.ValueOf(v).Len()}
 		if active[key] {
 			return nil, fmt.Errorf("cyclic JSON value")
 		}
@@ -116,24 +120,28 @@ func appendValue(dst []byte, v any, active map[identity]bool) ([]byte, error) {
 		}
 		return append(dst, ']'), nil
 	case strictjson.Object:
-		keys := make([]string, 0, len(x))
+		keys := make([]struct {
+			name  string
+			units []uint16
+		}, 0, len(x))
 		for k := range x {
 			if !utf8.ValidString(k) {
 				return nil, fmt.Errorf("invalid UTF-8 key")
 			}
-			keys = append(keys, k)
+			keys = append(keys, struct {
+				name  string
+				units []uint16
+			}{k, utf16.Encode([]rune(k))})
 		}
-		sort.Slice(keys, func(i, j int) bool { return less(keys[i], keys[j]) })
+		sort.Slice(keys, func(i, j int) bool { return less(keys[i].units, keys[j].units) })
 		dst = append(dst, '{')
-		for i, k := range keys {
+		for i, key := range keys {
+			k := key.name
 			if i > 0 {
 				dst = append(dst, ',')
 			}
 			var err error
-			dst, err = quote(dst, k)
-			if err != nil {
-				return nil, err
-			}
+			dst = quoteValid(dst, k)
 			dst = append(dst, ':')
 			dst, err = appendValue(dst, x[k], active)
 			if err != nil {

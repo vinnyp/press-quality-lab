@@ -6,6 +6,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 )
 
+// MaxInput is the judge contract input byte limit.
 const MaxInput = 16777216
 const maxInteger int64 = 9007199254740991
 
@@ -13,12 +14,16 @@ type object = strictjson.Object
 type array = strictjson.Array
 type number = strictjson.Number
 
+var contractBounds = strictjson.Bounds{Bytes: MaxInput, Depth: 64, NumberChars: 32, ExponentDigits: 4}
+
+// readDocument is the sole raw-byte boundary for judge input, enforcing grammar,
+// contract bounds and the optional shape with its retention policy.
 func readDocument(data []byte, s *shape) (any, bool) {
 	var h strictjson.Hook
 	if s != nil {
 		h = shapeHook{s: s}
 	}
-	return strictjson.Read(data, strictjson.Bounds{Bytes: MaxInput, Depth: 64, NumberChars: 32, ExponentDigits: 4}, h)
+	return strictjson.Read(data, contractBounds, h)
 }
 func write(v any) []byte { return strictjson.Write(v) }
 func obj(v any) object {

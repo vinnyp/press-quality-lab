@@ -70,7 +70,12 @@ func newRequest(in object) *request {
 	}
 	for _, d := range dimensions {
 		for scope := range r.scopes {
-			r.inScope[d] = r.inScope[d] || ScopeIncludes(scope, d)
+			// Unknown input scopes are diagnosed by X1 after request construction.
+			switch scope {
+			case ConformanceScope, DestructiveScope, SteeringScope, CompareScope:
+				r.inScope[d] = r.inScope[d] || ScopeIncludes(scope, d)
+			default:
+			}
 		}
 	}
 	for _, v := range arr(in["required"]) {
@@ -333,6 +338,11 @@ func modelEvaluator(kind EvaluatorKind) bool {
 
 // ScopeIncludes reports whether a scope part includes a dimension (rulebook §3).
 func ScopeIncludes(scope Scope, d Dimension) bool {
+	switch scope {
+	case ConformanceScope, DestructiveScope, SteeringScope, CompareScope:
+	default:
+		panic("unknown scope")
+	}
 	switch d {
 	case CLIMCPParity:
 		return false

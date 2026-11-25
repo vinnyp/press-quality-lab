@@ -27,8 +27,11 @@ type Bounds struct{ Bytes, Depth, NumberChars, ExponentDigits int }
 type Mode uint8
 
 const (
+	// Keep retains the decoded value.
 	Keep Mode = iota
+	// Discard validates without retaining the value.
 	Discard
+	// Note retains non-null presence as an empty string.
 	Note
 )
 
@@ -37,12 +40,19 @@ const (
 // Materialize requests decoded scalar contents, even for discarded values.
 // Child selects object field policy; End validates the member or element count.
 type Hook interface {
+	// Materialize controls scalar decoding for the judge memory bound; false yields an empty string for a string token.
 	Materialize(keep bool, token byte) bool
+	// Valid accepts or rejects a decoded scalar.
 	Valid(any) bool
+	// Container accepts or rejects an opening container token.
 	Container(byte) bool
+	// Retention selects whether to keep, discard or note this node.
 	Retention() Mode
+	// Child selects a member hook; false rejects the member name.
 	Child(string) (Hook, bool)
+	// Item selects the hook for each array element.
 	Item() Hook
+	// End accepts or rejects the final member or element count.
 	End(int) bool
 }
 type reader struct {
@@ -313,9 +323,7 @@ func (r *reader) text(materialize bool) string {
 			if b.Len() == 0 {
 				return string(r.data[start : r.pos-1])
 			}
-			if materialize {
-				b.Write(r.data[start : r.pos-1])
-			}
+			b.Write(r.data[start : r.pos-1])
 			return b.String()
 		}
 		if c < 32 {
@@ -430,15 +438,19 @@ func AppendValue(dst []byte, v any) []byte {
 		if strings.ContainsAny(string(x), ".eE") {
 			return append(dst, string(x)...)
 		}
-		i, e := strconv.ParseInt(string(x), 10, 64)
-		if e != nil {
-			digits := strings.TrimPrefix(string(x), "-")
-			if strings.Trim(digits, "0") == "" {
-				return append(dst, '0')
-			}
-			return append(dst, string(x)...)
+		digits := strings.TrimPrefix(string(x), "-")
+		if digits == "" || len(digits) > 1 && digits[0] == '0' {
+			panic("invalid integer Number")
 		}
-		return strconv.AppendInt(dst, i, 10)
+		for _, c := range digits {
+			if c < '0' || c > '9' {
+				panic("invalid integer Number")
+			}
+		}
+		if i, err := strconv.ParseInt(string(x), 10, 64); err == nil {
+			return strconv.AppendInt(dst, i, 10)
+		}
+		return append(dst, string(x)...)
 	case Array:
 		dst = append(dst, '[')
 		for i, a := range x {

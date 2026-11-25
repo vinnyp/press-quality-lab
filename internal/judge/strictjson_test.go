@@ -10,11 +10,43 @@ import (
 
 func TestStrictLeafMatchesJudge(t *testing.T) {
 	for _, raw := range []string{`{"x":1,"x":2}`, `"\ud800"`, strings.Repeat("[", 65) + strings.Repeat("]", 65), `0 true`, "0" + strings.Repeat(" ", MaxInput)} {
-		if _, ok := strictjson.Read([]byte(raw), strictjson.Bounds{Bytes: MaxInput, Depth: 64, NumberChars: 32, ExponentDigits: 4}, nil); ok {
+		if _, ok := strictjson.Read([]byte(raw), contractBounds, nil); ok {
 			t.Fatal("leaf accepted")
 		}
 		assertBytes(t, []byte(raw), rejectedExpected(X12))
 	}
+	f := conformanceFixture()
+	f.e("execution")["expected"] = "payload"
+	prefix := write(f.in)
+	for _, row := range []struct{ name, raw string }{
+		{"depth_at", strings.Repeat("[", 61) + "0" + strings.Repeat("]", 61)},
+		{"number_at", strings.Repeat("1", 32)}, {"exponent_at", "1e9999"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			input := bytes.Replace(prefix, []byte(`"expected":"payload"`), []byte(`"expected":`+row.raw), 1)
+			if _, ok := strictjson.Read(input, contractBounds, nil); !ok {
+				t.Fatal("leaf rejected at limit")
+			}
+			assertBytes(t, input, f.want)
+		})
+	}
+	t.Run("bytes_at", func(t *testing.T) {
+		input := append(prefix, bytes.Repeat([]byte{' '}, MaxInput-len(prefix))...)
+		if _, ok := strictjson.Read(input, contractBounds, nil); !ok {
+			t.Fatal("leaf rejected byte limit")
+		}
+		assertBytes(t, input, f.want)
+	})
+	for _, row := range []struct {
+		name  string
+		input []byte
+	}{
+		{"bad_escape", bytes.Replace(prefix, []byte(`"expected":"payload"`), []byte(`"expected":"\x"`), 1)},
+		{"unknown_key_same_count", bytes.Replace(prefix, []byte(`"expected":`), []byte(`"unexpected":`), 1)},
+	} {
+		t.Run(row.name, func(t *testing.T) { assertBytes(t, row.input, rejectedExpected(X12)) })
+	}
+
 }
 func TestExportedDimensionTables(t *testing.T) {
 	// Rulebook §3 scope rows and §6's five structural exclusions, as literal names.
@@ -60,4 +92,13 @@ func TestAnchorPromptNegativeZero(t *testing.T) {
 	if defect != nil || code != 0 || !bytes.Contains(out, []byte(`"k":0`)) || bytes.Contains(out, []byte(`"k":-0`)) {
 		t.Fatalf("output %s code %d defect %v", out, code, defect)
 	}
+}
+
+func TestUnknownScopePanics(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("unknown scope did not panic")
+		}
+	}()
+	ScopeIncludes(Scope("unknown"), Availability)
 }

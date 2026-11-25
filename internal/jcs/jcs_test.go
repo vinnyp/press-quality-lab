@@ -60,11 +60,17 @@ func TestErrors(t *testing.T) {
 	array := make(strictjson.Array, 1)
 	array[0] = array
 	values := []any{strictjson.Number("9007199254740993"), strictjson.Number("1e400"), strictjson.Number("1e-400"), strictjson.Number("0.123456789012345678901"), strictjson.Number("NaN"), strictjson.Number("01"), strictjson.Number(""), strictjson.Number("true"), strictjson.Number("0x1p0"), "\xff", strictjson.Object{"\xff": nil}, 1, cycle, array}
-	names := []string{"integer-loss", "overflow", "underflow", "decimal-loss", "nan", "leading-zero", "empty", "boolean", "hex", "invalid-string", "invalid-key", "unsupported", "object-cycle", "array-cycle"}
+	names := []string{"integer_loss", "overflow", "underflow", "decimal_loss", "nan", "leading_zero", "empty", "boolean", "hex", "invalid_string", "invalid_key", "unsupported", "object_cycle", "array_cycle"}
 	for i, v := range values {
 		t.Run(names[i], func(t *testing.T) {
 			if b, err := jcs.Canonical(v); err == nil || b != nil {
 				t.Fatalf("Canonical returned %q, %v", b, err)
+			}
+			if names[i] == "overflow" {
+				_, err := jcs.Canonical(v)
+				if err == nil || err.Error() != `number outside binary64: "1e400"` {
+					t.Fatalf("overflow error: %v", err)
+				}
 			}
 			if s, err := jcs.Digest(v); err == nil || s != "" {
 				t.Fatalf("Digest returned %q, %v", s, err)
@@ -110,7 +116,7 @@ func TestCorpusPreimages(t *testing.T) {
 			t.Fatal(err)
 		}
 		files++
-		t.Run(filepath.Base(filepath.Dir(path)), func(t *testing.T) {
+		t.Run(strings.ReplaceAll(filepath.Base(filepath.Dir(path)), "-", "_"), func(t *testing.T) {
 			preimages := object(t, parse(t, b))
 			if len(preimages) == 0 {
 				t.Fatal("empty preimages")
@@ -158,4 +164,13 @@ func array(t *testing.T, v any) strictjson.Array {
 		t.Fatalf("want array, got %T", v)
 	}
 	return x
+}
+
+func TestAliasedSlices(t *testing.T) {
+	x := make(strictjson.Array, 2)
+	x[1] = x[0:1]
+	b, err := jcs.Canonical(x)
+	if err != nil || string(b) != "[null,[null]]" {
+		t.Fatalf("canonical=%s error=%v", b, err)
+	}
 }
