@@ -111,6 +111,8 @@ step jcs-vectors 'verify generated JCS vectors'
 PYTHONDONTWRITEBYTECODE=1 python3 -I -B scripts/test_generate_jcs_vectors.py
 step ids-tests 'test canonical JSON and collection check ids'
 PYTHONDONTWRITEBYTECODE=1 python3 -I -B scripts/test_collection_ids.py
+step ratchet-prediction 'test the ratchet-set prediction script'
+PYTHONDONTWRITEBYTECODE=1 python3 -I -B scripts/test_predict_ratchet.py
 step behaviour 'validate behaviour schemas and agreement'
 PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I -B scripts/check-behaviour.py docs/specs/conformance-collection-1.0
 step ids-cross-check 'cross-check collection case ids and recordings'
