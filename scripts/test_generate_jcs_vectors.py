@@ -11,9 +11,13 @@ ROOT = Path(__file__).resolve().parents[1]
 class GeneratedVectors(unittest.TestCase):
     def test_checked_in_vectors(self):
         result = subprocess.run(
-            [sys.executable, "-I", str(ROOT / "scripts/generate_jcs_vectors.py"), "--stdout"],
+            [sys.executable, "-I", "-B", str(ROOT / "scripts/generate_jcs_vectors.py"), "--stdout"],
             check=True, capture_output=True,
             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        )
+        subprocess.run(
+            [sys.executable, "-I", "-B", str(ROOT / "scripts/generate_jcs_vectors.py"), "--check"],
+            check=True, capture_output=True,
         )
         self.assertEqual(
             (ROOT / "internal/jcs/testdata/vectors.json").read_bytes(),

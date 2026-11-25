@@ -435,17 +435,17 @@ func AppendValue(dst []byte, v any) []byte {
 	case int64:
 		return strconv.AppendInt(dst, x, 10)
 	case Number:
+		// Reuse the reader's number grammar without imposing caller input limits.
+		r := reader{data: []byte(x), bounds: Bounds{NumberChars: len(x), ExponentDigits: len(x)}}
+		if len(x) == 0 || x[0] != '-' && (x[0] < '0' || x[0] > '9') {
+			panic("invalid Number")
+		}
+		r.atom(false)
+		if r.bad || r.pos != len(x) {
+			panic("invalid Number")
+		}
 		if strings.ContainsAny(string(x), ".eE") {
 			return append(dst, string(x)...)
-		}
-		digits := strings.TrimPrefix(string(x), "-")
-		if digits == "" || len(digits) > 1 && digits[0] == '0' {
-			panic("invalid integer Number")
-		}
-		for _, c := range digits {
-			if c < '0' || c > '9' {
-				panic("invalid integer Number")
-			}
 		}
 		if i, err := strconv.ParseInt(string(x), 10, 64); err == nil {
 			return strconv.AppendInt(dst, i, 10)

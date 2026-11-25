@@ -9,11 +9,19 @@ import (
 )
 
 func TestStrictLeafMatchesJudge(t *testing.T) {
-	for _, raw := range []string{`{"x":1,"x":2}`, `"\ud800"`, strings.Repeat("[", 65) + strings.Repeat("]", 65), `0 true`, "0" + strings.Repeat(" ", MaxInput)} {
-		if _, ok := strictjson.Read([]byte(raw), contractBounds, nil); ok {
-			t.Fatal("leaf accepted")
-		}
-		assertBytes(t, []byte(raw), rejectedExpected(X12))
+	for _, row := range []struct{ name, raw string }{
+		{"duplicate", `{"x":1,"x":2}`},
+		{"surrogate", `"\ud800"`},
+		{"depth_over", strings.Repeat("[", 65) + strings.Repeat("]", 65)},
+		{"trailing", `0 true`},
+		{"bytes_over", "0" + strings.Repeat(" ", MaxInput)},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			if _, ok := strictjson.Read([]byte(row.raw), contractBounds, nil); ok {
+				t.Fatal("leaf accepted")
+			}
+			assertBytes(t, []byte(row.raw), rejectedExpected(X12))
+		})
 	}
 	f := conformanceFixture()
 	f.e("execution")["expected"] = "payload"

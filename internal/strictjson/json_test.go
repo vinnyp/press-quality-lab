@@ -26,6 +26,7 @@ func TestReaderLimits(t *testing.T) {
 		{"duplicate", `{"x":0,"\u0078":1}`, false},
 		{"surrogate", `"\ud800"`, false},
 		{"low_surrogate", `"\udc00"`, false},
+		{"uppercase_hex", `"\u00C9\u00e9"`, true},
 		{"pair", `"\ud834\udd1e"`, true},
 		{"depth_at", strings.Repeat("[", 64) + "0" + strings.Repeat("]", 64), true},
 		{"depth_over", strings.Repeat("[", 65) + strings.Repeat("]", 65), false},
@@ -37,7 +38,10 @@ func TestReaderLimits(t *testing.T) {
 		{"utf8", string([]byte{34, 0xed, 0xa0, 0x80, 34}), false},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			_, ok := Read([]byte(row.raw), testBounds(), nil)
+			v, ok := Read([]byte(row.raw), testBounds(), nil)
+			if row.name == "uppercase_hex" && v != "Éé" {
+				t.Fatalf("decoded=%v want Éé", v)
+			}
 			if ok != row.ok {
 				t.Fatalf("accepted=%v want %v", ok, row.ok)
 			}
@@ -175,12 +179,18 @@ func TestRetentionHook(t *testing.T) {
 
 type contractHook struct {
 	retentionHook
-	reject string
+	reject   string
+	endCount *int
 }
 
-func (h contractHook) Valid(any) bool                     { return h.reject != "valid" }
-func (h contractHook) Container(byte) bool                { return h.reject != "container" }
-func (h contractHook) End(int) bool                       { return h.reject != "end" }
+func (h contractHook) Valid(any) bool      { return h.reject != "valid" }
+func (h contractHook) Container(byte) bool { return h.reject != "container" }
+func (h contractHook) End(count int) bool {
+	if h.endCount != nil {
+		*h.endCount = count
+	}
+	return h.reject != "end" && h.reject != "end_object"
+}
 func (h contractHook) Child(k string) (Hook, bool)        { return nil, k != "forbidden" }
 func (h contractHook) Materialize(keep bool, _ byte) bool { return keep && h.reject != "materialize" }
 func TestHookContract(t *testing.T) {
@@ -188,25 +198,33 @@ func TestHookContract(t *testing.T) {
 		name, raw string
 		ok        bool
 		want      string
+		count     int
 	}{
-		{"valid", "0", false, "null"}, {"container", "[]", false, "null"},
-		{"end", "[]", false, "null"}, {"child", `{"forbidden":0}`, false, "null"},
-		{"materialize", `"contents"`, true, `""`},
+		{"valid", "0", false, "", -1}, {"container", "[]", false, "", -1},
+		{"end", "[]", false, "", 0}, {"child", `{"forbidden":0}`, false, "", 1},
+		{"materialize", `"contents"`, true, `""`, -1},
+		{"end_object", `{"a":0}`, false, "", 1},
+		{"array_count", `[0,0]`, true, `[0,0]`, 2},
+		{"object_count", `{"a":0}`, true, `{"a":0}`, 1},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			v, ok := Read([]byte(row.raw), testBounds(), contractHook{reject: row.name})
+			count := -1
+			v, ok := Read([]byte(row.raw), testBounds(), contractHook{reject: row.name, endCount: &count})
+			if count != row.count {
+				t.Fatalf("End count=%d want %d", count, row.count)
+			}
 			if ok != row.ok || ok && string(AppendValue(nil, v)) != row.want {
 				t.Fatalf("value=%v accepted=%v", v, ok)
 			}
 		})
 	}
 }
-func TestInvalidConstructedInteger(t *testing.T) {
-	for _, raw := range []string{"", "-", "+1", "01", "-00", "1x", "123456789012345678901x"} {
+func TestInvalidConstructedNumber(t *testing.T) {
+	for _, raw := range []string{"", "-", "+1", "01", "-00", "1x", "123456789012345678901x", "1e", "x.y", "1.2.3", "1.", "1e+", "01.2", "1e2x", "true"} {
 		t.Run(strings.ReplaceAll(strings.ReplaceAll(raw, "-", "minus"), "+", "plus")+"invalid", func(t *testing.T) {
 			defer func() {
 				if recover() == nil {
-					t.Fatal("invalid integer did not panic")
+					t.Fatal("invalid number did not panic")
 				}
 			}()
 			Write(Number(raw))

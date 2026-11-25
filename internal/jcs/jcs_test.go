@@ -63,11 +63,11 @@ func TestErrors(t *testing.T) {
 	names := []string{"integer_loss", "overflow", "underflow", "decimal_loss", "nan", "leading_zero", "empty", "boolean", "hex", "invalid_string", "invalid_key", "unsupported", "object_cycle", "array_cycle"}
 	for i, v := range values {
 		t.Run(names[i], func(t *testing.T) {
-			if b, err := jcs.Canonical(v); err == nil || b != nil {
+			b, err := jcs.Canonical(v)
+			if err == nil || b != nil {
 				t.Fatalf("Canonical returned %q, %v", b, err)
 			}
 			if names[i] == "overflow" {
-				_, err := jcs.Canonical(v)
 				if err == nil || err.Error() != `number outside binary64: "1e400"` {
 					t.Fatalf("overflow error: %v", err)
 				}

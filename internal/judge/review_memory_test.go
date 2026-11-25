@@ -109,40 +109,49 @@ func TestReviewRetainedFields(t *testing.T) {
 
 func TestFreeStringMemory(t *testing.T) {
 	for _, field := range []string{"precondition", "model"} {
-		t.Run(field, func(t *testing.T) {
-			f := conformanceFixture()
-			// Both fields are free strings; precondition records only non-null presence.
-			var node object
-			if field == "precondition" {
-				node = obj(arr(f.in["required"])[0])
-			} else {
-				node = obj(f.e("execution")["evaluator"])
-			}
-			node[field] = "payload"
-			// Establish the expected decision for the non-null precondition too.
-			small := write(f.in)
-			want, code, defect := Safe(Judge, small)
-			if defect != nil || code != 0 {
-				t.Fatalf("control code=%d defect=%v", code, defect)
-			}
-			input := bytes.Replace(small, []byte(`"payload"`), append(append([]byte{'"'}, bytes.Repeat([]byte{'x'}, MaxInput-len(small)+len("payload"))...), '"'), 1)
-			if len(input) != MaxInput {
-				t.Fatalf("fixture size %d", len(input))
-			}
-			runtime.GC()
-			var before, after runtime.MemStats
-			runtime.ReadMemStats(&before)
-			output, code, defect := Safe(Judge, input)
-			runtime.ReadMemStats(&after)
-			runtime.KeepAlive(input)
-			if defect != nil || code != 0 || !bytes.Equal(output, want) {
-				t.Fatalf("large string code=%d defect=%v", code, defect)
-			}
-			allocated := after.TotalAlloc - before.TotalAlloc
-			t.Logf("allocated %d bytes for %d input bytes", allocated, len(input))
-			if allocated > 2<<20 {
-				t.Fatalf("free string allocated %d bytes", allocated)
-			}
-		})
+		for _, encoding := range []string{"plain", "escaped"} {
+			t.Run(field+"/"+encoding, func(t *testing.T) {
+				f := conformanceFixture()
+				// Both fields are free strings; precondition records only non-null presence.
+				var node object
+				if field == "precondition" {
+					node = obj(arr(f.in["required"])[0])
+				} else {
+					node = obj(f.e("execution")["evaluator"])
+				}
+				node[field] = "payload"
+				// Establish the expected decision for the non-null precondition too.
+				small := write(f.in)
+				want, code, defect := Safe(Judge, small)
+				if defect != nil || code != 0 {
+					t.Fatalf("control code=%d defect=%v", code, defect)
+				}
+				size := MaxInput - len(small) + len("payload")
+				unit := []byte("x")
+				if encoding == "escaped" {
+					unit = []byte(`xxxxxx\n`)
+				}
+				payload := bytes.Repeat(unit, size/len(unit))
+				payload = append(payload, bytes.Repeat([]byte{'x'}, size%len(unit))...)
+				input := bytes.Replace(small, []byte(`"payload"`), append(append([]byte{'"'}, payload...), '"'), 1)
+				if len(input) != MaxInput {
+					t.Fatalf("fixture size %d", len(input))
+				}
+				runtime.GC()
+				var before, after runtime.MemStats
+				runtime.ReadMemStats(&before)
+				output, code, defect := Safe(Judge, input)
+				runtime.ReadMemStats(&after)
+				runtime.KeepAlive(input)
+				if defect != nil || code != 0 || !bytes.Equal(output, want) {
+					t.Fatalf("large string code=%d defect=%v", code, defect)
+				}
+				allocated := after.TotalAlloc - before.TotalAlloc
+				t.Logf("allocated %d bytes for %d input bytes", allocated, len(input))
+				if allocated > 2<<20 {
+					t.Fatalf("free string allocated %d bytes", allocated)
+				}
+			})
+		}
 	}
 }
