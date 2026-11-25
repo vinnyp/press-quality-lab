@@ -69,19 +69,14 @@ func newRequest(in object) *request {
 		r.scopes[enum[Scope](s)] = true
 	}
 	for _, d := range dimensions {
-		switch d {
-		case CLIMCPParity:
-			r.inScope[d] = false
-		case DestructiveGuard:
-			r.inScope[d] = r.scopes[DestructiveScope]
-		case Steering:
-			r.inScope[d] = r.scopes[SteeringScope]
-		case ToolDescriptionEfficacy:
-			r.inScope[d] = r.scopes[CompareScope]
-		case Availability, Execution, GracefulFailure, Robustness, ResponseCorrectness, Determinism, ProvenanceHonesty, CompletenessSignaling, OutputConformance, FlagConformance, Bounding, Discoverability, ErrorMessageQuality, TokenEconomy, SideEffectIntegrity, Idempotency, PIISecretHygiene:
-			r.inScope[d] = r.scopes[ConformanceScope]
+		for scope := range r.scopes {
+			// Unknown input scopes are diagnosed by X1 after request construction.
+			switch scope {
+			case ConformanceScope, DestructiveScope, SteeringScope, CompareScope:
+				r.inScope[d] = r.inScope[d] || ScopeIncludes(scope, d)
+			default:
+			}
 		}
-
 	}
 	for _, v := range arr(in["required"]) {
 		c := obj(v)
@@ -339,4 +334,26 @@ func modelEvaluator(kind EvaluatorKind) bool {
 		return false
 	}
 	panic("unknown evaluator")
+}
+
+// ScopeIncludes reports whether a scope part includes a dimension (rulebook §3).
+func ScopeIncludes(scope Scope, d Dimension) bool {
+	switch scope {
+	case ConformanceScope, DestructiveScope, SteeringScope, CompareScope:
+	default:
+		panic("unknown scope")
+	}
+	switch d {
+	case CLIMCPParity:
+		return false
+	case DestructiveGuard:
+		return scope == DestructiveScope
+	case Steering:
+		return scope == SteeringScope
+	case ToolDescriptionEfficacy:
+		return scope == CompareScope
+	case Availability, Execution, GracefulFailure, Robustness, ResponseCorrectness, Determinism, ProvenanceHonesty, CompletenessSignaling, OutputConformance, FlagConformance, Bounding, Discoverability, ErrorMessageQuality, TokenEconomy, SideEffectIntegrity, Idempotency, PIISecretHygiene:
+		return scope == ConformanceScope
+	}
+	panic("unknown dimension")
 }

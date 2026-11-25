@@ -104,6 +104,8 @@ PYCODE
 )
 step collection-controls 'verify sealed collection and scratch runner controls'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-draft.py
+step jcs-vectors 'verify generated JCS vectors'
+PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/test_generate_jcs_vectors.py
 step ids-tests 'test canonical JSON and collection check ids'
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/test_collection_ids.py
 step behaviour 'validate behaviour schemas and agreement'

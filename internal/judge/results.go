@@ -172,7 +172,7 @@ func (r *request) dimensions(checks array) (array, array, array, object, map[Dim
 			excluded = facts[fact] != nil && !boolean(facts[fact])
 		case Availability, Execution, GracefulFailure, Robustness, ResponseCorrectness, Determinism, CLIMCPParity, ProvenanceHonesty, CompletenessSignaling, OutputConformance, Discoverability, ErrorMessageQuality, TokenEconomy, PIISecretHygiene, Steering, ToolDescriptionEfficacy:
 		}
-		state, rule, reason := dimensionState(r.inScope[d], excluded, fact != "" && facts[fact] == nil, marked[d], results[d])
+		state, rule, reason := dimensionState(r.inScope[d], excluded, !AlwaysApplicable(d) && facts[fact] == nil, marked[d], results[d])
 		if rule == D0 && dimensionGroup(d) == SteeringGroup {
 			reason = LiveNotRun
 		}
@@ -276,4 +276,15 @@ func (r *request) evaluate() (object, int) {
 	}
 	o["exit_code"] = code
 	return o, code
+}
+
+// AlwaysApplicable reports whether a dimension has no structural deciding fact (§6).
+func AlwaysApplicable(d Dimension) bool {
+	switch d {
+	case Bounding, Idempotency, DestructiveGuard, SideEffectIntegrity, FlagConformance:
+		return false
+	case Availability, Execution, GracefulFailure, Robustness, ResponseCorrectness, Determinism, CLIMCPParity, ProvenanceHonesty, CompletenessSignaling, OutputConformance, Discoverability, ErrorMessageQuality, TokenEconomy, PIISecretHygiene, Steering, ToolDescriptionEfficacy:
+		return true
+	}
+	panic("unknown dimension")
 }

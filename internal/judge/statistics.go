@@ -4,7 +4,8 @@ import (
 	"math"
 	"sort"
 	"strconv"
-	"strings"
+
+	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 )
 
 func bounds(k, n int64) (float64, float64) {
@@ -115,74 +116,6 @@ func promptOutput(id string, s score, count int64) object {
 	}
 
 	return o
-}
-func normalize(n number) string {
-	s := string(n)
-	negative := strings.HasPrefix(s, "-")
-	s = strings.TrimPrefix(s, "-")
-	exponent := 0
-	if p := strings.IndexAny(s, "eE"); p >= 0 {
-		var e error
-		exponent, e = strconv.Atoi(s[p+1:])
-		if e != nil {
-			panic(e)
-		}
-		s = s[:p]
-	}
-	if p := strings.IndexByte(s, '.'); p >= 0 {
-		exponent -= len(s) - p - 1
-		s = s[:p] + s[p+1:]
-	}
-	s = strings.TrimLeft(s, "0")
-	if s == "" {
-		return "0"
-	}
-	trim := strings.TrimRight(s, "0")
-	exponent += len(s) - len(trim)
-	if negative {
-		trim = "-" + trim
-	}
-	return trim + "e" + strconv.Itoa(exponent)
-}
-func equalJSON(a, b any) bool {
-	switch x := a.(type) {
-	case nil:
-		return b == nil
-	case string:
-		y, ok := b.(string)
-		return ok && x == y
-	case bool:
-		y, ok := b.(bool)
-		return ok && x == y
-	case number:
-		y, ok := b.(number)
-		return ok && normalize(x) == normalize(y)
-	case array:
-		y, ok := b.(array)
-		if !ok || len(x) != len(y) {
-			return false
-		}
-		for i := range x {
-			if !equalJSON(x[i], y[i]) {
-				return false
-			}
-		}
-		return true
-	case object:
-		y, ok := b.(object)
-		if !ok || len(x) != len(y) {
-			return false
-		}
-		for k, v := range x {
-			w, exists := y[k]
-			if !exists || !equalJSON(v, w) {
-				return false
-			}
-		}
-		return true
-	default:
-		panic("invalid comparison node")
-	}
 }
 func (r *request) scores() map[poolKey]score {
 	scores := map[poolKey]score{}
@@ -347,3 +280,5 @@ func (r *request) setAside() (array, array) {
 	}
 	return aside, pools
 }
+
+func equalJSON(a, b any) bool { return strictjson.EqualJSON(a, b) }
