@@ -29,6 +29,29 @@ func TestEveryCaseAssembles(t *testing.T) {
 			if err := Read(filepath.Join(source, "case.json"), &c); err != nil {
 				t.Fatal(err)
 			}
+			var raw map[string]any
+			if err := Read(filepath.Join(source, "case.json"), &raw); err != nil {
+				t.Fatal(err)
+			}
+			input, ok := raw["input"].(map[string]any)
+			if !ok {
+				t.Fatal("input absent")
+			}
+			scope, ok := input["scope"].([]any)
+			if !ok {
+				t.Fatal("scope absent")
+			}
+			wantScope := make([]string, len(scope))
+			for i, v := range scope {
+				word, ok := v.(string)
+				if !ok {
+					t.Fatal("scope entry is not a string")
+				}
+				wantScope[i] = word
+			}
+			if !reflect.DeepEqual(c.Input.Scope, wantScope) {
+				t.Fatalf("scope got %v want %v", c.Input.Scope, wantScope)
+			}
 			l := Assemble(t, kit, source, c)
 			want := []string{c.Input.SubjectFile, "bin", "bin/subject", "seed", "computations"}
 			for _, name := range []string{"seed", "computations"} {

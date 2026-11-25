@@ -18,6 +18,7 @@ type Case struct {
 	ID    string `json:"id"`
 	Kind  string `json:"kind"`
 	Input struct {
+		Scope       []string                              `json:"scope"`
 		SubjectFile string                                `json:"subject_file"`
 		Form        string                                `json:"form"`
 		Request     string                                `json:"request"`

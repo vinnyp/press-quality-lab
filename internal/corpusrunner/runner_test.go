@@ -218,12 +218,115 @@ func discovery(k map[string]any) bool {
 	}
 	return words[len(words)-1] == "--help"
 }
+
+// levelTwoPlaceholder independently follows QS5's dependency bullets. Command
+// selection uses the longest declared prefix, including the bare binary.
+func levelTwoPlaceholder(subject, pre map[string]any) bool {
+	if placeholder(subject["binary"]) {
+		return true
+	}
+	probe := pre["probe"]
+	if probe == "discovery" {
+		return placeholder(subject["declared_count"])
+	}
+	if placeholder(subject["seed"]) || placeholder(subject["store"]) {
+		return true
+	}
+	blockedCommand := func(words []any) bool {
+		longest := -1
+		blocked := false
+		for _, value := range list(subject["commands"]) {
+			command := object(value)
+			prefix := list(command["words"])
+			if len(prefix) <= len(words) && len(prefix) > longest && (len(prefix) == 0 || reflect.DeepEqual(prefix, words[:len(prefix)])) {
+				longest = len(prefix)
+				blocked = placeholder(command["class"]) || placeholder(command["writes"])
+			}
+		}
+		return blocked
+	}
+	if probe == "planted_secret" {
+		if placeholder(subject["secret"]) {
+			return true
+		}
+		for _, value := range list(object(subject["secret"])["commands"]) {
+			if blockedCommand(list(value)) {
+				return true
+			}
+		}
+		for _, value := range list(object(pre["parameters"])["commands"]) {
+			if blockedCommand(list(object(value)["words"])) {
+				return true
+			}
+		}
+		return false
+	}
+	return blockedCommand(list(pre["words"]))
+}
+
+func hasPlaceholder(value any) bool {
+	if placeholder(value) {
+		return true
+	}
+	for _, v := range object(value) {
+		if hasPlaceholder(v) {
+			return true
+		}
+	}
+	for _, v := range list(value) {
+		if hasPlaceholder(v) {
+			return true
+		}
+	}
+	return false
+}
+
+func placeholderClass(subject, pre map[string]any, invocations []any) (string, error) {
+	if levelTwoPlaceholder(subject, pre) {
+		return "level_two", nil
+	}
+	trigger := hasPlaceholder(subject)
+	// Discovery help requests identify discovered commands independently of
+	// evidence's collector-chosen expected and observed fields (QE19).
+	for _, value := range invocations {
+		key := object(value)
+		if !discovery(key) {
+			continue
+		}
+		words := list(key["words"])
+		words = words[:len(words)-1]
+		if len(words) == 0 {
+			continue
+		}
+		declared := false
+		for _, command := range list(subject["commands"]) {
+			declared = declared || reflect.DeepEqual(words, list(object(command)["words"]))
+		}
+		trigger = trigger || !declared
+	}
+	// Rulebook §6 lists precisely these five structurally excludable dimensions.
+	dimension, ok := pre["dimension"].(string)
+	excluded := slices.Contains([]string{"bounding", "idempotency", "destructive-guard", "side-effect-integrity", "flag-conformance"}, dimension)
+	if trigger && ok && dimension != "" && !excluded {
+		return "override", nil
+	}
+	return "", errors.New("placeholder check has neither level-two dependency nor override")
+}
+
 func checkTrace(c caseassembly.Case, subject, input, preimages map[string]any, tr trace) error {
 	if tr.Required == nil {
 		return errors.New("trace not read")
 	}
 	if c.Kind == "derivation-only" && (len(tr.Served) > 0 || len(tr.Homes) > 0) {
 		return errors.New("derivation collected")
+	}
+	for _, value := range list(input["evidence"]) {
+		ev := object(value)
+		if ev["reason"] == "placeholder_unfilled" {
+			if _, err := placeholderClass(subject, object(preimages[fmt.Sprint(ev["check_id"])]), c.Invocations); err != nil {
+				return err
+			}
+		}
 	}
 	host := c.Input.Host
 	noRun := object(host["confinement"])["applied"] == false || host["self_test"] == "failed" || host["private_copy"] == "changed" || placeholder(subject["binary"])
@@ -246,7 +349,7 @@ func checkTrace(c caseassembly.Case, subject, input, preimages map[string]any, t
 			return errors.New("computation capture was cut")
 		}
 		// A key shared with an executable check remains allowed. Keys belonging
-		// solely to stopped/placeholder checks must not reach the source.
+		// solely to checks stopped before collection must not reach the source.
 		matched, runnable := false, false
 		for _, e := range list(input["evidence"]) {
 			ev := object(e)
@@ -263,7 +366,7 @@ func checkTrace(c caseassembly.Case, subject, input, preimages map[string]any, t
 			}
 			if match {
 				matched = true
-				if ev["reason"] != "earlier_step_failed" && ev["reason"] != "placeholder_unfilled" {
+				if ev["reason"] != "earlier_step_failed" && (ev["reason"] != "placeholder_unfilled" || !levelTwoPlaceholder(subject, p)) {
 					runnable = true
 				}
 			}

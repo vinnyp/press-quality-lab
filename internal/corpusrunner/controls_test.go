@@ -201,7 +201,7 @@ func TestTraceGuards(t *testing.T) {
 	// A fixture key associated only with a stopped check must not be served.
 	key := map[string]any{"words": []any{"list"}, "runbook": "book", "step": "second", "computation": nil, "home": "runbook", "offline_args": nil, "env": []any{}}
 	c.Invocations = []any{key}
-	for _, reason := range []string{"earlier_step_failed", "placeholder_unfilled"} {
+	for _, reason := range []string{"earlier_step_failed"} {
 		input = map[string]any{"evidence": []any{map[string]any{"check_id": "id", "reason": reason}}}
 		pre = map[string]any{"id": map[string]any{"words": []any{"list"}, "runbook": "book", "step": "second"}}
 		assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Served: []any{key}}), "served only for blocked checks")
@@ -490,5 +490,73 @@ func TestListGrammar(t *testing.T) {
 	want := map[string]bool{"QH1": true, "QH2": true}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("entries %v, want %v", got, want)
+	}
+}
+
+func TestPlaceholderCorpus(t *testing.T) {
+	entries, err := os.ReadDir(filepath.Join(kit, "cases"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantCounts := map[string][2]int{
+		"case-022": {0, 18}, "case-060": {29, 0}, "case-061": {28, 1}, "case-062": {28, 1}, "case-063": {4, 17}, "case-064": {1, 18}, "case-065": {1, 18}, "case-066": {0, 19}, "case-091": {1, 12},
+	}
+	cases := 0
+	for _, entry := range entries {
+		c, input, subject, pre := fixture(t, entry.Name())
+		counts := map[string]int{}
+		for _, value := range list(input["evidence"]) {
+			ev := object(value)
+			if ev["reason"] != "placeholder_unfilled" {
+				continue
+			}
+			id, ok := ev["check_id"].(string)
+			if !ok {
+				t.Fatal("check_id absent")
+			}
+			class, err := placeholderClass(subject, object(pre[id]), c.Invocations)
+			if err != nil {
+				t.Fatalf("%s: %v", c.ID, err)
+			}
+			counts[class]++
+		}
+		if len(counts) != 0 {
+			cases++
+			if got := [2]int{counts["level_two"], counts["override"]}; got != wantCounts[c.ID] {
+				t.Fatalf("%s classification got %v want %v", c.ID, got, wantCounts[c.ID])
+			}
+			t.Logf("%s level_two=%d override=%d", c.ID, counts["level_two"], counts["override"])
+		}
+	}
+	if cases != 9 {
+		t.Fatalf("placeholder cases %d, want 9", cases)
+	}
+}
+
+func TestPlaceholderTraceClasses(t *testing.T) {
+	for _, row := range []struct {
+		name             string
+		blocked, trigger bool
+		want             string
+	}{
+		{"level_two", true, false, "served only for blocked checks"},
+		{"override", false, true, ""},
+		{"neither", false, false, "placeholder check has neither level-two dependency nor override"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			c, _, subject, _ := fixture(t, "case-001")
+			subject["commands"] = []any{map[string]any{"words": []any{"list"}, "class": "safe", "writes": false}}
+			if row.blocked {
+				object(list(subject["commands"])[0])["class"] = map[string]any{"placeholder": "safety"}
+			}
+			if row.trigger {
+				subject["declared_count"] = map[string]any{"placeholder": "count"}
+			}
+			key := map[string]any{"words": []any{"list"}, "offline_args": nil, "env": []any{}, "runbook": nil, "step": nil, "computation": nil, "home": "seed"}
+			c.Invocations = []any{key}
+			pre := map[string]any{"id": map[string]any{"words": []any{"list"}, "dimension": "execution"}}
+			input := map[string]any{"evidence": []any{map[string]any{"check_id": "id", "reason": "placeholder_unfilled"}}}
+			assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Served: []any{key}}), row.want)
+		})
 	}
 }

@@ -53,7 +53,16 @@ func ledgerRules(root string) (map[string]bool, error) {
 // evidence tag. Evaluate every assignment of the other tags, not a substring
 // that could be a comment or one side of an OR.
 func evidenceOnly(source string) bool {
+	// The parser locates the package token even with leading block comments or
+	// unusual whitespace; constraints in declarations or raw strings are not headers.
+	fset := token.NewFileSet()
+	if file, err := parser.ParseFile(fset, "proof.go", source, parser.PackageClauseOnly); err == nil {
+		source = source[:fset.Position(file.Package).Offset]
+	}
 	for _, line := range strings.Split(source, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "package ") {
+			break
+		}
 		if !strings.HasPrefix(line, "//go:build ") {
 			continue
 		}
@@ -127,7 +136,7 @@ func proofExists(root, cases, id string, p ruleProof) bool {
 			return false
 		}
 		section := strings.SplitN(cases, "## "+p.Section+"\n", 2)
-		if len(section) != 2 || p.Route == "" {
+		if len(section) != 2 || !strings.HasPrefix(p.Route, "- "+id+": ") {
 			return false
 		}
 		body := strings.SplitN(section[1], "\n## ", 2)[0]
@@ -163,8 +172,40 @@ func proofExists(root, cases, id string, p ruleProof) bool {
 			return false
 		}
 	}
-	if p.Kind == "macos_evidence" && !evidenceOnly(string(data)) {
-		return false
+	if p.Kind == "macos_evidence" {
+		if !evidenceOnly(string(data)) {
+			return false
+		}
+		gate, err := os.ReadFile(filepath.Join("../..", "gate.sh"))
+		if err != nil {
+			return false
+		}
+		loops := regexp.MustCompile(`(?ms)^for tags in ([^\n]+); do\n(.*?)^done$`).FindAllStringSubmatch(string(gate), -1)
+		builds := false
+		for _, loop := range loops {
+			if !strings.Contains(loop[2], "compile_evidence") {
+				continue
+			}
+			for _, tags := range strings.Fields(loop[1]) {
+				tags = strings.Trim(tags, "'")
+				ctx := build.Default
+				ctx.GOOS, ctx.GOARCH, ctx.CgoEnabled = "darwin", "arm64", false
+				ctx.BuildTags = nil
+				if tags != "" {
+					ctx.BuildTags = strings.Split(tags, ",")
+				}
+				without, err := ctx.MatchFile(filepath.Join(root, filepath.Dir(p.File)), filepath.Base(p.File))
+				if err != nil || without {
+					return false
+				}
+				ctx.BuildTags = append(ctx.BuildTags, "macos_evidence")
+				with, err := ctx.MatchFile(filepath.Join(root, filepath.Dir(p.File)), filepath.Base(p.File))
+				builds = builds || (err == nil && with)
+			}
+		}
+		if !builds {
+			return false
+		}
 	}
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, p.File, data, parser.ParseComments)
@@ -327,13 +368,17 @@ func TestLedgerControls(t *testing.T) {
 		"subtest_test.go":  "package fixture\nimport \"testing\"\nfunc TestProof(t *testing.T) { t.Run(\"QS1\",func(t *testing.T){}) }\n",
 		"scripted_test.go": "//go:build scripted\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
 
-		"evidence_test.go": "//go:build macos_evidence\n\npackage fixture\nimport \"testing\"\n// QH13\nfunc TestProof(t *testing.T) {}\n",
+		"never_evidence_test.go": "//go:build macos_evidence && never_ci\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
+		"linux_evidence_test.go": "//go:build linux && macos_evidence\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
+		"evidence_linux_test.go": "//go:build macos_evidence\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
+		"raw_test.go":            "package fixture\nimport \"testing\"\nvar text = `\n//go:build macos_evidence\n`\n// QS1\nfunc TestProof(t *testing.T) {}\n",
+		"evidence_test.go":       "//go:build macos_evidence\n\npackage fixture\nimport \"testing\"\n// QH13\nfunc TestProof(t *testing.T) {}\n",
 	} {
 		if err := os.WriteFile(filepath.Join(root, name), []byte(source), 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
-	cases := "## Stated limits\n- QS1: stated\n## Not expressible as a case\n- QS1: valid\n- QH13: starts no process\n"
+	cases := "## Stated limits\n- QS1: stated\n## Not expressible as a case\n- QS1: valid\n- QH13: starts no process\n- QH1: cites QT4\n"
 	proof := ruleProof{Kind: "test", File: "valid_test.go", Function: "TestProof"}
 	for _, tc := range []struct {
 		name, id string
@@ -341,6 +386,11 @@ func TestLedgerControls(t *testing.T) {
 		pending  map[string]bool
 		want     []string
 	}{
+		{"never_evidence", "QS1", []ruleProof{{Kind: "macos_evidence", File: "never_evidence_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
+		{"linux_evidence", "QS1", []ruleProof{{Kind: "macos_evidence", File: "linux_evidence_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
+		{"linux_filename", "QS1", []ruleProof{{Kind: "macos_evidence", File: "evidence_linux_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
+		{"raw_constraint", "QS1", []ruleProof{{Kind: "macos_evidence", File: "raw_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
+		{"inline_limit", "QT4", []ruleProof{{Kind: "limit", Section: "Not expressible as a case", Route: "- QH1: cites QT4"}}, nil, []string{"QT4: invalid proof"}},
 		{"existing", "QS1", []ruleProof{proof}, nil, nil},
 		{"missing_test", "QS1", []ruleProof{{Kind: "test", File: proof.File, Function: "TestAbsent"}}, nil, []string{"QS1: invalid proof"}},
 		{"removed_mapping", "QS1", nil, nil, []string{"QS1: neither mapped nor listed"}},
