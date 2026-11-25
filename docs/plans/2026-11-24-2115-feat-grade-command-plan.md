@@ -41,7 +41,7 @@ This plan covers phase 3 of the [engine plan](2026-11-21-engine-plan.md). Its ow
   | slice e; second private scoring | 2027-01-08 |
   | the close | 2027-01-13 |
 
-  The first week spans a public holiday, so 2026-12-08 for the thin slice is at risk if the confinement core runs to its stop date. The weeks of 2026-12-21 and 2026-12-28 are half buffer, and 2027-01-16 is kept spare. The owner's E-3 ruling and the readings the thin slice needs are asked for on 2026-11-25; E-3 is needed by 2026-12-11. If the owner adopts a collection 1.1, slice e waits for its seal, and the owner is told the same day if the close is at risk.
+  The first week spans a public holiday, so 2026-12-08 for the thin slice is at risk if the confinement core runs to its stop date. The weeks of 2026-12-21 and 2026-12-28 are half buffer, and 2027-01-16 is kept spare. The owner settled every open reading on 2026-11-25 (errata E-3 to E-14).
 
 ---
 
@@ -84,7 +84,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
 - GR9. Slice b: command discovery and the six generated probes, proved by AE27.
 - GR10. Slice c: authored checks, ordered runbooks, time budgets and computed expected values, proved by AE8, AE22 and AE23.
 - GR11. Slice d: safety classes, scope and the no-network check with the real macOS verifier, proved by AE9 for conformance, AE24 and AE30.
-- GR12. Slice e: the store's baselines, comparison and anchoring, proved by AE16 to AE19, AE31 and AE33 as the owner's decision on E-3 settles.
+- GR12. Slice e: the store's baselines, comparison and anchoring, proved by AE16 to AE19, AE31 and AE33 as far as collection 1.0's cases reach, with engine tests for the rest (errata E-3).
 - GR13. Slice f: the scorecard, and agreement of exit code, scorecard and stored record, proved by AE21 and by the naming halves of AE8, AE20, AE23, AE24 and AE27.
 
 **Confinement evidence**
@@ -98,21 +98,23 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
 - GKD1. **A thin end-to-end slice comes before slice a.** It runs `case-003`, `case-004` and `case-129` through `grade`, each stage only as wide as those cases need, so every later slice changes outcomes on a pipeline that already runs. The judge's JSON refactor lands first, in its own pull request. Governs GR1, GR3. (session-settled: user-approved — chosen over starting at slice a as the engine plan's table does; the split that keeps it thin was chosen after the gate's third pass over keeping one large pull request.)
 - GKD2. **The corpus runner runs inside the existing CI checks.** It adds no new required check on `main`. Governs GR1. (session-settled: user-approved — chosen over a new CI job the owner would make required.)
 - GKD3. **The harness assembles each case**, and `grade` takes only what QT1, the specification and GKD8 name (errata E-2). Governs GR1, GR7. (session-settled: user-directed — chosen over a scripted-build `grade` that takes a case directory.)
-- GKD4. **The acceptance examples the corpus does not reach go to the owner first** (errata E-3); slice e is not built until the owner decides on a collection 1.1. Governs GR12. (session-settled: user-directed — chosen over proving them with engine tests and macOS runs alone, and over dropping them from the proof.)
+- GKD4. **The acceptance examples the corpus does not reach went to the owner first** (errata E-3). The owner decided on 2026-11-25 that no collection 1.1 is written for phase 3: slice e proves what 1.0's cases reach, engine tests cover the rest, and its pull request names what the corpus leaves unproved. Governs GR12. (session-settled: user-directed — chosen over drafting a 1.1 before slice e.)
 - GKD5. **The build is scored against the private half, as phase 1 was.** Governs GR5. (session-settled: user-directed — chosen over the public corpus alone.)
 - GKD6. **The launcher, the self-test programs and the known-fast control are hidden modes of the `pql` binary, written in Go,** and copied once per grade. Governs GR11, GR14, GR15. (session-settled: user-directed — chosen over embedding the spike's C programs.)
 - GKD7. **Darwin-only code may use `golang.org/x/sys` as one reviewed dependency, with raw syscalls where it falls short, and no cgo,** so the Linux gate compiles and lints all of it. Governs GR11, GR15. (session-settled: user-directed — chosen over cgo and over the standard library alone.)
-- GKD8. **The command line:** `pql grade <subject-file> [--scope conformance[,destructive]] [--baseline <file>]`; `pql anchor <subject-file> [--retired <file>] [--accept <file>]`; the QT1 flags on both; the missing-id list written to the run's store directory; a subject-file or pre-check rejection prints one stable line `pql: rejected: <rule id>: <cause>` on standard error; a malformed command line exits 64 before any exit 2. Governs GR1, GR7. (session-settled: user-directed — chosen over deciding the command line at the end-to-end slice's review.)
+- GKD8. **The command line:** `pql grade <subject-file> [--scope conformance[,destructive]] [--baseline <file>]`; `pql anchor <subject-file> [--retired <file>] [--accept <file>]`; `pql create <binary>` (GKD11); the QT1 flags on both; the missing-id list written to the run's store directory; every rejection prints one stable line `pql: rejected: <rule id>: <cause>` on standard error, a subject-file or pre-check rejection with exit 2 and a record the judge rejected (QE15) with exit 70 and the judge's rule; `--scope` passes any comma-separated tokens to the judge, which rejects an unknown one under X1 (errata E-7); a command line that cannot be parsed exits 64 before any exit 2. Governs GR1, GR7. (session-settled: user-directed — chosen over deciding the command line at the end-to-end slice's review; the QE15 line and the scope reading were settled on 2026-11-25.)
 - GKD9. **macOS evidence is taken on 27.2 only.** The phase close states 27.0.1 as unverified for phase 3, and the owner decides whether that stands. Governs GR1, GR15. (session-settled: user-directed — chosen over evidence on both supported versions.)
 - GKD10. **The build order and its proof follow the bake-off's selected approach.**
   - The order: macOS risk first; recordings as the contract between running and deciding; a served-invocation check, a rule ledger and one package for unconfined file work.
   - What this plan's earlier version adds to it: the growth check, schema validation against an independent count, the violating-form replay and the total writer.
   - Governs GR1, GR5, GR14 to GR16. (session-settled: user-approved — chosen over the plan's earlier fifteen-PR order after a bake-off of four approaches, whose comparison is in the review log.)
+- GKD11. **`pql create` takes the binary's path only.** It writes a subject file naming that binary, with a placeholder for every command, class, fact and setting, and never runs the subject. Governs GR8. (session-settled: user-directed — chosen over a confined help walk at create time.)
 
 ### Scope Boundaries
 
 - Phase 4's real CLI, steering (phases 5 to 7) and any edit to a sealed folder are out.
-- Writing a collection 1.1 is the owner's specification work, outside this plan; if adopted under E-3, slice e builds against it, and `record.schema.json`'s `spec_version`, fixed at `"1.0"`, changes with it.
+- No collection 1.1 is written in phase 3 (errata E-3); `record.schema.json`'s `spec_version` stays `"1.0"`.
+- Stated limits of collection 1.0, named in the documentation and never worked around: unbounded writes inside a home (errata E-13), and base64 matching of the canary only at its own alignment (errata E-14).
 - AE9's steering half and AE18's steering entries belong to phase 6; collection 1.0's `prompts` holds only a version.
 - Linux confinement is out: version 1.0 supports macOS only. On any other system, the real verifier gives every check that runs the subject `network_unverifiable` (QH1).
 - No macOS runner is added to CI; macOS evidence comes from local runs (`AGENTS.md`).
@@ -279,7 +281,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
     - No subject-file value is quoted in a rejection line's cause.
 - KTD17. **Every panic and every interruption ends in the one exit funnel.**
   - **Panics.** The grade and anchor commands recover a panic on the main goroutine, and every goroutine the engine starts recovers its own, as an engine defect, exit 70. An unrecovered panic would exit 2, the code for a rejected request (`CODING_STANDARDS.md`, Judge and evidence code).
-  - **Signals.** SIGINT, SIGTERM, SIGHUP and SIGQUIT end every live process group, then clean up, and the run exits as Open Questions settles.
+  - **Signals.** SIGINT, SIGTERM, SIGHUP and SIGQUIT end every live process group, then clean up, and the run exits 70 (errata E-6).
   - **The funnel.** It ends live groups (QH23) and runs QE20's cleanup on every exit.
 - KTD18. **macOS evidence runs on 27.2 with automatic updates off (GKD9).**
   - **The evidence script.** It runs every `macos_evidence` test with `go test -json`. It fails if any test the rule ledger (KTD22) names did not run, skipped or was not evaluated, or if the system is not 27.2.
@@ -301,9 +303,9 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
     - It removes each child entry with `Root.RemoveAll`, then removes the directory itself from its parent's root.
     - It never opens a FIFO, a socket or another special file.
     - Walks are bounded in time and entries.
-  - **Regular files.** Before a scan or a digest, a regular file in a used home may have its mode changed the same way. The profile kills `file-link` and `file-clone`, so no file in a home can share an inode with one outside it. An entry that still cannot be read never ends as held or unchanged (Open Questions).
+  - **Regular files.** Before a scan or a digest, a regular file in a used home may have its mode changed the same way. The profile kills `file-link` and `file-clone`, so no file in a home can share an inode with one outside it. An entry that still cannot be read is not observed with `harness_fault`, never held or unchanged (errata E-10).
   - **Darwin flags and access-control entries.** On darwin, the package first clears user flags with `Fchflags` on a descriptor opened `O_NOFOLLOW`, and removes access-control entries by descriptor, to the extent U43 shows a subject can set them.
-  - **When cleanup fails.** It is reported, never silent (Open Questions).
+  - **When cleanup fails.** The run exits 70, the scorecard names the directory left behind, and the next sweep retries it (errata E-11).
   - **Where it is tested.** The walk is untagged and tested in CI; the flag and access-control half is tested on macOS (GR16).
 - KTD21. **Until slice d end to end, the released real path never starts a subject or a computation.** From the thin slice, a released `grade` or `anchor` gives every subject-running and computation-running check `network_unverifiable` (QO1) and still reaches the judge, as it must on any system QH1 does not name. U35 replaces this with the real verifier.
 - KTD22. **A rule ledger maps every binding rule to its proof.**
@@ -347,13 +349,12 @@ flowchart TB
   RP --> D
   D --> E[PR17 slice e]
   F --> E
-  O[Owner decision on E-3] --> E
   E --> Z[PR18 phase close]
 ```
 
 ### Assumptions
 
-- The private half and its scoring harness are reachable on the owner's machine, as they were for phase 1, and the harness can score a collector build through the binary contract: the scripted build, the store isolated through the home directory, and the stored record (Open Questions).
+- The private half and its scoring harness are reachable on the owner's machine, as they were for phase 1. The owner confirmed on 2026-11-25 that the harness can score a collector build through the binary contract: the scripted build, the store isolated through the home directory, and the stored record. A party other than the build session runs it.
 - A machine running macOS 27.2 with automatic updates off is available for each pull request that needs local evidence. It matches the recordings' build 26B123 closely enough for parity, and the main session can run commands there with the tool sandbox disabled (KTD19).
 - The owner is available for rulings and merges through the holiday weeks, which the dates treat as half buffer.
 
@@ -371,13 +372,13 @@ flowchart TB
 
 Waits on: nothing.
 
-### U1. Errata entries E-2 and E-3
+### U1. Errata entries E-2 to E-14
 
-- **Goal:** the owner's reading of case assembly, and the coverage finding behind GKD4, are on record beside the sealed folder.
+- **Goal:** the owner's readings of 2026-11-24 and 2026-11-25 are on record beside the sealed folder.
 - **Requirements:** GR6, GR12.
 - **Dependencies:** none.
 - **Files:** `docs/specs/conformance-collection-1.0-errata.md`.
-- **Approach:** E-2 states both readings of QT6 and the owner's choice; E-3 lists AE16, AE19's anchoring parts, AE31 and AE33 and leaves the 1.1 decision to the owner.
+- **Approach:** E-2 states both readings of QT6 and the owner's choice; E-3 lists AE16, AE19's anchoring parts, AE31 and AE33 and records the owner's decision against a 1.1; E-4 to E-12 record the readings the build needs; E-13 and E-14 record two stated limits.
 - **Test expectation:** none -- a documentation note; the citation test checks its ids.
 - **Verification:** the gate passes, and the note changes no case's record.
 
@@ -663,7 +664,8 @@ Waits on: PR2, PR3 and PR5, needed before this group can start. Each stage is on
   - file and directory modes; an existing store directory with a wrong mode;
   - a stale run directory swept, and a link, a foreign directory and a directory without its published process-id file left alone;
   - a test that would resolve the developer's real store fails;
-  - a store write that fails after the judge has decided exits as Open Questions settles.
+  - a store write that fails after the judge has decided exits 70, with the scorecard's note (errata E-4);
+  - a record the judge rejected is stored with `judge_rejected: true` without validating against the record schema (errata E-5).
 - **Verification:** every run the corpus runner makes that reaches a record leaves a stored record under that run's home.
 
 ### U7. Record builder
@@ -725,7 +727,7 @@ Waits on: PR4 and PR6, needed before this group can start.
   - a 0000 directory swapped for a link between its `Lstat` and its mode change leaves the outside directory's mode unchanged;
   - a racing process that keeps swapping directories for links through a thousand walks changes nothing outside, by digest, mode and existence;
   - names with newlines and invalid UTF-8, and trees at QP13's bounds;
-  - a cleanup that cannot remove an entry is reported as Open Questions settles;
+  - a cleanup that cannot remove an entry exits 70, names the directory, and the next sweep removes it (errata E-11);
   - SIGINT, SIGTERM, SIGHUP and SIGQUIT each end the live group and clean up;
   - a sweep after a killed `pql` ends the recorded group before removing its home;
   - on macOS, behind KTD19's tag, every hazard U43 found possible is removed, among them `uchg`, `uappnd` and a deny-delete access-control entry where U43 shows them.
@@ -760,7 +762,7 @@ Waits on: PR6, merge order only.
   - QS7's names with QH12's, QP7's and QP10's rejections, QA4's capture names, and QA9's type and path rules;
   - QA5's warning on the terminal, in the help of `grade` and `anchor`, and in the README.
 
-  The order for a file that breaks two named rules waits for the owner (Open Questions).
+  A file that breaks two named rules names the first in the specification's order (errata E-9). QS8's home is the account's home from the system's user record (errata E-8).
 - **Test scenarios:**
   - one fixture per rejecting rule, from the specification's text. Each exits 2 with GKD8's line naming that rule, and quotes no subject-file value in the cause;
   - QS8's containment and QS9's seed-link rejection;
@@ -774,9 +776,9 @@ Waits on: PR6, merge order only.
 - **Requirements:** GR8.
 - **Dependencies:** U9.
 - **Files:** `cmd/pql/main.go`, `internal/subject/`, `internal/decide/`, their tests.
-- **Approach:** level 2 of the precedence table (QS5) and QS5's final override. What `create` takes as input is not specified (Open Questions); the slice's design note fixes the smallest input QS5 needs before the brief is written.
+- **Approach:** level 2 of the precedence table (QS5) and QS5's final override. `create` takes the binary's path only and never runs the subject (GKD11).
 - **Test scenarios:**
-  - through the scripted build with a passing host and a recording, `create` then `grade` on its output gives `placeholder_unfilled` exactly where QS5 says. The expected side is written from QS5, never from `create`'s code (AE20). If `create`'s output has checks that pass level 2, this test moves to the slice that builds their later levels (Open Questions);
+  - through the scripted build with a passing host and a recording, `create` then `grade` on its output gives `placeholder_unfilled` exactly where QS5 says. The expected side is written from QS5, never from `create`'s code (AE20). If `create`'s output has checks that pass level 2, this test moves to the slice that builds their later levels;
   - each kind of placeholder gives QS5's outcomes in a unit test where its corpus case needs a later slice.
 - **Verification:** `case-060` leaves the pending list; the other placeholder cases leave it where their later levels land, as each design note computes.
 
@@ -1132,7 +1134,7 @@ Waits on: PR13 and PR15, needed before this group can start.
 
 ### PR17: slice e, baselines and anchoring
 
-Waits on: PR14 and PR16, merge order only; and the owner's decision on E-3 before it starts (Open Questions).
+Waits on: PR14 and PR16, merge order only. The owner decided against a collection 1.1 (errata E-3).
 
 ### U19. Baselines, comparison and anchoring
 
@@ -1145,7 +1147,7 @@ Waits on: PR14 and PR16, merge order only; and the owner's decision on E-3 befor
   - the missing-id list written to the durable store;
   - the anchor's pre-check with KTD9, and QE21;
   - KTD5's atomic writes;
-  - the cases a collection 1.1 adds, if the owner adopts one.
+  - engine tests for the parts of AE16, AE19, AE31 and AE33 the corpus does not reach, and the pull request naming them as unproved by the corpus (errata E-3).
 - **Test scenarios:**
   - a named baseline file read in place without checking its path;
   - the missing-id list's form and causes;
@@ -1212,45 +1214,17 @@ Waits on: PR17, merge order only.
 
 ## Open Questions
 
-**Blocking slice e (asked on 2026-11-25, needed by 2026-12-11)**
+None. The owner settled every reading on 2026-11-24 and 2026-11-25:
+- errata E-1 to E-12 hold the specification readings;
+- E-13 and E-14 hold two stated limits;
+- GKD4, GKD8 and GKD11 hold the decisions about slice e, the command line and `pql create`;
+- the Assumptions record that the private harness can score a collector build.
 
-- Does a collection specification 1.1 add cases for AE16, AE19's anchoring, AE31 and AE33 (errata E-3)?
-  - If it does, slice e waits for its seal and builds against it, with a new `spec_version`.
-  - If not, slice e proves what 1.0 reaches, and the pull request names what stays unproved.
+A new reading found during the build goes to the owner with both readings (GR6) and lands in the errata note.
 
-**Before the thin slice's design note (asked on 2026-11-25)**
-
-- When the store write fails after the judge has decided, does the engine exit 70 (QE16) or with the judge's code (QE14)? The plan's reading is 70, since the run did not complete; the owner confirms or corrects (GR6).
-- QE15 keeps a rejected record, and `record.schema.json` nests the judge input's schema, so a record the judge rejected as schema-invalid cannot validate. The plan's reading is that QE15 wins and the stored record need not validate (KTD15). The owner confirms, and the reading goes in the errata (GR6).
-- QE16's table names no interruption. The plan's reading is that a run ended by a signal is an engine fault, exit 70; the owner confirms (GR6).
-- What does a run whose record the judge rejected (QE15, exit 70) print on standard error? GKD8 fixes the line only for subject-file and pre-check rejections. The plan's reading is one line in GKD8's form naming the judge's rule; the owner confirms (GR6).
-- Is an unknown `--scope` token a malformed command line, exit 64 under GKD8? Or is it a requested scope the judge rejects as X1, exit 2, which QE6 calls the user's fault? The owner decides (GR6).
-
-**Before slice a (U9)**
-
-- QS8 names "the user's home directory". The plan's reading is the account's home from the system's user record, not `$HOME`, since tests override `$HOME`; the owner confirms (GR6).
-- When a user's file breaks two named rules, which rule does GKD8's line name at run time? The corpus question and a proposed deterministic order go to the owner before U9's brief is written (GR6).
-- What does `pql create` take as input? The specification fixes only that it writes a placeholder for each value it cannot know (U10).
-
-**Before unconfined safety and slice b2 (U36, U37, U40)**
-
-- An entry in a used home that stays unreadable after KTD20's mode change cannot be scanned or compared. The plan's reading is that the check is `not_observed` with `harness_fault`, by analogy with QP13; the owner confirms (GR6).
-- A cleanup that cannot remove an entry breaks QE20. The plan's reading is an engine fault, exit 70, with a scorecard note naming the directory; the owner confirms (GR6).
-
-**Before slice c (U26)**
-
-- Is QA6's depth limit for computation output counted from the output, or from where the value sits inside a record? The plan's reading is inside the record, since QA6 says "inside a record"; the owner confirms (GR6).
-
-**For the owner, no unit waits**
-
-- Nothing in the specification bounds how much a subject or computation writes inside its home, so a subject can fill the volume within its budget. This is a candidate stated limit or a 1.1 rule; the engine does not work around it (GR6).
-- `credit-and-routes.md` §4's base64 forms are of the canary alone. A canary inside a larger base64 value, at an offset not divisible by three, matches none of them; one example is a Basic authorisation header in a log. This gives a false green on the planted-secret check and leaves a declared value unmasked. It is a candidate stated limit or a 1.1 rule; the engine does not work around it (GR6).
-
-**Before the first private scoring round (asked in week 1)**
-
-- Does the private harness score a collector build through the binary contract? The plan's procedure for the seeded mistakes:
-  1. Each catalogued mistake becomes a mutation at its rule's site.
-  2. The mutant must build and pass every lint, and produce exactly the catalogued wrong record on its private case under QE19's fields.
-  3. CI must then fail through a test, and the failing tests are recorded by name. A mutant only a lint or the build catches is not evaluated.
-  4. A party other than the session that briefs the next build runs it and returns rule ids only.
-  5. A mistake that cannot be expressed this way is not evaluated and is reported by count with its rule id. It blocks GR5 unless the owner waives it by id.
+**The seeded-mistake procedure for private scoring**
+1. Each catalogued mistake becomes a mutation at its rule's site.
+2. The mutant must build and pass every lint, and produce exactly the catalogued wrong record on its private case under QE19's fields.
+3. CI must then fail through a test, and the failing tests are recorded by name. A mutant only a lint or the build catches is not evaluated.
+4. A party other than the session that briefs the next build runs it and returns rule ids only.
+5. A mistake that cannot be expressed this way is not evaluated and is reported by count with its rule id. It blocks GR5 unless the owner waives it by id.
