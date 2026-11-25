@@ -371,11 +371,16 @@ func checkTrace(c caseassembly.Case, subject, input, preimages map[string]any, t
 				}
 			}
 		}
-		if matched && !runnable && !discovery(k) {
+		if servedOnlyForBlockedChecks(matched, runnable, k) {
 			return errors.New("served only for blocked checks")
 		}
 	}
 	return nil
+}
+
+// Discovery requests remain allowed independently of blocked-check evidence.
+func servedOnlyForBlockedChecks(matched, runnable bool, key map[string]any) bool {
+	return matched && !runnable && !discovery(key)
 }
 
 // Captures read stdout of an earlier step in the same runbook (QA4).
@@ -529,10 +534,7 @@ func TestCorpus(t *testing.T) {
 	var real []string
 	for _, entry := range entries {
 		source := filepath.Join(kit, "cases", entry.Name())
-		var c caseassembly.Case
-		if err := caseassembly.Read(filepath.Join(source, "case.json"), &c); err != nil {
-			t.Fatal(err)
-		}
+		c, want, subject, preimages := fixture(t, entry.Name())
 		if c.ID != entry.Name() {
 			t.Fatalf("case id mismatch: %s", entry.Name())
 		}
@@ -551,18 +553,6 @@ func TestCorpus(t *testing.T) {
 			layout := caseassembly.Assemble(t, kit, source, c)
 			r, failure := runGradeNotBuilt(c, layout)
 			if failure == nil {
-				var want, subject, preimages map[string]any
-				if err := caseassembly.Read(filepath.Join(source, c.Input.SubjectFile), &subject); err != nil {
-					t.Fatal(err)
-				}
-				if c.Kind == "judge-checked" {
-					if err := caseassembly.Read(filepath.Join(source, "input.json"), &want); err != nil {
-						t.Fatal(err)
-					}
-					if err := caseassembly.Read(filepath.Join(source, "preimages.json"), &preimages); err != nil {
-						t.Fatal(err)
-					}
-				}
 				failure = compareResult(c, want, r)
 				if failure == nil {
 					failure = checkTrace(c, subject, want, preimages, r.Trace)

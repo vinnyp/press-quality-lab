@@ -542,6 +542,11 @@ func TestPlaceholderTraceClasses(t *testing.T) {
 		{"level_two", true, false, "served only for blocked checks"},
 		{"override", false, true, ""},
 		{"neither", false, false, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_bounding", false, true, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_idempotency", false, true, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_destructive_guard", false, true, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_side_effect_integrity", false, true, "placeholder check has neither level-two dependency nor override"},
+		{"excluded_flag_conformance", false, true, "placeholder check has neither level-two dependency nor override"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			c, _, subject, _ := fixture(t, "case-001")
@@ -555,8 +560,84 @@ func TestPlaceholderTraceClasses(t *testing.T) {
 			key := map[string]any{"words": []any{"list"}, "offline_args": nil, "env": []any{}, "runbook": nil, "step": nil, "computation": nil, "home": "seed"}
 			c.Invocations = []any{key}
 			pre := map[string]any{"id": map[string]any{"words": []any{"list"}, "dimension": "execution"}}
+			if strings.HasPrefix(row.name, "excluded_") {
+				object(pre["id"])["dimension"] = strings.ReplaceAll(strings.TrimPrefix(row.name, "excluded_"), "_", "-")
+			}
 			input := map[string]any{"evidence": []any{map[string]any{"check_id": "id", "reason": "placeholder_unfilled"}}}
 			assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Served: []any{key}}), row.want)
 		})
+	}
+}
+
+// Discovery keys end with --help; an earlier occurrence does not qualify.
+func TestDiscoveryLastWord(t *testing.T) {
+	for _, row := range []struct {
+		name  string
+		words []any
+		want  bool
+	}{
+		{"last_help", []any{"list", "--help"}, true},
+		{"earlier_help", []any{"--help", "list"}, false},
+		{"no_help", []any{"list"}, false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			got := discovery(map[string]any{"words": row.words, "home": "empty", "computation": nil})
+			if got != row.want {
+				t.Fatalf("discovery = %v, want %v", got, row.want)
+			}
+		})
+	}
+}
+
+func TestBlockedDiscoveryExemption(t *testing.T) {
+	for _, row := range []struct{ name, home, want string }{
+		{"discovery", "empty", ""},
+		{"non_discovery", "seed", "served only for blocked checks"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			c, _, subject, _ := fixture(t, "case-001")
+			key := map[string]any{"words": []any{"list", "--help"}, "offline_args": nil, "env": []any{}, "runbook": nil, "step": nil, "computation": nil, "home": row.home}
+			c.Invocations = []any{key}
+			if got := servedOnlyForBlockedChecks(true, false, key); got != (row.want != "") {
+				t.Fatalf("servedOnlyForBlockedChecks = %v, want %v", got, row.want != "")
+			}
+			pre := map[string]any{"id": map[string]any{"words": key["words"]}}
+			input := map[string]any{"evidence": []any{map[string]any{"check_id": "id", "reason": "earlier_step_failed"}}}
+			assertError(t, checkTrace(c, subject, input, pre, trace{Required: []any{}, Served: []any{key}}), row.want)
+		})
+	}
+}
+
+func TestSecretCommandPlaceholder(t *testing.T) {
+	for _, row := range []struct {
+		name  string
+		class any
+		want  bool
+	}{
+		{"concrete", "safe", false},
+		{"placeholder", map[string]any{"placeholder": "class"}, true},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			subject := map[string]any{
+				"commands": []any{map[string]any{"words": []any{"secret"}, "class": row.class, "writes": false}},
+				"secret":   map[string]any{"commands": []any{[]any{"secret"}}},
+			}
+			if got := levelTwoPlaceholder(subject, map[string]any{"probe": "planted_secret"}); got != row.want {
+				t.Fatalf("levelTwoPlaceholder = %v, want %v", got, row.want)
+			}
+		})
+	}
+}
+
+func TestPreconditionComputationKey(t *testing.T) {
+	pre := map[string]any{"words": []any{"list"}, "runbook": "book", "step": "second", "expected": map[string]any{
+		"precondition": map[string]any{"computation": map[string]any{"argv": []any{"compute", "precondition"}}},
+	}}
+	want := []map[string]any{
+		{"words": []any{"list"}, "offline_args": nil, "env": []any{}, "runbook": "book", "step": "second", "computation": nil, "home": "runbook"},
+		{"words": nil, "offline_args": []any{}, "env": []any{}, "runbook": "book", "step": "second", "computation": []any{"compute", "precondition"}, "home": "scratch"},
+	}
+	if got := preimageKeys(pre); !reflect.DeepEqual(got, want) {
+		t.Fatalf("keys = %v, want %v", got, want)
 	}
 }

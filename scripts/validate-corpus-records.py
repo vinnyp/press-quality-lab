@@ -6,8 +6,13 @@ from pathlib import Path
 import sys
 
 
+def pending_entries(pending):
+    return {line.strip() for line in pending.read_text().splitlines()
+            if line.strip() and not line.strip().startswith('#')}
+
+
 def expected_cases(cases, pending):
-    excluded = {line.strip() for line in pending.read_text().splitlines() if line.strip() and not line.strip().startswith('#')}
+    excluded = pending_entries(pending)
     expected = set()
     found = set()
     for directory in sorted(cases.iterdir()):
@@ -26,7 +31,7 @@ def expected_cases(cases, pending):
 def validate(kit, cases, pending, copies):
     # Import only in validation, so count controls run with plain isolated Python.
     expected = expected_cases(cases, pending)
-    wanted = {name + suffix for name in expected for suffix in ('.record.json',)}
+    wanted = {name + '.record.json' for name in expected}
     actual = {p.name for p in copies.iterdir()}
     # Baselines are validated only when a real path stores one.
     baselines = {name + '.baseline.json' for name in expected} & actual
@@ -35,8 +40,7 @@ def validate(kit, cases, pending, copies):
         raise ValueError('export file set differs: missing=' + repr(sorted(wanted - actual))
                          + ' extra=' + repr(sorted(actual - wanted)))
     if not expected:
-        count = len({line.strip() for line in pending.read_text().splitlines()
-                     if line.strip() and not line.strip().startswith('#')})
+        count = len(pending_entries(pending))
         print(f'nothing to validate: {count} pending')
         return
     import jsonschema

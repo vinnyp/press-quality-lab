@@ -69,6 +69,12 @@ class CorpusControls(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "^export file set differs: missing=\\['case-001.record.json'\\] extra=\\[\\]$"):
                     validation.validate(root, cases, pending, copies)
             pending.write_text('  # comment\n\n  case-001  \n')
+            (copies / 'extra.txt').write_text('extra')
+            with self.assertRaises(ValueError) as caught:
+                validation.validate(root, cases, pending, copies)
+            self.assertEqual(str(caught.exception),
+                             "export file set differs: missing=[] extra=['extra.txt']")
+            (copies / 'extra.txt').unlink()
             self.assertEqual(validation.expected_cases(cases, pending), set())
             output = io.StringIO()
             with contextlib.redirect_stdout(output):

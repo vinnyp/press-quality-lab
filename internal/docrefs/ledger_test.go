@@ -359,14 +359,22 @@ func TestRuleLedger(t *testing.T) {
 }
 
 func TestLedgerControls(t *testing.T) {
-	root := t.TempDir()
+	parent := t.TempDir()
+	root := filepath.Join(parent, "ledger")
+	if err := os.Mkdir(root, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(parent, "outside_test.go"), []byte("package fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
 	for name, source := range map[string]string{
-		"valid_test.go":    "package fixture\nimport \"testing\"\n// QS1 QH13\nfunc TestProof(t *testing.T) {}\n",
-		"uncited_test.go":  "package fixture\nimport \"testing\"\nfunc TestProof(t *testing.T) { _ = \"QS1\" }\n",
-		"hidden_test.go":   "//go:build never_ci\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
-		"named_test.go":    "package fixture\nimport \"testing\"\nfunc TestQS1(t *testing.T) {}\n",
-		"subtest_test.go":  "package fixture\nimport \"testing\"\nfunc TestProof(t *testing.T) { t.Run(\"QS1\",func(t *testing.T){}) }\n",
-		"scripted_test.go": "//go:build scripted\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
+		"outside_comment_test.go": "package fixture\nimport \"testing\"\n// QS1\nfunc TestOther(t *testing.T) {}\nfunc TestProof(t *testing.T) {}\n",
+		"valid_test.go":           "package fixture\nimport \"testing\"\n// QS1 QH13\nfunc TestProof(t *testing.T) {}\n",
+		"uncited_test.go":         "package fixture\nimport \"testing\"\nfunc TestProof(t *testing.T) { _ = \"QS1\" }\n",
+		"hidden_test.go":          "//go:build never_ci\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
+		"named_test.go":           "package fixture\nimport \"testing\"\nfunc TestQS1(t *testing.T) {}\n",
+		"subtest_test.go":         "package fixture\nimport \"testing\"\nfunc TestProof(t *testing.T) { t.Run(\"QS1\",func(t *testing.T){}) }\n",
+		"scripted_test.go":        "//go:build scripted\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
 
 		"never_evidence_test.go": "//go:build macos_evidence && never_ci\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
 		"linux_evidence_test.go": "//go:build linux && macos_evidence\n\npackage fixture\nimport \"testing\"\n// QS1\nfunc TestProof(t *testing.T) {}\n",
@@ -392,6 +400,8 @@ func TestLedgerControls(t *testing.T) {
 		{"raw_constraint", "QS1", []ruleProof{{Kind: "macos_evidence", File: "raw_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
 		{"inline_limit", "QT4", []ruleProof{{Kind: "limit", Section: "Not expressible as a case", Route: "- QH1: cites QT4"}}, nil, []string{"QT4: invalid proof"}},
 		{"existing", "QS1", []ruleProof{proof}, nil, nil},
+		{"outside_comment", "QS1", []ruleProof{{Kind: "test", File: "outside_comment_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
+		{"parent_path", "QS1", []ruleProof{{Kind: "test", File: "../outside_test.go", Function: proof.Function}}, nil, []string{"QS1: invalid proof"}},
 		{"missing_test", "QS1", []ruleProof{{Kind: "test", File: proof.File, Function: "TestAbsent"}}, nil, []string{"QS1: invalid proof"}},
 		{"removed_mapping", "QS1", nil, nil, []string{"QS1: neither mapped nor listed"}},
 		{"both", "QS1", []ruleProof{proof}, map[string]bool{"QS1": true}, []string{"QS1: mapped and listed"}},

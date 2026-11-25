@@ -19,6 +19,7 @@ KIT = Path(__file__).resolve().parents[1] / 'docs/specs/conformance-collection-1
 class SchemaControls(unittest.TestCase):
     def test_schema_examples(self):
         for name, record, baseline, error, message in [
+            ('invalid_record', 'record-01.json', None, jsonschema.ValidationError, None),
             ('valid_record', 'record-01.json', None, None, 'corpus exports: 1 records and 0 baselines validated'),
             ('valid_baseline', 'record-01.json', 'baseline-01.json', None, 'corpus exports: 1 records and 1 baselines validated'),
             ('rejected_record', 'record-02.json', None, ValueError, 'corpus record was judge rejected: case-001'),
@@ -36,6 +37,11 @@ class SchemaControls(unittest.TestCase):
                 copies = root / 'copies'
                 copies.mkdir()
                 (copies / 'case-001.record.json').write_bytes((KIT / 'examples' / record).read_bytes())
+                if name == 'invalid_record':
+                    path = copies / 'case-001.record.json'
+                    document = json.loads(path.read_text())
+                    del document['record_version']
+                    path.write_text(json.dumps(document))
                 if baseline:
                     (copies / 'case-001.baseline.json').write_bytes((KIT / 'examples' / baseline).read_bytes())
                 self.assertEqual(validation.expected_cases(cases, pending), {'case-001'})
