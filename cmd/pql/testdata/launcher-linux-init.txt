@@ -29,6 +29,7 @@ crypto/fips140
 crypto/internal/fips140/aes
 crypto/internal/fips140/drbg
 crypto/internal/fips140/aes/gcm
+crypto/sha256
 encoding/json/jsontext
 encoding/json/v2
 encoding/json

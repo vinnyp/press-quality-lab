@@ -34,6 +34,7 @@ func TestGradeMalformed(t *testing.T) {
 }
 
 func TestGradeCommandSurface(t *testing.T) {
+	stubCollection(t)
 	// GKD8 and errata E-7: scope tokens are passed through, never validated here.
 	// QE16: the unbuilt pipeline ends as an engine fault.
 	for _, args := range [][]string{
@@ -61,4 +62,13 @@ func TestGradeParsedRequest(t *testing.T) {
 	if calls != 2 || got.SubjectFile != "subject" || got.Retired != "old" || got.Accept != "new" {
 		t.Fatalf("anchor calls=%d request=%+v", calls, got)
 	}
+}
+
+// Command surface tests replace the pipeline; pipeline behavior has separate tests.
+func stubCollection(t *testing.T) {
+	t.Helper()
+	oldGrade, oldAnchor := runGrade, runAnchor
+	t.Cleanup(func() { runGrade, runAnchor = oldGrade, oldAnchor })
+	stub := func(commandOptions) error { return &rejectionError{70, "QE16", "grade pipeline not built (U25)"} }
+	runGrade, runAnchor = stub, stub
 }

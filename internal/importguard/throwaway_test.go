@@ -44,6 +44,10 @@ func filesystemProblems(path string, source any) ([]string, error) {
 	}
 	var problems []string
 	forbidden := func(pkg, name string) bool {
+		// KTD16: reads only the user's inputs and never a workspace.
+		if filepath.ToSlash(path) == "grade/inputs.go" && pkg == "os" && (name == "Open" || name == "OpenRoot") {
+			return false
+		}
 		return pkg == "os" && (strings.HasPrefix(name, "Remove") || strings.HasPrefix(name, "Open") || name == "ReadFile" || name == "Chmod" || name == "Lstat") || pkg == "path/filepath" && strings.HasPrefix(name, "Walk")
 	}
 	ast.Inspect(f, func(n ast.Node) bool {
@@ -86,7 +90,11 @@ func filesystemTreeProblems(base string) ([]string, error) {
 		if filesystemAllowed[pkg] {
 			return nil
 		}
-		problems, err := filesystemProblems(path, nil)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		problems, err := filesystemProblems(filepath.ToSlash(rel), data)
 		if err != nil {
 			return err
 		}
@@ -120,7 +128,7 @@ func TestThrowawayFilesystemTreeControl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{path + ": forbidden os.RemoveAll"}
+	want := []string{"collect/planted.go: forbidden os.RemoveAll"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
@@ -140,6 +148,37 @@ func TestThrowawayFilesystemControl(t *testing.T) {
 			want := []string{"collect/planted.go: forbidden " + row.pkg + "." + row.call}
 			if !reflect.DeepEqual(got, want) {
 				t.Fatalf("got %v, want %v", got, want)
+			}
+		})
+	}
+}
+
+func TestGradeInputException(t *testing.T) {
+	// KTD16, KTD20: the exception grants only two APIs in exactly one file.
+	for _, row := range []struct {
+		path, call string
+		allowed    bool
+	}{
+		{"grade/inputs.go", "Open", true},
+		{"grade/inputs.go", "OpenRoot", true},
+		{"grade/inputs.go", "RemoveAll", false},
+		{"grade/other.go", "Open", false},
+		{"grade/other.go", "OpenRoot", false},
+	} {
+		t.Run(strings.ReplaceAll(row.path, "/", "_")+"_"+row.call, func(t *testing.T) {
+			got, err := filesystemProblems(row.path, fmt.Sprintf(`package grade
+import "os"
+var planted = os.%s
+`, row.call))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var want []string
+			if !row.allowed {
+				want = []string{row.path + ": forbidden os." + row.call}
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Fatalf("got %v want %v", got, want)
 			}
 		})
 	}

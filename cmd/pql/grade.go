@@ -2,6 +2,9 @@ package main
 
 import (
 	"errors"
+	"github.com/vinnyp/press-quality-lab/internal/grade"
+	"github.com/vinnyp/press-quality-lab/internal/observe"
+	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -9,6 +12,7 @@ import (
 
 // commandOptions is the parsed request handed to the pipeline.
 type commandOptions struct {
+	Output      io.Writer
 	SubjectFile string
 	Scope       []string
 	Baseline    string
@@ -27,12 +31,32 @@ type rejectionError struct {
 
 func (e *rejectionError) Error() string { return "rejected: " + e.rule + ": " + e.cause }
 
-func pipelineNotBuilt(commandOptions) error {
-	return &rejectionError{exitSoftware, "QE16", "grade pipeline not built (U25)"}
+type collectionExit struct {
+	code int
+	err  error
 }
 
-var runGrade = pipelineNotBuilt
-var runAnchor = pipelineNotBuilt
+func (e *collectionExit) Error() string {
+	if e.err != nil {
+		return e.err.Error()
+	}
+	return ""
+}
+
+var collectionDependencies = func(o commandOptions) grade.Dependencies {
+	return grade.Dependencies{Source: func() (source observe.Source, close func() error, err error) {
+		return buildGradeSource(o)
+	}}
+}
+
+func executeCollection(o commandOptions, anchor bool) error {
+	d := collectionDependencies(o)
+	code, err := grade.Run(grade.Options{SubjectFile: o.SubjectFile, Scope: o.Scope, Baseline: o.Baseline, Retired: o.Retired, Accept: o.Accept, Anchor: anchor, Scripted: o.Verifier == "scripted"}, d, o.Output)
+	return &collectionExit{code, err}
+}
+
+var runGrade = func(o commandOptions) error { return executeCollection(o, false) }
+var runAnchor = func(o commandOptions) error { return executeCollection(o, true) }
 
 func newCollectionCommand(name string) *cobra.Command {
 	options := commandOptions{}
@@ -48,6 +72,7 @@ func newCollectionCommand(name string) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			options.SubjectFile = args[0]
+			options.Output = cmd.OutOrStdout()
 			if err := validateTestEntry(cmd, options); err != nil {
 				return err
 			}

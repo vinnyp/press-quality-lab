@@ -116,6 +116,12 @@ func placeholder(v any) bool {
 }
 func (in Input) includes(d string) bool {
 	for _, s := range in.Scopes {
+		// E-7: unknown tokens include no dimension; the judge owns X1 rejection.
+		switch s {
+		case rulebook.ConformanceScope, rulebook.DestructiveScope, rulebook.SteeringScope, rulebook.CompareScope:
+		default:
+			continue
+		}
 		if rulebook.ScopeIncludes(s, rulebook.Dimension(d)) {
 			return true
 		}
@@ -176,13 +182,6 @@ func SubjectKey(s subject.File, words Array, home string, runbook, step any) Obj
 // Build returns no partial plan on a planning gap or malformed digest input.
 func Build(in Input) (Plan, error) {
 	s := in.Subject
-	for _, scope := range in.Scopes {
-		switch scope {
-		case rulebook.ConformanceScope, rulebook.DestructiveScope, rulebook.SteeringScope, rulebook.CompareScope:
-		default:
-			return Plan{}, fmt.Errorf("QE3: invalid scope")
-		}
-	}
 	if in.Anchor {
 		return Plan{}, &Gap{"QE4", "anchor"}
 	}
