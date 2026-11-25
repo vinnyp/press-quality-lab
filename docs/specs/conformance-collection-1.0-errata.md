@@ -84,3 +84,13 @@ Nothing in version 1.0 bounds how much a subject or a computation writes inside 
 ### E-14. Stated limit: base64 alignment in the leak scan
 
 `credit-and-routes.md` §4 lists base64 forms of the canary alone. A canary inside a larger base64 value, at an offset not divisible by three, matches none of them; one example is a Basic authorisation header written to a log. This can give a false green on the planted-secret check, and can leave a declared value unmasked. **This is a stated limit of version 1.0,** named in the planted-secret check's documentation. Matching all three alignments is a candidate rule for a later version.
+
+## 2026-11-25
+
+### E-15. QO1 and a check that runs nothing
+
+QO1's grade-wide conditions, a failed self-test (QH9) and confinement that could not be applied, can hold while a required check runs neither the subject nor a computation: a store-unchanged or byte-bound probe with no command (`empty_target`), or a planted-secret probe whose `secret` is `null`. §2 tries QO1 "for any check", and QO6 says a check is not observed "like every other check" when QO1 holds for the grade. QH1, QH6 and QH9 speak only of the checks that run the subject. **When a grade-wide condition of QO1 holds, every required check is not observed with `network_unverifiable`, including a check that runs nothing.** The owner ruled on this reading on 2026-11-25. No case of the corpus has such a check under a grade-wide condition, so no record changes.
+
+### E-16. A version that is not a string
+
+QS1 says the file states its version in `subject_file_version`, "which is `1.0` for this specification", and the specification calls its version "this string". **A `subject_file_version` that is not the string `1.0`, the number `1.0` included, is another version and is rejected under QS1,** which E-9 checks before QS2. The owner ruled on this reading on 2026-11-25. No case of the corpus has such a file, so no record changes.
