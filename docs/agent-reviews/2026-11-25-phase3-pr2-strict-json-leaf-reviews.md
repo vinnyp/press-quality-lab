@@ -95,6 +95,13 @@ Each mutant below was run, and the named test failed on it, then the code was re
 | QE2 and the corpus | truncate a digest | `TestWorkedIDs`, `TestCorpusPreimages/*` |
 | Checked-in vectors | edit one digest | `test_checked_in_vectors` (Python) |
 
-## Owed before merge
+## The private re-score (waived)
 
-U3's verification requires a re-run of phase 1's private judge scoring and its seeded-mistake catalogue on this build. The run must show zero wrong outputs and no surviving mistake, and report how many mistakes were evaluated out of the total. The private half lives outside this repository, and a party other than the build session runs it. The pull request stays unmerged until the result is reported.
+U3's verification asks for a re-run of phase 1's private judge scoring and its seeded-mistake catalogue on this build. On 2026-11-25 a separately dispatched agent looked for that material outside the repository. It found only the collection's private half, whose tools score collector records, not the judge alone. The owner then said phase 1's private judge cases and catalogue were never kept outside the repository, and waived the re-score for this pull request.
+
+The evidence it merges on:
+- 0 output differences between the base and the head over 1,609 JSON inputs, checked after every round;
+- the 383 published judge cases;
+- the review rounds above.
+
+KTD3 asks for the same re-score after any later change under `internal/strictjson`. That needs its own ruling, because the material it names does not exist.
