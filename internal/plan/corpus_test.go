@@ -12,7 +12,7 @@ import (
 
 	"github.com/vinnyp/press-quality-lab/internal/caseassembly"
 	"github.com/vinnyp/press-quality-lab/internal/jcs"
-	"github.com/vinnyp/press-quality-lab/internal/judge"
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"github.com/vinnyp/press-quality-lab/internal/subject"
 )
@@ -80,7 +80,7 @@ func TestCorpus(t *testing.T) {
 			}
 			in := Input{Subject: s, Files: map[string][]byte{}, Baseline: c.Input.Baseline != nil}
 			for _, scope := range c.Input.Scope {
-				in.Scopes = append(in.Scopes, judge.Scope(scope))
+				in.Scopes = append(in.Scopes, rulebook.Scope(scope))
 			}
 			if seed, ok := s["seed"].(string); ok {
 				root := filepath.Join(l.Subject, seed)

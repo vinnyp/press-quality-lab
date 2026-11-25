@@ -1,7 +1,7 @@
 package plan
 
 import (
-	"github.com/vinnyp/press-quality-lab/internal/judge"
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"testing"
 )
@@ -82,17 +82,17 @@ func TestScope(t *testing.T) {
 	// QE3: each requested scope is filtered through the judge's scope definition.
 	for _, row := range []struct {
 		name      string
-		scope     judge.Scope
+		scope     rulebook.Scope
 		dimension string
 		want      bool
 	}{
-		{"Conformance", judge.ConformanceScope, "availability", true},
-		{"DestructiveExcluded", judge.ConformanceScope, "destructive-guard", false},
-		{"DestructiveIncluded", judge.DestructiveScope, "destructive-guard", true},
-		{"ConformanceExcluded", judge.DestructiveScope, "availability", false},
+		{"Conformance", rulebook.ConformanceScope, "availability", true},
+		{"DestructiveExcluded", rulebook.ConformanceScope, "destructive-guard", false},
+		{"DestructiveIncluded", rulebook.DestructiveScope, "destructive-guard", true},
+		{"ConformanceExcluded", rulebook.DestructiveScope, "availability", false},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			in := Input{Scopes: []judge.Scope{row.scope}}
+			in := Input{Scopes: []rulebook.Scope{row.scope}}
 			if got := in.includes(row.dimension); got != row.want {
 				t.Fatalf("got %v want %v", got, row.want)
 			}

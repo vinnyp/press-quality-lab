@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/vinnyp/press-quality-lab/internal/jcs"
-	"github.com/vinnyp/press-quality-lab/internal/judge"
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"github.com/vinnyp/press-quality-lab/internal/subject"
 )
@@ -39,7 +39,7 @@ type Entry struct {
 // Input contains only parsed values and caller-supplied file contents.
 type Input struct {
 	Subject  subject.File
-	Scopes   []judge.Scope
+	Scopes   []rulebook.Scope
 	Seed     []Entry
 	Files    map[string][]byte
 	Baseline bool
@@ -116,7 +116,7 @@ func placeholder(v any) bool {
 }
 func (in Input) includes(d string) bool {
 	for _, s := range in.Scopes {
-		if judge.ScopeIncludes(s, judge.Dimension(d)) {
+		if rulebook.ScopeIncludes(s, rulebook.Dimension(d)) {
 			return true
 		}
 	}
@@ -178,7 +178,7 @@ func Build(in Input) (Plan, error) {
 	s := in.Subject
 	for _, scope := range in.Scopes {
 		switch scope {
-		case judge.ConformanceScope, judge.DestructiveScope, judge.SteeringScope, judge.CompareScope:
+		case rulebook.ConformanceScope, rulebook.DestructiveScope, rulebook.SteeringScope, rulebook.CompareScope:
 		default:
 			return Plan{}, fmt.Errorf("QE3: invalid scope")
 		}
