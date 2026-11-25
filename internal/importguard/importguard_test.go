@@ -71,7 +71,7 @@ func dependencyProblems(packages []listedPackage, target string) []string {
 			if name == module+"/internal/collect" && (dep == module+"/internal/store" || dep == module+"/internal/judge") {
 				problems = append(problems, name+": forbidden dependency "+dep)
 			}
-			if (dep == module+"/internal/scripted" || dep == module+"/internal/confine") && !strings.HasPrefix(name, module+"/cmd/pql") && name != dep && !strings.HasSuffix(name, "_test") {
+			if (dep == module+"/internal/scripted" || dep == module+"/internal/confine") && !strings.HasPrefix(name, module+"/cmd/pql") && name != dep && name != dep+".test" && !strings.HasSuffix(name, "_test") {
 				problems = append(problems, name+": source selected outside cmd/pql")
 			}
 		}
@@ -359,6 +359,7 @@ func TestDependencyClassifier(t *testing.T) {
 		{"collect store", `{"ImportPath":"` + module + `/internal/collect","Imports":["` + module + `/internal/store"]}`, "linux", []string{module + "/internal/collect: forbidden dependency " + module + "/internal/store"}},
 		{"collect judge", `{"ImportPath":"` + module + `/internal/collect","Imports":["` + module + `/internal/judge"]}`, "linux", []string{module + "/internal/collect: forbidden dependency " + module + "/internal/judge"}},
 		{"collect inputs", `{"ImportPath":"` + module + `/internal/collect","Imports":["` + module + `/internal/observe","` + module + `/internal/plan","` + module + `/internal/decide"]}`, "linux", nil},
+		{"confine test driver", `{"ImportPath":"` + module + `/internal/confine.test","Imports":["` + module + `/internal/confine"]}`, "darwin", nil},
 		{"source selection", `{"ImportPath":"` + module + `/internal/grade","Imports":["` + module + `/internal/confine"]}`, "darwin", []string{module + "/internal/grade: source selected outside cmd/pql"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
