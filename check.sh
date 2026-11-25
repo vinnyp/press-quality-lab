@@ -8,7 +8,7 @@ fail() { trap - EXIT; echo "CHECK FAILED at step: $STEP ($1)" >&2; exit 1; }
 trap 'status=$?; if (( status != 0 )); then echo "CHECK FAILED at step: $STEP (exit $status)" >&2; fi' EXIT
 step() { STEP="$1"; echo "==> [$STEP] $2"; }
 need() { command -v "$1" >/dev/null || fail "$1 not found on PATH"; }
-step rule-growth 'check unmapped rule ratchet'
+step rule-growth 'check rule and pending-case ratchets'
 need python3
 PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/check-rule-growth.py
 step gate './gate.sh'
@@ -127,6 +127,13 @@ if [[ -d docs/specs/conformance-collection-1.0/cases ]]; then
 else
  echo 'no cases yet'
 fi
+step corpus-records 'run scripted corpus and validate stored copies'
+(
+ corpus_copies=$(mktemp -d "${TMPDIR:-/tmp}/pql-corpus-records.XXXXXX")
+ trap 'rm -rf "$corpus_copies"' EXIT
+ PQL_CORPUS_COPIES="$corpus_copies" GOPROXY=off GOFLAGS=-mod=readonly GOTOOLCHAIN=local go test -count=1 -tags scripted ./internal/corpusrunner
+ PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I scripts/validate-corpus-records.py --kit docs/specs/conformance-collection-1.0 --pending internal/corpusrunner/pending.txt --copies "$corpus_copies"
+)
 step export 'export blind collection inputs and check for leaks'
 (
  export_tmp=$(mktemp -d "${TMPDIR:-/tmp}/pql-export.XXXXXX")
