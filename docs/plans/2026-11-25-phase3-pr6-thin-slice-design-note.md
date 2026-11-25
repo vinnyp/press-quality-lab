@@ -8,14 +8,15 @@ The plan says that from the thin slice to slice e, each pull request gets this n
 
 After this slice, `pql grade` runs end to end:
 - it reads a subject file;
-- it fixes the required set and every invocation key for the anchor cases;
+- it fixes the required set, its preimages and its check ids for the anchor cases;
 - it collects through the seam and the loop, with only the precedence table's level 1 built;
 - it builds the record, has the judge decide it, stores it, and exits with the judge's code.
 
-**Three kinds of engine fault.** Each ends the run with exit 70 and names a rule on the GKD8 rejection line:
+**Four kinds of engine fault.** Each ends the run with exit 70 and names a rule on the GKD8 rejection line:
 - **A planning gap.** The engine fixes the required set, its preimages and check ids, and the pre-check before any check runs. If a check needs a preimage or required-set kind the slice does not build, such as a placeholder's preimage, the run ends there, naming that rule. Nothing has been collected at that point.
 - **An unbuilt level.** A check that reaches an unbuilt level ends the run, naming that level's rule, whenever its trigger holds or cannot be ruled out (KTD11).
 - **A key gap.** An invocation key, in QT5's shape, is needed only when the loop serves that invocation: at level 6 for a computation, at level 7 for the subject. A check meets a missing key kind, such as a computation's key, only if it gets that far. A check decided at level 1 never needs a key.
+- **A record gap.** A step used after collection, when the record is built, judged and stored, that the slice does not build ends the run there, naming that rule.
 
 Either way, an unbuilt rule is an engine fault and never a pass.
 
@@ -23,20 +24,11 @@ A released `grade` gives every subject-running and computation-running check `ne
 
 ## Evidence rules
 
-The only evidence rule this slice decides is **QO1** (confinement not applied), at level 1, through its two grade-wide conditions. The scripted host (QT4) supplies the facts for both:
-- the confinement could not be applied, which is the host's `confinement.applied`;
-- the self-test failed (QH9), which is the host's `self_test`.
+The only evidence rule this slice decides is **QO1** (confinement not applied), at level 1. §2 tries QO1 first for any check (`collection-rules.md` lines 121 and 122). The slice builds two of its conditions:
+- **The grade-wide conditions.** The scripted host (QT4) supplies the facts: `confinement.applied` for confinement that could not be applied, and `self_test` for a failed self-test (QH9). When either holds, every required check is not observed with `network_unverifiable`, a check that runs nothing included. That is errata E-15, which the owner ruled on 2026-11-25.
+- **The per-invocation condition.** The engine could not apply confinement to one invocation (QH6). Level 1 reads it from the recording's markers and end for each subject invocation that ran (QT4, "each invocation's markers and end"), since §2 puts QO1 before every other reason. No corpus recording has a run without its marker, so a synthetic recording tests this condition.
 
-**Which checks QO1 covers.** QO1 covers the checks that run the subject or a computation, and no others. Three clauses say this:
-- §2 opens "These rules turn one invocation of the subject into an outcome for the check it serves" (`collection-rules.md` line 119);
-- QH1, QH6 and QH9 each say "every check that runs the subject" (`confinement.md` lines 9, 17 and 31);
-- QO6 applies the same rules to a computation.
-
-A check with no invocation, such as an `empty_target` probe, is decided by its own rule, which this slice does not build. No corpus case has such a check under a level-1 host.
-
-**What this slice does not build of QO1:**
-- its per-invocation clause, where confinement was not applied to one invocation. That clause is QH6, read from the recording's markers and end (QT4, "each invocation's markers and end"), and it belongs to level 7;
-- its system clause (QH1). A scripted run checks no system version (QT3), and the real verifier comes with U35.
+**What this slice does not build of QO1:** its system clause (QH1). A scripted run checks no system version (QT3), and the real verifier comes with U35. So QO1 stays on KTD22's list.
 
 Every other observation the slice makes feeds the record and the trace, never a resolution:
 - the required set;
@@ -86,7 +78,12 @@ For each pending case, the prediction file holds the ending the build must show.
 
 - **A judge-checked case with a planning gap:** exit 70, naming one of its planning-gap rules.
 - **Any other pending judge-checked case:** exit 70, naming a rule from the set of its checks' endings, which are unbuilt levels and key gaps. The loop's order across checks is the engine's, so any member of the set may be named.
-- **A pending derivation-only case:** not exit 2. The file is refused under no rule, because a refusal naming another rule would be a wrong decision.
+- **A pending derivation-only case:** exit 70, naming one of three kinds of rule:
+  - a KTD11 level's rule;
+  - a planning-gap or record-gap rule;
+  - QE6, since the pre-check's X10 row is the engine's fault.
+
+  It never exits 2, since a refusal naming another rule would be a wrong decision. It never names a verdict either.
 - **A real-verifier case:** not run.
 
 For this slice:
@@ -116,21 +113,21 @@ A rule leaves the unmapped list only when a test proves its whole text. The pull
 
 | Rule | Proof | Its mutation |
 |---|---|---|
-| QS1 | U4: version `2.0`, a missing version and the number `1.0` are each refused naming QS1. A missing version does not "state its own version", and E-9 puts QS1 first | accept any version |
-| QS2 | U4: each strict-reading clause (§3 of the judge contract, through `internal/strictjson`) and a schema refusal, each naming QS2 when no named rule is broken | accept a repeated key |
+| QS1 | U4: version `2.0`, a missing version and the number `1.0` are each refused naming QS1. A missing version does not "state its own version" (as `case-101` and `case-102` read "states" for QS4 and QS3), E-9 puts QS1 first, and E-16 settles the number | accept any version |
+| QS2 | U4: each strict-reading clause (§3 of the judge contract, through `internal/strictjson`) and a schema refusal, each naming QS2 when no built named rule is broken. A refused file shows no required set in the trace | accept a repeated key |
 | QS4 | U4: a table over each of the five facts and each wrong type; U7 passes every fact as given | hard-code one fact's value |
-| QT1 | U2 and U6: the flag matrix in released and scripted builds, and an unreadable or invalid host or recording refused with exit 2 | let a released build accept `--host` |
 | QE6 | U25: all twelve rows of QE6's table, X1 to X12, through an injected judge, each with its expected exit code | flip one row's cause |
 | QE15 | U25: a record the injected judge rejects exits 70, shows no verdict, and is stored with `judge_rejected: true` | drop the stored rejected record |
-| QH3 | U25: an effective user id of 0, through the injected seam, exits 70 before the store or the sweep is resolved | check the real user id instead of the effective one |
+| QH3 | U25: the seam returns both the real and the effective user id, and the tested code chooses the effective one. Real id 1000 with effective id 0 exits 70 before the store or the sweep is resolved, and a guard test asserts the production seam reads `os.Geteuid` | check the real user id instead of the effective one |
 
-None of the seven is a GR15 rule.
+None of the six is a GR15 rule.
 
 **Stays listed,** each with what it still lacks:
 
 | Rule | Still lacks |
 |---|---|
-| QO1 | the per-invocation clause (QH6, level 7) and the system clause (QH1, U35 and macOS) |
+| QO1 | the system clause (QH1, U35 and macOS) |
+| QT1 | its "breaks a rule of QT5" clause is only as complete as QT5's recording checks, which stay listed with QT5 |
 | QT2 | an anchor of a scripted run refused, and scripted baselines from files (U19) |
 | QT4 | the rules that decide from six of the eight host fields: QO4, QP9, QP11, QH21 and QO5 |
 | QE14 | the scorecard half (U18, whose agreement check proves it again) |
@@ -160,7 +157,12 @@ None of the seven is a GR15 rule.
    | `case-136` | swap QE6's cause | exit 70, not 2 |
    | every case | **QO1 fires on a passing host** | caught by controls 3 and 4 |
 3. **Every check's ending, checked by a test.**
-   - **The in-process test.** A tagged test runs `plan` and `decide` in process over every scripted case's subject, host and recording, and compares each check's ending with `pr6-prediction.json`. `decide` is pure. A check decided wrongly inside a pending case is therefore seen, even though that case's run stops early. QO1 firing on a passing host turns this test red on every case with a passing host.
+   - **The in-process test.** A tagged test builds each scripted case's facts through the real path: `internal/subject`, `internal/plan`, `internal/scripted` and the loop's own gathering. It then runs `decide`, which returns an unbuilt level as a value rather than exiting, so every check is evaluated. What it asserts depends on the case's predicted phase in `pr6-prediction.json`:
+     - **The 94 judge-checked cases that reach `decide`** (2 predicted, 92 ending at an unbuilt level): the check ids equal the prediction's, and each check's ending equals its entry, with a part's suffix dropped.
+     - **The 24 judge-checked cases with a planning gap:** `plan` returns a planning gap whose rule is in the case's predicted set, and `decide` is not called.
+     - **The derivation-only cases:** `subject` or `plan` returns a rule in the case's predicted ending.
+
+     A check decided wrongly inside a pending case is therefore seen, even though that case's run stops early. QO1 firing on a passing host turns this test red on every case that reaches `decide` with a passing host.
    - **The corpus runner.** It requires each pending case's actual exit code and named rule to match its predicted ending. It reads the rule from the GKD8 line, as it already does for derivation-only cases.
 
    The script's prediction is independent of the engine's code, so the test's oracle does not come from the code under test.
@@ -182,6 +184,10 @@ None of the seven is a GR15 rule.
    - a stored rejected record;
    - QE16's exit-code cross-check;
    - a panic in either goroutine exits 70.
+
+## Readings
+
+The owner ruled on two readings before this build, now errata E-15 (QO1 covers every check under a grade-wide condition) and E-16 (a version that is not the string `1.0` is QS1's). The design review's log, `docs/agent-reviews/2026-11-25-phase3-pr6-design-note-reviews.md`, records how each was raised.
 
 ## Limits the script carries into later slices
 

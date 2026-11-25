@@ -188,8 +188,20 @@ class PredictorTests(unittest.TestCase):
                          'rules': ['QD4', 'QH8'], 'phase': 'sentinel'})
 
     def test_unbuilt_derivation_is_not_refused(self):
+        allowed = {'QO1', 'QS5', 'QD4', 'QA7', 'QH8', 'QA6/QA4',
+                   'QO2-QO5', 'probe/predicate', 'QE6'}
+        allowed.update({'QE2.placeholders', 'QE2.captures',
+                        'QE3.placeholder_candidates', 'QA9.preconditions',
+                        'QE7.asserts_emptiness', 'QA3.capture_crediting',
+                        'QA7.destructive_exclusion', 'QE4', 'QE4.anchor'})
+        served_at_observation = {
+            'QT5.subject_keys',
+            'QS7.invocation_keys',
+        }
+        allowed.update(r['rule'] for r in BUILT['builds']
+                       if r['rule'] not in served_at_observation)
         self.assertEqual(self.case(114)['ending'],
-                         {'exit_code': 'not exit 2', 'rules': [], 'phase': 'unrefused'})
+                         {'exit_code': 70, 'rules': sorted(allowed), 'phase': 'unrefused'})
 
     def test_qe6_requires_required_set_and_precheck(self):
         for rule in ('QE2.slice', 'QE3.scope', 'QE7.slice', 'QE5', 'QE6'):
@@ -224,6 +236,33 @@ class PredictorTests(unittest.TestCase):
             run = ({'computation': computation}, {'markers': {'confinement': False}, 'end': end})
             with patch.object(predictor, 'runs_for', return_value=[run]):
                 self.assertEqual(predictor.deciding_level(e, p, subject, host, {}, doc['evidence'], ps), expected)
+
+    def test_grade_wide_qo1_covers_checks_without_runs(self):
+        # E-15 includes empty_target and a null-secret probe.
+        for probe in ('byte_bound', 'planted_secret'):
+            p = {'probe': probe, 'words': None, 'expected': None,
+                 'parameters': {}}
+            self.assertFalse(predictor.has_invocation(p))
+            self.assertFalse(predictor.has_computation(p))
+            for applied, self_test in ((False, 'passed'), (True, 'failed')):
+                host = {'confinement': {'applied': applied}, 'self_test': self_test}
+                self.assertEqual(predictor.deciding_level(
+                    {'reason': 'network_unverifiable'}, p, {'secret': None}, host,
+                    {'invocations': []}, [], {}), 1)
+
+    def test_record_gaps_follow_collection(self):
+        for rule in ('QE8', 'QE9', 'QE10.record', 'QE11', 'QS4', 'QT2',
+                     'QE14', 'QE16', 'QE17'):
+            built = copy.deepcopy(BUILT)
+            built['builds'] = [r for r in built['builds'] if r['rule'] != rule]
+            self.assertEqual(self.case(3, built)['ending'],
+                             {'exit_code': 70, 'rules': [rule], 'phase': 'record'})
+            self.assertEqual(self.case(59, built)['ending']['phase'], 'sentinel')
+        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 6, 7, 'record'})
+        for rule in predictor.names(BUILT['builds']):
+            self.assertEqual(sum(rule in {r for r, phase in predictor.BUILD_PHASE.items()
+                                         if phase == candidate}
+                                 for candidate in (None, 6, 7, 'record')), 1)
 
     def test_reason_table_covers_corpus(self):
         observed = set()

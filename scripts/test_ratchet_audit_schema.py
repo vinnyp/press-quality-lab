@@ -18,10 +18,19 @@ def problems(audit):
     result = []
     for case, entry in sorted(audit.items()):
         parts = [v.split('.', 1)[1] for v in entry['violations'] if '.' in v]
-        if not parts:
-            continue
-        subject = json.loads((KIT / 'cases' / case / 'subject.json').read_text())
-        rejected = not validator.is_valid(subject)
+        duplicates = []
+        def unique(pairs):
+            result = {}
+            for name, value in pairs:
+                if name in result:
+                    duplicates.append(name)
+                result[name] = value
+            return result
+        subject = json.loads((KIT / 'cases' / case / 'subject.json').read_text(),
+                             object_pairs_hook=unique)
+        rejected = bool(duplicates) or not validator.is_valid(subject)
+        if rejected != ('QS2' in entry['violations']):
+            result.append((case, 'QS2', rejected))
         for part in parts:
             if rejected != (part == 'schema'):
                 result.append((case, part, rejected))
@@ -31,6 +40,15 @@ def problems(audit):
 class AuditSchemaTests(unittest.TestCase):
     def test_audit_labels(self):
         self.assertEqual(problems(predictor.DERIVATION_AUDIT), [])
+
+    def test_unparted_labels_are_checked(self):
+        for case in ('case-113', 'case-117', 'case-118'):
+            audit = copy.deepcopy(predictor.DERIVATION_AUDIT)
+            audit[case]['violations'].append('QS2')
+            self.assertEqual(problems(audit), [(case, 'QS2', False)])
+        audit = copy.deepcopy(predictor.DERIVATION_AUDIT)
+        audit['case-129']['violations'].remove('QS2')
+        self.assertEqual(problems(audit), [('case-129', 'QS2', True)])
 
     def test_wrong_labels_are_detected_in_both_directions(self):
         audit = copy.deepcopy(predictor.DERIVATION_AUDIT)

@@ -42,3 +42,28 @@
 | 17 | `check.sh` runs `unittest` without `-B` | agy (Nit) | Rejected: no such line in `check.sh`; every Python step uses `-I -B` | No change |
 
 The agy review also described three predicted cases' violations wrongly. It gave `case-100` an unknown field, `case-101` a relative directory, and `case-129` a trailing comma. The files show a repeated `declared_count`, `read_only: "no"`, and version `2.0`, as the script says. Its prediction verdict did not depend on those descriptions.
+
+## Round 2
+
+**Range:** b2fe47a to 7ae392c (delta).
+
+**Verdicts.**
+- **Measurement:** dispositions #1 to #6 and #9 to #14 hold. #7 and #8 did not hold as written. Two Majors, five Minors and four Nits.
+- **agy:** pass with minor findings. Four Minors and one Nit.
+
+Both reproduced the nine predicted cases. The measurement reviewer found the committed prediction file byte-identical to a fresh run. The agy reviewer again could not run the script, because its sandbox refused.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 18 | QO1's scope over a check that runs nothing is two-way after all. §2's "for any check" (line 121), QO1's grade-wide wording (line 137) and QO6's "like every other check" (line 161) point the other way from the clauses #7 cited, which are silent rather than exclusive | measurement (Major), agy (Minor) | Confirmed against line 161, which #7 had missed | Reported to the owner, who ruled on 2026-11-25 that QO1 covers every check. That ruling is errata E-15, and KTD21 is amended to match |
+| 19 | QH3's planned mutation, reading the real user id, sits in the production wiring its test replaces | measurement (Major) | Confirmed against the note | Fixed: the seam returns both ids, the tested code chooses, and a guard test pins `os.Geteuid` |
+| 20 | QS1 with the number `1.0` is two-way | measurement (Minor) | Confirmed that QS1 states no type; line 3 calls the version "this string" | Reported to the owner, who ruled QS1. That ruling is errata E-16. The note also cites the `case-101` and `case-102` analogs for a missing version |
+| 21 | "Not exit 2" is a loose ending for the pending derivation-only cases | measurement (Minor) | Confirmed | Fixed: exit 70 naming a level, planning-gap, record-gap or QE6 rule, never a verdict |
+| 22 | QT1's exit-2 clause is only as complete as QT5's recording checks | measurement (Minor) | Confirmed against QT5's "never holds" conditions | QT1 stays listed |
+| 23 | Moving QO1's per-invocation clause to level 7 would break §2's order | measurement (Minor) | Confirmed against lines 121 to 127 | Fixed: level 1 reads it for each subject invocation that ran, tested with a synthetic recording |
+| 24 | The note's per-invocation clause "belongs to level 7", and the script decides it at level 1 | agy (Minor) | Confirmed. The agy reviewer proposed moving the script to level 7 | The script is right and the note was wrong, per #23. The agy reviewer's KTD11 citation is the helper that multi-invocation checks use (QO7), not a single-invocation check's order |
+| 25 | The in-process test must use the real fact path, and must say what it asserts for planning-gap and derivation-only cases | measurement (Minor), agy (Minor) | Confirmed | Fixed: facts come through `internal/scripted` and the loop, `decide` returns an unbuilt level as a value, and the assertion is stated for each phase |
+| 26 | Steps after collection were classified as planning | measurement (Nit) | Confirmed in the script's phase table | Fixed: a record phase |
+| 27 | The schema-label test skipped labels with no part | measurement (Nit) | Confirmed | Fixed |
+| 28 | Wording: "every invocation key"; QS2's "no named rule"; QH6 misquoted | measurement (Nit), agy (Nit) | Confirmed | Fixed. The QH6 quote went with the rewritten paragraph |
+| 29 | The agy reviewer could not run the script | agy (Minor) | Tool error on its side | No change. The measurement reviewer and `check.sh` ran it |

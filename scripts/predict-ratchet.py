@@ -36,7 +36,8 @@ LEVEL_RULE = {1: 'QO1', 2: 'QS5', 3: 'QD4', 4: 'QA7', 5: 'QH8',
 RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
     'QP7', 'QP10', 'QA4', 'QA9', 'QS2', 'QE6']
 
-# None means pre-collection construction/pre-check/record support; an integer
+# None means pre-collection construction/pre-check; record means after collection.
+# An integer
 # means observation support, needed only at that invocation's serving level.
 BUILD_PHASE = {
     'QE2.slice': None, 'QE2.placeholders': None, 'QE2.captures': None,
@@ -44,11 +45,11 @@ BUILD_PHASE = {
     'QE3.placeholder_candidates': None, 'QP1': None,
     'QA9.empty_satisfiable': None, 'QA9.preconditions': None,
     'QE7.slice': None, 'QE7.asserts_emptiness': None,
-    'QE8': None, 'QE9': None, 'QE10.record': None, 'QE11': None,
-    'QS4': None, 'QT2': None, 'QT3': None, 'QT4': None,
+    'QE8': 'record', 'QE9': 'record', 'QE10.record': 'record', 'QE11': 'record',
+    'QS4': 'record', 'QT2': 'record', 'QT3': None, 'QT4': None,
     'QT5.recording_reads': None, 'QT5.subject_keys': 7,
     'QT5.computation_keys': 6, 'QS7.invocation_keys': 7,
-    'QE14': None, 'QE16': None, 'QE17': None, 'QE20.portable': None,
+    'QE14': 'record', 'QE16': 'record', 'QE17': 'record', 'QE20.portable': None,
     'QE5': None, 'QE6': None, 'QA3.slice': None,
     'QA3.capture_crediting': None, 'QA7.destructive_exclusion': None,
     'QE4': None, 'QE4.anchor': None,
@@ -156,6 +157,8 @@ def runs_for(preimage, recording):
 def deciding_level(evidence, preimage, subject, host, recording, all_evidence, preimages):
     reason = evidence['reason'] or evidence['failure_kind'] or evidence['outcome']
     runs = runs_for(preimage, recording)
+    # E-15: grade-wide QO1 covers even checks that run nothing.
+    # collection-rules.md lines 121-122 and 136: QH6 is tried at level 1.
     if reason == 'network_unverifiable':
         if (not host['confinement']['applied'] or host['self_test'] == 'failed' or
                 any(key['computation'] is None and not r['markers']['confinement']
@@ -303,6 +306,12 @@ def ending(exit_code, rules=(), phase='deciding'):
     return {'exit_code': exit_code, 'rules': sorted(set(rules)), 'phase': phase}
 
 
+def pending_rules(built):
+    # A missing refusal may proceed only to an engine fault, never a verdict.
+    return set(LEVEL_RULE.values()) | {'QE6'} | {
+        r for r, phase in BUILD_PHASE.items() if phase in (None, 'record')}
+
+
 def check_ending(level, built, subject, preimage, gaps):
     planning = {r for r in gaps if BUILD_PHASE[r] is None}
     if planning:
@@ -342,7 +351,7 @@ def predict_case(directory, built):
             result['blockers'] += ['builds lacks ' + r for r in gaps]
         result['ending'] = (ending(70, gaps, 'planning') if gaps else
                             ending(2, [case['expect']['rule']]) if not result['blockers'] else
-                            ending('not exit 2', phase='unrefused'))
+                            ending(70, pending_rules(built), phase='unrefused'))
     else:
         document = load(directory / 'input.json')
         preimages = load(directory / 'preimages.json')
@@ -369,12 +378,15 @@ def predict_case(directory, built):
                     for r in c['ending']['rules']}
         sentinels = {r for c in checks if c['ending']['phase'] in ('sentinel', 'observation')
                      for r in c['ending']['rules']}
+        record = {r for r in common_gaps if BUILD_PHASE[r] == 'record'}
         case_end = (ending(70, planning, 'planning') if planning else
                     ending(70, sentinels, 'sentinel') if sentinels else
+                    ending(70, record, 'record') if record else
                     ending(case['expect']['exit_code'], [case['expect'].get('rule')]
                            if case['expect'].get('rule') else []))
         blockers = (['builds lacks ' + r for r in sorted(planning)] if planning else
-                    ['first sentinel: ' + r for r in sorted(sentinels)])
+                    ['first sentinel: ' + r for r in sorted(sentinels)] if sentinels else
+                    ['builds lacks ' + r for r in sorted(record)])
         result = {'levels': sorted({c['deciding_level'] for c in checks}),
                   'blockers': blockers, 'detail': '', 'checks': checks, 'ending': case_end}
     return dict(row, **result, predicted=not result['blockers'])
