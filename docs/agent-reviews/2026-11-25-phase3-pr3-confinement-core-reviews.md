@@ -62,7 +62,23 @@ Each reviewer ran in its own clone. No reviewer started `sandbox-exec`. The coor
 | 18 | The import guard's two-file selection limit is untested | testing (P2) | Validator confirmed | Fixed: `ThreeSelectors` and a `TwoSelectors` control |
 | 19 | `kern.argmax` wiring, the capture cut boundary, a fixed sleep in `TestNewSession` | testing (gaps) | Mutants survived | Fixed |
 
-The branch was then rebased onto `main` with PR2 merged. `cmd/pql`'s darwin dependency list gained one line, `internal/strictjson`. Round 4 (`ce-code-review` on the rebased branch) is recorded in the pull request.
+The branch was then rebased onto `main` with PR2 merged. `cmd/pql`'s darwin dependency list gained one line, `internal/strictjson`.
+
+## Round 4 (ce-code-review on the rebased branch, run `20261125-133848-3c072f41`)
+
+The same lenses and a second cross-model pass on codex (`independence_verified` true) ran. The verdict was "Ready with fixes", with no P0 or P1. All units are met. The validator confirmed all six findings.
+
+| # | finding | raised-by | disposition |
+|---|---|---|---|
+| 20 | Nothing tests that the program's stdin reads `/dev/null` (QH13) | testing (P2) | Fixed: `TestNullStdin` swaps the engine's fd 0 for a pipe |
+| 21 | The check that `internal/scripted` stays out of the untagged build cannot fire yet and has no control | project-standards (P2) | Fixed: a helper with `ScriptedBoth` and `ScriptedTaggedOnly` rows |
+| 22 | The zombie state is a bare literal, and `killGroup` duplicates `groupMembers` | maintainability (P2) | Fixed |
+| 23 | The words argument's UTF-8 check, the launcher's exit 70, and the duplicated test helpers | testing, maintainability (P3) | Fixed |
+| 24 | A FIFO subject path would block the engine in `open` | security (residual) | Fixed: `O_NONBLOCK` before the type check; `TestCopyFIFO` |
+| 25 | The size check did not count `sandbox-exec`'s real argument vector | adversarial-codex, correctness (residual) | Fixed: the actual exec vector, pointers included; `TestStartEncodedArgumentLimit` |
+| 26 | The marker line uses part of the stderr cap | adversarial-codex | Left to U30, which owns heads, counts and cut flags; the cap is interim |
+
+The `-race` runs for this round also exposed a race between closing a finished drain and setting its deadline. It is fixed, and `TestCaptureDeadlineAfterClose` covers it.
 
 ## Constraints on later units (from the security review)
 
@@ -93,7 +109,10 @@ Each mutant was run, the named test failed on it, and the code was restored. Row
 | Argument size | skip the check | `TestArgumentSize`, `TestStartArgumentLimit` |
 | Environment | populate the launcher's; pass the program's to spawn | `TestLauncherInvalidWords`, `TestStartEnvironment` |
 | Wait | disable the cache | `TestWaitCached` |
-| Import guard | Cobra outside `cmd/`; `x/sys` on Linux; transitive spawn; `func init`; cgo via `go list`; the dependency list; three selectors | `TestDependencyClassifier/*` (reviewers), `TestSourceMutations/*`, `TestCgoListMutation`, `TestDependencyListMutations`, `ThreeSelectors` |
+| Stdin (QH13) | inherit the engine's fd 0 | `TestNullStdin` |
+| FIFO source | drop `O_NONBLOCK` | `TestCopyFIFO` |
+| Exec size | bypass the launcher-vector check; omit pointer sizes | `TestStartEncodedArgumentLimit`, `TestArgumentSize` |
+| Import guard | Cobra outside `cmd/`; `x/sys` on Linux; transitive spawn; `func init`; cgo via `go list`; the dependency list; three selectors; the scripted-package check | `TestDependencyClassifier/*` (reviewers), `TestSourceMutations/*`, `TestCgoListMutation`, `TestDependencyListMutations`, `ThreeSelectors` |
 | Gate steps | errcheck tags through `GOFLAGS`; drop a vet, test or evidence step; drop a tag set; drop `GOARCH` | `TestTaggedLintControls`, `TestGateExecutionControls/*`, `TestGateTagSets` (reviewer) |
 | Builders | inherit `GOFLAGS` | `TestBuilderEnvironment` |
 
