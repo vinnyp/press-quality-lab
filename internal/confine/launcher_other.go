@@ -3,4 +3,4 @@
 package confine
 
 // Hidden refuses unsupported systems (QH1) without starting a program.
-func Hidden(_, _ string, _ func() (string, []string, []string)) int { return 70 }
+func Hidden(_, _ string, _ func() (string, []string, []string)) int { return LauncherFailed }

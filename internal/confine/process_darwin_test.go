@@ -84,7 +84,7 @@ func TestGroupEnd(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, proc := range procs {
-		if proc.Proc.P_stat != 5 {
+		if proc.Proc.P_stat != zombieState {
 			t.Fatalf("live background member: %d", proc.Proc.P_pid)
 		}
 	}
@@ -111,7 +111,7 @@ func waitZombie(t *testing.T, pid int) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if proc.Proc.P_stat == 5 {
+		if proc.Proc.P_stat == zombieState {
 			return
 		}
 		time.Sleep(time.Millisecond)
@@ -306,10 +306,10 @@ func TestCanonicalCopies(t *testing.T) {
 	}
 }
 func TestArgumentSize(t *testing.T) {
-	if err := argumentSize([]string{"abc"}, []string{"A=b"}, 8); err != nil {
+	if err := argumentSize([]string{"abc"}, []string{"A=b"}, 24); err != nil {
 		t.Fatal(err)
 	}
-	if err := argumentSize([]string{"abc"}, []string{"A=b"}, 7); err == nil {
+	if err := argumentSize([]string{"abc"}, []string{"A=b"}, 23); err == nil {
 		t.Fatal("oversized arguments accepted")
 	}
 }
@@ -521,5 +521,119 @@ func TestStartArgumentLimit(t *testing.T) {
 	})
 	if called || p != nil || err == nil || err.Error() != "program arguments and environment exceed kern.argmax" {
 		t.Fatalf("argument limit did not fault before launch: called=%v process=%v error=%v", called, p, err)
+	}
+}
+
+func TestNullStdin(t *testing.T) {
+	saved, err := unix.Dup(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := unix.Dup2(saved, 0); err != nil {
+			t.Error(err)
+		}
+		if err := unix.Close(saved); err != nil {
+			t.Error(err)
+		}
+	})
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := r.Close(); err != nil {
+			t.Error(err)
+		}
+		if err := w.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := unix.Dup2(int(r.Fd()), 0); err != nil {
+		t.Fatal(err)
+	}
+	var input unix.Stat_t
+	if err := unix.Fstat(0, &input); err != nil {
+		t.Fatal(err)
+	}
+	if input.Mode&unix.S_IFMT != unix.S_IFIFO {
+		t.Fatal("stdin control is not a pipe")
+	}
+	p := shellProcess(t, "if [ /dev/fd/0 -ef /dev/null ]; then printf null; else printf inherited; fi")
+	run, err := p.Wait()
+	if err != nil || run.End.Code != 0 || string(run.Stdout) != "null" {
+		t.Fatalf("standard input is not /dev/null: output=%q end=%+v error=%v", run.Stdout, run.End, err)
+	}
+}
+
+func TestCopyFIFO(t *testing.T) {
+	root := t.TempDir()
+	fifo := filepath.Join(root, "fifo")
+	if err := unix.Mkfifo(fifo, 0600); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() { _, err := NewCopies(root, "/bin/sh", fifo); done <- err }()
+	select {
+	case err := <-done:
+		if err == nil || err.Error() != "executable is not regular" {
+			t.Fatalf("FIFO program was not refused: %v", err)
+		}
+	case <-time.After(time.Second):
+		// Release a regressed blocking open before failing, leaving no worker behind.
+		fd, err := unix.Open(fifo, unix.O_RDWR|unix.O_NONBLOCK, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		result := <-done
+		if err := unix.Close(fd); err != nil {
+			t.Error(err)
+		}
+		t.Fatalf("FIFO program blocked in open: %v", result)
+	}
+}
+
+func TestStartEncodedArgumentLimit(t *testing.T) {
+	limit, err := unix.SysctlUint32("kern.argmax")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := NewCopies(t.TempDir(), "/usr/bin/true", "/usr/bin/true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	words := []string{strings.Repeat("\t", int(limit)/2)}
+	if err := argumentSize(append([]string{c.program.path}, words...), nil, int(limit)); err != nil {
+		t.Fatalf("program words must fit: %v", err)
+	}
+	values := map[string]string{}
+	for _, name := range commonNames {
+		values[name] = "/"
+	}
+	called := false
+	p, err := c.startWith(Invocation{Paths: Paths{Values: values}, Words: words}, func(string, []string, string, []string, string) (Process, error) {
+		called = true
+		return &process{changed: true}, nil
+	})
+	if called || p != nil || err == nil || err.Error() != "program arguments and environment exceed kern.argmax" {
+		t.Fatalf("encoded launcher arguments did not fault before launch: called=%v process=%v error=%v", called, p, err)
+	}
+}
+
+func TestCaptureDeadlineAfterClose(t *testing.T) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	c := drain(r)
+	<-c.done
+	if c.err != nil {
+		t.Fatal(c.err)
+	}
+	if err := c.setDeadline(time.Now()); err != nil {
+		t.Fatalf("deadline on completed drain: %v", err)
 	}
 }

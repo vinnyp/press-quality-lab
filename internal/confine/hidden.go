@@ -19,6 +19,9 @@ const FailurePrefix = "pql-could-not-start:"
 // CouldNotStart is reserved for launcher replacement failure, never attribution by itself.
 const CouldNotStart = 72
 
+// LauncherFailed reports a launcher infrastructure failure.
+const LauncherFailed = 70
+
 // NewMarker is called by the engine, never by the confined launcher.
 func NewMarker() (string, error) {
 	var b [32]byte

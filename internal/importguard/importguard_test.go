@@ -127,12 +127,7 @@ func goOutput(t *testing.T, root, target, tags, cgo string, args ...string) []by
 	cmd.Dir = root
 	// os.Environ may already hold any of these keys. Strip them before adding
 	// the explicit configuration so nested invocations cannot inherit tags.
-	for _, e := range os.Environ() {
-		key := strings.SplitN(e, "=", 2)[0]
-		if !slices.Contains([]string{"GOOS", "GOARCH", "CGO_ENABLED", "GOFLAGS", "GOWORK", "GOTOOLCHAIN", "GOPROXY"}, key) {
-			cmd.Env = append(cmd.Env, e)
-		}
-	}
+	cmd.Env = scrubbedEnv()
 	flags := "-mod=readonly"
 	if tags != "" {
 		flags += " -tags=" + tags
@@ -199,8 +194,8 @@ func TestCommandDependencies(t *testing.T) {
 			if got := dependencyDifference(untagged, tagged); len(got) != 0 {
 				t.Errorf("%s %s scripted dependency difference: %v", target, base, got)
 			}
-			if slices.Contains(tagged, module+"/internal/scripted") && !slices.Contains(dependencyDifferenceWithoutException(untagged, tagged), module+"/internal/scripted") {
-				t.Errorf("scripted package present in untagged build")
+			if got := scriptedBuildProblem(untagged, tagged); got != "" {
+				t.Error(got)
 			}
 		}
 		if target == "darwin" {
@@ -218,14 +213,36 @@ func TestCommandDependencies(t *testing.T) {
 	}
 }
 
-func dependencyDifferenceWithoutException(plain, tagged []string) []string {
-	var difference []string
-	for _, dep := range tagged {
-		if !slices.Contains(plain, dep) {
-			difference = append(difference, dep)
+func scriptedBuildProblem(plain, _ []string) string {
+	if slices.Contains(plain, module+"/internal/scripted") {
+		return "scripted package present in untagged build"
+	}
+	return ""
+}
+
+func scrubbedEnv(extraKeys ...string) []string {
+	keys := append([]string{"GOOS", "GOARCH", "CGO_ENABLED", "GOFLAGS", "GOWORK", "GOTOOLCHAIN", "GOPROXY"}, extraKeys...)
+	var env []string
+	for _, e := range os.Environ() {
+		if !slices.Contains(keys, strings.SplitN(e, "=", 2)[0]) {
+			env = append(env, e)
 		}
 	}
-	return difference
+	return env
+}
+
+func gateStep(t *testing.T, gate, prefix string) string {
+	t.Helper()
+	var commands []string
+	for _, line := range strings.Split(gate, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), prefix) {
+			commands = append(commands, line)
+		}
+	}
+	if len(commands) != 1 {
+		t.Fatalf("want one gate step %q, got %d", prefix, len(commands))
+	}
+	return commands[0]
 }
 
 func dependencyListMatches(want []byte, deps []string) bool {
@@ -479,6 +496,21 @@ func TestSourceScope(t *testing.T) {
 }
 
 func TestDependencyListMutations(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		plain, tagged []string
+		want          string
+	}{
+		{"ScriptedBoth", []string{module + "/internal/scripted"}, []string{module + "/internal/scripted"}, "scripted package present in untagged build"},
+		{"ScriptedTaggedOnly", nil, []string{module + "/internal/scripted"}, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := scriptedBuildProblem(tc.plain, tc.tagged); got != tc.want {
+				t.Fatalf("scripted build problem: got %q want %q", got, tc.want)
+			}
+		})
+	}
+
 	if !dependencyListMatches([]byte("fmt\nos\n"), []string{"fmt", "os"}) {
 		t.Fatal("clean dependency list rejected")
 	}
@@ -525,12 +557,7 @@ func TestToolMutations(t *testing.T) {
 			run := func() ([]byte, error) {
 				cmd := exec.Command("go", tc.args...)
 				cmd.Dir = root
-				for _, e := range os.Environ() {
-					key := strings.SplitN(e, "=", 2)[0]
-					if !slices.Contains([]string{"GOOS", "GOARCH", "CGO_ENABLED", "GOFLAGS", "GOWORK", "GOTOOLCHAIN", "GOPROXY"}, key) {
-						cmd.Env = append(cmd.Env, e)
-					}
-				}
+				cmd.Env = scrubbedEnv()
 				cmd.Env = append(cmd.Env, "GOOS="+tc.target, "GOARCH=arm64", "CGO_ENABLED=0", "GOFLAGS=-mod=readonly -tags="+tc.tag, "GOWORK=off", "GOTOOLCHAIN=local", "GOPROXY=off")
 				return cmd.CombinedOutput()
 			}
@@ -573,15 +600,7 @@ func TestTaggedLintControls(t *testing.T) {
 				if variant.target == "darwin" {
 					prefix = "step \"darwin-" + lint.tool + "-$label\" "
 				}
-				var commands []string
-				for _, line := range strings.Split(string(gate), "\n") {
-					if strings.HasPrefix(strings.TrimSpace(line), prefix) {
-						commands = append(commands, line)
-					}
-				}
-				if len(commands) != 1 {
-					t.Fatalf("want one gate step %q, got %d", prefix, len(commands))
-				}
+				command := gateStep(t, string(gate), prefix)
 				root := t.TempDir()
 				for name, content := range map[string]string{
 					"go.mod":  "module example.invalid/lintprobe\n\ngo 1.27.3\n",
@@ -605,14 +624,9 @@ step() { shift; "$@"; }
 flags="-mod=readonly${tags:+ -tags=$tags}"
 label="${tags:-plain}"
 export PATH="${GATE_TOOLS_BIN:-$HOME/.gate-tools/go/bin}:$PATH"
-`+commands[0])
+`+command)
 					cmd.Dir = root
-					for _, e := range os.Environ() {
-						key := strings.SplitN(e, "=", 2)[0]
-						if !slices.Contains([]string{"GOOS", "GOARCH", "CGO_ENABLED", "GOFLAGS", "GOWORK", "GOTOOLCHAIN", "GOPROXY", "tags"}, key) {
-							cmd.Env = append(cmd.Env, e)
-						}
-					}
+					cmd.Env = scrubbedEnv("tags")
 					cmd.Env = append(cmd.Env, "GOOS="+variant.target, "GOARCH=arm64", "CGO_ENABLED=0", "GOFLAGS=-mod=readonly", "GOWORK=off", "GOTOOLCHAIN=local", "GOPROXY=off", "tags="+variant.tags)
 					out, err := cmd.CombinedOutput()
 					if control.name == "clean" {
@@ -666,15 +680,7 @@ func TestGateExecutionControls(t *testing.T) {
 			if kind == "evidence" {
 				prefix = `step "darwin-evidence-compile-$label" `
 			}
-			var commands []string
-			for _, line := range strings.Split(gate, "\n") {
-				if strings.HasPrefix(strings.TrimSpace(line), prefix) {
-					commands = append(commands, line)
-				}
-			}
-			if len(commands) != 1 {
-				t.Fatalf("missing gate execution step %q", prefix)
-			}
+			command := gateStep(t, gate, prefix)
 			prelude := `step() { shift; "$@"; }
 export GOPROXY=off GOTOOLCHAIN=local CGO_ENABLED=0 GOFLAGS=-mod=readonly
 tags=scripted
@@ -719,13 +725,9 @@ label=scripted
 				if err := os.WriteFile(filepath.Join(root, "probe_test.go"), []byte(source), 0600); err != nil {
 					t.Fatal(err)
 				}
-				cmd := exec.Command("bash", "-eu", "-c", prelude+commands[0])
+				cmd := exec.Command("bash", "-eu", "-c", prelude+command)
 				cmd.Dir = root
-				for _, e := range os.Environ() {
-					if !strings.HasPrefix(e, "GOFLAGS=") && !strings.HasPrefix(e, "GOOS=") && !strings.HasPrefix(e, "GOARCH=") {
-						cmd.Env = append(cmd.Env, e)
-					}
-				}
+				cmd.Env = scrubbedEnv()
 				target, arch := "darwin", "arm64"
 				if kind != "evidence" {
 					target, arch = runtime.GOOS, runtime.GOARCH

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -14,6 +15,9 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"golang.org/x/sys/unix"
 )
+
+// zombieState is SZOMB from Darwin sys/proc.h; x/sys exposes no constant.
+const zombieState = 5
 
 type privateCopy struct {
 	path     string
@@ -71,7 +75,7 @@ func makeCopy(run, source string) (privateCopy, error) {
 		return privateCopy{}, err
 	}
 	path := filepath.Join(dir, "program")
-	in, err := os.OpenFile(source, os.O_RDONLY|syscall.O_NOFOLLOW, 0)
+	in, err := os.OpenFile(source, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
 	if err != nil {
 		return privateCopy{}, err
 	}
@@ -130,12 +134,24 @@ const StreamCap = 1 << 20
 const PostExitDrainGrace = 100 * time.Millisecond
 
 type capture struct {
+	closeMu      sync.Mutex
+	closed       bool
 	head         []byte
 	seen         int64
 	err          error
 	done         chan struct{}
 	reader       *os.File
 	cutAfterExit bool
+}
+
+// setDeadline serializes the deadline with drain closing the reader.
+func (c *capture) setDeadline(deadline time.Time) error {
+	c.closeMu.Lock()
+	defer c.closeMu.Unlock()
+	if c.closed {
+		return nil
+	}
+	return c.reader.SetReadDeadline(deadline)
 }
 
 func drain(r io.ReadCloser) *capture {
@@ -150,7 +166,12 @@ func drain(r io.ReadCloser) *capture {
 				c.err = errors.Join(c.err, fmt.Errorf("stream drain panic: %v", v))
 			}
 		}()
-		defer func() { c.err = errors.Join(c.err, r.Close()) }()
+		defer func() {
+			c.closeMu.Lock()
+			defer c.closeMu.Unlock()
+			c.err = errors.Join(c.err, r.Close())
+			c.closed = true
+		}()
 		buf := make([]byte, 32*1024)
 		for {
 			n, err := r.Read(buf)
@@ -202,7 +223,7 @@ func argumentSize(words, env []string, limit int) error {
 	size := 0
 	for _, list := range [][]string{words, env} {
 		for _, word := range list {
-			size += len(word) + 1
+			size += strconv.IntSize/8 + len(word) + 1
 		}
 	}
 	if size > limit {
@@ -248,7 +269,11 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if err := argumentSize(append([]string{c.program.path}, inv.Words...), inv.Env, int(limit)); err != nil {
 		return nil, err
 	}
-	return launch(SandboxExec, append([]string{SandboxExec}, args...), inv.Directory, EngineEnvironment(), marker)
+	argv, env := append([]string{SandboxExec}, args...), EngineEnvironment()
+	if err := argumentSize(argv, env, int(limit)); err != nil {
+		return nil, err
+	}
+	return launch(SandboxExec, argv, inv.Directory, env, marker)
 }
 
 func spawn(path string, args []string, directory string, env []string, marker string) (Process, error) {
@@ -305,16 +330,9 @@ func killGroup(pgid int) (bool, error) {
 	if err != unix.EPERM {
 		return false, err
 	}
-	procs, lookupErr := unix.SysctlKinfoProcSlice("kern.proc.pgrp", pgid)
+	members, lookupErr := groupMembers(pgid)
 	if lookupErr != nil {
 		return false, errors.Join(err, lookupErr)
-	}
-	// Darwin's sys/proc.h defines SZOMB as 5; x/sys exposes P_stat but
-	// does not export this process-state constant.
-	const zombieState = 5
-	members := make([]groupMember, len(procs))
-	for i, proc := range procs {
-		members[i] = groupMember{pid: int(proc.Proc.P_pid), zombie: proc.Proc.P_stat == zombieState}
 	}
 	if groupEnded(members) {
 		return false, nil
@@ -337,7 +355,7 @@ func (p *process) Kill() error {
 	if lookupErr != nil {
 		return lookupErr
 	}
-	if proc.Proc.P_stat == 5 {
+	if proc.Proc.P_stat == zombieState {
 		p.observed = true
 	}
 	sent := false
@@ -422,7 +440,7 @@ func (p *process) wait() (observe.Run, error) {
 		select {
 		case <-c.done:
 		default:
-			if err := c.reader.SetReadDeadline(deadline); err != nil && !errors.Is(err, os.ErrClosed) {
+			if err := c.setDeadline(deadline); err != nil && !errors.Is(err, os.ErrClosed) {
 				deadlineErr = errors.Join(deadlineErr, err)
 			}
 		}
@@ -445,7 +463,7 @@ func groupMembers(pid int) ([]groupMember, error) {
 	}
 	members := make([]groupMember, len(procs))
 	for i, proc := range procs {
-		members[i] = groupMember{pid: int(proc.Proc.P_pid), zombie: proc.Proc.P_stat == 5}
+		members[i] = groupMember{pid: int(proc.Proc.P_pid), zombie: proc.Proc.P_stat == zombieState}
 	}
 	return members, nil
 }

@@ -7,7 +7,7 @@ import (
 // Hidden writes only the protocol lines; replacement preserves the process id.
 func Hidden(mode, marker string, program func() (string, []string, []string)) int {
 	if err := writeLine(MarkerPrefix + marker + "\n"); err != nil {
-		return 70
+		return LauncherFailed
 	}
 	if mode == FastMode {
 		return 0
