@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"unicode"
 
 	"github.com/vinnyp/press-quality-lab/internal/collect"
@@ -20,6 +22,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/store"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"github.com/vinnyp/press-quality-lab/internal/subject"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 )
 
 type Options struct {
@@ -42,6 +45,12 @@ func failure(code int, rule, cause string) *Error { return &Error{code, rule, ca
 // Dependencies exposes effects, including identity before any store resolution.
 // Source is constructed inside the funnel, so its trace is closed on all exits.
 type Dependencies struct {
+	// Workspace is constructed after root refusal, inside the exit funnel.
+	Workspace         func() (*throwaway.Workspace, error)
+	SourceInWorkspace func(*throwaway.Workspace) (observe.Source, func() error, error)
+	Stderr            io.Writer
+	// Signals permits deterministic tests; nil subscribes to the four signals.
+	Signals   <-chan os.Signal
 	IDs       func() (real, effective int)
 	Open      func(string) (io.ReadCloser, error)
 	Source    func() (observe.Source, func() error, error)
@@ -63,6 +72,12 @@ func (ReleasedSource) Observe(observe.Key, observe.Spec) (observe.Run, error) {
 }
 
 func defaults(d Dependencies) Dependencies {
+	if d.Workspace == nil {
+		d.Workspace = throwaway.Begin
+	}
+	if d.Stderr == nil {
+		d.Stderr = os.Stderr
+	}
 	if d.IDs == nil {
 		d.IDs = UserIDs
 	}
@@ -90,16 +105,50 @@ func defaults(d Dependencies) Dependencies {
 func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	code = 70
 	var closeSource func() error
+	var waitCollector func()
+	groupsEnded := true
+	var workspace *throwaway.Workspace
+	d = defaults(d)
+	signals := d.Signals
+	if signals == nil {
+		ch := make(chan os.Signal, 4)
+		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+		defer signal.Stop(ch)
+		signals = ch
+	}
 	defer func() {
 		if p := recover(); p != nil {
 			err = failure(70, "QE16", fmt.Sprintf("engine panic: %v", p))
 			code = 70
+		}
+		if workspace != nil {
+			if endErr := workspace.EndGroups(d.Stderr); endErr != nil {
+				groupsEnded = false
+				err = failure(70, "QH23", endErr.Error())
+				code = 70
+			}
+		}
+		if waitCollector != nil {
+			waitCollector()
 		}
 		if closeSource != nil {
 			if closeErr := closeSafely(closeSource); closeErr != nil {
 				err = failure(70, "QE16", "trace close failed: "+closeErr.Error())
 				code = 70
 			}
+		}
+		if workspace != nil && groupsEnded {
+			if removeErr := workspace.Remove(); removeErr != nil {
+				_, reportErr := io.WriteString(out, "cleanup failed; directory left behind: "+Escape(workspace.Path())+"\n")
+				err = failure(70, "QE20", errors.Join(removeErr, reportErr).Error())
+				code = 70
+			}
+		}
+		select {
+		case sig := <-signals:
+			err = failure(70, "QE16", "interrupted by "+sig.String())
+			code = 70
+		default:
 		}
 		if err != nil {
 			var classified *Error
@@ -112,10 +161,13 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 			}
 		}
 	}()
-	d = defaults(d)
 	_, effective := d.IDs()
 	if effective == 0 {
 		return 70, failure(70, "QH3", "effective user is root")
+	}
+	workspace, err = d.Workspace()
+	if err != nil {
+		return 70, err
 	}
 	data, err := readFile(o.SubjectFile, d.Open)
 	if err != nil {
@@ -158,7 +210,13 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		rule := stringValue(preOutput["rejected_by"])
 		return precheck(rule)
 	}
-	source, closer, err := d.Source()
+	var source observe.Source
+	var closer func() error
+	if d.SourceInWorkspace != nil {
+		source, closer, err = d.SourceInWorkspace(workspace)
+	} else {
+		source, closer, err = d.Source()
+	}
 	closeSource = closer
 	if err != nil {
 		return 70, err
@@ -168,7 +226,9 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 			return 70, err
 		}
 	}
-	checks, err := gather(d.Collect, p, source)
+	checks, wait, collectErr := gatherSignals(d.Collect, p, source, signals)
+	waitCollector = wait
+	err = collectErr
 	if err != nil {
 		return 70, err
 	}
@@ -287,7 +347,7 @@ func callJudge(fn func([]byte) ([]byte, int), input []byte) (strictjson.Object, 
 	return doc, code, nil
 }
 
-func gather(fn func(plan.Plan, observe.Source) ([]collect.Check, error), p plan.Plan, source observe.Source) ([]collect.Check, error) {
+func gatherSignals(fn func(plan.Plan, observe.Source) ([]collect.Check, error), p plan.Plan, source observe.Source, signals <-chan os.Signal) ([]collect.Check, func(), error) {
 	type result struct {
 		checks []collect.Check
 		err    error
@@ -303,8 +363,12 @@ func gather(fn func(plan.Plan, observe.Source) ([]collect.Check, error), p plan.
 		}()
 		r.checks, r.err = fn(p, source)
 	}()
-	r := <-done
-	return r.checks, r.err
+	select {
+	case r := <-done:
+		return r.checks, nil, r.err
+	case sig := <-signals:
+		return nil, func() { <-done }, failure(70, "QE16", "interrupted by "+sig.String())
+	}
 }
 
 func classify(err error) *Error {

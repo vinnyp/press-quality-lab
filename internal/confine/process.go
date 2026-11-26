@@ -2,11 +2,14 @@ package confine
 
 import "syscall"
 
+import "github.com/vinnyp/press-quality-lab/internal/throwaway"
+
 import "github.com/vinnyp/press-quality-lab/internal/observe"
 
 // Invocation supplies a resolved profile and the exact program words. The loop
 // owns home creation, environment construction and invocation sequencing.
 type Invocation struct {
+	Workspace                  *throwaway.Workspace
 	Paths                      Paths
 	Words, Env                 []string
 	Directory                  string

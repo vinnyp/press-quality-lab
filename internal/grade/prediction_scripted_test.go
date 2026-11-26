@@ -136,7 +136,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 				counts["derivation"]++
 				return
 			}
-			checks, err := gather(collect.Collect, p, raw)
+			checks, _, err := gatherSignals(collect.Collect, p, raw, nil)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 	"golang.org/x/sys/unix"
 )
 
@@ -192,6 +193,7 @@ func drain(r io.ReadCloser) *capture {
 }
 
 type process struct {
+	workspace                                              *throwaway.Workspace
 	waitMu                                                 sync.Mutex
 	waited                                                 bool
 	result                                                 observe.Run
@@ -273,7 +275,29 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if err := argumentSize(argv, env, int(limit)); err != nil {
 		return nil, err
 	}
-	return launch(SandboxExec, argv, inv.Directory, env, marker)
+	p, err := launch(SandboxExec, argv, inv.Directory, env, marker)
+	if err != nil {
+		return nil, err
+	}
+	if inv.Workspace != nil {
+		real, ok := p.(*process)
+		if !ok {
+			killErr := p.Kill()
+			_, waitErr := p.Wait()
+			return nil, errors.Join(fmt.Errorf("unrecordable process"), killErr, waitErr)
+		}
+		start, err := throwaway.ProcessStart(real.pid)
+		if err == nil {
+			err = inv.Workspace.RecordGroup(throwaway.Process{PID: real.pid, StartTime: start})
+		}
+		if err != nil {
+			killErr := p.Kill()
+			_, waitErr := p.Wait()
+			return nil, errors.Join(err, killErr, waitErr)
+		}
+		real.workspace = inv.Workspace
+	}
+	return p, nil
 }
 
 func spawn(path string, args []string, directory string, env []string, marker string) (Process, error) {
@@ -453,7 +477,11 @@ func (p *process) wait() (observe.Run, error) {
 	run.StdoutCut, run.StderrCut = p.stdout.seen > StreamCap, p.stderr.seen > StreamCap
 	run.Markers, run.Stderr = observe.ParseMarkers(p.stderr.head, MarkerPrefix+p.marker, FailurePrefix+p.marker)
 	run.StderrSeen -= int64(len(p.stderr.head) - len(run.Stderr))
-	return run, errors.Join(deadlineErr, waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
+	var forgetErr error
+	if p.workspace != nil && groupErr == nil && reapErr == nil {
+		forgetErr = p.workspace.ForgetGroup(p.pid)
+	}
+	return run, errors.Join(forgetErr, deadlineErr, waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
 }
 
 func groupMembers(pid int) ([]groupMember, error) {
