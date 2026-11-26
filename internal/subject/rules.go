@@ -89,6 +89,16 @@ func semantic(o File, bad map[string]bool) {
 	for _, v := range arr(o["offline"]) {
 		setting := obj(v)
 		for name := range obj(setting["env"]) {
+			switch name {
+			case "HOME",
+				"TMPDIR",
+				"PATH",
+				"LANG",
+				"LC_ALL",
+				"TZ",
+				"__CF_USER_TEXT_ENCODING":
+				bad["QS7"] = true
+			}
 			if strings.HasPrefix(name, "DYLD_") || strings.HasPrefix(name, "__CF_") {
 				bad["QS7"] = true
 			}
@@ -118,16 +128,6 @@ func semantic(o File, bad map[string]bool) {
 				envs[k] = map[string]bool{}
 			}
 			for name := range obj(setting["env"]) {
-				switch name {
-				case "HOME",
-					"TMPDIR",
-					"PATH",
-					"LANG",
-					"LC_ALL",
-					"TZ",
-					"__CF_USER_TEXT_ENCODING":
-					bad["QS7"] = true
-				}
 				if envs[k][name] {
 					bad["QS7"] = true
 				}
@@ -253,6 +253,10 @@ func computationRules(c strictjson.Object, earlier map[string]bool, bad map[stri
 			end := strings.IndexByte(s, '}')
 			if end < 0 {
 				break
+			}
+			if nested := strings.Index(s[:end], "{CAPTURE:"); nested >= 0 {
+				s = s[nested:]
+				continue
 			}
 			name := s[:end]
 			if !captures[name] || !earlier[name] {

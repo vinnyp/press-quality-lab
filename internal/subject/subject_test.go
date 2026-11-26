@@ -165,7 +165,7 @@ func TestSchemaRules(t *testing.T) {
 		name, rule string
 		change     func(strictjson.Object)
 	}{
-		{"command_budget", "QS2", func(o strictjson.Object) {
+		{"command_budget", "QS6", func(o strictjson.Object) {
 			testObject(testArray(o["commands"])[0])["budget_seconds"] = strictjson.Number("1.0")
 		}},
 		{"offline_argument", "QS2", func(o strictjson.Object) {

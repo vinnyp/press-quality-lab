@@ -79,6 +79,11 @@ type shape struct {
 	values                []string
 	nullable, placeholder bool
 	pattern               string
+	schemaMax             bool
+	conditionalReason     bool
+	minRule               bool
+	typeRule              string
+	spellingRule          string
 }
 
 func (s *shape) check(v any, failures map[string]bool) {
@@ -132,7 +137,7 @@ func (s *shape) check(v any, failures map[string]bool) {
 	case "string":
 		x, ok := v.(string)
 		if !ok || utf8.RuneCountInString(x) < s.min || utf8.RuneCountInString(x) > s.max {
-			if ok && utf8.RuneCountInString(x) > s.max && s.max == 4096 && len(s.values) == 0 {
+			if ok && utf8.RuneCountInString(x) > s.max && s.schemaMax {
 				failures["QS2"] = true
 			} else {
 				bad()
@@ -180,10 +185,18 @@ func (s *shape) check(v any, failures map[string]bool) {
 	case "integer":
 		x, ok := v.(strictjson.Number)
 		if !ok {
-			bad()
+			if s.typeRule != "" {
+				failures[s.typeRule] = true
+			} else {
+				bad()
+			}
 			return
 		}
 		n, err := strconv.ParseInt(string(x), 10, 64)
+		if err != nil && s.spellingRule != "" {
+			failures[s.spellingRule] = true
+			return
+		}
 		if err != nil || n < int64(s.min) || n > int64(s.max) {
 			bad()
 		}
@@ -198,8 +211,8 @@ func (s *shape) check(v any, failures map[string]bool) {
 			return
 		}
 		if len(a) < s.min || len(a) > s.max {
-			if s.rule == "QP10" && len(a) < s.min {
-				failures["QP10"] = true
+			if s.minRule && len(a) < s.min {
+				bad()
 			} else if s.rule == "QS11" {
 				failures["QS11"] = true
 			} else {
@@ -221,7 +234,7 @@ func (s *shape) check(v any, failures map[string]bool) {
 		for key, c := range s.fields {
 			x, present := o[key]
 			if !present {
-				if s.rule == "QP10" && key == "reason" && o["kind"] != "seeded_state" {
+				if c.conditionalReason && o["kind"] != "seeded_state" {
 					failures["QS2"] = true
 				} else {
 					bad()
@@ -247,9 +260,19 @@ func (s *shape) check(v any, failures map[string]bool) {
 		}
 	}
 }
-func (s *shape) valid(v any) bool         { f := map[string]bool{}; s.check(v, f); return len(f) == 0 }
-func envName(v string) bool               { s := str(1, 4096); s.pattern = "env"; return s.valid(v) }
-func str(minimum, maximum int) *shape     { return &shape{kind: "string", min: minimum, max: maximum} }
+func (s *shape) valid(v any) bool { f := map[string]bool{}; s.check(v, f); return len(f) == 0 }
+func envName(v string) bool       { s := schemaText(1); s.pattern = "env"; return s.valid(v) }
+func str(minimum, maximum int) *shape {
+	return &shape{kind: "string", min: minimum, max: maximum}
+}
+func schemaText(minimum int) *shape { s := str(minimum, 4096); s.schemaMax = true; return s }
+func seconds(rule string, maximum int) *shape {
+	s := integer(1, maximum)
+	s.typeRule = rule
+	s.spellingRule = rule
+	return s
+}
+func reason() *shape                      { s := optional(schemaText(1)); s.conditionalReason = true; return s }
 func integer(minimum, maximum int) *shape { return &shape{kind: "integer", min: minimum, max: maximum} }
 func array(minimum, maximum int, item *shape) *shape {
 	return &shape{kind: "array", min: minimum, max: maximum, item: item}
@@ -257,17 +280,24 @@ func array(minimum, maximum int, item *shape) *shape {
 func object(rule string, fields map[string]*shape) *shape {
 	return &shape{kind: "object", rule: rule, fields: fields}
 }
-func named(rule string, s *shape) *shape  { s.rule = rule; return s }
-func optional(s *shape) *shape            { s.nullable = true; return s }
-func fill(s *shape) *shape                { s.placeholder = true; return s }
-func enumeration(values ...string) *shape { s := str(0, 4096); s.values = values; return s }
-func words() *shape                       { return array(0, 64, str(1, 256)) }
-func name() *shape                        { s := str(1, 256); s.pattern = "id"; return s }
-func runbookName() *shape                 { s := name(); s.pattern = "name"; return s }
-func relative() *shape                    { s := str(1, 4096); s.pattern = "relative"; s.rule = "QS9"; return s }
-func codes() *shape                       { return optional(array(1, 256, integer(0, 255))) }
+func named(rule string, s *shape) *shape { s.rule = rule; return s }
+func optional(s *shape) *shape           { s.nullable = true; return s }
+func fill(s *shape) *shape               { s.placeholder = true; return s }
+func enumeration(values ...string) *shape {
+	s := str(0, 4096)
+	s.values = values
+	s.schemaMax = false
+	return s
+}
+func words() *shape                      { return array(0, 64, str(1, 256)) }
+func name() *shape                       { s := str(1, 256); s.pattern = "id"; return s }
+func runbookName() *shape                { s := name(); s.pattern = "name"; return s }
+func relative() *shape                   { s := schemaText(1); s.pattern = "relative"; s.rule = "QS9"; return s }
+func codes() *shape                      { return optional(array(1, 256, integer(0, 255))) }
+func typed(rule string, s *shape) *shape { s.typeRule = rule; return s }
+func minimumRule(s *shape) *shape        { s.minRule = true; return s }
 func computation() *shape {
-	return object("QA4", map[string]*shape{"argv": array(1, 64, str(0, 4096)), "budget_seconds": integer(1, 600), "declared_files": array(0, 64, str(1, 4096)), "captures": array(0, 64, name())})
+	return object("QA4", map[string]*shape{"argv": named("QA4", minimumRule(array(1, 64, named("QA4", schemaText(0))))), "budget_seconds": seconds("QA4", 600), "declared_files": array(0, 64, schemaText(1)), "captures": array(0, 64, name())})
 }
 func dimension() *shape {
 	return enumeration("availability", "execution", "graceful-failure", "robustness", "response-correctness", "determinism", "provenance-honesty", "completeness-signaling", "output-conformance", "flag-conformance", "bounding", "discoverability", "error-message-quality", "token-economy", "side-effect-integrity", "idempotency", "destructive-guard", "pii-secret-hygiene")
@@ -279,15 +309,15 @@ func subjectShape() *shape {
 		facts.fields[key] = fill(named("QS4", &shape{kind: "boolean"}))
 	}
 	facts.fields["bounding"] = fill(named("QS4", enumeration("none", "declared")))
-	command := object("QS6", map[string]*shape{"words": named("QS6", words()), "class": fill(named("QS6", enumeration("safe", "destructive"))), "writes": fill(named("QS6", &shape{kind: "boolean"})), "exit_codes": named("QS6", codes()), "byte_bound": optional(integer(1, 1073741824)), "budget_seconds": integer(1, 3600)})
+	command := object("QS6", map[string]*shape{"words": named("QS6", words()), "class": fill(named("QS6", enumeration("safe", "destructive"))), "writes": fill(named("QS6", &shape{kind: "boolean"})), "exit_codes": named("QS6", codes()), "byte_bound": typed("QS6", optional(integer(1, 1073741824))), "budget_seconds": seconds("QS6", 3600)})
 	expected := &shape{choices: []*shape{object("", map[string]*shape{"literal": {kind: "any"}}), object("QA4", map[string]*shape{"computation": computation()})}}
 	check := object("", map[string]*shape{"dimension": dimension(), "predicate": named("QA9", enumeration("exit_code", "stdout_equals", "stdout_json_equals", "stdout_contains", "stdout_not_contains", "stderr_contains", "stdout_bytes_at_most", "json_path_equals", "row_count", "stdout_empty")), "path": optional(str(0, 1024)), "expected": expected, "precondition": optional(object("", map[string]*shape{"computation": computation()})), "exit_codes": codes()})
 	step := object("", map[string]*shape{"name": runbookName(), "words": words(), "budget_seconds": integer(1, 3600), "checks": array(1, 64, check)})
-	env := &shape{kind: "object", max: 64, item: str(0, 4096)}
-	secret := optional(fill(object("QP10", map[string]*shape{"path": relative(), "kind": named("QP10", enumeration("credential", "seeded_state")), "reason": optional(str(1, 4096)), "token": named("QP10", str(8, 256)), "commands": named("QP10", array(1, 64, words()))})))
+	env := &shape{kind: "object", max: 64, item: named("QS7", schemaText(0))}
+	secret := optional(fill(object("QP10", map[string]*shape{"path": relative(), "kind": named("QP10", enumeration("credential", "seeded_state")), "reason": reason(), "token": named("QP10", str(8, 256)), "commands": named("QP10", minimumRule(array(1, 64, words())))})))
 	return object("QS3", map[string]*shape{
-		"subject_file_version": {kind: "any"}, "binary": fill(str(1, 4096)), "facts": facts, "commands": named("QS11", array(0, 512, command)), "declared_count": fill(integer(0, 100000)), "seed": fill(optional(str(1, 4096))), "store": fill(optional(relative())),
-		"offline": array(0, 256, object("QS7", map[string]*shape{"applies_to": array(1, 1024, words()), "args": array(0, 64, str(0, 4096)), "env": env})), "bookkeeping": array(0, 256, relative()), "secret": secret,
+		"subject_file_version": {kind: "any"}, "binary": fill(schemaText(1)), "facts": facts, "commands": named("QS11", array(0, 512, command)), "declared_count": fill(integer(0, 100000)), "seed": fill(optional(schemaText(1))), "store": fill(optional(relative())),
+		"offline": array(0, 256, object("QS7", map[string]*shape{"applies_to": named("QS7", array(1, 1024, words())), "args": array(0, 64, schemaText(0)), "env": env})), "bookkeeping": array(0, 256, relative()), "secret": secret,
 		"runbooks": array(0, 1024, object("", map[string]*shape{"name": runbookName(), "steps": array(1, 256, step)})), "markers": named("QS11", array(0, 1024, object("", map[string]*shape{"record": name(), "dimension": dimension()}))), "prompts": object("", map[string]*shape{"version": str(0, 64)}),
 	})
 }

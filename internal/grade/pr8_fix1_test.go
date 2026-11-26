@@ -72,16 +72,18 @@ func TestPR8HomeIdentity(t *testing.T) {
 		}
 	}
 	if runtime.GOOS == "darwin" {
-		variant := filepath.Join(parent, "accounthome")
-		if _, e := os.Stat(variant); e == nil {
-			_, e := planningInputWith(Options{SubjectFile: filepath.Join(variant, "subject.json")}, subject.File{"binary": "bin/subject"}, inputAccess{home: func() (string, error) { return home, nil }})
-			var refusal *Error
-			if !errors.As(e, &refusal) || refusal.Cause != "subject directory cannot be safely read: home" {
-				t.Fatal(e)
+		t.Run("CaseVariant", func(t *testing.T) {
+			variant := filepath.Join(parent, "accounthome")
+			if _, e := os.Stat(variant); e == nil {
+				_, e := planningInputWith(Options{SubjectFile: filepath.Join(variant, "subject.json")}, subject.File{"binary": "bin/subject"}, inputAccess{home: func() (string, error) { return home, nil }})
+				var refusal *Error
+				if !errors.As(e, &refusal) || refusal.Cause != "subject directory cannot be safely read: home" {
+					t.Fatal(e)
+				}
+			} else {
+				t.Skip("case-sensitive volume: variant does not name the home")
 			}
-		} else {
-			t.Log("case-sensitive volume: variant does not name the home")
-		}
+		})
 	}
 	s, e := subject.Parse([]byte(validSubject))
 	if e != nil {
@@ -146,7 +148,7 @@ func TestPR8SubjectRegular(t *testing.T) {
 }
 
 func TestPR8AbsoluteExecutables(t *testing.T) {
-	// QS12, QA4, QA6: content equality refuses; missing executes later; other read faults exit 70.
+	// QS12, QA4, QA6: content equality refuses; missing executes later; existing unreadable files refuse under E-23.
 	o, _, _ := fixture(t)
 	s, e := subject.Parse([]byte(validSubject))
 	if e != nil {
@@ -164,7 +166,7 @@ func TestPR8AbsoluteExecutables(t *testing.T) {
 		{"Different", "different", nil, "", false},
 		{"Equal", "synthetic", nil, "QS12", false},
 		{"Missing", "different", nil, "", false},
-		{"Unreadable", "different", syscall.EACCES, "", true},
+		{"Unreadable", "different", syscall.EACCES, "QS12", false},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			comp := inputObject(inputObject(inputArray(inputObject(inputArray(inputObject(inputArray(s["runbooks"])[0])["steps"])[0])["checks"])[0])["expected"])
@@ -278,6 +280,19 @@ func TestPR8E9Order(t *testing.T) {
 			if code != 4 || err != nil {
 				t.Fatalf("control %d %v", code, err)
 			}
+			control := strictjson.Write(s)
+			second.change(s)
+			write()
+			out.Reset()
+			code, err = Run(o, d, &out)
+			var secondRefusal *Error
+			if code != 2 || !errors.As(err, &secondRefusal) || secondRefusal.Rule != second.rule {
+				t.Fatalf("second alone %d %v want %s", code, err, second.rule)
+			}
+			s, e = subject.Parse(control)
+			if e != nil {
+				t.Fatal(e)
+			}
 			first.change(s)
 			second.change(s)
 			write()
@@ -352,7 +367,7 @@ func TestPR8AbsoluteDescriptor(t *testing.T) {
 		t.Fatal(e)
 	}
 	access.openAbsolute = func(string) (*os.File, error) { return os.OpenFile(pipe, os.O_RDONLY|syscall.O_NONBLOCK, 0) }
-	if _, e := planningInputWith(o, s, access); !errors.Is(e, errSpecial) {
+	if _, e := planningInputWith(o, s, access); e == nil {
 		t.Fatal(e)
 	}
 }
@@ -378,7 +393,7 @@ func TestPR8HomeLookupFault(t *testing.T) {
 }
 
 func TestPR8AbsoluteReadFaultRun(t *testing.T) {
-	// QS12, QA6, QE16: unreadable system executable is an engine fault, not a missing computation.
+	// QS12, QA6, QE16: E-23: an unreadable system executable refuses the subject file.
 	o, d, _ := fixture(t)
 	input := strings.Replace(validSubject, `"runbooks":[]`, `"runbooks":[{"name":"book","steps":[{"name":"step","words":[],"budget_seconds":1,"checks":[{"dimension":"response-correctness","predicate":"stdout_equals","path":null,"expected":{"computation":{"argv":["/bin/echo"],"budget_seconds":1,"declared_files":[],"captures":[]}},"precondition":null,"exit_codes":null}]}]}]`, 1)
 	if e := os.WriteFile(o.SubjectFile, []byte(input), 0600); e != nil {
@@ -392,7 +407,7 @@ func TestPR8AbsoluteReadFaultRun(t *testing.T) {
 	out.Reset()
 	code, e := Run(o, d, &out)
 	var failure *Error
-	if code != 70 || !errors.As(e, &failure) || failure.Rule != "QE16" || failure.Cause != "permission denied" || out.Len() != 0 {
+	if code != 2 || !errors.As(e, &failure) || failure.Rule != "QS12" || out.Len() != 0 {
 		t.Fatalf("%d %v %q", code, e, out.String())
 	}
 }

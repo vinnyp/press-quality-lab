@@ -60,7 +60,9 @@ type Dependencies struct {
 	// Signals permits deterministic tests; nil subscribes to the four signals.
 	Signals        <-chan os.Signal
 	OpenSystemFile func(string) (*os.File, error) // Nil opens absolute computation executables nonblocking.
-	AccountHome    func() (string, error)         // Nil uses the system account record, never an environment fallback.
+	StatInput      func(string) (os.FileInfo, error)
+	SystemPath     func(string) bool
+	AccountHome    func() (string, error) // Nil uses the system account record, never an environment fallback.
 	IDs            func() (real, effective int)
 	Open           func(string) (io.ReadCloser, error)
 	Source         func() (observe.Source, func() error, error)
@@ -222,14 +224,27 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if err != nil {
 		return 70, err
 	}
-	data, err := readFile(o.SubjectFile, d.Open)
+	var subjectInfo os.FileInfo
+	data, err := readFile(o.SubjectFile, func(path string) (io.ReadCloser, error) {
+		f, e := d.Open(path)
+		if e != nil {
+			return nil, e
+		}
+		if descriptor, ok := f.(interface{ Stat() (os.FileInfo, error) }); ok {
+			subjectInfo, e = descriptor.Stat()
+			if e != nil {
+				return nil, errors.Join(e, f.Close())
+			}
+		}
+		return f, nil
+	})
 	if err != nil {
 		return 2, failure(2, "QS2", "subject file unreadable: "+err.Error())
 	}
 	var in snapshot
 	var inputErr error
 	s, parseErr := subject.ParseWithFiles(data, func(s subject.File) []string {
-		in, inputErr = planningInputWith(o, s, inputAccess{home: d.AccountHome, openAbsolute: d.OpenSystemFile})
+		in, inputErr = planningInputWith(o, s, inputAccess{subjectInfo: subjectInfo, stat: d.StatInput, systemPath: d.SystemPath, home: d.AccountHome, openAbsolute: d.OpenSystemFile})
 		var refusal *Error
 		if errors.As(inputErr, &refusal) && refusal.Code == 2 {
 			return []string{refusal.Rule}

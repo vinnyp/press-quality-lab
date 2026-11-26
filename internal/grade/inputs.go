@@ -26,6 +26,8 @@ type snapshot struct {
 }
 
 type inputAccess struct {
+	subjectInfo  os.FileInfo
+	stat         func(string) (os.FileInfo, error)
 	systemPath   func(string) bool
 	openAbsolute func(string) (*os.File, error)
 	home         func() (string, error)
@@ -65,6 +67,19 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 	if e != nil {
 		return in, safeReadFailure("QS8", "subject directory", e)
 	}
+	if access.subjectInfo != nil {
+		info, e := os.Stat(filepath.Join(directory, filepath.Base(o.SubjectFile)))
+		if e != nil {
+			return in, safeReadFailure("QS8", "subject directory", e)
+		}
+		if !os.SameFile(info, access.subjectInfo) {
+			return in, safeReadFailure("QS8", "subject directory", errEscape)
+		}
+	}
+	if access.stat == nil {
+		access.stat = os.Stat
+	}
+
 	if access.home == nil {
 		access.home = accountHome
 	}
@@ -72,8 +87,11 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 	if e != nil {
 		return in, e
 	}
+	lexicalHome := home
 	home, e = filepath.EvalSymlinks(home)
-	if e != nil {
+	if errors.Is(e, os.ErrNotExist) {
+		home = lexicalHome
+	} else if e != nil {
 		return in, e
 	}
 	directoryInfo, e := os.Stat(directory)
@@ -81,7 +99,10 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 		return in, safeReadFailure("QS8", "subject directory", e)
 	}
 	for ancestor := home; ; ancestor = filepath.Dir(ancestor) {
-		info, e := os.Stat(ancestor)
+		info, e := access.stat(ancestor)
+		if errors.Is(e, os.ErrNotExist) && filepath.Dir(ancestor) != ancestor {
+			continue
+		}
 		if e != nil {
 			return in, e
 		}
@@ -216,6 +237,10 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 }
 
 func openInput(path string) (io.ReadCloser, error) {
+	return openInputWith(path, func(name string) (*os.File, error) { return os.OpenFile(name, os.O_RDONLY|syscall.O_NONBLOCK, 0) })
+}
+
+func openInputWith(path string, open func(string) (*os.File, error)) (io.ReadCloser, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, err
@@ -223,7 +248,7 @@ func openInput(path string) (io.ReadCloser, error) {
 	if !info.Mode().IsRegular() {
 		return nil, errSpecial
 	}
-	f, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NONBLOCK, 0)
+	f, err := open(path)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +350,7 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 				continue
 			}
 			if e != nil {
-				return e
+				return safeReadFailure("QS12", "absolute executable", e)
 			}
 			if seen[resolved] {
 				continue
@@ -340,28 +365,28 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 				continue
 			}
 			if e != nil {
-				return e
+				return safeReadFailure("QS12", "absolute executable", e)
 			}
 			if !info.Mode().IsRegular() {
-				return errSpecial
+				return safeReadFailure("QS12", "absolute executable", errSpecial)
 			}
 			f, e := access.openAbsolute(resolved)
 			if errors.Is(e, os.ErrNotExist) {
 				continue
 			}
 			if e != nil {
-				return e
+				return safeReadFailure("QS12", "absolute executable", e)
 			}
 			info, e = f.Stat()
 			if e != nil || !info.Mode().IsRegular() {
-				return errors.Join(e, errSpecial, f.Close())
+				return safeReadFailure("QS12", "absolute executable", errors.Join(e, errSpecial, f.Close()))
 			}
 
 			h := sha256.New()
 			_, e = io.Copy(h, f)
 			e = errors.Join(e, f.Close())
 			if e != nil {
-				return e
+				return safeReadFailure("QS12", "absolute executable", e)
 			}
 			sum := fmt.Sprintf("%x", h.Sum(nil))
 			digests[resolved] = sum
