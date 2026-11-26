@@ -37,6 +37,7 @@ func allowedRule(e predictedEnding, rule string) bool {
 	return false
 }
 func TestPredictedCheckEndings(t *testing.T) {
+	// QD5, QO2, QO4, QE19, QT5: compare pending case evidence and served keys.
 	// QO1, QT6: independent predictions check every resolution, including pending checks.
 	const kit = "../../docs/specs/conformance-collection-1.0"
 	var predictions struct {
@@ -51,7 +52,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 			} `json:"checks"`
 		} `json:"cases"`
 	}
-	if err := caseassembly.Read("../../scripts/ratchet/pr8-prediction.json", &predictions); err != nil {
+	if err := caseassembly.Read("../../scripts/ratchet/pr9-prediction.json", &predictions); err != nil {
 		t.Fatal(err)
 	}
 	counts := map[string]int{}
@@ -71,7 +72,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 				t.Fatal(err)
 			}
 			// U9 moves all subject-file derivation refusals ahead of planning.
-			// Judge-checked endings follow the PR8 prediction.
+			// Judge-checked endings follow the PR9 prediction.
 			expectedRule := stringValue(c.Expect["rule"])
 			if prediction.Kind == "derivation-only" && (strings.HasPrefix(expectedRule, "QS") || expectedRule == "QP7" || expectedRule == "QP10" || expectedRule == "QA4" || expectedRule == "QA9") {
 				options := Options{SubjectFile: filepath.Join(layout.Subject, c.Input.SubjectFile), Scope: c.Input.Scope, Scripted: true}
@@ -129,7 +130,8 @@ func TestPredictedCheckEndings(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			raw, err := scripted.Read(host, recording, nil)
+			var trace bytes.Buffer
+			raw, err := scripted.Read(host, recording, &trace)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -157,10 +159,32 @@ func TestPredictedCheckEndings(t *testing.T) {
 				counts["derivation"]++
 				return
 			}
+			if err := raw.Required(plan.Array{}); err != nil {
+				t.Fatal(err)
+			}
 			checks, _, err := gatherSignals(collect.Collect, p, raw, nil, 0)
 			if err != nil {
 				t.Fatal(err)
 			}
+			var pres map[string]any
+			if err := caseassembly.Read(filepath.Join(source, "preimages.json"), &pres); err != nil {
+				t.Fatal(err)
+			}
+			predByID := map[string]struct {
+				Level  int
+				Ending predictedEnding
+			}{}
+			for _, pred := range prediction.Checks {
+				predByID[pred.ID] = struct {
+					Level  int
+					Ending predictedEnding
+				}{pred.Level, pred.Ending}
+			}
+			var subjectJSON map[string]any
+			if err := json.Unmarshal(data, &subjectJSON); err != nil {
+				t.Fatal(err)
+			}
+			compareTrace(t, trace.Bytes(), recording, c.Input.Host, subjectJSON, pres, predByID)
 			gotIDs, wantIDs := []string{}, []string{}
 			for _, check := range checks {
 				gotIDs = append(gotIDs, check.Plan.ID)
@@ -178,58 +202,13 @@ func TestPredictedCheckEndings(t *testing.T) {
 					if check.Plan.ID != want.ID {
 						continue
 					}
-					if len(want.Ending.Rules) == 1 && want.Ending.Rules[0] == "QH8" {
-						// QH8, QO2 to QO5: U44 replaces PR8's level-5 sentinel.
-						// Keep the PR8 reader until U11; take changed expectations from the sealed case.
-						var document struct {
-							Evidence []struct {
-								ID      string `json:"check_id"`
-								Outcome string `json:"outcome"`
-								Reason  string `json:"reason"`
-								Failure string `json:"failure_kind"`
-							} `json:"evidence"`
-						}
-						if err := caseassembly.Read(filepath.Join(source, "input.json"), &document); err != nil {
-							t.Fatal(err)
-						}
-						expectedLevel, expectedRule := 8, "QA9"
-						expected, expectedObject := check.Plan.Preimage["expected"].(plan.Object)
-						if check.Plan.Preimage["expected"] != nil && !expectedObject {
-							t.Fatal("expected value context is not an object")
-						}
-						if expected["computation"] != nil || expected["precondition"] != nil {
-							expectedLevel, expectedRule = 6, "QO6"
-						}
-						foundEvidence := false
-						for _, e := range document.Evidence {
-							if e.ID == want.ID {
-								foundEvidence = true
-								invocationEnd := e.Reason == "could_not_start" || e.Reason == "network_unverifiable" || (e.Reason == "harness_fault" && recordedEngineOrBudget(t, recording, c.Input.Host, check.Plan.Keys)) || e.Failure == "over_budget" || e.Failure == "crashed" || e.Failure == "wrong_exit"
-								changed := c.Input.Host["private_copy"] == "changed" && len(check.Plan.Keys) > 0
-								if changed || expectedLevel != 6 && invocationEnd {
-									level := 7
-									if changed {
-										level = 5
-									}
-									if check.Result.Unbuilt != nil || check.Result.Level != level || string(check.Result.Outcome) != e.Outcome || string(check.Result.Reason) != e.Reason || check.Result.FailureKind != e.Failure {
-										t.Errorf("U44 check %s got %+v want level %d %s %s %s", want.ID, check.Result, level, e.Outcome, e.Reason, e.Failure)
-									}
-									expectedRule = ""
-								}
-							}
-						}
-						if !foundEvidence {
-							t.Fatal("expected evidence absent", want.ID)
-						}
-						if expectedRule != "" && (check.Result.Unbuilt == nil || check.Result.Level != expectedLevel || check.Result.Unbuilt.Rule != expectedRule) {
-							t.Errorf("U44 check %s got %+v want level %d %s", want.ID, check.Result, expectedLevel, expectedRule)
-						}
-						continue
-					}
+
 					if want.Ending.Phase == "deciding" {
-						if check.Result.Unbuilt != nil || check.Result.Level != want.Level || check.Result.Outcome != "not_observed" || (want.Level == 1 && check.Result.Reason != "network_unverifiable") || (want.Level == 2 && check.Result.Reason != "placeholder_unfilled") {
+						if check.Result.Unbuilt != nil || check.Result.Level != want.Level {
 							t.Errorf("check %s: %+v; want level %d", want.ID, check.Result, want.Level)
 						}
+						compareDecided(t, source, check)
+
 					} else if check.Result.Unbuilt == nil || !allowedRule(want.Ending, check.Result.Unbuilt.Rule) {
 						t.Errorf("check %s: %+v; want %+v", want.ID, check.Result, want.Ending)
 					}
@@ -250,41 +229,4 @@ func mustJSON(t *testing.T, v any) []byte {
 		t.Fatal(err)
 	}
 	return b
-}
-
-func recordedEngineOrBudget(t *testing.T, data []byte, host map[string]any, keys []plan.Object) bool {
-	t.Helper()
-	var recorded struct {
-		Invocations []struct {
-			Key      any `json:"key"`
-			Confined []struct {
-				End struct {
-					By string `json:"by"`
-				} `json:"end"`
-			} `json:"confined"`
-		} `json:"invocations"`
-	}
-	if err := json.Unmarshal(data, &recorded); err != nil {
-		t.Fatal(err)
-	}
-	var overrides []struct {
-		Key any    `json:"invocation"`
-		By  string `json:"by"`
-	}
-	if err := json.Unmarshal(mustJSON(t, host["kill_attribution"]), &overrides); err != nil {
-		t.Fatal(err)
-	}
-	for _, key := range keys {
-		for _, i := range recorded.Invocations {
-			if bytes.Equal(mustJSON(t, i.Key), mustJSON(t, key)) && len(i.Confined) > 0 && i.Confined[0].End.By == "budget" {
-				return true
-			}
-		}
-		for _, o := range overrides {
-			if bytes.Equal(mustJSON(t, o.Key), mustJSON(t, key)) && o.By == "engine" {
-				return true
-			}
-		}
-	}
-	return false
 }

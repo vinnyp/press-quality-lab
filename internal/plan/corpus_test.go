@@ -59,7 +59,7 @@ func TestCorpus(t *testing.T) {
 			}
 		}
 	}
-	if e := json.Unmarshal(read(t, "../../scripts/ratchet/pr8-prediction.json"), &prediction); e != nil {
+	if e := json.Unmarshal(read(t, "../../scripts/ratchet/pr9-prediction.json"), &prediction); e != nil {
 		t.Fatal(e)
 	}
 	checked := 0

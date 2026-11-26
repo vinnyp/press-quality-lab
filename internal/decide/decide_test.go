@@ -188,7 +188,7 @@ func TestOwnRuleNames(t *testing.T) {
 	// QP3: byte bound.
 	// QP4: declared exits.
 	// QP6: store integrity.
-	// QO7: planted-secret combination.
+	// QP10: the planted-secret level-8 sentinel.
 	// QA9: authored predicates.
 	want := map[any]string{
 		nil:               "QA9",
@@ -197,7 +197,7 @@ func TestOwnRuleNames(t *testing.T) {
 		"byte_bound":      "QP3",
 		"exit_codes":      "QP4",
 		"store_unchanged": "QP6",
-		"planted_secret":  "QO7",
+		"planted_secret":  "QP10",
 	}
 	seen := map[any]bool{}
 	for _, ch := range corpusPlan(t, "case-004").Checks {
@@ -214,7 +214,7 @@ func TestOwnRuleNames(t *testing.T) {
 }
 
 func TestInvocationTriggers(t *testing.T) {
-	// QO7: discovery and planted-secret combinations await U11 and U37.
+	// QO7: absent discovery facts and the unbuilt planted-secret combination stop here.
 	// QO2: other checks have built invocation rules, even with no facts yet.
 	for _, ch := range corpusPlan(t, "case-004").Checks {
 		r := level7(ch, passing(), Evidence{})

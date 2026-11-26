@@ -159,10 +159,10 @@ class PredictorTests(unittest.TestCase):
                 subject['binary'] = {'placeholder': 'Supply binary.'}
                 self.assertTrue(predictor.contains_placeholder(subject))
 
-    def test_pr8_placeholder_dependencies(self):
+    def test_pr9_placeholder_dependencies(self):
         # QS5, KTD2.8: the dependency classifier produces the shared oracle.
-        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
-        expected = predictor.load(Path(__file__).with_name('ratchet') / 'pr8-prediction.json')
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr9.json')
+        expected = predictor.load(Path(__file__).with_name('ratchet') / 'pr9-prediction.json')
         actual = predictor.predict(built)['placeholder_dependencies']
         self.assertEqual(len(actual), 121)
         self.assertEqual(actual, expected['placeholder_dependencies'])

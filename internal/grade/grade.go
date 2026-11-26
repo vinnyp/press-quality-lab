@@ -357,7 +357,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		if ch.Result.FailureKind != "" {
 			failure = ch.Result.FailureKind
 		}
-		results[ch.Plan.ID] = record.Resolution{Result: ch.Result, FailureKind: failure}
+		results[ch.Plan.ID] = record.Resolution{Result: ch.Result, FailureKind: failure, Keys: ch.Plan.Keys}
 	}
 	markers, markersOK := s["markers"].(strictjson.Array)
 	if !markersOK {

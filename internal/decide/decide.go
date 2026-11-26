@@ -27,7 +27,10 @@ type Result struct {
 }
 
 // Evidence contains only runs actually made for this check, never planned keys.
-type Evidence struct{ Invocations []observe.Invocation }
+type Evidence struct {
+	Invocations []observe.Invocation
+	Discovery   *Discovery
+}
 type level func(plan.Check, observe.Controls, Evidence) Result
 
 var levels = [...]level{level1, level2, level3, level4, level5, level6, level7, level8}
@@ -77,8 +80,13 @@ func dependency(v any) bool {
 
 // BeforeInvocations tries levels 1 through 6 before the loop serves any key.
 func BeforeInvocations(ch plan.Check, c observe.Controls) Result {
+	return BeforeInvocationsWithEvidence(ch, c, Evidence{})
+}
+
+// BeforeInvocationsWithEvidence includes the already completed discovery walk.
+func BeforeInvocationsWithEvidence(ch plan.Check, c observe.Controls, e Evidence) Result {
 	for _, step := range levels[:6] {
-		if r := step(ch, c, Evidence{}); r.Level != 0 {
+		if r := step(ch, c, e); r.Level != 0 {
 			return r
 		}
 	}

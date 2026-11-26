@@ -7,12 +7,21 @@ import (
 	"strconv"
 )
 
-// InvocationLevelBuilt leaves QO7's combinations to their own units.
+// InvocationLevelBuilt leaves the planted-secret combination to U37.
 func InvocationLevelBuilt(ch plan.Check) bool {
-	return ch.Preimage != nil && ch.Preimage["probe"] != "discovery" && ch.Preimage["probe"] != "planted_secret"
+	return ch.Preimage != nil && ch.Preimage["probe"] != "planted_secret"
 }
 
 func level7(ch plan.Check, c observe.Controls, e Evidence) Result {
+	if ch.Preimage["probe"] == "discovery" {
+		if e.Discovery == nil {
+			return sentinel(7, "QO7")
+		}
+		return e.Discovery.invocationResult(ch, c)
+	}
+	if ch.Preimage["probe"] == "planted_secret" && len(ch.Keys) == 0 {
+		return Result{}
+	}
 	if !InvocationLevelBuilt(ch) {
 		rule := "QO7"
 		if ch.Preimage == nil {
@@ -32,7 +41,7 @@ func level7(ch plan.Check, c observe.Controls, e Evidence) Result {
 }
 
 // InvocationOutcome decides QO1 to QO5 for a single subject invocation.
-// Discovery and the planted secret call their own QO7 combination in later units.
+// Discovery limits this helper to QO1 to QO4 in its QO7 combination.
 func InvocationOutcome(ch plan.Check, c observe.Controls, run observe.Run) Result {
 	a, err := observe.Attribute(run)
 	if err != nil {

@@ -394,7 +394,7 @@ func TestEngineFaultRules(t *testing.T) {
 			o, d, _ := fixture(t)
 			want := "QE10"
 			if row == "Unbuilt" {
-				want = "QD4"
+				want = "QP10"
 				d.Source = func() (observe.Source, func() error, error) { return passingSource{}, func() error { return nil }, nil }
 			} else {
 				d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {

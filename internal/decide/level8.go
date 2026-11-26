@@ -5,11 +5,11 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/plan"
 )
 
-func level8(ch plan.Check, _ observe.Controls, _ Evidence) Result {
+func level8(ch plan.Check, _ observe.Controls, e Evidence) Result {
 	rule := "QA9"
 	switch ch.Preimage["probe"] {
 	case "discovery":
-		rule = "QD2"
+		return discoveryLevel8(ch, e.Discovery)
 	case "bare":
 		rule = "QP2"
 	case "byte_bound":
@@ -19,7 +19,7 @@ func level8(ch plan.Check, _ observe.Controls, _ Evidence) Result {
 	case "store_unchanged":
 		rule = "QP6"
 	case "planted_secret":
-		rule = "QO7"
+		rule = "QP10"
 	}
 	return sentinel(8, rule)
 }

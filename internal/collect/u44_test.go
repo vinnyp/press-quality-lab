@@ -25,7 +25,7 @@ func (s *servingSource) Observe(k observe.Key, _ observe.Spec) (observe.Run, err
 func TestInvocationServing(t *testing.T) {
 	// QE8, QO1, QH8, QA7, QO6, QO7: only built checks reaching level 7 serve their keys, in target order.
 	base := plan.Check{ID: "synthetic", Subject: plan.Object{}, Preimage: plan.Object{"probe": nil, "earlier": plan.Array{}, "words": plan.Array{"read"}, "expected": plan.Object{"literal": "value"}}, Keys: []plan.Object{{"words": plan.Array{"first"}}, {"words": plan.Array{"second"}}}}
-	for _, name := range []string{"Ordered", "UnconfinedInvocation", "GradeWide", "Placeholder", "DiscoverySentinel", "RunbookSentinel", "ChangedCopy", "ComputationSentinel", "NoInvocation", "SourceFault"} {
+	for _, name := range []string{"Ordered", "UnconfinedInvocation", "GradeWide", "Placeholder", "DiscoveryWalk", "RunbookSentinel", "ChangedCopy", "ComputationSentinel", "NoInvocation", "SourceFault"} {
 		t.Run(name, func(t *testing.T) {
 			ch := base
 			ch.Preimage = plan.Object{}
@@ -47,10 +47,10 @@ func TestInvocationServing(t *testing.T) {
 				ch.Subject = plan.Object{"binary": plan.Object{"placeholder": "Supply binary."}}
 				want = nil
 				level = 2
-			case "DiscoverySentinel":
+			case "DiscoveryWalk":
 				ch.Preimage["probe"] = "discovery"
-				want = nil
-				level = 3
+				want = []observe.Key{map[string]any(plan.DiscoveryKey(plan.Array{}))}
+				level = 8
 			case "RunbookSentinel":
 				ch.Preimage["earlier"] = plan.Array{"prior"}
 				want = nil
