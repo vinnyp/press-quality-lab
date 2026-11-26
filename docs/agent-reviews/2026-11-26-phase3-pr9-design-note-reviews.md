@@ -54,3 +54,21 @@
 | 22 | A recorded run whose marker and `by` disagree | Two-way | Put to the owner, who ruled E-31: the recording is invalid, exit 2 |
 | 23 | Control 2 compared fewer fields than QE19 and dropped the level | Confirmed | QE19's fields and the deciding level |
 | 24 | Control 7's third case needed its reasoning and a fourth case; QD5 needed a negative row; Nits on the cycle cases' names, tab-indented section ends, QO1's no-marker request and a copy changing during the walk | Confirmed | Each added to the note |
+
+## Round 3 (delta, measurement lens; 04e6261 to 6eb302f), with its confirmation (to 9e25552)
+
+**Verdict:** two Majors, four Minors and four Nits at 6eb302f. Its confirmation at 9e25552 found no Blocker or Major, one new Minor and three Nits, all fixed after it.
+
+| # | finding | verify | disposition |
+|---|---|---|---|
+| 25 | E-30's "walk cut short" conflicted with QD2, under which an unreadable help still lists and descends, and the note's QD4 condition dropped QD5's second case | Confirmed against QD2 line 180 and `case-044` to `case-046` | E-30 restated in the walk's terms, and the owner confirmed the wording; QD4's condition names both QD5 cases |
+| 26 | Control 3 did not say whether a check whose level 7 is unbuilt serves its invocations, the planted secret in 97 cases | Confirmed against the prediction | It serves none; only invocation targets count |
+| 27 | E-29 read as "none confined"; no row tested its ordering clause | Confirmed | "One or more", and a row |
+| 28 | KTD11 still ordered QO1 by QO7 for discovery; U37 lacked the open readings | Confirmed | Both fixed |
+| 29 | Control 6's cross product held undefined combinations and lacked the could-not-start marker | Confirmed | Facts added, undefined combinations unrepresentable or an engine fault |
+| 30 | E-31's scope | Confirmed | Every run of the recording |
+| 31 | A check QO1 decides on its own invocation is served (confirmation, Minor) | Confirmed against E-29's reasoning | The loop text and control 3's set include it |
+| 32 | Nits: control 5's wording, E-30's title, the loop text naming the prediction, control 7's count, row 18's wording | Confirmed | Fixed |
+
+**Design gate:** passed at the commit that adds this round. No Blocker or Major is open.
+

@@ -40,7 +40,7 @@ This note follows the slice a note, `docs/plans/2026-11-25-phase3-pr8-slice-a-de
   - whether the system reported a memory or a code-signing kill.
 
   The darwin source keeps the raw exit detail as evidence, and an untagged decoder turns it into the memory and code-signing facts. The scripted source fills the same facts from the recording's `by` field, and applies QT4's `kill_attribution` overrides to them. A run whose `by` contradicts its marker makes the recording invalid, exit 2 (E-31). No source-specific file names a decision value (KTD13's guard).
-- **The loop serves invocations.** Discovery's walk observes each help request as it goes. For each other check that reaches level 7, as the prediction's per-check ending gives it, the loop observes its invocations in QE8's target order. A check decided at levels 1 to 5, stopped at QA7 (level 4) or QO6 (level 6), or whose level 7 is still an unbuilt sentinel, serves none. So the planted-secret probe serves no `planted`-home key until slice b2. KTD2.6's trace records every served key.
+- **The loop serves invocations.** Discovery's walk observes each help request as it goes. For each other check that reaches level 7, the loop observes its invocations in QE8's target order. A check that QO1 decides on its own invocation (no marker) has served that invocation. A check decided at level 1 because QO1 holds for the whole grade, or at levels 2 to 5, stopped at QA7 (level 4) or QO6 (level 6), or whose level 7 is still an unbuilt sentinel, serves none. So the planted-secret probe serves no `planted`-home key until slice b2. KTD2.6's trace records every served key.
 
 ## Evidence rules
 
@@ -135,7 +135,8 @@ A rule leaves the list only when a test proves its whole text. Each mutation bel
 3. **The trace.** The served keys must equal a set derived from the case, never from the engine:
    - when the walk runs, discovery's help requests, in QD2's order. That order is derived by an independent reader of each recorded help's listing, not taken from `case.json`'s list, whose order QT5 does not fix;
    - when it does not, no discovery key, and one target that did not run;
-   - for every other check that reaches level 7 and whose level 7 is built, whether level 7 decides it, a later level does, or it stops at a level-8 sentinel, its targets that are invocations. A target named by a check's own id, as for a planted secret with no commands (`case-144`), is never a served key.
+   - for a check that QO1 decides on its own invocation, that invocation;
+   - for every other check that reaches level 7, as the prediction's per-check ending gives it, and whose level 7 is built, whether level 7 decides it, a later level does, or it stops at a level-8 sentinel, its targets that are invocations. A target named by a check's own id, as for a planted secret with no commands (`case-144`), is never a served key.
 
    Every check is gathered, so this is the whole run's set, for a pending case as for a predicted one. A key outside it, such as an invocation of a command whose class is a placeholder or of a check QD4 decides, fails the test.
 4. **Discovery's rules from the text, one row each:**
@@ -152,7 +153,7 @@ A rule leaves the list only when a test proves its whole text. Each mutation bel
    - QD5, either of its cases (`case-046`'s bare help with no section included), or a bound decides discovery while the walk also missed a declared command: the other generated checks stand on their own invocations (QD4's second sentence);
    - a help request below the bare binary is decided at level 7 while a declared command is missing: QD4 does not hold;
    - `declared_count` is a placeholder and a declared command is missing: the walk runs, and QD4 decides the other generated checks;
-   - `declared_count` is a placeholder, a bound or an unreadable help cuts the walk short, and a declared command is missing: the other generated checks stand on their own invocations (E-30);
+   - `declared_count` is a placeholder, a bound stops the walk or a case of QD5 holds, and a declared command is missing: the other generated checks stand on their own invocations (E-30);
    - `declared_count` is a placeholder and the bare `--help` is never confined: QO1 decides discovery (E-29);
    - a help request below the bare binary is decided by QO2, and a later sibling is never confined: QO1 decides discovery at level 1, not `could_not_start` (E-29);
    - `declared_count` is a placeholder, a help below the bare binary exits non-zero but lists a command, and a declared command is never found: the other generated checks stand on their own invocations (E-30).
