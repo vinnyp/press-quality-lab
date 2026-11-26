@@ -229,7 +229,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
     - level 7: always, for any check with an invocation;
     - level 8: always.
 
-    Level 7 decides a check with one invocation directly. Discovery and the planted-secret probe have several, and QO7 orders them: their own rules in U11 and U37 call level 7's per-invocation helper (QO1 to QO4), in QO7's order. Any other end there, a crash, an unsuccessful exit and an engine kill outside the budget included, is QD5's for discovery (QO7, `collection-rules.md` line 163) and falls to QO7's own combination for the planted secret, never to QO5's. (Amended 2026-11-26: the plan first named an engine kill `harness_fault` here, against QO7's text.)
+    Level 7 decides a check with one invocation directly. Discovery and the planted-secret probe have several, and QO7 orders them: their own rules in U11 and U37 call level 7's per-invocation helper (QO1 to QO4), in QO7's order. For discovery, any other end, a crash, an unsuccessful exit and an engine kill outside the budget included, is QD5's (QO7, `collection-rules.md` line 163), never QO5's. For the planted secret, a crash or an unsuccessful exit proves no read; an engine kill outside the budget there is an open reading that goes to the owner before U37 is built. (Amended 2026-11-26: the plan first named an engine kill `harness_fault` for both, against QO7's text for discovery.)
 
     A test at the close asserts that no unbuilt level remains.
   - These are the collection specification's evidence rules, not verdicts: the judge still decides requiredness, rollups, comparison and every verdict.

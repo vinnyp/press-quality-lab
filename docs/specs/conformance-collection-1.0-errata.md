@@ -139,4 +139,16 @@ QA4 replaces `{CAPTURE:<step>}`, and a capture that names a step other than a li
 
 ### E-28. A signal before the launcher's marker
 
-QH6 says confinement was not applied when no marker was written and either `sandbox-exec` itself exited or the launcher was ended by `SIGKILL` before writing its marker. QO5 decides an invocation that "ran to its end under confinement". Neither says what an invocation ended by another signal before the marker is. **An invocation that ends by any signal before the launcher's marker was written is QH6's case: the confinement was not applied, and QO1 decides, with `network_unverifiable`. QO5 decides only invocations whose marker was written.** The owner ruled on 2026-11-26. No case of the corpus has such a run, so no record changes.
+QH6 says confinement was not applied when no marker was written and either `sandbox-exec` itself exited or the launcher was ended by `SIGKILL` before writing its marker. QO5 decides an invocation that "ran to its end under confinement". Neither says what an invocation ended by another signal before the marker is. **An invocation of the subject that ends by any signal before the launcher's marker was written is QH6's case: the confinement was not applied, and QO1 decides, with `network_unverifiable`. QO5 decides only invocations whose marker was written. A computation's run is QO6's, which this entry does not change.** The owner ruled on 2026-11-26. No case of the corpus has such a run, so no record changes.
+
+### E-29. QO1 against QO7's order for discovery
+
+The precedence table puts QO1 first, for any check an invocation of which the engine could not confine. QO7 says that for each of discovery's help requests "QO1 to QO4 decide as for any invocation", and the first such request in QD2's order decides discovery. **When the engine could not confine any of discovery's help requests, QO1 decides discovery at level 1, ahead of a placeholder (level 2) and ahead of an earlier request that QO2 to QO4 decide. QO7's "first such request" then orders only the requests QO2 to QO4 decide.** The owner ruled on 2026-11-26. No case of the corpus has an unconfined help request, so no record changes.
+
+### E-30. QD4's second sentence and a walk cut short
+
+QD4's second sentence lets the other generated checks stand on their own invocations "when QD5 or a bound of QD2 decides discovery", even when the walk also missed a declared command. Discovery's own check can be decided earlier, at level 2 when `declared_count` is a placeholder. **QD4's second sentence applies whenever the walk was cut short, by a bound of QD2 or by a help that QD5 makes unreadable, whatever level decides discovery's own check. QD4's first sentence applies only to a walk that ran to its end.** The owner ruled on 2026-11-26. No case of the corpus has a placeholder `declared_count` with a walk cut short, so no record changes.
+
+### E-31. A recorded run whose marker and attribution disagree
+
+QT5 records, for each run, whether the launcher wrote its marker, and for a `SIGKILL` what ended it, one value being `before_marker`. **A recorded run whose attribution is `before_marker` while its marker is recorded as written, or `confinement` while no marker is recorded, contradicts itself. The recording is invalid, and the scripted run exits 2 as QE16 says for a recording that is invalid.** The owner ruled on 2026-11-26. No run of the corpus has such a pair, so no record changes.
