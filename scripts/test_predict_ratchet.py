@@ -1,4 +1,9 @@
-"""Literal controls for the ratchet predictor (not an engine conformance test)."""
+"""Literal controls for the ratchet predictor (not an engine conformance test).
+
+E-17 is covered by the engine tests. The former PR8 seed-name-link test
+was removed because PR8 disables the legacy safe-read phase: it accepted
+any link without evaluating QS9 and therefore proved no E-17 behavior.
+"""
 import copy
 import importlib.util
 import json
@@ -41,19 +46,23 @@ class PredictorTests(unittest.TestCase):
         self.assertFalse(row['predicted'])
         self.assertIn('QS5.final_override', row['ending']['rules'])
 
-    def test_pr8_seed_name_links_are_resolved(self):
-        # QS9, E-17: a link naming the seed is resolved; a contained link rejects.
+    def test_pr8_qd3_trigger_is_independent_of_placeholder_override(self):
+        # QS5, QD3: an undeclared discovered command has its own override trigger.
         built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
-        case = predictor.load(KIT / 'cases/case-112/case.json')
-        subject = predictor.load(KIT / 'cases/case-112/subject.json')
-        self.assertEqual(self.case(112, built)['ending'], {
-            'exit_code': 2, 'rules': ['QS9'], 'phase': 'deciding'})
-        case['input']['fixtures'] = [{'kind': 'link', 'path': subject['seed'],
-                                      'target': 'actual_seed'}]
-        with patch.object(predictor, 'load', return_value=subject):
-            self.assertIsNone(predictor.safe_read_refusal(case, KIT / 'cases/case-112', built))
-        self.assertNotIn('QS9.safe_read', predictor.names(built['builds']))
-        self.assertIn('QS9', predictor.names(built['rejects']))
+        built['levels'] = list(range(1, 9))
+        row = self.case(22, built)
+        self.assertFalse(row['predicted'])
+        self.assertEqual(row['ending']['rules'], ['QS5.qd3_trigger'])
+        overrides = [c for c in row['checks'] if c['ending']['phase'] == 'observation']
+        self.assertEqual(len(overrides), 18)
+        self.assertTrue(all(c['ending'] == {
+            'exit_code': 70, 'rules': ['QS5.qd3_trigger'], 'phase': 'observation'}
+            for c in overrides))
+        built['builds'].append('QS5.qd3_trigger')
+        self.assertTrue(self.case(22, built)['predicted'])
+        built['builds'] = [r for r in built['builds']
+                           if not isinstance(r, dict) or r['rule'] != 'QS5.final_override']
+        self.assertTrue(self.case(22, built)['predicted'])
 
     def test_pr6_prediction_history(self):
         # KTD1: earlier slice predictions remain reproducible.

@@ -135,7 +135,7 @@
       },
       {
         "rule": "QS5.final_override",
-        "why": "U10 builds the final override, reachable only after all earlier levels through level 8."
+        "why": "U10 builds the placeholder trigger only, reachable after all earlier levels through level 8; QS5.qd3_trigger awaits U11."
       }
     ],
     "levels": [

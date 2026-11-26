@@ -86,6 +86,7 @@ RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
 # override means the QS5 step after level 8, independent of its level-2 step.
 BUILD_PHASE = {
     'QS5.final_override': 'override',
+    'QS5.qd3_trigger': 'override',
     'QS8.safe_read': 'safe_read',
     'QS9.safe_read': 'safe_read',
     'QE2.slice': None, 'QE2.placeholders': None, 'QE2.captures': None,
@@ -483,8 +484,10 @@ def predict_case(directory, built):
                 # QS5's final override follows level 8, independently of level 2.
                 # An unbuilt earlier level still wins; this is reachable only
                 # after check_ending has passed every level through 8.
-                if not supports(names(built['builds']), 'QS5.final_override'):
-                    check_end = ending(70, ['QS5.final_override'], 'observation')
+                token = ('QS5.final_override' if contains_placeholder(subject)
+                         else 'QS5.qd3_trigger')
+                if not supports(names(built['builds']), token):
+                    check_end = ending(70, [token], 'observation')
                 else:
                     check_end = ending(None, ['QS5'])
             checks.append({'id': check, 'deciding_level': level, 'ending': check_end})
