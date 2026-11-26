@@ -1,0 +1,3 @@
+# Verified false positives in pushed history. Each line is one gitleaks fingerprint (commit:file:rule:line); it allows that single finding and nothing else.
+# PR6's first commit listed rule-token strings ('QT5.subject_keys', 'QS7.invocation_keys') on one line, which the generic-api-key rule reads as a credential. The tree no longer holds that line; the commit cannot be rewritten without a force-push.
+b2fe47abde677f568f691a8976132ad59680bec1:scripts/predict-ratchet.py:generic-api-key:211

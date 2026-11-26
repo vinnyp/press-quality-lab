@@ -3,6 +3,7 @@ set -euo pipefail
 PINNED_GITLEAKS=8.30.1
 fail() { echo "SCAN FAILED: $1" >&2; exit 1; }
 trap 'fail "command failed (exit $?)"' ERR
+[[ $# -eq 0 ]] || fail 'scan.sh takes no arguments; set SCAN_COMMITS=base..head to scan a commit range'
 for tool in git gitleaks python3 mktemp tar; do
  command -v "$tool" >/dev/null || fail "$tool not found on PATH"
 done
