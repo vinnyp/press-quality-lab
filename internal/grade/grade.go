@@ -22,6 +22,9 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/subject"
 )
 
+// ComputationWarning is shown before grading and in command documentation (QA5).
+const ComputationWarning = "Warning: grading another person's subject file runs their computations on this machine."
+
 type Options struct {
 	SubjectFile               string
 	Scope                     []string
@@ -121,13 +124,21 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if err != nil {
 		return 2, failure(2, "QS2", "subject file unreadable: "+err.Error())
 	}
-	s, parseErr := subject.Parse(data)
+	var in snapshot
+	var inputErr error
+	s, parseErr := subject.ParseWithFiles(data, func(s subject.File) []string {
+		in, inputErr = planningInput(o, s)
+		var refusal *Error
+		if errors.As(inputErr, &refusal) && refusal.Code == 2 {
+			return []string{refusal.Rule}
+		}
+		return nil
+	})
 	if parseErr != nil {
 		return 2, failure(2, parseErr.Rule, "invalid subject file")
 	}
-	in, err := planningInput(o, s)
-	if err != nil {
-		return 70, err
+	if inputErr != nil {
+		return 70, inputErr
 	}
 	p, err := plan.Build(in.Input)
 	if err != nil {

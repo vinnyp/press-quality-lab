@@ -143,5 +143,6 @@ github.com/vinnyp/press-quality-lab/internal/judge
 github.com/vinnyp/press-quality-lab/internal/record
 github.com/vinnyp/press-quality-lab/internal/throwaway
 github.com/vinnyp/press-quality-lab/internal/store
+os/user
 github.com/vinnyp/press-quality-lab/internal/grade
 github.com/vinnyp/press-quality-lab/cmd/pql

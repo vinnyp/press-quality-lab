@@ -3,6 +3,7 @@
 package grade
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
@@ -66,6 +67,20 @@ func TestPredictedCheckEndings(t *testing.T) {
 			data, err := os.ReadFile(filepath.Join(layout.Subject, c.Input.SubjectFile))
 			if err != nil {
 				t.Fatal(err)
+			}
+			// U9 moves all subject-file derivation refusals ahead of planning.
+			// Judge-checked predictions remain PR6's until the dispatcher moves U39.
+			expectedRule := stringValue(c.Expect["rule"])
+			if prediction.Kind == "derivation-only" && (strings.HasPrefix(expectedRule, "QS") || expectedRule == "QP7" || expectedRule == "QP10" || expectedRule == "QA4" || expectedRule == "QA9") {
+				options := Options{SubjectFile: filepath.Join(layout.Subject, c.Input.SubjectFile), Scope: c.Input.Scope, Scripted: true}
+				var output bytes.Buffer
+				code, err := Run(options, Dependencies{IDs: func() (int, int) { return 1000, 1000 }}, &output)
+				var refusal *Error
+				if code != 2 || !errors.As(err, &refusal) || refusal.Rule != expectedRule || output.Len() != 0 {
+					t.Fatalf("U9: code=%d error=%v output=%q; want exit 2 %s", code, err, output.String(), expectedRule)
+				}
+				counts["derivation"]++
+				return
 			}
 			s, refusal := subject.Parse(data)
 			if refusal != nil {
@@ -169,7 +184,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 			counts["decide"]++
 		})
 	}
-	if !reflect.DeepEqual(counts, map[string]int{"decide": 94, "planning": 24, "derivation": 29, "safe_read": 2}) {
+	if !reflect.DeepEqual(counts, map[string]int{"decide": 94, "planning": 24, "derivation": 31}) {
 		t.Fatalf("phase counts %v", counts)
 	}
 }

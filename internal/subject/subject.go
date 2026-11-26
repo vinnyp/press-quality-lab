@@ -1,4 +1,4 @@
-// Package subject parses subject-file bytes without deriving checks or inspecting files.
+// Package subject validates subject-file bytes without deriving checks or reading files.
 package subject
 
 import (
@@ -18,8 +18,13 @@ type Error struct{ Rule string }
 
 func (e *Error) Error() string { return e.Rule + ": invalid subject file" }
 
-// Parse checks strict reading and only the schema-detectable parts of named rules.
-func Parse(data []byte) (File, *Error) {
+// Parse checks strict reading, schema shape and declaration semantics. File
+// evidence is supplied separately by the grade reader through ParseWithFiles.
+func Parse(data []byte) (File, *Error) { return ParseWithFiles(data, nil) }
+
+// ParseWithFiles combines file evidence with declaration checks in E-9 order.
+// The callback is the caller's sole file reader and must tolerate invalid shapes.
+func ParseWithFiles(data []byte, inspect func(File) []string) (File, *Error) {
 	value, ok := strictjson.Read(data, strictjson.Bounds{Bytes: 16 << 20, Depth: 64, NumberChars: 32, ExponentDigits: 4}, nil)
 	if !ok {
 		return nil, &Error{Rule: "QS2"}
@@ -33,6 +38,12 @@ func Parse(data []byte) (File, *Error) {
 		failures["QS1"] = true
 	}
 	subjectShape().check(root, failures)
+	semantic(root, failures)
+	if inspect != nil {
+		for _, rule := range inspect(root) {
+			failures[rule] = true
+		}
+	}
 	for _, rule := range []string{
 		"QS1",
 		"QS3",

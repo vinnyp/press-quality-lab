@@ -52,7 +52,7 @@ func TestReleasedProcessSentinels(t *testing.T) {
 	t.Setenv("PQL_COMPUTATION_SENTINEL", computationMarker)
 	write("bin/subject", "#!/bin/sh\nprintf 'subject' > \"$PQL_SUBJECT_SENTINEL\"\nprintf 'subject\\n'\n", 0700)
 	write("computations/value", "#!/bin/sh\nprintf 'computation' > \"$PQL_COMPUTATION_SENTINEL\"\nprintf '1\\n'\n", 0700)
-	runbooks := `[{"name":"book","steps":[{"name":"step","words":[],"budget_seconds":10,"checks":[{"dimension":"response-correctness","predicate":"row_count","path":null,"expected":{"computation":{"argv":["computations/value"],"budget_seconds":10,"declared_files":[],"captures":[]}},"precondition":null,"exit_codes":null}]}]}]`
+	runbooks := `[{"name":"book","steps":[{"name":"step","words":[],"budget_seconds":10,"checks":[{"dimension":"response-correctness","predicate":"row_count","path":"","expected":{"computation":{"argv":["computations/value"],"budget_seconds":10,"declared_files":[],"captures":[]}},"precondition":null,"exit_codes":null}]}]}]`
 	write("subject.json", strings.Replace(pipelineSubject, `"runbooks":[]`, `"runbooks":`+runbooks, 1), 0600)
 	old := collectionDependencies
 	t.Cleanup(func() { collectionDependencies = old })
@@ -67,7 +67,7 @@ func TestReleasedProcessSentinels(t *testing.T) {
 	}
 	var out, diagnostic bytes.Buffer
 	code := run([]string{"grade", filepath.Join(dir, "subject.json")}, bytes.NewReader(nil), &out, &diagnostic)
-	if code != 4 || diagnostic.Len() != 0 || !strings.Contains(out.String(), `"exit_code":4`) || watch.observed || strings.Join(watch.events, ",") != "required" {
+	if code != 4 || diagnostic.String() != grade.ComputationWarning+"\n" || !strings.Contains(out.String(), `"exit_code":4`) || watch.observed || strings.Join(watch.events, ",") != "required" {
 		t.Fatalf("code=%d stdout=%q stderr=%q trace=%v observed=%v", code, out.String(), diagnostic.String(), watch.events, watch.observed)
 	}
 	input, ok := saved.JudgeInput.(strictjson.Object)
@@ -122,7 +122,7 @@ func TestPipelineErrorEscaping(t *testing.T) {
 	}
 	var out, diagnostic bytes.Buffer
 	code := run([]string{"grade", path}, bytes.NewReader(nil), &out, &diagnostic)
-	if code != 2 || out.Len() != 0 || diagnostic.String() != "pql: rejected: QS2: subject file unreadable: subject\\u{001b}[31m\n" {
+	if code != 2 || out.Len() != 0 || diagnostic.String() != grade.ComputationWarning+"\n"+"pql: rejected: QS2: subject file unreadable: subject\\u{001b}[31m\n" {
 		t.Fatalf("%d %q %q", code, out.String(), diagnostic.String())
 	}
 	// A recovered panic can carry any subject-derived value; it uses the same funnel.
@@ -131,7 +131,7 @@ func TestPipelineErrorEscaping(t *testing.T) {
 	}
 	diagnostic.Reset()
 	code = run([]string{"grade", path}, bytes.NewReader(nil), &out, &diagnostic)
-	if code != 70 || diagnostic.String() != `pql: rejected: QE16: engine panic: subject\u{001b}[31m`+"\n" {
+	if code != 70 || diagnostic.String() != grade.ComputationWarning+"\n"+`pql: rejected: QE16: engine panic: subject\u{001b}[31m`+"\n" {
 		t.Fatalf("%d %q", code, diagnostic.String())
 	}
 }

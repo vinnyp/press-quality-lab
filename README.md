@@ -8,3 +8,5 @@ Status: pre-alpha. A CLI skeleton exists. The judge is not yet implemented.
 
 The judge specification lives in [`docs/specs/`](docs/specs/). Licensed under the MIT License (see
 [`LICENSE`](LICENSE)).
+
+Warning: grading another person's subject file runs their computations on this machine.
