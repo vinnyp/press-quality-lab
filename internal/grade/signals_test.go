@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -20,10 +21,14 @@ import (
 )
 
 func TestInterruptedRunHelper(t *testing.T) {
+	// KTD17, QE20: interrupted helpers use parent-owned fixtures.
 	if os.Getenv("PQL_INTERRUPTED_HELPER") != "1" {
 		return
 	}
-	o, d, _ := fixture(t)
+	o, d, _ := fixtureAt(t, os.Getenv("PQL_SIGNAL_FIXTURE"))
+	if filepath.Dir(o.SubjectFile) != os.Getenv("PQL_SIGNAL_FIXTURE") {
+		t.Fatal("helper fixture escaped parent directory")
+	}
 	var w *throwaway.Workspace
 	d.SourceInWorkspace = func(workspace *throwaway.Workspace) (observe.Source, func() error, error) {
 		w = workspace
@@ -76,7 +81,8 @@ func TestOSSignalsExit70(t *testing.T) {
 					t.Error(err)
 				}
 			}()
-			pid, err := syscall.ForkExec(exe, []string{exe, "-test.run=^TestInterruptedRunHelper$"}, &syscall.ProcAttr{Env: append(os.Environ(), "PQL_INTERRUPTED_HELPER=1", "TMPDIR="+t.TempDir()), Files: []uintptr{0, w.Fd(), 2}})
+			helperEnv := signalHelperEnvironment(t)
+			pid, err := syscall.ForkExec(exe, []string{exe, "-test.run=^TestInterruptedRunHelper$"}, &syscall.ProcAttr{Env: append(helperEnv, "PQL_INTERRUPTED_HELPER=1"), Files: []uintptr{0, w.Fd(), 2}})
 			if closeErr := w.Close(); closeErr != nil {
 				t.Fatal(closeErr)
 			}
@@ -158,7 +164,10 @@ func TestCleanupSignalHelper(t *testing.T) {
 	if mode == "Ignored" {
 		signal.Ignore(syscall.SIGHUP)
 	}
-	o, d, _ := fixture(t)
+	o, d, _ := fixtureAt(t, os.Getenv("PQL_SIGNAL_FIXTURE"))
+	if filepath.Dir(o.SubjectFile) != os.Getenv("PQL_SIGNAL_FIXTURE") {
+		t.Fatal("helper fixture escaped parent directory")
+	}
 	d.SourceInWorkspace = func(w *throwaway.Workspace) (observe.Source, func() error, error) {
 		return ReleasedSource{}, func() error {
 			if mode == "Second" {
@@ -201,7 +210,8 @@ func TestIgnoredAndSecondSignals(t *testing.T) {
 					t.Error(err)
 				}
 			}()
-			pid, err := syscall.ForkExec(exe, []string{exe, "-test.run=^TestCleanupSignalHelper$"}, &syscall.ProcAttr{Env: append(os.Environ(), "PQL_CLEANUP_SIGNAL_HELPER="+mode, "TMPDIR="+t.TempDir()), Files: []uintptr{0, w.Fd(), 2}})
+			helperEnv := signalHelperEnvironment(t)
+			pid, err := syscall.ForkExec(exe, []string{exe, "-test.run=^TestCleanupSignalHelper$"}, &syscall.ProcAttr{Env: append(helperEnv, "PQL_CLEANUP_SIGNAL_HELPER="+mode), Files: []uintptr{0, w.Fd(), 2}})
 			if closeErr := w.Close(); closeErr != nil {
 				t.Fatal(closeErr)
 			}
@@ -271,4 +281,31 @@ func TestIgnoredAndSecondSignals(t *testing.T) {
 			}
 		})
 	}
+}
+
+func signalHelperEnvironment(t *testing.T) []string {
+	t.Helper()
+	// KTD17, QE20: the parent owns directories even when the helper calls os.Exit.
+	parent := t.TempDir()
+	fixtureDir := filepath.Join(parent, "fixture")
+	if err := os.Mkdir(fixtureDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		entries, err := os.ReadDir(parent)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if len(entries) != 1 || entries[0].Name() != "fixture" {
+			t.Errorf("helper left temporary directories: %v", entries)
+		}
+		if err := os.RemoveAll(parent); err != nil {
+			t.Error(err)
+		}
+		if _, err := os.Stat(parent); !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("helper parent remains: %v", err)
+		}
+	})
+	return append(os.Environ(), "TMPDIR="+parent, "PQL_SIGNAL_FIXTURE="+fixtureDir)
 }

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 func TestDirectorySwapBeforeOpen(t *testing.T) {
@@ -30,6 +32,16 @@ func TestDirectorySwapBeforeOpen(t *testing.T) {
 	verifyMetadata := protectRaceOutside(t, outside)
 	defer verifyMetadata()
 	t.Cleanup(func() {
+		var stat unix.Stat_t
+		if err := unix.Lstat(outside, &stat); err != nil {
+			t.Error(err)
+			return
+		}
+		if err := unix.Chflags(outside, int(stat.Flags&^(unix.UF_IMMUTABLE|unix.UF_APPEND))); err != nil {
+			t.Error(err)
+			return
+		}
+		clearRaceACL(t, outside)
 		if err := os.Chmod(outside, 0700); err != nil {
 			t.Error(err)
 		}

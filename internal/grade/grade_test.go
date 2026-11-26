@@ -23,7 +23,11 @@ const validSubject = `{"subject_file_version":"1.0","binary":"bin/subject","fact
 
 func fixture(t *testing.T) (Options, Dependencies, *store.Record) {
 	t.Helper()
-	dir := t.TempDir()
+	return fixtureAt(t, t.TempDir())
+}
+
+func fixtureAt(t *testing.T, dir string) (Options, Dependencies, *store.Record) {
+	t.Helper()
 	if err := os.Mkdir(filepath.Join(dir, "bin"), 0700); err != nil {
 		t.Fatal(err)
 	}

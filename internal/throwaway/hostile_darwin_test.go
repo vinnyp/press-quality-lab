@@ -261,3 +261,8 @@ func protectRaceOutside(t *testing.T, path string) func() {
 		}
 	}
 }
+
+func clearRaceACL(t *testing.T, path string) {
+	t.Helper()
+	setNoACL(t, path)
+}
