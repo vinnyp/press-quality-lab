@@ -120,3 +120,11 @@ QS5 defines a placeholder by its shape and rejects one outside its allowed posit
 ### E-23. An absolute executable the engine cannot read
 
 QS12 compares the content of "an executable a computation names" with the binary's, and QA4 lets that executable be an absolute path under `/bin` or `/usr/bin`. E-18 covers a file the engine cannot read only for QS8's kinds, which are relative. **An absolute executable that exists but that the engine cannot read as a regular file, such as an execute-only file, rejects the subject file under QS12, with exit 2, because the engine cannot show that its content differs from the binary's. One that does not exist is not compared, and its computation fails at run time under QA6.** The owner ruled on 2026-11-26. No case of the corpus names such an executable, so no record changes.
+
+### E-24. A subject file that is a link
+
+QS8 names files relative to "the directory that holds the subject file", E-17 resolves the links in that directory's own path, and QE4 keys baselines by "the subject file's canonical path". None says what happens when the path given is itself a link. **Every link in the subject file's path, the file's own name included, is resolved once. The directory of that resolved path is the directory that holds the subject file, for QS8, QS9, QA4's `{SUBJECT_DIR}` and every other rule, and the resolved path is the canonical path QE4 uses.** The owner ruled on 2026-11-26. No case of the corpus passes a link as its subject file, so no record changes.
+
+### E-25. Text that cannot be a capture token
+
+QA4 replaces `{CAPTURE:<step>}`, and a capture that names a step other than a listed earlier one rejects the subject file. The schema's step names exclude `{`, `}` and `:`. **A capture token is `{CAPTURE:`, then text that matches the schema's step-name pattern, then `}`. Any other text, an unterminated `{CAPTURE:` included, is literal and replaced by nothing. A token whose name is not a listed earlier step of its runbook rejects the file under QA4.** The owner ruled on 2026-11-26. No case of the corpus has such text, so no record changes.
