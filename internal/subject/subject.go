@@ -136,6 +136,10 @@ func (s *shape) check(v any, failures map[string]bool) {
 		return
 	case "string":
 		x, ok := v.(string)
+		if !ok && s.typeRule != "" {
+			failures[s.typeRule] = true
+			return
+		}
 		if !ok || utf8.RuneCountInString(x) < s.min || utf8.RuneCountInString(x) > s.max {
 			if ok && utf8.RuneCountInString(x) > s.max && s.schemaMax {
 				failures["QS2"] = true
@@ -193,7 +197,7 @@ func (s *shape) check(v any, failures map[string]bool) {
 			return
 		}
 		n, err := strconv.ParseInt(string(x), 10, 64)
-		if err != nil && s.spellingRule != "" {
+		if strings.ContainsAny(string(x), ".eE") && s.spellingRule != "" {
 			failures[s.spellingRule] = true
 			return
 		}
@@ -289,6 +293,7 @@ func enumeration(values ...string) *shape {
 	s.schemaMax = false
 	return s
 }
+func wordElement() *shape                { s := str(1, 256); s.typeRule = "QS7"; return s }
 func words() *shape                      { return array(0, 64, str(1, 256)) }
 func name() *shape                       { s := str(1, 256); s.pattern = "id"; return s }
 func runbookName() *shape                { s := name(); s.pattern = "name"; return s }
@@ -317,7 +322,7 @@ func subjectShape() *shape {
 	secret := optional(fill(object("QP10", map[string]*shape{"path": relative(), "kind": named("QP10", enumeration("credential", "seeded_state")), "reason": reason(), "token": named("QP10", str(8, 256)), "commands": named("QP10", minimumRule(array(1, 64, words())))})))
 	return object("QS3", map[string]*shape{
 		"subject_file_version": {kind: "any"}, "binary": fill(schemaText(1)), "facts": facts, "commands": named("QS11", array(0, 512, command)), "declared_count": fill(integer(0, 100000)), "seed": fill(optional(schemaText(1))), "store": fill(optional(relative())),
-		"offline": array(0, 256, object("QS7", map[string]*shape{"applies_to": named("QS7", array(1, 1024, words())), "args": array(0, 64, schemaText(0)), "env": env})), "bookkeeping": array(0, 256, relative()), "secret": secret,
+		"offline": array(0, 256, object("QS7", map[string]*shape{"applies_to": named("QS7", array(1, 1024, named("QS7", array(0, 64, wordElement())))), "args": array(0, 64, schemaText(0)), "env": env})), "bookkeeping": array(0, 256, relative()), "secret": secret,
 		"runbooks": array(0, 1024, object("", map[string]*shape{"name": runbookName(), "steps": array(1, 256, step)})), "markers": named("QS11", array(0, 1024, object("", map[string]*shape{"record": name(), "dimension": dimension()}))), "prompts": object("", map[string]*shape{"version": str(0, 64)}),
 	})
 }

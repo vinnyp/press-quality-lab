@@ -67,6 +67,9 @@ func TestPR8HomeIdentity(t *testing.T) {
 		if e := os.MkdirAll(filepath.Join(dir, "bin"), 0700); e != nil {
 			t.Fatal(e)
 		}
+		if e := os.WriteFile(filepath.Join(dir, "subject.json"), []byte(validSubject), 0600); e != nil {
+			t.Fatal(e)
+		}
 		if e := os.WriteFile(filepath.Join(dir, "bin", "subject"), []byte("synthetic"), 0600); e != nil {
 			t.Fatal(e)
 		}
@@ -132,6 +135,11 @@ func TestPR8DigestMemo(t *testing.T) {
 
 func TestPR8SubjectRegular(t *testing.T) {
 	// QS2: the regular-file control returns its bytes.
+	checkPR8SubjectRegular(t)
+}
+
+func checkPR8SubjectRegular(t *testing.T) {
+	t.Helper()
 	path := filepath.Join(t.TempDir(), "subject.json")
 	if e := os.WriteFile(path, []byte("{}"), 0600); e != nil {
 		t.Fatal(e)
@@ -367,7 +375,9 @@ func TestPR8AbsoluteDescriptor(t *testing.T) {
 		t.Fatal(e)
 	}
 	access.openAbsolute = func(string) (*os.File, error) { return os.OpenFile(pipe, os.O_RDONLY|syscall.O_NONBLOCK, 0) }
-	if _, e := planningInputWith(o, s, access); e == nil {
+	_, e := planningInputWith(o, s, access)
+	var refusal *Error
+	if !errors.As(e, &refusal) || refusal.Rule != "QS12" {
 		t.Fatal(e)
 	}
 }

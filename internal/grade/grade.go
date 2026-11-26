@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -58,18 +57,21 @@ type Dependencies struct {
 	SourceInWorkspace func(*throwaway.Workspace) (observe.Source, func() error, error)
 	Stderr            io.Writer
 	// Signals permits deterministic tests; nil subscribes to the four signals.
-	Signals        <-chan os.Signal
-	OpenSystemFile func(string) (*os.File, error) // Nil opens absolute computation executables nonblocking.
-	StatInput      func(string) (os.FileInfo, error)
-	SystemPath     func(string) bool
-	AccountHome    func() (string, error) // Nil uses the system account record, never an environment fallback.
-	IDs            func() (real, effective int)
-	Open           func(string) (io.ReadCloser, error)
-	Source         func() (observe.Source, func() error, error)
-	Judge          func([]byte) ([]byte, int)
-	StoreRoot      func() (string, error)
-	Write          func(store.Record) error
-	Collect        func(plan.Plan, observe.Source) ([]collect.Check, error)
+	Signals           <-chan os.Signal
+	OpenSystemFile    func(string) (*os.File, error) // Nil opens absolute computation executables nonblocking.
+	ResolveSystemFile func(string) (string, error)
+	StatSystemFile    func(string) (os.FileInfo, error)
+	CopySystemFile    func(io.Writer, io.Reader) (int64, error)
+	StatInput         func(string) (os.FileInfo, error)
+	SystemPath        func(string) bool
+	AccountHome       func() (string, error) // Nil uses the system account record, never an environment fallback.
+	IDs               func() (real, effective int)
+	Open              func(string) (io.ReadCloser, error)
+	Source            func() (observe.Source, func() error, error)
+	Judge             func([]byte) ([]byte, int)
+	StoreRoot         func() (string, error)
+	Write             func(store.Record) error
+	Collect           func(plan.Plan, observe.Source) ([]collect.Check, error)
 }
 
 func UserIDs() (int, int) { return os.Getuid(), os.Geteuid() }
@@ -224,8 +226,12 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if err != nil {
 		return 70, err
 	}
+	canonical, pathErr := physicalSubjectPath(o.SubjectFile)
+	if pathErr != nil {
+		return 2, failure(2, "QS2", "subject file unreadable")
+	}
 	var subjectInfo os.FileInfo
-	data, err := readFile(o.SubjectFile, func(path string) (io.ReadCloser, error) {
+	data, err := readFile(canonical, func(path string) (io.ReadCloser, error) {
 		f, e := d.Open(path)
 		if e != nil {
 			return nil, e
@@ -235,6 +241,8 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 			if e != nil {
 				return nil, errors.Join(e, f.Close())
 			}
+		} else {
+			return nil, errors.Join(errors.New("subject reader cannot be statted"), f.Close())
 		}
 		return f, nil
 	})
@@ -244,7 +252,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	var in snapshot
 	var inputErr error
 	s, parseErr := subject.ParseWithFiles(data, func(s subject.File) []string {
-		in, inputErr = planningInputWith(o, s, inputAccess{subjectInfo: subjectInfo, stat: d.StatInput, systemPath: d.SystemPath, home: d.AccountHome, openAbsolute: d.OpenSystemFile})
+		in, inputErr = planningInputWith(o, s, inputAccess{resolveAbsolute: d.ResolveSystemFile, statAbsolute: d.StatSystemFile, copyAbsolute: d.CopySystemFile, canonical: canonical, subjectInfo: subjectInfo, stat: d.StatInput, systemPath: d.SystemPath, home: d.AccountHome, openAbsolute: d.OpenSystemFile})
 		var refusal *Error
 		if errors.As(inputErr, &refusal) && refusal.Code == 2 {
 			return []string{refusal.Rule}
@@ -364,14 +372,6 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	code = judgedCode
 	if rejected {
 		code = 70
-	}
-	canonical, err := filepath.EvalSymlinks(o.SubjectFile)
-	if err != nil {
-		return 70, err
-	}
-	canonical, err = filepath.Abs(canonical)
-	if err != nil {
-		return 70, err
 	}
 	host, hostErr := hostFields()
 	if hostErr != nil {

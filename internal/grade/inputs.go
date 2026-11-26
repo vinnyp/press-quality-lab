@@ -26,12 +26,16 @@ type snapshot struct {
 }
 
 type inputAccess struct {
-	subjectInfo  os.FileInfo
-	stat         func(string) (os.FileInfo, error)
-	systemPath   func(string) bool
-	openAbsolute func(string) (*os.File, error)
-	home         func() (string, error)
-	open         func(*os.Root, string) (*os.File, error)
+	canonical       string
+	subjectInfo     os.FileInfo
+	stat            func(string) (os.FileInfo, error)
+	systemPath      func(string) bool
+	openAbsolute    func(string) (*os.File, error)
+	resolveAbsolute func(string) (string, error)
+	statAbsolute    func(string) (os.FileInfo, error)
+	copyAbsolute    func(io.Writer, io.Reader) (int64, error)
+	home            func() (string, error)
+	open            func(*os.Root, string) (*os.File, error)
 }
 
 func accountHome() (string, error) {
@@ -59,16 +63,22 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 	for _, token := range o.Scope {
 		in.Scopes = append(in.Scopes, rulebook.Scope(token))
 	}
-	directory, e := filepath.Abs(filepath.Dir(o.SubjectFile))
-	if e != nil {
-		return in, e
+	canonical := access.canonical
+	var e error
+	if canonical == "" {
+		canonical, e = physicalSubjectPath(o.SubjectFile)
 	}
-	directory, e = filepath.EvalSymlinks(directory)
 	if e != nil {
 		return in, safeReadFailure("QS8", "subject directory", e)
 	}
+	directory := filepath.Dir(canonical)
+	root, err := os.OpenRoot(directory)
+	if err != nil {
+		return in, safeReadFailure("QS8", "subject directory", err)
+	}
+	defer func() { err = errors.Join(err, root.Close()) }()
 	if access.subjectInfo != nil {
-		info, e := os.Stat(filepath.Join(directory, filepath.Base(o.SubjectFile)))
+		info, e := root.Stat(filepath.Base(canonical))
 		if e != nil {
 			return in, safeReadFailure("QS8", "subject directory", e)
 		}
@@ -87,20 +97,17 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 	if e != nil {
 		return in, e
 	}
-	lexicalHome := home
-	home, e = filepath.EvalSymlinks(home)
-	if errors.Is(e, os.ErrNotExist) {
-		home = lexicalHome
-	} else if e != nil {
+	home, e = existingHomePrefix(home)
+	if e != nil {
 		return in, e
 	}
-	directoryInfo, e := os.Stat(directory)
+	directoryInfo, e := root.Stat(".")
 	if e != nil {
 		return in, safeReadFailure("QS8", "subject directory", e)
 	}
 	for ancestor := home; ; ancestor = filepath.Dir(ancestor) {
 		info, e := access.stat(ancestor)
-		if errors.Is(e, os.ErrNotExist) && filepath.Dir(ancestor) != ancestor {
+		if missingPath(e) && filepath.Dir(ancestor) != ancestor {
 			continue
 		}
 		if e != nil {
@@ -113,11 +120,6 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 			break
 		}
 	}
-	root, err := os.OpenRoot(directory)
-	if err != nil {
-		return in, safeReadFailure("QS8", "subject directory", err)
-	}
-	defer func() { err = errors.Join(err, root.Close()) }()
 	resolve := func(name string) (string, error) { return resolveInput(directory, name) }
 	open := func(name string) (*os.File, error) {
 		if access.open != nil {
@@ -334,6 +336,15 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 	if access.openAbsolute == nil {
 		access.openAbsolute = func(name string) (*os.File, error) { return os.OpenFile(name, os.O_RDONLY|syscall.O_NONBLOCK, 0) }
 	}
+	if access.resolveAbsolute == nil {
+		access.resolveAbsolute = filepath.EvalSymlinks
+	}
+	if access.statAbsolute == nil {
+		access.statAbsolute = os.Stat
+	}
+	if access.copyAbsolute == nil {
+		access.copyAbsolute = io.Copy
+	}
 	seen := map[string]bool{}
 	if in.BinaryDigest != nil {
 		for _, computation := range subject.Computations(s) {
@@ -345,8 +356,8 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 			if !ok || !access.systemPath(name) {
 				continue
 			}
-			resolved, e := filepath.EvalSymlinks(name)
-			if errors.Is(e, os.ErrNotExist) {
+			resolved, e := access.resolveAbsolute(name)
+			if missingPath(e) {
 				continue
 			}
 			if e != nil {
@@ -360,8 +371,8 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 				evidence.NamedDigests = append(evidence.NamedDigests, sum)
 				continue
 			}
-			info, e := os.Stat(resolved)
-			if errors.Is(e, os.ErrNotExist) {
+			info, e := access.statAbsolute(resolved)
+			if missingPath(e) {
 				continue
 			}
 			if e != nil {
@@ -371,7 +382,7 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 				return safeReadFailure("QS12", "absolute executable", errSpecial)
 			}
 			f, e := access.openAbsolute(resolved)
-			if errors.Is(e, os.ErrNotExist) {
+			if missingPath(e) {
 				continue
 			}
 			if e != nil {
@@ -383,7 +394,7 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 			}
 
 			h := sha256.New()
-			_, e = io.Copy(h, f)
+			_, e = access.copyAbsolute(h, f)
 			e = errors.Join(e, f.Close())
 			if e != nil {
 				return safeReadFailure("QS12", "absolute executable", e)
@@ -476,4 +487,65 @@ func inputObject(v any) strictjson.Object {
 		return o
 	}
 	return nil
+}
+
+// physicalSubjectPath preserves link/.. until the filesystem resolves it.
+func physicalSubjectPath(name string) (string, error) {
+	if !filepath.IsAbs(name) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		cwd, err = filepath.EvalSymlinks(cwd)
+		if err != nil {
+			return "", err
+		}
+		name = cwd + string(os.PathSeparator) + name
+	}
+	return filepath.EvalSymlinks(name)
+}
+
+func missingPath(err error) bool {
+	return errors.Is(err, os.ErrNotExist) || errors.Is(err, syscall.ENOTDIR)
+}
+
+func existingHomePrefix(home string) (string, error) {
+	if !filepath.IsAbs(home) {
+		return "", errors.New("account home is not absolute")
+	}
+	// Peel missing suffixes without cleaning link/.. lexically. Readlink also
+	// follows a dangling final link, whose target may have different ancestors.
+	links := 0
+	for {
+		resolved, err := filepath.EvalSymlinks(home)
+		if err == nil {
+			return resolved, nil
+		}
+		if !missingPath(err) {
+			return "", err
+		}
+		target, linkErr := os.Readlink(home)
+		if linkErr == nil {
+			links++
+			if links > 255 {
+				return "", syscall.ELOOP
+			}
+			if filepath.IsAbs(target) {
+				home = target
+			} else {
+				home = home[:strings.LastIndexByte(home, '/')] + "/" + target
+			}
+			continue
+		}
+		if !missingPath(linkErr) && !errors.Is(linkErr, syscall.EINVAL) {
+			return "", linkErr
+		}
+		home = strings.TrimRight(home, "/")
+		last := strings.LastIndexByte(home, '/')
+		if last <= 0 {
+			home = "/"
+		} else {
+			home = home[:last]
+		}
+	}
 }

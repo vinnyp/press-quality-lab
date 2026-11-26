@@ -32,6 +32,15 @@ func TestPR8Declarations(t *testing.T) {
 		}},
 		{"ByteBoundType", "QS6", func(s File) { obj(arr(s["commands"])[0])["byte_bound"] = "10" }},
 		{"EnvType", "QS7", func(s File) { obj(arr(s["offline"])[0])["env"] = strictjson.Object{"OK": true} }},
+		{"AppliesElementBound", "QS2", func(s File) {
+			w := strictjson.Array{}
+			for i := 0; i < 65; i++ {
+				w = append(w, "x")
+			}
+			obj(arr(s["commands"])[0])["words"] = w
+			obj(arr(s["offline"])[0])["applies_to"] = strictjson.Array{w}
+		}},
+		{"AppliesElementType", "QS7", func(s File) { obj(arr(s["offline"])[0])["applies_to"] = strictjson.Array{true} }},
 		{"AppliesType", "QS7", func(s File) { obj(arr(s["offline"])[0])["applies_to"] = "x" }},
 		{"ReservedEmpty", "QS7", func(s File) {
 			o := obj(arr(s["offline"])[0])

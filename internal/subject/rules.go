@@ -259,13 +259,27 @@ func computationRules(c strictjson.Object, earlier map[string]bool, bad map[stri
 				continue
 			}
 			name := s[:end]
-			if !captures[name] || !earlier[name] {
+			if captureName(name) && (!captures[name] || !earlier[name]) {
 				bad["QA4"] = true
 			}
 			s = s[end+1:]
 		}
 	}
 }
+
+// captureName matches the step-name pattern, without its separate length bound.
+func captureName(name string) bool {
+	if name == "" {
+		return false
+	}
+	for _, r := range name {
+		if r < 32 || r == '{' || r == '}' || r == ':' {
+			return false
+		}
+	}
+	return true
+}
+
 func pointer(s string) bool {
 	if s == "" {
 		return true

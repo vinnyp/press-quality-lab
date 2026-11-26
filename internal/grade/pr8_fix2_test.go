@@ -14,7 +14,7 @@ import (
 
 func TestPR8PhysicalSubject(t *testing.T) {
 	// QS8: logical parent traversal must not select a decoy binary.
-	for _, layout := range []string{"PathParent", "WorkingParent"} {
+	for _, layout := range []string{"PathParent", "WorkingParent", "HardLinkParent"} {
 		t.Run(layout, func(t *testing.T) {
 			parent := t.TempDir()
 			physical := filepath.Join(parent, "physical")
@@ -24,7 +24,11 @@ func TestPR8PhysicalSubject(t *testing.T) {
 					t.Fatal(e)
 				}
 			}
-			o, d, _ := fixtureAt(t, physical)
+			o, d, saved := fixtureAt(t, physical)
+			canonical, err := filepath.EvalSymlinks(o.SubjectFile)
+			if err != nil {
+				t.Fatal(err)
+			}
 			_, _, _ = fixtureAt(t, logical)
 			if e := os.Mkdir(filepath.Join(physical, "child"), 0700); e != nil {
 				t.Fatal(e)
@@ -40,7 +44,15 @@ func TestPR8PhysicalSubject(t *testing.T) {
 			if code, e := Run(o, d, &out); code != 4 || e != nil {
 				t.Fatalf("control %d %v", code, e)
 			}
-			if layout == "PathParent" {
+			if layout == "HardLinkParent" {
+				for _, dir := range []string{physical, logical} {
+					if e := os.Link(o.SubjectFile, filepath.Join(dir, "hard.json")); e != nil {
+						t.Fatal(e)
+					}
+				}
+				canonical = filepath.Join(filepath.Dir(canonical), "hard.json")
+				o.SubjectFile = link + "/../hard.json"
+			} else if layout == "PathParent" {
 				o.SubjectFile = link + "/../subject.json"
 			} else {
 				t.Chdir(link)
@@ -49,9 +61,8 @@ func TestPR8PhysicalSubject(t *testing.T) {
 			}
 			out.Reset()
 			code, e := Run(o, d, &out)
-			var refusal *Error
-			if code != 2 || !errors.As(e, &refusal) || refusal.Rule != "QS8" || out.Len() != 0 {
-				t.Fatalf("%d %v %q", code, e, out.String())
+			if code != 4 || e != nil || saved.SubjectFilePath != canonical || saved.BinaryDigest == nil || *saved.BinaryDigest != "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2" {
+				t.Fatalf("%d %v path=%s want=%s", code, e, saved.SubjectFilePath, canonical)
 			}
 		})
 	}
@@ -62,7 +73,11 @@ func TestPR8AbsentHome(t *testing.T) {
 	for _, row := range []string{"Related", "Unrelated", "StatFault"} {
 		t.Run(row, func(t *testing.T) {
 			o, d, _ := fixture(t)
-			home := filepath.Join(t.TempDir(), "missing", "home")
+			base, err := filepath.EvalSymlinks(t.TempDir())
+			if err != nil {
+				t.Fatal(err)
+			}
+			home := filepath.Join(base, "missing", "home")
 			d.AccountHome = func() (string, error) { return home, nil }
 			var out bytes.Buffer
 			if code, e := Run(o, d, &out); code != 4 || e != nil {
@@ -179,7 +194,7 @@ func TestPR8AbsoluteKinds(t *testing.T) {
 
 func TestPR8SubjectDevice(t *testing.T) {
 	// QS2: the pre-open type check refuses devices; the regular control returns bytes.
-	TestPR8SubjectRegular(t)
+	checkPR8SubjectRegular(t)
 	opened := false
 	_, e := openInputWith("/dev/null", func(name string) (*os.File, error) { opened = true; return os.Open(name) })
 	if !errors.Is(e, errSpecial) || opened {
