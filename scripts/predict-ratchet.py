@@ -73,6 +73,29 @@ LEVEL_RULE = {
 }
 
 
+# credit-and-routes §1; collection-rules QP2–QP13 and QA9.
+# QO7 combines the planted-secret checks before their own probe rules.
+PROBE_LEVEL_EIGHT_RULES = {
+    'discovery': (
+        'QD2',
+        'QD3',
+        'QD5',
+        'QO7',
+    ),
+    'bare': ('QP2',),
+    'byte_bound': ('QP3',),
+    'exit_codes': ('QP4',),
+    'store_unchanged': (
+        'QP6',
+        'QP7',
+        'QP8',
+        'QP9',
+    ),
+    'planted_secret': ('QO7',),
+    None: ('QA9',),
+}
+
+
 def level_rules(level):
     rules = LEVEL_RULE[level]
     return (rules,) if isinstance(rules, str) else rules
@@ -392,6 +415,11 @@ def check_ending(level, built, subject, preimage, gaps):
                 current in built['levels'] and
                 not supports(capabilities, 'QO7.planted_secret')):
             return ending(70, ['QO7'], 'sentinel')
+        # QO7 also combines discovery requests decided at level 7.
+        if (current == 7 and preimage['probe'] == 'discovery' and applies and
+                current in built['levels'] and
+                not supports(capabilities, 'QO7.discovery')):
+            return ending(70, ['QO7'], 'sentinel')
         discovery_built = (current == 8 and preimage['probe'] == 'discovery' and
                            all(supports(capabilities, token) for token in (
                                'QD2.bounds',
@@ -400,7 +428,8 @@ def check_ending(level, built, subject, preimage, gaps):
                                'QO7.discovery',
                            )))
         if current not in built['levels'] and applies and not discovery_built:
-            return ending(70, level_rules(current), 'sentinel')
+            return ending(70, PROBE_LEVEL_EIGHT_RULES[preimage['probe']]
+                          if current == 8 else level_rules(current), 'sentinel')
     return ending(None, level_rules(level))
 
 

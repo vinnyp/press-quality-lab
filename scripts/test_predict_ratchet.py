@@ -70,6 +70,53 @@ class PredictorTests(unittest.TestCase):
                 self.assertEqual(predictor.check_ending(8, other_built, subject, other, [])['phase'],
                                  'sentinel')
 
+    def test_level_eight_probe_rules(self):
+        # QD2, QD3, QD5, QO7, QP2–QP4, QP6–QP9, QA9:
+        # credit-and-routes §1 and collection-rules §2, §4, §5.
+        rows = {
+            'discovery': [
+                'QD2',
+                'QD3',
+                'QD5',
+                'QO7',
+            ],
+            'bare': ['QP2'],
+            'byte_bound': ['QP3'],
+            'exit_codes': ['QP4'],
+            'store_unchanged': [
+                'QP6',
+                'QP7',
+                'QP8',
+                'QP9',
+            ],
+            'planted_secret': ['QO7'],
+            None: ['QA9'],
+        }
+        subject = {'binary': 'bin/subject', 'commands': [], 'declared_count': 0,
+                   'seed': None, 'store': None, 'secret': None}
+        built = {'levels': list(range(1, 8)), 'builds': [
+            'QO7.planted_secret',
+            'QO7.discovery',
+        ]}
+        for probe, rules in rows.items():
+            with self.subTest(probe=probe or 'authored'):
+                pre = {'probe': probe, 'words': [], 'earlier': [], 'expected': None}
+                self.assertEqual(predictor.check_ending(8, built, subject, pre, []),
+                                 {'exit_code': 70, 'rules': rules, 'phase': 'sentinel'})
+
+    def test_discovery_level_seven_requires_combination(self):
+        # QO7: the first help request decided at level 7 decides discovery.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr9.json')
+        built['builds'].append('QO7.planted_secret')
+        self.assertTrue(self.case(95, built)['predicted'])
+        built['builds'] = [entry for entry in built['builds']
+                           if (entry if isinstance(entry, str) else entry['rule'])
+                           != 'QO7.discovery']
+        row = self.case(95, built)
+        self.assertFalse(row['predicted'])
+        self.assertEqual(row['ending'],
+                         {'exit_code': 70, 'rules': ['QO7'], 'phase': 'sentinel'})
+
     def test_pr9_planted_secret_combination(self):
         # QO7: the planted-secret combination gates level 7 independently.
         built = predictor.load(Path(__file__).with_name('ratchet') / 'pr9.json')
@@ -124,6 +171,7 @@ class PredictorTests(unittest.TestCase):
         self.assertTrue(any(c['ending']['phase'] == 'sentinel' and
                             c['deciding_level'] == 8 for c in row['checks']))
         built['levels'] = list(range(1, 9))
+        built['builds'].append({'rule': 'QO7.discovery'})
         row = self.case(61, built)
         self.assertTrue(row['predicted'])
         self.assertTrue(any(c['ending'] == {'exit_code': None, 'rules': ['QS5'],
@@ -138,6 +186,7 @@ class PredictorTests(unittest.TestCase):
         # QS5, QD3: an undeclared discovered command has its own override trigger.
         built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
         built['levels'] = list(range(1, 9))
+        built['builds'].append({'rule': 'QO7.discovery'})
         built['builds'].append('QO7.planted_secret')
         row = self.case(22, built)
         self.assertFalse(row['predicted'])
@@ -157,6 +206,7 @@ class PredictorTests(unittest.TestCase):
         # QS5: the QD3 trigger cannot implement the placeholder override.
         built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
         built['levels'] = list(range(1, 9))
+        built['builds'].append({'rule': 'QO7.discovery'})
         self.assertTrue(self.case(61, built)['predicted'])
         built['builds'] = [r for r in built['builds']
                            if not isinstance(r, dict) or r['rule'] != 'QS5.final_override']
