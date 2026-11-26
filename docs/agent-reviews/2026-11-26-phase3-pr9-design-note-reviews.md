@@ -37,3 +37,20 @@
 | 12 | The attribution seam carried two representations of one fact, and the round trip ignored the host's overrides | measurement (Minor), agy (Minor) | Confirmed against `observe.End` and QT4 | One representation stated, an untagged exit-detail decoder, and the seam check includes the overrides |
 | 13 | The ledger left out rules this slice builds parts of (QE8, QH5 to QH7, QS6, QS7, QT5) | measurement (Minor), agy (Minor) | Confirmed | Each is listed with what it still lacks |
 | 14 | Control rows: section ends, trailing commas, every hidden marker, both streams non-empty, a cycle bounded by depth, the QD3 trigger under QD5 | measurement (Minor), agy (Minor) | Confirmed against §5 and QD2 | Rows added |
+
+## Round 2 (delta, measurement lens; 7da380a to 04e6261)
+
+**Verdict:** not ready, with three Majors, eight Minors and four Nits. All fourteen round-1 dispositions were checked, and most are done and right. The prediction reproduced byte for byte.
+
+| # | finding | verify | disposition |
+|---|---|---|---|
+| 15 | The KTD11 amendment also settled a planted-secret engine kill, which the text leaves open, in a direction that could pass an engine fault | Confirmed: only QO5 and QO6 name an engine kill outside the budget | The amendment is limited to discovery; the planted-secret reading goes to the owner before U37 |
+| 16 | E-28 had no test row, and "before the marker" was missing from QD5's rows | Confirmed | Control 6 is a full raw-fact table with each row's clause; QD5's rows say "after the marker" |
+| 17 | The trace control tested containment, and its expected set left out checks that stop at a level-8 sentinel | Confirmed against QT5 | Control 3 compares an exact, case-derived set, with the help order from an independent reader |
+| 18 | The planted secret's level-8 list was QO7, not the probe table's QP10 to QP13, so the note's table did not match the JSON | Reproduced | Lists tied to the table, the test reads the table, and the note's table is regenerated |
+| 19 | E-28's wording also covered computations, against QO6 | Confirmed | Scoped to the subject |
+| 20 | A help request's QO1 sat at both level 1 and level 7 | Two-way | Put to the owner, who ruled E-29: QO1 at level 1 wins |
+| 21 | QD4's second sentence when level 2 decides discovery | Two-way | Put to the owner, who ruled E-30: the walk's facts decide |
+| 22 | A recorded run whose marker and `by` disagree | Two-way | Put to the owner, who ruled E-31: the recording is invalid, exit 2 |
+| 23 | Control 2 compared fewer fields than QE19 and dropped the level | Confirmed | QE19's fields and the deciding level |
+| 24 | Control 7's third case needed its reasoning and a fourth case; QD5 needed a negative row; Nits on the cycle cases' names, tab-indented section ends, QO1's no-marker request and a copy changing during the walk | Confirmed | Each added to the note |

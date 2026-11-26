@@ -74,13 +74,12 @@ LEVEL_RULE = {
 
 
 # credit-and-routes §1; collection-rules QP2–QP13 and QA9.
-# QO7 combines the planted-secret checks before their own probe rules.
+# QO7 combines invocation results at level 7, before the probe rules.
 PROBE_LEVEL_EIGHT_RULES = {
     'discovery': (
         'QD2',
         'QD3',
         'QD5',
-        'QO7',
     ),
     'bare': ('QP2',),
     'byte_bound': ('QP3',),
@@ -91,7 +90,12 @@ PROBE_LEVEL_EIGHT_RULES = {
         'QP8',
         'QP9',
     ),
-    'planted_secret': ('QO7',),
+    'planted_secret': (
+        'QP10',
+        'QP11',
+        'QP12',
+        'QP13',
+    ),
     None: ('QA9',),
 }
 

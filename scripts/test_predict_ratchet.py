@@ -71,26 +71,33 @@ class PredictorTests(unittest.TestCase):
                                  'sentinel')
 
     def test_level_eight_probe_rules(self):
-        # QD2, QD3, QD5, QO7, QP2–QP4, QP6–QP9, QA9:
+        # QD2, QD3, QD5, QP2–QP4, QP6–QP13, QA9:
         # credit-and-routes §1 and collection-rules §2, §4, §5.
+        # Literal oracle: credit-and-routes.md §1, lines 9–14.
+        # Discovery's line 9 gives QD1–QD5; collection-rules §2/§3
+        # puts QD1 in construction and QD4 at level 3, leaving these three.
         rows = {
-            'discovery': [
+            'discovery': [  # line 9
                 'QD2',
                 'QD3',
                 'QD5',
-                'QO7',
             ],
-            'bare': ['QP2'],
-            'byte_bound': ['QP3'],
-            'exit_codes': ['QP4'],
-            'store_unchanged': [
+            'bare': ['QP2'],  # line 10
+            'byte_bound': ['QP3'],  # line 11
+            'exit_codes': ['QP4'],  # line 12
+            'store_unchanged': [  # line 14
                 'QP6',
                 'QP7',
                 'QP8',
                 'QP9',
             ],
-            'planted_secret': ['QO7'],
-            None: ['QA9'],
+            'planted_secret': [  # line 13
+                'QP10',
+                'QP11',
+                'QP12',
+                'QP13',
+            ],
+            None: ['QA9'],  # Authored predicate: collection-rules §5.
         }
         subject = {'binary': 'bin/subject', 'commands': [], 'declared_count': 0,
                    'seed': None, 'store': None, 'secret': None}

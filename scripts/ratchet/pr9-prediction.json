@@ -36866,7 +36866,10 @@
         "first sentinel: QA7",
         "first sentinel: QA9",
         "first sentinel: QO6",
-        "first sentinel: QO7",
+        "first sentinel: QP10",
+        "first sentinel: QP11",
+        "first sentinel: QP12",
+        "first sentinel: QP13",
         "first sentinel: QP2",
         "first sentinel: QP3",
         "first sentinel: QP4",
@@ -36963,7 +36966,10 @@
             "exit_code": 70,
             "phase": "sentinel",
             "rules": [
-              "QO7"
+              "QP10",
+              "QP11",
+              "QP12",
+              "QP13"
             ]
           },
           "id": "445bc3c8cb269528ae6dcc4bbcfd38b059299cb2ba2eb1534f74feb5a6da3c0e"
@@ -37233,7 +37239,10 @@
           "QA7",
           "QA9",
           "QO6",
-          "QO7",
+          "QP10",
+          "QP11",
+          "QP12",
+          "QP13",
           "QP2",
           "QP3",
           "QP4",

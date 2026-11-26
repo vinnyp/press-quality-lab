@@ -77,15 +77,20 @@ These two cases cannot tell a real discovery from one that always says held, bec
 
 All 112 pending judge-checked cases still end with exit 70. The 3 real-verifier cases are not run.
 
-| Ending (exit 70, one of) | Cases |
+Each row is the set of rule names a case's exit-70 ending may name, as `pr9-prediction.json` gives it.
+
+| Rules the ending may name | Cases |
 |---|---|
-| QA7, QO6, QO7 (planted secret) and level 8 | 65 |
-| QA7, QO7 and level 8 | 7 |
-| QA7, QO6 and level 8 | 6 |
-| QA7 only | 2 (`case-005`, `case-092`) |
-| QO6, QO7 and level 8 | 2 |
-| QO7 and level 8 | 22 |
-| QO7 only | 1 (`case-095`) |
+| QA7, QA9, QO6, QO7, QP2 to QP4, QP6 to QP9 | 65 |
+| QO7, QP2 to QP4, QP6 to QP9 | 20 |
+| QA7, QA9, QO7, QP2 to QP4, QP6 to QP9 | 7 |
+| QA7, QA9, QO6 | 3 |
+| QA7 | 2 (`case-005`, `case-092`) |
+| QO6, QO7, QP2 to QP4, QP6 to QP9 | 2 |
+| QA7, QA9, QO6, QP2 to QP4, QP6 to QP9 | 2 |
+| QA9, QO7, QP2 to QP4, QP6 to QP9 | 2 |
+| QA7, QA9, QO6, QP2 to QP4, QP6 to QP13 | 1 |
+| QO7 | 1 (`case-095`) |
 | QE4 (a baseline's planning gap) | 6 |
 | `QE4.anchor` | 1 |
 
