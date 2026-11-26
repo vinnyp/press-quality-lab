@@ -14,6 +14,18 @@ func hidden(args []string) (int, bool) {
 	if len(args) == 0 || !strings.HasPrefix(args[0], confine.HiddenPrefix) {
 		return 0, false
 	}
+	if args[0] == confine.SelfTestMode {
+		if len(args) != 4 {
+			return exitUsage, true
+		}
+		return confine.SelfTestHidden(args[1], args[2], args[3]), true
+	}
+	if args[0] == confine.DecoyMode {
+		if len(args) != 1 {
+			return exitUsage, true
+		}
+		return confine.DecoyHidden(), true
+	}
 	if args[0] != confine.LauncherMode && args[0] != confine.FastMode {
 		return exitUsage, true
 	}
