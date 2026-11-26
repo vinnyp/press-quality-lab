@@ -23,11 +23,11 @@ func (s *fake) Observe(observe.Key, observe.Spec) (observe.Run, error) {
 	return observe.Run{}, errors.New("unexpected invocation")
 }
 func TestPlanningBeforeCollection(t *testing.T) {
-	// QE2: a placeholder planning gap comes before controls or decide.
+	// QE4: a baseline planning gap comes before controls or decide.
 	s := &fake{}
-	got, err := Build(plan.Input{Subject: subject.File{"binary": plan.Object{"placeholder": "supply binary"}}}, s)
+	got, err := Build(plan.Input{Baseline: true}, s)
 	var gap *plan.Gap
-	if !errors.As(err, &gap) || gap.Rule != "QE2" || gap.Part != "placeholders" || got != nil || s.calls != 0 || s.observations != 0 {
+	if !errors.As(err, &gap) || gap.Rule != "QE4" || gap.Part != "" || got != nil || s.calls != 0 || s.observations != 0 {
 		t.Fatalf("%+v %v %+v", got, err, s)
 	}
 }

@@ -1,4 +1,9 @@
-"""Literal controls for the ratchet predictor (not an engine conformance test)."""
+"""Literal controls for the ratchet predictor (not an engine conformance test).
+
+E-17 is covered by the engine tests. The former PR8 seed-name-link test
+was removed because PR8 disables the legacy safe-read phase: it accepted
+any link without evaluating QS9 and therefore proved no E-17 behavior.
+"""
 import copy
 import importlib.util
 import json
@@ -19,6 +24,95 @@ BUILT = json.loads(Path(__file__).with_name('ratchet').joinpath('pr6.json').read
 class PredictorTests(unittest.TestCase):
     def case(self, number, built=None):
         return predictor.predict_case(KIT / 'cases' / f'case-{number:03d}', built or BUILT)
+
+    def test_pr8_literal_placeholder_data(self):
+        # QS5, E-22: the prediction classifier inspects only allowed positions.
+        for literal in ({'placeholder': 'x'}, {'placeholder': 'x', 'k': 1}):
+            with self.subTest(literal=literal):
+                subject = {'runbooks': [{'steps': [{'checks': [
+                    {'expected': {'literal': literal}}]}]}]}
+                self.assertFalse(predictor.contains_placeholder(subject))
+                subject['binary'] = {'placeholder': 'x', 'k': 1}
+                self.assertFalse(predictor.contains_placeholder(subject))
+                subject['binary'] = {'placeholder': 'Supply binary.'}
+                self.assertTrue(predictor.contains_placeholder(subject))
+
+    def test_pr8_placeholder_dependencies(self):
+        # QS5, KTD2.8: the dependency classifier produces the shared oracle.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
+        expected = predictor.load(Path(__file__).with_name('ratchet') / 'pr8-prediction.json')
+        actual = predictor.predict(built)['placeholder_dependencies']
+        self.assertEqual(len(actual), 121)
+        self.assertEqual(actual, expected['placeholder_dependencies'])
+
+    def test_pr8_final_override_is_independent_of_level_two(self):
+        # QS5: final override follows level 8; building level 2 alone is insufficient.
+        built = json.loads(Path(__file__).with_name('ratchet').joinpath('pr8.json').read_text())
+        row = self.case(61, built)
+        self.assertFalse(row['predicted'])
+        built['levels'] = list(range(1, 8))
+        row = self.case(61, built)
+        self.assertFalse(row['predicted'])
+        self.assertTrue(any(c['ending']['phase'] == 'sentinel' and
+                            c['deciding_level'] == 8 for c in row['checks']))
+        built['levels'] = list(range(1, 9))
+        row = self.case(61, built)
+        self.assertTrue(row['predicted'])
+        self.assertTrue(any(c['ending'] == {'exit_code': None, 'rules': ['QS5'],
+                                          'phase': 'deciding'} for c in row['checks']
+                            if c['deciding_level'] == 8))
+        built['builds'] = [r for r in built['builds'] if r['rule'] != 'QS5.final_override']
+        row = self.case(61, built)
+        self.assertFalse(row['predicted'])
+        self.assertIn('QS5.final_override', row['ending']['rules'])
+
+    def test_pr8_qd3_trigger_is_independent_of_placeholder_override(self):
+        # QS5, QD3: an undeclared discovered command has its own override trigger.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
+        built['levels'] = list(range(1, 9))
+        row = self.case(22, built)
+        self.assertFalse(row['predicted'])
+        self.assertEqual(row['ending']['rules'], ['QS5.qd3_trigger'])
+        overrides = [c for c in row['checks'] if c['ending']['phase'] == 'observation']
+        self.assertEqual(len(overrides), 18)
+        self.assertTrue(all(c['ending'] == {
+            'exit_code': 70, 'rules': ['QS5.qd3_trigger'], 'phase': 'observation'}
+            for c in overrides))
+        built['builds'].append('QS5.qd3_trigger')
+        self.assertTrue(self.case(22, built)['predicted'])
+        built['builds'] = [r for r in built['builds']
+                           if not isinstance(r, dict) or r['rule'] != 'QS5.final_override']
+        self.assertTrue(self.case(22, built)['predicted'])
+
+    def test_pr8_placeholder_override_converse(self):
+        # QS5: the QD3 trigger cannot implement the placeholder override.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
+        built['levels'] = list(range(1, 9))
+        self.assertTrue(self.case(61, built)['predicted'])
+        built['builds'] = [r for r in built['builds']
+                           if not isinstance(r, dict) or r['rule'] != 'QS5.final_override']
+        built['builds'].append('QS5.qd3_trigger')
+        row = self.case(61, built)
+        self.assertFalse(row['predicted'])
+        self.assertIn('QS5.final_override', row['ending']['rules'])
+
+    def test_pr6_prediction_history(self):
+        # KTD1: earlier slice predictions remain reproducible.
+        expected = predictor.load(Path(__file__).with_name('ratchet') / 'pr6-prediction.json')
+        self.assertEqual(predictor.predict(BUILT), expected)
+
+    def test_pr8_rejections_and_construction(self):
+        # QS1 to QS12, QP7, QP10, QA4, QA9; U39's construction precedes collection.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
+        result = predictor.predict(built)
+        derivations = [r for r in result['cases'] if r['kind'] == 'derivation-only']
+        self.assertEqual(len(derivations), 31)
+        self.assertTrue(all(r['predicted'] for r in derivations))
+        self.assertTrue(self.case(60, built)['predicted'])
+        self.assertTrue(self.case(90, built)['predicted'])
+        self.assertFalse(any(r['ending']['phase'] == 'planning' and
+                             any(x != 'QE4' and x != 'QE4.anchor' for x in r['ending']['rules'])
+                             for r in result['cases']))
 
     def test_safe_read_phase(self):
         # QS8, QS9: safe snapshots stop before planning; semantic store checks wait.
@@ -353,7 +447,7 @@ class PredictorTests(unittest.TestCase):
             self.assertEqual(self.case(3, built)['ending'],
                              {'exit_code': 70, 'rules': [rule], 'phase': 'record'})
             self.assertEqual(self.case(59, built)['ending']['phase'], 'sentinel')
-        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 6, 7, 'record', 'safe_read'})
+        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 6, 7, 'record', 'safe_read', 'override'})
         for rule in predictor.names(BUILT['builds']):
             self.assertEqual(sum(rule in {r for r, phase in predictor.BUILD_PHASE.items()
                                          if phase == candidate}

@@ -93,6 +93,38 @@ QO1's grade-wide conditions, a failed self-test (QH9), confinement that could no
 
 QS1 says the file states its version in `subject_file_version`, "which is `1.0` for this specification", and the specification calls its version "this string". **A `subject_file_version` that is not the string `1.0`, the number `1.0` included, is another version and is rejected under QS1,** which E-9 checks before QS2. The owner ruled on this reading on 2026-11-25. No case of the corpus has such a file, so no record changes.
 
+### E-17. A link in the path that names the seed
+
+QS9 names the seed by a path "inside" the subject file's directory, and a path is inside a directory "after every link in the path is resolved" (§1's definitions). QS9 also rejects a seed that "holds a link". **A link in the path that names the seed, the seed's own name included, is resolved, as are the links in the subject file's own directory path, before "inside" is tested. The resolved seed must be a directory inside the subject file's directory. Of links on the seed's path or within the seed, only a link the seed directory contains rejects the file under QS9. QS9's other rejections are unchanged.** The owner ruled on 2026-11-25. No case of the corpus has a link in a seed's name, so no record changes.
+
+### E-18. A named file the engine cannot read
+
+QS8 rejects a named file that leaves the subject file's directory, a directory, a link left unresolved or a special file, and QE16 lists "an unreadable subject file" under exit 2. Neither names a regular file inside the directory that cannot be read. **A binary, a computation's executable named by a relative path, or a declared file (QS8's three kinds) that is a regular file inside the directory but cannot be read rejects the subject file under QS8, with exit 2, before collection. A file or directory inside the seed that cannot be read rejects it under QS9, with exit 2.** The owner ruled on 2026-11-25. No case of the corpus has such a file, so no record changes.
+
 ### E-19. A stale run directory the start sweep cannot remove
 
 QE20 removes, at start, every per-run directory a killed run left. E-11 makes a run exit 70 when its own cleanup cannot remove an entry, and says the next run's sweep retries it. Neither says what the new run does when that retry fails again. **The sweep tries every stale directory. One it cannot remove is named on standard error and left for a later sweep, and the new run goes on. The new run ends with exit 70 only when the directory that holds the run directories is unsafe, or when it cannot tell whether a recorded process still exists.** The owner ruled on 2026-11-26. No case of the corpus reaches a start sweep, so no record changes.
+
+### E-20. A planted-secret token that overlaps itself
+
+QP10 requires the planted secret's `token` to appear exactly once in the seed's copy of its file, and does not say how an occurrence that overlaps another is counted. **Each position at which the token starts is one occurrence, so a token that overlaps itself, such as `aaaaaaaa` in nine `a`s, appears more than once and rejects the file under QP10.** The owner ruled on 2026-11-26. No case of the corpus has such a token, so no record changes.
+
+### E-21. The rule a reserved environment prefix names
+
+QH12 rejects a subject file whose offline setting sets an environment variable whose name begins `DYLD_` or `__CF_`. E-9's order of named rules does not list QH12, and QS7, the rule for offline settings, cites QH12 for its reserved names. **Such a refusal names QS7, with exit 2, in QS7's place in E-9's order.** The owner ruled on 2026-11-26. No case of the corpus sets such a variable, so no record changes.
+
+### E-22. A placeholder-shaped value inside a literal
+
+QS5 defines a placeholder by its shape and rejects one outside its allowed positions. A `literal` is the output the author expects the subject to produce, and may be any JSON value. **An object inside a `literal` is data, never a placeholder, whatever its shape: it does not reject the file, and no rule treats it as a value the author has not supplied. Placeholder detection looks only at the positions QS5 allows.** The owner ruled on 2026-11-26. No case of the corpus has such a literal, so no record changes.
+
+### E-23. An absolute executable the engine cannot read
+
+QS12 compares the content of "an executable a computation names" with the binary's, and QA4 lets that executable be an absolute path under `/bin` or `/usr/bin`. E-18 covers a file the engine cannot read only for QS8's kinds, which are relative. **An absolute executable that exists but that the engine cannot read as a regular file, such as an execute-only file, rejects the subject file under QS12, with exit 2, because the engine cannot show that its content differs from the binary's. One that does not exist is not compared, and its computation fails at run time under QA6.** The owner ruled on 2026-11-26. No case of the corpus names such an executable, so no record changes.
+
+### E-24. A subject file that is a link
+
+QS8 names files relative to "the directory that holds the subject file", E-17 resolves the links in that directory's own path, and QE4 keys baselines by "the subject file's canonical path". None says what happens when the path given is itself a link. **Every link in the subject file's path, the file's own name included, is resolved once. The directory of that resolved path is the directory that holds the subject file, for QS8, QS9, QA4's `{SUBJECT_DIR}` and every other rule, and the resolved path is the canonical path QE4 uses.** The owner ruled on 2026-11-26. No case of the corpus passes a link as its subject file, so no record changes.
+
+### E-25. Text that cannot be a capture token
+
+QA4 replaces `{CAPTURE:<step>}`, and a capture that names a step other than a listed earlier one rejects the subject file. The schema's step names exclude `{`, `}` and `:`. **A capture token is `{CAPTURE:`, then text that matches the schema's step-name pattern, then `}`. Any other text, an unterminated `{CAPTURE:` included, is literal and left as written. A token whose name is not a listed earlier step of its runbook rejects the file under QA4.** The owner ruled on 2026-11-26. No case of the corpus has such text, so no record changes.

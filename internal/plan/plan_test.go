@@ -68,7 +68,6 @@ func TestWorkedIDs(t *testing.T) {
 
 func TestPlanningGaps(t *testing.T) {
 	// QE4: baselines and anchors stop before returning any partial plan.
-	// QE2: placeholder preimages stop before collection.
 	for _, row := range []struct {
 		name       string
 		in         Input
@@ -76,7 +75,6 @@ func TestPlanningGaps(t *testing.T) {
 	}{
 		{"Baseline", Input{Baseline: true}, "QE4", ""},
 		{"Anchor", Input{Anchor: true}, "QE4", "anchor"},
-		{"Placeholder", Input{Subject: Object{"binary": Object{"placeholder": "supply binary"}}}, "QE2", "placeholders"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			p, err := Build(row.in)
@@ -110,14 +108,14 @@ func TestScope(t *testing.T) {
 	}
 }
 
-func TestCanonicalizationGap(t *testing.T) {
+func TestCanonicalizationFault(t *testing.T) {
 	// QE2: a subject integer outside JCS's exact range cannot produce a check id.
 	check := Object{"dimension": "output-conformance", "predicate": "stdout_json_equals", "expected": Object{"literal": strictjson.Number("9007199254740993")}, "path": nil, "precondition": nil, "exit_codes": nil}
 	step := Object{"name": "read", "words": Array{"list"}, "budget_seconds": strictjson.Number("10"), "checks": Array{check}}
 	in := Input{Subject: Object{"declared_count": strictjson.Number("0"), "runbooks": Array{Object{"name": "book", "steps": Array{step}}}}, Scopes: []rulebook.Scope{rulebook.ConformanceScope}}
 	p, err := Build(in)
-	gap, ok := err.(*Gap)
-	if !ok || gap.Rule != "QE2" || gap.Part != "" || len(p.Checks) != 0 {
-		t.Fatalf("plan %+v error %v; want QE2 gap", p, err)
+	_, gap := err.(*Gap)
+	if err == nil || gap || len(p.Checks) != 0 {
+		t.Fatalf("plan %+v error %v; want canonicalization fault", p, err)
 	}
 }

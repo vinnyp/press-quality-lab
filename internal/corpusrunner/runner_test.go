@@ -214,7 +214,7 @@ func readTrace(path string) (trace, error) {
 	return tr, nil
 }
 
-func placeholder(v any) bool { _, ok := object(v)["placeholder"]; return ok }
+func placeholder(v any) bool { o := object(v); _, ok := o["placeholder"]; return len(o) == 1 && ok }
 func discovery(k map[string]any) bool {
 	words := list(k["words"])
 	if k["home"] != "empty" || k["computation"] != nil || len(words) == 0 {
@@ -269,16 +269,20 @@ func levelTwoPlaceholder(subject, pre map[string]any) bool {
 }
 
 func hasPlaceholder(value any) bool {
-	if placeholder(value) {
-		return true
-	}
-	for _, v := range object(value) {
-		if hasPlaceholder(v) {
+	s := object(value)
+	for _, key := range []string{"binary", "declared_count", "seed", "store", "secret"} {
+		if placeholder(s[key]) {
 			return true
 		}
 	}
-	for _, v := range list(value) {
-		if hasPlaceholder(v) {
+	for _, v := range object(s["facts"]) {
+		if placeholder(v) {
+			return true
+		}
+	}
+	for _, v := range list(s["commands"]) {
+		c := object(v)
+		if placeholder(c["class"]) || placeholder(c["writes"]) {
 			return true
 		}
 	}
@@ -600,6 +604,7 @@ func pendingSet(data string) map[string]bool {
 
 func TestCorpus(t *testing.T) {
 	// QT6, QE19, QO1: execute the real command and independently compare its record and trace.
+	// QE3, QE7: every judge-checked required set matches the trace (KTD2.7).
 	binary := filepath.Join(t.TempDir(), "pql")
 	build := exec.Command("go", "build", "-tags", "scripted", "-o", binary, "../../cmd/pql")
 	if output, err := build.CombinedOutput(); err != nil {
@@ -652,7 +657,7 @@ func TestCorpus(t *testing.T) {
 			if err := checkTrace(c, subject, want, preimages, r.Trace); err != nil {
 				t.Fatal(err)
 			}
-			if c.ID == "case-003" || c.ID == "case-004" {
+			if c.Kind == "judge-checked" {
 				if err := checkRequired(r.Trace, want); err != nil {
 					t.Fatal(err)
 				}
@@ -672,6 +677,7 @@ func TestCorpus(t *testing.T) {
 			if err := ratchet(pending[c.ID], failure); err != nil {
 				t.Fatal(err)
 			}
+			t.Logf("result %s exit=%d rule=%s pending=%v required=%d", c.ID, r.Exit, r.Rule, pending[c.ID], len(r.Trace.Required))
 			if pending[c.ID] {
 				t.Logf("pending: exit=%d rule=%s comparison=%v", r.Exit, r.Rule, failure)
 			}

@@ -18,13 +18,20 @@ type Check struct {
 // stop at an unbuilt level before an invocation can be served. Later units add
 // sequencing at those levels; no source call may jump over an unbuilt level.
 func Collect(p plan.Plan, source observe.Source) ([]Check, error) {
+	return collect(p, source, decide.Resolve)
+}
+
+func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) ([]Check, error) {
 	controls, err := source.Controls()
 	if err != nil {
 		return nil, err
 	}
 	checks := make([]Check, 0, len(p.Checks))
 	for _, ch := range p.Checks {
-		checks = append(checks, Check{Plan: ch, Result: decide.Resolve(ch, controls, decide.Evidence{})})
+		checks = append(checks, Check{Plan: ch, Result: resolve(ch, controls, decide.Evidence{})})
+	}
+	for i := range checks {
+		checks[i].Result = decide.FinalOverride(checks[i].Plan, checks[i].Result)
 	}
 	return checks, nil
 }

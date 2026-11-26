@@ -11,21 +11,44 @@ import (
 
 func TestVersion(t *testing.T) {
 	// QS1: absent, numeric and other versions are rejected before shape checks.
-	for _, input := range []string{`{}`, `{"subject_file_version":1.0}`, `{"subject_file_version":"2.0"}`} {
-		if _, err := Parse([]byte(input)); err == nil || err.Rule != "QS1" {
-			t.Fatalf("got %v", err)
+	for _, value := range []any{nil, strictjson.Number("1.0"), "2.0"} {
+		o := parsedFixture(t)
+		checkFixture(t, o, "")
+		if value == nil {
+			delete(o, "subject_file_version")
+		} else {
+			o["subject_file_version"] = value
 		}
+		checkFixture(t, o, "QS1")
 	}
+
 }
 
 func TestCorpus(t *testing.T) {
-	// QS1, QS2, QS3, QS4, QS5, QS11: schema refusals; semantic refusals wait for U9.
+	// QS1, QS2, QS3, QS4, QS5, QS6, QS7, QS10, QS11, QP10, QA4, QA9:
+	// declaration refusals; file-content refusals use the grade reader.
 	dirs, err := filepath.Glob("../../docs/specs/conformance-collection-1.0/cases/case-*")
 	if err != nil || len(dirs) == 0 {
 		t.Fatal("missing corpus", err)
 	}
 	refusals := map[string]string{
 		"case_100": "QS2",
+		"case_104": "QS6",
+		"case_105": "QS6",
+		"case_106": "QS6",
+		"case_107": "QS7",
+		"case_108": "QS7",
+		"case_109": "QS7",
+		"case_113": "QS10",
+		"case_114": "QS11",
+		"case_115": "QS11",
+		"case_122": "QP10",
+		"case_123": "QA4",
+		"case_124": "QA4",
+		"case_125": "QA9",
+		"case_126": "QA9",
+		"case_127": "QA9",
+		"case_128": "QA9",
 		"case_101": "QS4",
 		"case_102": "QS3",
 		"case_103": "QS5",
@@ -93,6 +116,7 @@ func TestFacts(t *testing.T) {
 					t.Fatal("fixture")
 				}
 				o := testObject(v)
+				checkFixture(t, o, "")
 				testObject(o["facts"])[key] = value
 				data := strictjson.Write(o)
 				_, err := Parse(data)
@@ -111,8 +135,8 @@ func TestStrictReading(t *testing.T) {
 	}
 	// The literal sits under eight containers; 57 nested arrays make depth 65.
 	for name, raw := range map[string]string{
-		"depth_at_bound":    strings.Repeat("[", 56) + "0" + strings.Repeat("]", 56),
-		"number_at_bound":   strings.Repeat("1", 32),
+		"depth_at_bound":    strings.Repeat("[", 48) + "0" + strings.Repeat("]", 48),
+		"number_at_bound":   "10000000000000000000000000000000",
 		"exponent_at_bound": "1e0001",
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -144,11 +168,11 @@ func TestSchemaRules(t *testing.T) {
 		{"command_budget", "QS6", func(o strictjson.Object) {
 			testObject(testArray(o["commands"])[0])["budget_seconds"] = strictjson.Number("1.0")
 		}},
-		{"offline_argument", "QS7", func(o strictjson.Object) {
+		{"offline_argument", "QS2", func(o strictjson.Object) {
 			o["offline"] = strictjson.Array{strictjson.Object{"applies_to": strictjson.Array{strictjson.Array{}}, "args": strictjson.Array{false}, "env": strictjson.Object{}}}
 		}},
 		{"absolute_store", "QS9", func(o strictjson.Object) { o["store"] = "/store" }},
-		{"computation_budget", "QA4", func(o strictjson.Object) {
+		{"computation_budget", "QS2", func(o strictjson.Object) {
 			c := firstCheck(o)
 			c["expected"] = strictjson.Object{"computation": strictjson.Object{"argv": strictjson.Array{"/bin/echo"}, "budget_seconds": strictjson.Number("601"), "declared_files": strictjson.Array{}, "captures": strictjson.Array{}}}
 		}},
@@ -215,7 +239,7 @@ func TestSchemaBounds(t *testing.T) {
 			_, err := Parse(strictjson.Write(o))
 			want := ""
 			if n == 0 || n == 3601 {
-				want = "QS6"
+				want = "QS2"
 			}
 			assertRule(t, err, want)
 		})
@@ -223,11 +247,18 @@ func TestSchemaBounds(t *testing.T) {
 	for _, n := range []int{511, 512, 513} {
 		t.Run("commands_"+strconv.Itoa(n), func(t *testing.T) {
 			o := parsedFixture(t)
-			command := testArray(o["commands"])[0]
+			command := testObject(testArray(o["commands"])[0])
 			a := make(strictjson.Array, n)
 			for i := range a {
-				a[i] = command
+				copy := strictjson.Object{}
+				for k, v := range command {
+					copy[k] = v
+				}
+				copy["words"] = strictjson.Array{"unique" + strconv.Itoa(i)}
+				a[i] = copy
 			}
+			original := testArray(o["commands"])
+			copy(a, original)
 			o["commands"] = a
 			_, err := Parse(strictjson.Write(o))
 			want := ""

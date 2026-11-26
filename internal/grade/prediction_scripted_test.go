@@ -3,6 +3,7 @@
 package grade
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
@@ -44,12 +45,13 @@ func TestPredictedCheckEndings(t *testing.T) {
 			Kind   string          `json:"kind"`
 			Ending predictedEnding `json:"ending"`
 			Checks []struct {
+				Level  int             `json:"deciding_level"`
 				ID     string          `json:"id"`
 				Ending predictedEnding `json:"ending"`
 			} `json:"checks"`
 		} `json:"cases"`
 	}
-	if err := caseassembly.Read("../../scripts/ratchet/pr6-prediction.json", &predictions); err != nil {
+	if err := caseassembly.Read("../../scripts/ratchet/pr8-prediction.json", &predictions); err != nil {
 		t.Fatal(err)
 	}
 	counts := map[string]int{}
@@ -67,6 +69,20 @@ func TestPredictedCheckEndings(t *testing.T) {
 			data, err := os.ReadFile(filepath.Join(layout.Subject, c.Input.SubjectFile))
 			if err != nil {
 				t.Fatal(err)
+			}
+			// U9 moves all subject-file derivation refusals ahead of planning.
+			// Judge-checked endings follow the PR8 prediction.
+			expectedRule := stringValue(c.Expect["rule"])
+			if prediction.Kind == "derivation-only" && (strings.HasPrefix(expectedRule, "QS") || expectedRule == "QP7" || expectedRule == "QP10" || expectedRule == "QA4" || expectedRule == "QA9") {
+				options := Options{SubjectFile: filepath.Join(layout.Subject, c.Input.SubjectFile), Scope: c.Input.Scope, Scripted: true}
+				var output bytes.Buffer
+				code, err := Run(options, Dependencies{IDs: func() (int, int) { return 1000, 1000 }}, &output)
+				var refusal *Error
+				if code != 2 || !errors.As(err, &refusal) || refusal.Rule != expectedRule || output.Len() != 0 {
+					t.Fatalf("U9: code=%d error=%v output=%q; want exit 2 %s", code, err, output.String(), expectedRule)
+				}
+				counts["derivation"]++
+				return
 			}
 			s, refusal := subject.Parse(data)
 			if refusal != nil {
@@ -163,8 +179,8 @@ func TestPredictedCheckEndings(t *testing.T) {
 						continue
 					}
 					if want.Ending.Phase == "deciding" {
-						if check.Result.Unbuilt != nil || check.Result.Level != 1 || check.Result.Outcome != "not_observed" || check.Result.Reason != "network_unverifiable" {
-							t.Errorf("check %s: %+v; want QO1", want.ID, check.Result)
+						if check.Result.Unbuilt != nil || check.Result.Level != want.Level || check.Result.Outcome != "not_observed" || (want.Level == 1 && check.Result.Reason != "network_unverifiable") || (want.Level == 2 && check.Result.Reason != "placeholder_unfilled") {
+							t.Errorf("check %s: %+v; want level %d", want.ID, check.Result, want.Level)
 						}
 					} else if check.Result.Unbuilt == nil || !allowedRule(want.Ending, check.Result.Unbuilt.Rule) {
 						t.Errorf("check %s: %+v; want %+v", want.ID, check.Result, want.Ending)
@@ -174,7 +190,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 			counts["decide"]++
 		})
 	}
-	if !reflect.DeepEqual(counts, map[string]int{"decide": 94, "planning": 24, "derivation": 29, "safe_read": 2}) {
+	if !reflect.DeepEqual(counts, map[string]int{"decide": 111, "planning": 7, "derivation": 31}) {
 		t.Fatalf("phase counts %v", counts)
 	}
 }

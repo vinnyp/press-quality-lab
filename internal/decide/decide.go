@@ -52,23 +52,23 @@ func object(v any) strictjson.Object {
 	return o
 }
 
-// dependency finds placeholders carried by required-set dependency metadata.
+// dependency inspects only the positions QS5 permits, excluding literal data.
 func dependency(v any) bool {
-	switch x := v.(type) {
-	case strictjson.Object:
-		if _, ok := x["placeholder"]; ok {
+	s := object(v)
+	for _, key := range []string{"binary", "declared_count", "seed", "store", "secret"} {
+		if placeholder(s[key]) {
 			return true
 		}
-		for _, v := range x {
-			if dependency(v) {
-				return true
-			}
+	}
+	for _, value := range object(s["facts"]) {
+		if placeholder(value) {
+			return true
 		}
-	case strictjson.Array:
-		for _, v := range x {
-			if dependency(v) {
-				return true
-			}
+	}
+	for _, value := range array(s["commands"]) {
+		c := object(value)
+		if placeholder(c["class"]) || placeholder(c["writes"]) {
+			return true
 		}
 	}
 	return false

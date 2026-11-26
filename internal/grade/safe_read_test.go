@@ -110,7 +110,7 @@ func TestSafeReads(t *testing.T) {
 			}
 			writes, judges := 0, 0
 			d.Write = func(store.Record) error { writes++; return nil }
-			if name != "BinaryLink" && name != "DeclaredOversized" {
+			if name != "BinaryLink" && name != "DeclaredOversized" && name != "SeedDirectoryLink" && name != "SeedParentLink" {
 				d.Judge = func([]byte) ([]byte, int) { judges++; return nil, 0 }
 			}
 			type result struct {
@@ -139,17 +139,17 @@ func TestSafeReads(t *testing.T) {
 				}
 				t.Fatal("safe read timed out; FIFO opened for reading")
 			}
-			if name == "BinaryLink" || name == "DeclaredOversized" {
+			if name == "BinaryLink" || name == "DeclaredOversized" || name == "SeedDirectoryLink" || name == "SeedParentLink" {
 				if got.code != 4 || got.err != nil || writes != 1 {
 					t.Fatalf("control: %+v writes=%d", got, writes)
 				}
 				return
 			}
 			var e *Error
-			if got.code != 70 || !errors.As(got.err, &e) || e.Rule != rule || writes != 0 || judges != 0 || got.output != "" {
+			if got.code != 2 || !errors.As(got.err, &e) || e.Rule != rule || writes != 0 || judges != 0 || got.output != "" {
 				t.Fatalf("got %+v writes=%d judges=%d want %s", got, writes, judges, rule)
 			}
-			if name == "BinaryMissing" && e.Cause != "named file cannot be safely read: missing" {
+			if name == "BinaryMissing" && e.Cause != "invalid subject file" {
 				t.Fatal(e.Cause)
 			}
 			if !strings.HasPrefix(got.err.Error(), "rejected: "+rule+":") {

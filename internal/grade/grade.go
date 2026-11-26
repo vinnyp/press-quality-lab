@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -25,6 +24,9 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/subject"
 	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 )
+
+// ComputationWarning is shown before grading and in command documentation (QA5).
+const ComputationWarning = "Warning: grading another person's subject file runs their computations on this machine."
 
 type Options struct {
 	SubjectFile               string
@@ -55,14 +57,21 @@ type Dependencies struct {
 	SourceInWorkspace func(*throwaway.Workspace) (observe.Source, func() error, error)
 	Stderr            io.Writer
 	// Signals permits deterministic tests; nil subscribes to the four signals.
-	Signals   <-chan os.Signal
-	IDs       func() (real, effective int)
-	Open      func(string) (io.ReadCloser, error)
-	Source    func() (observe.Source, func() error, error)
-	Judge     func([]byte) ([]byte, int)
-	StoreRoot func() (string, error)
-	Write     func(store.Record) error
-	Collect   func(plan.Plan, observe.Source) ([]collect.Check, error)
+	Signals           <-chan os.Signal
+	OpenSystemFile    func(string) (*os.File, error) // Nil opens absolute computation executables nonblocking.
+	ResolveSystemFile func(string) (string, error)
+	StatSystemFile    func(string) (os.FileInfo, error)
+	CopySystemFile    func(io.Writer, io.Reader) (int64, error)
+	StatInput         func(string) (os.FileInfo, error)
+	SystemPath        func(string) bool
+	AccountHome       func() (string, error) // Nil uses the system account record, never an environment fallback.
+	IDs               func() (real, effective int)
+	Open              func(string) (io.ReadCloser, error)
+	Source            func() (observe.Source, func() error, error)
+	Judge             func([]byte) ([]byte, int)
+	StoreRoot         func() (string, error)
+	Write             func(store.Record) error
+	Collect           func(plan.Plan, observe.Source) ([]collect.Check, error)
 }
 
 func UserIDs() (int, int) { return os.Getuid(), os.Geteuid() }
@@ -217,19 +226,48 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if err != nil {
 		return 70, err
 	}
-	data, err := readFile(o.SubjectFile, d.Open)
+	canonical, pathErr := physicalSubjectPath(o.SubjectFile)
+	if pathErr != nil {
+		return 2, failure(2, "QS2", "subject file unreadable")
+	}
+	var subjectInfo os.FileInfo
+	data, err := readFile(canonical, func(path string) (io.ReadCloser, error) {
+		f, e := d.Open(path)
+		if e != nil {
+			return nil, e
+		}
+		if descriptor, ok := f.(interface{ Stat() (os.FileInfo, error) }); ok {
+			subjectInfo, e = descriptor.Stat()
+			if e != nil {
+				return nil, errors.Join(e, f.Close())
+			}
+		} else {
+			return nil, errors.Join(errors.New("subject reader cannot be statted"), f.Close())
+		}
+		return f, nil
+	})
 	if err != nil {
 		return 2, failure(2, "QS2", "subject file unreadable: "+err.Error())
 	}
-	s, parseErr := subject.Parse(data)
+	var in snapshot
+	var inputErr error
+	s, parseErr := subject.ParseWithFiles(data, func(s subject.File) []string {
+		in, inputErr = planningInputWith(o, s, inputAccess{resolveAbsolute: d.ResolveSystemFile, statAbsolute: d.StatSystemFile, copyAbsolute: d.CopySystemFile, canonical: canonical, subjectInfo: subjectInfo, stat: d.StatInput, systemPath: d.SystemPath, home: d.AccountHome, openAbsolute: d.OpenSystemFile})
+		var refusal *Error
+		if errors.As(inputErr, &refusal) && refusal.Code == 2 {
+			return []string{refusal.Rule}
+		}
+		return nil
+	})
 	if parseErr != nil {
 		return 2, failure(2, parseErr.Rule, "invalid subject file")
 	}
-	in, err := planningInput(o, s)
-	if err != nil {
-		return 70, err
+	if inputErr != nil {
+		return 70, inputErr
 	}
-	p, err := plan.Build(in.Input)
+	fixed := in.Input
+	fixed.Baseline, fixed.Anchor = false, false
+	p, err := plan.Build(fixed)
 	if err != nil {
 		return 70, err
 	}
@@ -245,11 +283,40 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	for _, ch := range p.Checks {
 		required = append(required, ch.Required)
 	}
+	rawFacts, factsOK := s["facts"].(strictjson.Object)
+	if !factsOK {
+		return 70, failure(70, "QE16", "parsed subject facts lost")
+	}
+	facts := strictjson.Object{}
+	for key, value := range rawFacts {
+		if _, ok := value.(strictjson.Object); ok {
+			facts[key] = nil
+		} else {
+			facts[key] = value
+		}
+	}
+	if in.Baseline || in.Anchor {
+		source, closer, sourceErr := d.Source()
+		closeSource = closer
+		if sourceErr != nil {
+			return 70, sourceErr
+		}
+		if traced, ok := source.(interface{ Required(any) error }); ok {
+			if err := traced.Required(required); err != nil {
+				return 70, err
+			}
+		}
+		part := ""
+		if in.Anchor {
+			part = "anchor"
+		}
+		return 70, &plan.Gap{Rule: "QE4", Part: part}
+	}
 	tier := "live"
 	if o.Scripted {
 		tier = "scripted"
 	}
-	pre := strictjson.Object{"request": request, "scope": scopes, "claimed_tier": tier, "subject_facts": s["facts"], "markers": s["markers"], "required": required, "evidence": strictjson.Array{}, "baseline": nil, "retired": strictjson.Array{}, "accepted_regressions": strictjson.Array{}, "trials": strictjson.Array{}}
+	pre := strictjson.Object{"request": request, "scope": scopes, "claimed_tier": tier, "subject_facts": facts, "markers": s["markers"], "required": required, "evidence": strictjson.Array{}, "baseline": nil, "retired": strictjson.Array{}, "accepted_regressions": strictjson.Array{}, "trials": strictjson.Array{}}
 	preOutput, _, err := callJudge(d.Judge, strictjson.Write(pre))
 	if err != nil {
 		return 70, err
@@ -288,9 +355,8 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		}
 		results[ch.Plan.ID] = record.Resolution{Result: ch.Result}
 	}
-	facts, factsOK := s["facts"].(strictjson.Object)
 	markers, markersOK := s["markers"].(strictjson.Array)
-	if !factsOK || !markersOK {
+	if !markersOK {
 		return 70, failure(70, "QE16", "parsed subject shape lost")
 	}
 	input, err := record.Build(record.Input{Plan: p, Results: results, Request: request, Scope: scopes, SubjectFacts: facts, Markers: markers, Scripted: o.Scripted})
@@ -306,14 +372,6 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	code = judgedCode
 	if rejected {
 		code = 70
-	}
-	canonical, err := filepath.EvalSymlinks(o.SubjectFile)
-	if err != nil {
-		return 70, err
-	}
-	canonical, err = filepath.Abs(canonical)
-	if err != nil {
-		return 70, err
 	}
 	host, hostErr := hostFields()
 	if hostErr != nil {

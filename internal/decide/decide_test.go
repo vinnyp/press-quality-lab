@@ -60,7 +60,6 @@ func first(t *testing.T, p plan.Plan, match func(plan.Check) bool) plan.Check {
 	return plan.Check{}
 }
 func TestTriggers(t *testing.T) {
-	// QS5: required placeholder dependency, synthetic until planning supports it.
 	// QD4: generated checks only.
 	// QA7: an earlier runbook step.
 	// QH8: any private copy can change.
@@ -79,7 +78,6 @@ func TestTriggers(t *testing.T) {
 	empty := first(t, emptyPlan, func(c plan.Check) bool {
 		return c.Preimage["words"] == nil && c.Preimage["probe"] != "discovery" && len(c.Keys) == 0
 	})
-	placeholder := plan.Check{Required: plan.Object{"dependency": plan.Object{"placeholder": "binary"}}}
 	for _, row := range []struct {
 		name string
 		n    int
@@ -87,7 +85,6 @@ func TestTriggers(t *testing.T) {
 		no   *plan.Check
 		rule string
 	}{
-		{"Placeholder", 2, placeholder, &generated, "QS5"},
 		{"Generated", 3, generated, &authored, "QD4"},
 		{"Earlier", 4, earlier, &generated, "QA7"},
 		{"PrivateCopy", 5, authored, nil, "QH8"},
@@ -232,12 +229,9 @@ func TestInvocationTriggers(t *testing.T) {
 	}
 }
 func TestUnknownTriggers(t *testing.T) {
-	// QS5: absent required-set information cannot exclude a dependency.
-	// QD4: absent preimage cannot exclude a generated check.
-	// QA7: absent ordering information cannot exclude an earlier step.
 	// QO6: absent expected-value information cannot exclude a computation.
 	// QO2: absent invocation information cannot exclude an invocation.
-	for _, n := range []int{2, 3, 4, 6, 7} {
+	for _, n := range []int{6, 7} {
 		if r := levels[n-1](plan.Check{}, passing(), Evidence{}); r.Unbuilt == nil || r.Level != n {
 			t.Fatalf("level %d: %+v", n, r)
 		}

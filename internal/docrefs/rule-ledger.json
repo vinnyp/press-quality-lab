@@ -41,6 +41,146 @@
         "file": "internal/subject/subject_test.go",
         "function": "TestFacts"
       }
+    ],
+    "QS3": [
+      {
+        "kind": "test",
+        "file": "internal/subject/rules_test.go",
+        "function": "TestRequiredFields"
+      },
+      {
+        "kind": "test",
+        "file": "internal/subject/rules_test.go",
+        "function": "TestDeclarationClauses"
+      }
+    ],
+    "QS8": [
+      {
+        "kind": "test",
+        "file": "internal/grade/subject_rules_test.go",
+        "function": "TestNamedFileForms"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/subject_rules_test.go",
+        "function": "TestAccountHome"
+      }
+    ],
+    "QS10": [
+      {
+        "kind": "test",
+        "file": "internal/subject/rules_test.go",
+        "function": "TestDeclarationClauses"
+      }
+    ],
+    "QS11": [
+      {
+        "kind": "test",
+        "file": "internal/subject/rules_test.go",
+        "function": "TestDeclarationClauses"
+      },
+      {
+        "kind": "test",
+        "file": "internal/subject/rules_test.go",
+        "function": "TestLiteralBounds"
+      },
+      {
+        "kind": "test",
+        "file": "internal/subject/rules_test.go",
+        "function": "TestCheckCount"
+      },
+      {
+        "kind": "test",
+        "file": "internal/subject/rules_test.go",
+        "function": "TestMarkerCount"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/subject_rules_test.go",
+        "function": "TestLiteralCheckIDs"
+      },
+      {
+        "kind": "test",
+        "file": "internal/subject/subject_test.go",
+        "function": "TestSchemaBounds"
+      }
+    ],
+    "QS12": [
+      {
+        "kind": "test",
+        "file": "internal/grade/subject_rules_test.go",
+        "function": "TestFileContentRules"
+      }
+    ],
+    "QA5": [
+      {
+        "kind": "test",
+        "file": "cmd/pql/subject_warning_test.go",
+        "function": "TestComputationWarning"
+      }
+    ],
+    "QE2": [
+      {
+        "kind": "test",
+        "file": "internal/plan/corpus_test.go",
+        "function": "TestCorpus"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/plan_test.go",
+        "function": "TestWorkedIDs"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestNoCommandPreimages"
+      }
+    ],
+    "QE3": [
+      {
+        "kind": "test",
+        "file": "internal/plan/corpus_test.go",
+        "function": "TestCorpus"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestNoCommandPreimages"
+      }
+    ],
+    "QE7": [
+      {
+        "kind": "test",
+        "file": "internal/plan/corpus_test.go",
+        "function": "TestCorpus"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestNoCommandPreimages"
+      }
+    ],
+    "QA3": [
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestCreditConditions"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestSelfAgreement"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestCreditRoutes"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestCreditConditionGuards"
+      }
     ]
   }
 }

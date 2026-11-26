@@ -108,17 +108,15 @@ func TestPrecheckRows(t *testing.T) {
 }
 
 func TestScopeOrdering(t *testing.T) {
-	// QE5, QE6, X1, E-7: unknown scope reaches the judge unless planning has a gap.
+	// QE4, QE5, QE6, X1, E-7: unknown scope reaches the judge unless planning has a gap.
 	o, d, _ := fixture(t)
 	o.Scope = []string{"unknown"}
 	code, err := Run(o, d, io.Discard)
 	assertFailure(t, code, err, 2, "QE6", "X1: user caused pre-check rejection")
-	if err := os.WriteFile(o.SubjectFile, []byte(strings.Replace(validSubject, `"seed":null`, `"seed":{"placeholder":"seed"}`, 1)), 0600); err != nil {
-		t.Fatal(err)
-	}
+	o.Baseline = "baseline.json"
 	d.Judge = func([]byte) ([]byte, int) { t.Fatal("judge before planning gap"); return nil, 0 }
 	code, err = Run(o, d, io.Discard)
-	assertFailure(t, code, err, 70, "QE2", "planning rule not built")
+	assertFailure(t, code, err, 70, "QE4", "planning rule not built")
 }
 
 func TestJudgeAuthority(t *testing.T) {

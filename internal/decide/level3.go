@@ -7,7 +7,10 @@ import (
 
 func level3(ch plan.Check, _ observe.Controls, _ Evidence) Result {
 	_, known := ch.Preimage["probe"]
-	if !known || ch.Preimage["probe"] != nil {
+	if !known {
+		panic("QE2: preimage lacks probe")
+	}
+	if ch.Preimage["probe"] != nil {
 		return sentinel(3, "QD4")
 	}
 	return Result{}
