@@ -178,6 +178,54 @@ func TestPredictedCheckEndings(t *testing.T) {
 					if check.Plan.ID != want.ID {
 						continue
 					}
+					if len(want.Ending.Rules) == 1 && want.Ending.Rules[0] == "QH8" {
+						// QH8, QO2 to QO5: U44 replaces PR8's level-5 sentinel.
+						// Keep the PR8 reader until U11; take changed expectations from the sealed case.
+						var document struct {
+							Evidence []struct {
+								ID      string `json:"check_id"`
+								Outcome string `json:"outcome"`
+								Reason  string `json:"reason"`
+								Failure string `json:"failure_kind"`
+							} `json:"evidence"`
+						}
+						if err := caseassembly.Read(filepath.Join(source, "input.json"), &document); err != nil {
+							t.Fatal(err)
+						}
+						expectedLevel, expectedRule := 8, "QA9"
+						expected, expectedObject := check.Plan.Preimage["expected"].(plan.Object)
+						if check.Plan.Preimage["expected"] != nil && !expectedObject {
+							t.Fatal("expected value context is not an object")
+						}
+						if expected["computation"] != nil || expected["precondition"] != nil {
+							expectedLevel, expectedRule = 6, "QO6"
+						}
+						foundEvidence := false
+						for _, e := range document.Evidence {
+							if e.ID == want.ID {
+								foundEvidence = true
+								invocationEnd := e.Reason == "could_not_start" || e.Reason == "network_unverifiable" || (e.Reason == "harness_fault" && recordedEngineOrBudget(t, recording, c.Input.Host, check.Plan.Keys)) || e.Failure == "over_budget" || e.Failure == "crashed" || e.Failure == "wrong_exit"
+								changed := c.Input.Host["private_copy"] == "changed" && len(check.Plan.Keys) > 0
+								if changed || expectedLevel != 6 && invocationEnd {
+									level := 7
+									if changed {
+										level = 5
+									}
+									if check.Result.Unbuilt != nil || check.Result.Level != level || string(check.Result.Outcome) != e.Outcome || string(check.Result.Reason) != e.Reason || check.Result.FailureKind != e.Failure {
+										t.Errorf("U44 check %s got %+v want level %d %s %s %s", want.ID, check.Result, level, e.Outcome, e.Reason, e.Failure)
+									}
+									expectedRule = ""
+								}
+							}
+						}
+						if !foundEvidence {
+							t.Fatal("expected evidence absent", want.ID)
+						}
+						if expectedRule != "" && (check.Result.Unbuilt == nil || check.Result.Level != expectedLevel || check.Result.Unbuilt.Rule != expectedRule) {
+							t.Errorf("U44 check %s got %+v want level %d %s", want.ID, check.Result, expectedLevel, expectedRule)
+						}
+						continue
+					}
 					if want.Ending.Phase == "deciding" {
 						if check.Result.Unbuilt != nil || check.Result.Level != want.Level || check.Result.Outcome != "not_observed" || (want.Level == 1 && check.Result.Reason != "network_unverifiable") || (want.Level == 2 && check.Result.Reason != "placeholder_unfilled") {
 							t.Errorf("check %s: %+v; want level %d", want.ID, check.Result, want.Level)
@@ -193,4 +241,50 @@ func TestPredictedCheckEndings(t *testing.T) {
 	if !reflect.DeepEqual(counts, map[string]int{"decide": 111, "planning": 7, "derivation": 31}) {
 		t.Fatalf("phase counts %v", counts)
 	}
+}
+
+func mustJSON(t *testing.T, v any) []byte {
+	t.Helper()
+	b, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
+}
+
+func recordedEngineOrBudget(t *testing.T, data []byte, host map[string]any, keys []plan.Object) bool {
+	t.Helper()
+	var recorded struct {
+		Invocations []struct {
+			Key      any `json:"key"`
+			Confined []struct {
+				End struct {
+					By string `json:"by"`
+				} `json:"end"`
+			} `json:"confined"`
+		} `json:"invocations"`
+	}
+	if err := json.Unmarshal(data, &recorded); err != nil {
+		t.Fatal(err)
+	}
+	var overrides []struct {
+		Key any    `json:"invocation"`
+		By  string `json:"by"`
+	}
+	if err := json.Unmarshal(mustJSON(t, host["kill_attribution"]), &overrides); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range keys {
+		for _, i := range recorded.Invocations {
+			if bytes.Equal(mustJSON(t, i.Key), mustJSON(t, key)) && len(i.Confined) > 0 && i.Confined[0].End.By == "budget" {
+				return true
+			}
+		}
+		for _, o := range overrides {
+			if bytes.Equal(mustJSON(t, o.Key), mustJSON(t, key)) && o.By == "engine" {
+				return true
+			}
+		}
+	}
+	return false
 }

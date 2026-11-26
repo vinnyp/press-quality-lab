@@ -5,7 +5,6 @@ import "bytes"
 
 // End records the system's end and the engine's own actions, before attribution.
 type End struct {
-	AfterMarker                     bool
 	SignalName                      string
 	MemoryKilled, CodeSigningKilled bool
 	Code                            int

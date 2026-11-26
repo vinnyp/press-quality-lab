@@ -459,6 +459,7 @@ func (p *process) wait() (observe.Run, error) {
 	}
 	p.mu.Unlock()
 	run := observe.Run{End: observe.End{Code: status.ExitStatus(), ExitDetail: detail, EngineKilled: killed}}
+	run.End.MemoryKilled, run.End.CodeSigningKilled = observe.DecodeExitDetail(detail)
 	if status.Signaled() {
 		run.End.Signal = int(status.Signal())
 	}

@@ -13,7 +13,7 @@ func level1(_ plan.Check, c observe.Controls, e Evidence) Result {
 			continue
 		}
 		r := invocation.Run
-		if !r.Markers.Confinement && (r.End.Signal == 0 || r.End.Signal == 9) {
+		if !r.Markers.Confinement {
 			failed = true
 		}
 	}

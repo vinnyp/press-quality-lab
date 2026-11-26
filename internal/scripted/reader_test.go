@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
+	"github.com/vinnyp/press-quality-lab/internal/plan"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 )
 
@@ -471,6 +473,10 @@ func TestRawValuesProjection(t *testing.T) {
 			for _, value := range arr(i["confined"]) {
 				run := obj(value)
 				run["end"] = row.end
+				run["planted"] = object{"atime_moved": false, "same_file": false, "control_end": row.end}
+				if row.end["by"] == "before_marker" {
+					obj(run["markers"])["confinement"] = false
+				}
 				run["printed_value"] = object{"value": object{"n": number("9007199254740993"), "null": nil, "list": array{true}}}
 				obj(run["stdout"])["kept"] = "AB=="
 			}
@@ -522,6 +528,172 @@ func TestTraceWriterFailures(t *testing.T) {
 			}
 			if output.String() != "{\"kind\":\"required\",\"value\":[]}\n" {
 				t.Fatalf("trace %q", output.String())
+			}
+		})
+	}
+}
+
+func TestAttributionSeam(t *testing.T) {
+	// QT4, QT5, QH21: every recorded invocation is attributed, including all host overrides.
+	cases, err := filepath.Glob(filepath.Join(kit, "cases", "*", "case.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	overrides := map[string]bool{}
+	forms := map[string]bool{}
+	for _, path := range cases {
+		c := decode(t, readFile(t, path))
+		input := obj(c["input"])
+		if input["host"] == nil {
+			continue
+		}
+		forms[textValue(input["form"])] = true
+		b := readFile(t, filepath.Join(kit, "behaviour", textValue(input["form"])+".json"))
+		s, err := Read(strictjson.Write(input["host"]), b, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, v := range arr(decode(t, b)["invocations"]) {
+			i := obj(v)
+			raw := obj(arr(i["confined"])[0])
+			end := obj(raw["end"])
+			markers := obj(raw["markers"])
+			by := "exit"
+			if end["kind"] == "signal" {
+				by = textValue(end["by"])
+				if by == "" {
+					by = "signal"
+				}
+			}
+			if markers["could_not_start"] == true {
+				by = "could_not_start"
+			}
+			for _, v := range arr(obj(input["host"])["kill_attribution"]) {
+				override := obj(v)
+				if strictjson.EqualJSON(override["invocation"], i["key"]) {
+					by = textValue(override["by"])
+					overrides[textValue(c["id"])] = true
+				}
+			}
+			if markers["confinement"] != true || obj(obj(input["host"])["confinement"])["applied"] != true {
+				by = "unconfined"
+			}
+			r, err := s.Observe(map[string]any(obj(i["key"])), observe.Spec{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			CheckAttribution(t, r, by)
+		}
+	}
+	recordings, err := filepath.Glob(filepath.Join(kit, "behaviour", "*.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(recordings) != 54 {
+		t.Fatalf("recordings %d", len(recordings))
+	}
+	for _, path := range recordings {
+		if !forms[strings.TrimSuffix(filepath.Base(path), ".json")] {
+			t.Fatal("recording not attributed", filepath.Base(path))
+		}
+	}
+	for _, id := range []string{"case-078", "case-079", "case-089"} {
+		if !overrides[id] {
+			t.Fatalf("missing override %s", id)
+		}
+	}
+}
+
+func TestContradictoryRecording(t *testing.T) {
+	// QT5, E-31, QE16: a contradictory run anywhere invalidates the recording with exit 2.
+	base := readFile(t, filepath.Join(kit, "examples", "behaviour-02.json"))
+	if _, err := Read([]byte(passing), base, nil); err != nil {
+		t.Fatal(err)
+	}
+	for index := 0; index < 6; index++ {
+		for _, by := range []string{"confinement", "before_marker"} {
+			t.Run(fmt.Sprintf("Run%d_%s", index, by), func(t *testing.T) {
+				b := decode(t, base)
+				i := obj(arr(b["invocations"])[0])
+				runs := arr(i["confined"])
+				var run object
+				if index == 5 {
+					b["violating"] = true
+					for _, value := range arr(b["invocations"]) {
+						inv := obj(value)
+						inv["unconfined"] = decode(t, strictjson.Write(arr(inv["confined"])[0]))
+					}
+					run = obj(i["unconfined"])
+				} else {
+					run = obj(runs[index])
+				}
+				run["end"] = object{"kind": "signal", "signal": "SIGKILL", "by": by}
+				obj(run["markers"])["confinement"] = by == "before_marker"
+				_, err := Read([]byte(passing), strictjson.Write(b), nil)
+				var rejection *Error
+				if !errors.As(err, &rejection) || rejection.Code != 2 || rejection.Rule != "QT5" || rejection.Detail != "marker contradicts attribution" {
+					t.Fatalf("%v", err)
+				}
+			})
+		}
+	}
+}
+
+func TestOutcomeLedgerCases(t *testing.T) {
+	// QO2: case-095 proves the marker through the scripted source, check by check.
+	// QO4: case-072 and case-073 prove the known-fast control through the scripted source.
+	for _, id := range []string{"case-095", "case-072", "case-073"} {
+		t.Run(strings.ReplaceAll(id, "-", "_"), func(t *testing.T) {
+			c := decode(t, readFile(t, filepath.Join(kit, "cases", id, "case.json")))
+			input := obj(c["input"])
+			b := readFile(t, filepath.Join(kit, "behaviour", textValue(input["form"])+".json"))
+			s, err := Read(strictjson.Write(input["host"]), b, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			controls, err := s.Controls()
+			if err != nil {
+				t.Fatal(err)
+			}
+			preimages := decode(t, readFile(t, filepath.Join(kit, "cases", id, "preimages.json")))
+			subject := decode(t, readFile(t, filepath.Join(kit, "cases", id, "subject.json")))
+			evidence := decode(t, readFile(t, filepath.Join(kit, "cases", id, "input.json")))
+			n := 0
+			for _, value := range arr(evidence["evidence"]) {
+				e := obj(value)
+				pre := obj(preimages[textValue(e["check_id"])])
+				var keys []plan.Object
+				switch pre["probe"] {
+				case "discovery":
+					keys = append(keys, plan.DiscoveryKey(plan.Array{}))
+				case "planted_secret":
+					for _, v := range arr(obj(pre["parameters"])["commands"]) {
+						keys = append(keys, plan.SubjectKey(subject, arr(obj(v)["words"]), "planted", nil, nil))
+					}
+				default:
+					if pre["words"] != nil {
+						home := "seed"
+						if pre["runbook"] != nil {
+							home = "runbook"
+						}
+						keys = append(keys, plan.SubjectKey(subject, arr(pre["words"]), home, pre["runbook"], pre["step"]))
+					}
+				}
+				var runs []observe.Run
+				for _, key := range keys {
+					r, err := s.Observe(map[string]any(key), observe.Spec{})
+					if err != nil {
+						t.Fatal(err)
+					}
+					runs = append(runs, r)
+				}
+				t.Run(textValue(e["check_id"]), func(t *testing.T) {
+					CheckInvocationDecision(t, pre, runs, controls, textValue(e["outcome"]), textValue(e["reason"]), textValue(e["failure_kind"]))
+				})
+				n++
+			}
+			if n == 0 {
+				t.Fatal("no checks evaluated")
 			}
 		})
 	}

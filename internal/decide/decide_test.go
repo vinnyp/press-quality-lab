@@ -47,7 +47,7 @@ func corpusPlan(t *testing.T, name string) plan.Plan {
 	return p
 }
 func passing() observe.Controls {
-	return observe.Controls{ConfinementApplied: true, SelfTestPassed: true, SystemNamed: true}
+	return observe.Controls{ConfinementApplied: true, SelfTestPassed: true, SystemNamed: true, PrivateCopyUnchanged: true}
 }
 func first(t *testing.T, p plan.Plan, match func(plan.Check) bool) plan.Check {
 	t.Helper()
@@ -74,10 +74,6 @@ func TestTriggers(t *testing.T) {
 		return ok && len(earlier) > 0
 	})
 	computation := first(t, p, func(c plan.Check) bool { return object(c.Preimage["expected"])["computation"] != nil })
-	emptyPlan := corpusPlan(t, "case-144")
-	empty := first(t, emptyPlan, func(c plan.Check) bool {
-		return c.Preimage["words"] == nil && c.Preimage["probe"] != "discovery" && len(c.Keys) == 0
-	})
 	for _, row := range []struct {
 		name string
 		n    int
@@ -87,11 +83,9 @@ func TestTriggers(t *testing.T) {
 	}{
 		{"Generated", 3, generated, &authored, "QD4"},
 		{"Earlier", 4, earlier, &generated, "QA7"},
-		{"PrivateCopy", 5, authored, nil, "QH8"},
 		{"Computation", 6, computation, &generated, "QO6"},
 		{"Precondition", 6, plan.Check{Preimage: plan.Object{"expected": plan.Object{"precondition": plan.Object{"argv": plan.Array{"/bin/echo"}}}}}, &generated, "QO6"},
 		{"Captures", 6, plan.Check{Preimage: plan.Object{"expected": plan.Object{"literal": plan.Object{"captures": plan.Array{"step"}}}}}, &generated, "QO6"},
-		{"Invocation", 7, authored, &empty, "QO2"},
 		{"OwnRule", 8, authored, nil, "QA9"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
@@ -111,7 +105,10 @@ func TestPassingHost(t *testing.T) {
 	// QO1: a passing host must leave the check to the first applicable sentinel.
 	p := corpusPlan(t, "case-004")
 	for _, ch := range p.Checks {
-		want, rule := 5, "QH8"
+		want, rule := 8, "QA9"
+		if object(ch.Preimage["expected"])["computation"] != nil {
+			want, rule = 6, "QO6"
+		}
 		if ch.Preimage["probe"] != nil {
 			want, rule = 3, "QD4"
 		} else if earlier, ok := ch.Preimage["earlier"].(plan.Array); ok && len(earlier) > 0 {
@@ -153,7 +150,7 @@ func TestGradeWide(t *testing.T) {
 	}
 }
 func TestInvocationConfinement(t *testing.T) {
-	// QO1: QH6's failed confinement applies only to a subject run that happened.
+	// QO1, QH6, E-28: any end before the marker applies only to a subject run that happened.
 	ch := corpusPlan(t, "case-004").Checks[0]
 	for _, row := range []struct {
 		name        string
@@ -165,7 +162,7 @@ func TestInvocationConfinement(t *testing.T) {
 		{"KilledBeforeMarker", observe.Run{End: observe.End{Signal: 9}}, nil, true},
 		{"MarkedExit", observe.Run{Markers: observe.Markers{Confinement: true}}, nil, false},
 		{"MarkedKill", observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9, EngineKilled: true}}, nil, false},
-		{"OtherSignal", observe.Run{End: observe.End{Signal: 11, EngineKilled: true}}, nil, false},
+		{"OtherSignal", observe.Run{End: observe.End{Signal: 11, EngineKilled: true}}, nil, true},
 		{"Computation", observe.Run{}, plan.Array{"/bin/echo"}, false},
 	} {
 		t.Run(row.name, func(t *testing.T) {
@@ -217,14 +214,16 @@ func TestOwnRuleNames(t *testing.T) {
 }
 
 func TestInvocationTriggers(t *testing.T) {
-	// QO2: each subject invocation shape reaches the invocation rules.
-	p := corpusPlan(t, "case-004")
-	for _, ch := range p.Checks {
-		// All checks in this subject have a subject invocation, including discovery
-		// and the multi-command planted-secret probe, whose words are null.
+	// QO7: discovery and planted-secret combinations await U11 and U37.
+	// QO2: other checks have built invocation rules, even with no facts yet.
+	for _, ch := range corpusPlan(t, "case-004").Checks {
 		r := level7(ch, passing(), Evidence{})
-		if r.Unbuilt == nil || r.Unbuilt.Rule != "QO2" || r.Level != 7 {
-			t.Fatalf("probe %v: %+v", ch.Preimage["probe"], r)
+		if ch.Preimage["probe"] == "discovery" || ch.Preimage["probe"] == "planted_secret" {
+			if r.Unbuilt == nil || r.Unbuilt.Rule != "QO7" || r.Level != 7 {
+				t.Fatal(r)
+			}
+		} else if r != (Result{}) {
+			t.Fatal(r)
 		}
 	}
 }

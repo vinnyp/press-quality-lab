@@ -19,10 +19,11 @@ type Unbuilt struct {
 	Rule  string
 }
 type Result struct {
-	Outcome Outcome
-	Reason  Reason
-	Level   int
-	Unbuilt *Unbuilt
+	FailureKind string
+	Outcome     Outcome
+	Reason      Reason
+	Level       int
+	Unbuilt     *Unbuilt
 }
 
 // Evidence contains only runs actually made for this check, never planned keys.
@@ -72,4 +73,14 @@ func dependency(v any) bool {
 		}
 	}
 	return false
+}
+
+// BeforeInvocations tries levels 1 through 6 before the loop serves any key.
+func BeforeInvocations(ch plan.Check, c observe.Controls) Result {
+	for _, step := range levels[:6] {
+		if r := step(ch, c, Evidence{}); r.Level != 0 {
+			return r
+		}
+	}
+	return Result{}
 }

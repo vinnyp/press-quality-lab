@@ -353,7 +353,11 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		if ch.Result.Unbuilt != nil {
 			return 70, failure(70, ch.Result.Unbuilt.Rule, "collection level not built")
 		}
-		results[ch.Plan.ID] = record.Resolution{Result: ch.Result}
+		var failure any
+		if ch.Result.FailureKind != "" {
+			failure = ch.Result.FailureKind
+		}
+		results[ch.Plan.ID] = record.Resolution{Result: ch.Result, FailureKind: failure}
 	}
 	markers, markersOK := s["markers"].(strictjson.Array)
 	if !markersOK {
