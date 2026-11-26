@@ -108,7 +108,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
   - The order: macOS risk first; recordings as the contract between running and deciding; a served-invocation check, a rule ledger and one package for unconfined file work.
   - What this plan's earlier version adds to it: the growth check, schema validation against an independent count, the violating-form replay and the total writer.
   - Governs GR1, GR5, GR14 to GR16. (session-settled: user-approved — chosen over the plan's earlier fifteen-PR order after a bake-off of four approaches, whose comparison is in the review log.)
-- GKD11. **`pql create` takes the binary's path only.** It writes a subject file naming that binary, with a placeholder for every command, class, fact and setting, and never runs the subject. Governs GR8. (session-settled: user-directed — chosen over a confined help walk at create time.)
+- GKD11. **`pql create` takes the binary's path only.** It writes a subject file naming that binary, with a placeholder in every position QS5 allows (each fact, `declared_count`, the seed, the store and the secret), `commands` and every other list empty, and never runs the subject. (Wording amended by the owner on 2026-11-26: a placeholder for every command and setting, as first written, is not allowed by QS5.) Governs GR8. (session-settled: user-directed — chosen over a confined help walk at create time.)
 
 ### Scope Boundaries
 
