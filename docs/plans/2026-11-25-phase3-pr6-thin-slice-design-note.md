@@ -12,7 +12,8 @@ After this slice, `pql grade` runs end to end:
 - it collects through the seam and the loop, with only the precedence table's level 1 built;
 - it builds the record, has the judge decide it, stores it, and exits with the judge's code.
 
-**Four kinds of engine fault.** Each ends the run with exit 70 and names a rule on the GKD8 rejection line:
+**Five kinds of engine fault.** Each ends the run with exit 70 and names a rule on the GKD8 rejection line:
+- **A safe-read refusal.** Before planning, the engine reads the binary, the seed and every declared file through the subject directory's `os.Root`, regular files only, and never opens a special file. A path that leaves the directory, a missing or special file, or a link the rule refuses ends the run there, naming QS8 for a named file or QS9 for the seed. This builds the parts of QS8 and QS9 an engine needs to read its inputs safely. The refusal with exit 2 waits for U9, so until then the run ends with exit 70 and never a verdict.
 - **A planning gap.** The engine fixes the required set, its preimages and check ids, and the pre-check before any check runs. If a check needs a preimage or required-set kind the slice does not build, such as a placeholder's preimage, the run ends there, naming that rule. Nothing has been collected at that point.
 - **An unbuilt level.** A check that reaches an unbuilt level ends the run, naming that level's rule, whenever its trigger holds or cannot be ruled out (KTD11).
 - **A key gap.** An invocation key, in QT5's shape, is needed only when the loop serves that invocation: at level 6 for a computation, at level 7 for the subject. A check meets a missing key kind, such as a computation's key, only if it gets that far. A check decided at level 1 never needs a key.
@@ -215,11 +216,12 @@ On darwin it records `kern.osproductversion`, `kern.osversion` and `hw.machine`.
 
 ## Stated limits of this slice
 
-- **Rules the schema cannot detect are not yet refused.** Until U9 builds them, a subject file that breaks one of those rules (QS3, QS5 to QS12, QP7, QP10, QA4 or QA9 beyond their schema parts, such as `case-107`'s QS7 clause) is graded rather than refused with exit 2:
+- **Rules the schema cannot detect are not yet refused.** Until U9 builds them, a subject file that breaks one of those rules (QS3, QS5 to QS12, QP7, QP10, QA4 or QA9 beyond their schema parts, such as `case-107`'s QS7 clause) is graded rather than refused with exit 2. The safe-read parts of QS8 and QS9 are the exception: they end the run with exit 70, as above.
   - **On the released interim path,** every check is not observed with `network_unverifiable` at level 1 (KTD21, errata E-15). So the run prints an all-unobserved verdict (exit 4, never green) and stores a record.
   - **On a scripted run,** such a file stops at an unbuilt level whenever its host passes.
 
   The owner accepted this interim behaviour on 2026-11-25, after the code review raised it. U9 removes it.
+- **An open reading for U9: a link on the seed's path.** QS9 rejects a seed that "holds a link". It does not say whether a link in the path that names the seed counts, for example a seed `seed` that is itself a link to a directory inside the subject directory, or a seed `p/seed` whose parent `p` is a link. Until U9 builds the exit-2 refusal, the engine refuses both with exit 70, which fails closed and gives no wrong verdict. The reading goes to the owner when U9 builds the refusal.
 
 ## Limits the script carries into later slices
 
