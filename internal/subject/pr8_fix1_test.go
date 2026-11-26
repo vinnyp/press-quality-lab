@@ -37,8 +37,11 @@ func TestPR8Declarations(t *testing.T) {
 			for i := 0; i < 65; i++ {
 				w = append(w, "x")
 			}
-			obj(arr(s["commands"])[0])["words"] = w
+			obj(arr(s["commands"])[0])["words"] = strictjson.Array{"x"}
 			obj(arr(s["offline"])[0])["applies_to"] = strictjson.Array{w}
+		}},
+		{"AppliesWordType", "QS7", func(s File) {
+			obj(arr(s["offline"])[0])["applies_to"] = strictjson.Array{strictjson.Array{strictjson.Number("1")}}
 		}},
 		{"AppliesElementType", "QS7", func(s File) { obj(arr(s["offline"])[0])["applies_to"] = strictjson.Array{true} }},
 		{"AppliesType", "QS7", func(s File) { obj(arr(s["offline"])[0])["applies_to"] = "x" }},
@@ -116,6 +119,17 @@ func TestPR8Declarations(t *testing.T) {
 			s := parsedFixture(t)
 			checkFixture(t, s, "")
 			r.change(s)
+			if r.name == "AppliesElementBound" || r.name == "AppliesWordType" {
+				// QS2, QS7: inspect schema failures before semantic refusal can mask them.
+				failures := map[string]bool{}
+				subjectShape().check(s, failures)
+				if len(failures) != 1 || !failures[r.rule] {
+					t.Fatalf("schema failures %v", failures)
+				}
+				if r.name == "AppliesElementBound" {
+					return
+				}
+			}
 			checkFixture(t, s, r.rule)
 		})
 	}

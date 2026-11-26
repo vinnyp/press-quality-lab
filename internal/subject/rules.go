@@ -242,7 +242,7 @@ func computationRules(c strictjson.Object, earlier map[string]bool, bad map[stri
 			bad["QA4"] = true
 		}
 	}
-	for _, v := range argv {
+	for _, v := range argv[min(1, len(argv)):] {
 		s := text(v)
 		for {
 			start := strings.Index(s, "{CAPTURE:")

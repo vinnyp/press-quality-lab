@@ -14,7 +14,7 @@ import (
 
 func TestPR8PhysicalSubject(t *testing.T) {
 	// QS8: logical parent traversal must not select a decoy binary.
-	for _, layout := range []string{"PathParent", "WorkingParent", "HardLinkParent"} {
+	for _, layout := range []string{"PathParent", "RelativePathParent", "WorkingParent", "HardLinkParent"} {
 		t.Run(layout, func(t *testing.T) {
 			parent := t.TempDir()
 			physical := filepath.Join(parent, "physical")
@@ -52,6 +52,9 @@ func TestPR8PhysicalSubject(t *testing.T) {
 				}
 				canonical = filepath.Join(filepath.Dir(canonical), "hard.json")
 				o.SubjectFile = link + "/../hard.json"
+			} else if layout == "RelativePathParent" {
+				t.Chdir(parent)
+				o.SubjectFile = "logical/link/../subject.json"
 			} else if layout == "PathParent" {
 				o.SubjectFile = link + "/../subject.json"
 			} else {

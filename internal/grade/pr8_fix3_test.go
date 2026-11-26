@@ -13,7 +13,7 @@ import (
 
 func TestPR8SubjectLayouts(t *testing.T) {
 	// QS8, QE4: a file link selects its target directory; hard links retain their own physical parent.
-	for _, layout := range []string{"Ordinary", "FileLink", "HardLink"} {
+	for _, layout := range []string{"Ordinary", "FileLink", "HardLink", "FileLinkHome"} {
 		t.Run(layout, func(t *testing.T) {
 			target := t.TempDir()
 			o, d, saved := fixtureAt(t, target)
@@ -27,7 +27,7 @@ func TestPR8SubjectLayouts(t *testing.T) {
 			if layout != "Ordinary" {
 				other := t.TempDir()
 				alias := filepath.Join(other, "subject.json")
-				if layout == "FileLink" {
+				if layout == "FileLink" || layout == "FileLinkHome" {
 					err = os.Symlink(o.SubjectFile, alias)
 				} else {
 					_, _, _ = fixtureAt(t, other)
@@ -42,6 +42,16 @@ func TestPR8SubjectLayouts(t *testing.T) {
 					t.Fatal(err)
 				}
 				o.SubjectFile = alias
+			}
+
+			if layout == "FileLinkHome" {
+				d.AccountHome = func() (string, error) { return target, nil }
+				code, e := Run(o, d, io.Discard)
+				var refusal *Error
+				if code != 2 || !errors.As(e, &refusal) || refusal.Rule != "QS8" {
+					t.Fatalf("%d %v", code, e)
+				}
+				return
 			}
 			code, e := Run(o, d, io.Discard)
 			if code != 4 || e != nil || saved.SubjectFilePath != canonical || saved.BinaryDigest == nil || *saved.BinaryDigest != "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2" {
@@ -168,6 +178,29 @@ func TestPR8SubjectIdentity(t *testing.T) {
 	}
 	other, _, _ := fixture(t)
 	d.Open = func(string) (io.ReadCloser, error) { return openInput(other.SubjectFile) }
+	code, e := Run(o, d, io.Discard)
+	var refusal *Error
+	if code != 2 || !errors.As(e, &refusal) || refusal.Rule != "QS8" {
+		t.Fatalf("%d %v", code, e)
+	}
+}
+
+func TestPR8SubjectLinkSwap(t *testing.T) {
+	// QS8: a link inserted after resolution must not share the parsed file's identity.
+	o, d, _ := fixture(t)
+	if code, e := Run(o, d, io.Discard); code != 4 || e != nil {
+		t.Fatalf("control %d %v", code, e)
+	}
+	d.Open = func(name string) (io.ReadCloser, error) {
+		moved := name + ".moved"
+		if e := os.Rename(name, moved); e != nil {
+			return nil, e
+		}
+		if e := os.Symlink(filepath.Base(moved), name); e != nil {
+			return nil, e
+		}
+		return openInput(name)
+	}
 	code, e := Run(o, d, io.Discard)
 	var refusal *Error
 	if code != 2 || !errors.As(e, &refusal) || refusal.Rule != "QS8" {

@@ -14,6 +14,7 @@ func TestPR8BudgetSpelling(t *testing.T) {
 		{"NegativeOverflow", "-99999999999999999999", "QS2"},
 		{"LargeOverflow", "100000000000000000000", "QS2"},
 		{"Exponent", "1e1", "QS6"},
+		{"UpperExponent", "1E1", "QS6"},
 		{"Decimal", "10.0", "QS6"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
@@ -34,6 +35,8 @@ func TestPR8CaptureGrammar(t *testing.T) {
 		{"NestedBrace", "{CAPTURE:{CAPTURE:b}}", ""},
 		{"LongUnlisted", "{CAPTURE:" + strings.Repeat("a", 257) + "}", "QA4"},
 		{"ControlLiteral", "{CAPTURE:a\nb}", ""},
+		{"NestedSpaceMissing", "{CAPTURE:x {CAPTURE:missing}", "QA4"},
+		{"NestedBraceMissing", "{CAPTURE:{CAPTURE:missing}}", "QA4"},
 		{"Unlisted", "{CAPTURE:missing}", "QA4"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
@@ -49,4 +52,12 @@ func TestPR8CaptureGrammar(t *testing.T) {
 			checkFixture(t, s, row.rule)
 		})
 	}
+}
+
+func TestPR8ExecutableCaptureLiteral(t *testing.T) {
+	// QA4: the executable name is literal, even when it resembles a capture.
+	s := parsedFixture(t)
+	checkFixture(t, s, "")
+	firstCheck(s)["expected"] = strictjson.Object{"computation": testComputation("{CAPTURE:missing}")}
+	checkFixture(t, s, "")
 }

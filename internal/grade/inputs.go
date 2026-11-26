@@ -78,7 +78,7 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 	}
 	defer func() { err = errors.Join(err, root.Close()) }()
 	if access.subjectInfo != nil {
-		info, e := root.Stat(filepath.Base(canonical))
+		info, e := root.Lstat(filepath.Base(canonical))
 		if e != nil {
 			return in, safeReadFailure("QS8", "subject directory", e)
 		}
