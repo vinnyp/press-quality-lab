@@ -129,9 +129,10 @@ math/big
 crypto/rand
 crypto/sha256
 github.com/vinnyp/press-quality-lab/internal/observe
-golang.org/x/sys/unix
-github.com/vinnyp/press-quality-lab/internal/confine
 github.com/vinnyp/press-quality-lab/internal/strictjson
+golang.org/x/sys/unix
+github.com/vinnyp/press-quality-lab/internal/throwaway
+github.com/vinnyp/press-quality-lab/internal/confine
 github.com/vinnyp/press-quality-lab/internal/jcs
 github.com/vinnyp/press-quality-lab/internal/rulebook
 github.com/vinnyp/press-quality-lab/internal/subject
@@ -141,7 +142,7 @@ github.com/vinnyp/press-quality-lab/internal/collect
 runtime/debug
 github.com/vinnyp/press-quality-lab/internal/judge
 github.com/vinnyp/press-quality-lab/internal/record
-github.com/vinnyp/press-quality-lab/internal/throwaway
 github.com/vinnyp/press-quality-lab/internal/store
+os/signal
 github.com/vinnyp/press-quality-lab/internal/grade
 github.com/vinnyp/press-quality-lab/cmd/pql

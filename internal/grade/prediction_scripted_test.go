@@ -18,6 +18,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/plan"
 	"github.com/vinnyp/press-quality-lab/internal/scripted"
 	"github.com/vinnyp/press-quality-lab/internal/subject"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 )
 
 type predictedEnding struct {
@@ -119,7 +120,11 @@ func TestPredictedCheckEndings(t *testing.T) {
 			if prediction.Kind == "derivation-only" {
 				// QE6: predicted refusals stop at the pre-check; pending cases follow the real loop.
 				var output strings.Builder
+				workspaceParent := t.TempDir()
 				dependencies := Dependencies{
+					Workspace: func() (*throwaway.Workspace, error) {
+						return throwaway.BeginAt(filepath.Join(workspaceParent, "workspaces"))
+					},
 					IDs:       func() (int, int) { return 1000, 1000 },
 					StoreRoot: func() (string, error) { t.Fatal("derivation reached store"); return "", nil },
 					Source:    func() (observe.Source, func() error, error) { return raw, func() error { return nil }, nil },
@@ -136,7 +141,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 				counts["derivation"]++
 				return
 			}
-			checks, err := gather(collect.Collect, p, raw)
+			checks, _, err := gatherSignals(collect.Collect, p, raw, nil, 0)
 			if err != nil {
 				t.Fatal(err)
 			}

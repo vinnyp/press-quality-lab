@@ -92,3 +92,7 @@ QO1's grade-wide conditions, a failed self-test (QH9), confinement that could no
 ### E-16. A version that is not a string
 
 QS1 says the file states its version in `subject_file_version`, "which is `1.0` for this specification", and the specification calls its version "this string". **A `subject_file_version` that is not the string `1.0`, the number `1.0` included, is another version and is rejected under QS1,** which E-9 checks before QS2. The owner ruled on this reading on 2026-11-25. No case of the corpus has such a file, so no record changes.
+
+### E-19. A stale run directory the start sweep cannot remove
+
+QE20 removes, at start, every per-run directory a killed run left. E-11 makes a run exit 70 when its own cleanup cannot remove an entry, and says the next run's sweep retries it. Neither says what the new run does when that retry fails again. **The sweep tries every stale directory. One it cannot remove is named on standard error and left for a later sweep, and the new run goes on. The new run ends with exit 70 only when the directory that holds the run directories is unsafe, or when it cannot tell whether a recorded process still exists.** The owner ruled on 2026-11-26. No case of the corpus reaches a start sweep, so no record changes.

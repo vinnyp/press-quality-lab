@@ -16,11 +16,12 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/confine"
 	"github.com/vinnyp/press-quality-lab/internal/formtest"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 )
 
 func coreRun(t *testing.T, f launchFixture, copies *confine.Copies, words []string) observe.Run {
 	t.Helper()
-	p, err := copies.Start(confine.Invocation{Paths: f.paths(t, false), Words: words, Directory: f.home, Env: []string{"HOME=" + f.home, "TMPDIR=" + filepath.Join(f.home, ".pql-tmp") + "/", "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", fmt.Sprintf("__CF_USER_TEXT_ENCODING=0x%X:0x0:0x0", os.Getuid())}})
+	p, err := copies.Start(confine.Invocation{Workspace: coreWorkspace(t), Paths: f.paths(t, false), Words: words, Directory: f.home, Env: []string{"HOME=" + f.home, "TMPDIR=" + filepath.Join(f.home, ".pql-tmp") + "/", "PATH=/usr/bin:/bin", "LANG=C", "LC_ALL=C", "TZ=UTC", fmt.Sprintf("__CF_USER_TEXT_ENCODING=0x%X:0x0:0x0", os.Getuid())}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +190,7 @@ import("fmt";"os";"syscall";"unsafe")
 func main(){sid,_,err:=syscall.Syscall(syscall.SYS_GETSID,0,0,0);if err!=0{panic(err)};p:=[]byte("/dev/tty\x00");fd,_,openErr:=syscall.Syscall(syscall.SYS_OPEN,uintptr(unsafe.Pointer(&p[0])),uintptr(syscall.O_RDWR),0);fmt.Printf("session=%t tty_closed=%t\n",int(sid)==os.Getpid(),openErr!=0);if openErr==0{if err:=syscall.Close(int(fd));err!=nil{panic(err)}}}`)
 	f := fixture(t, program)
 	copies := coreCopies(t, f)
-	p, err := copies.Start(confine.Invocation{Paths: f.paths(t, true), Directory: f.home, Computation: true})
+	p, err := copies.Start(confine.Invocation{Workspace: coreWorkspace(t), Paths: f.paths(t, true), Directory: f.home, Computation: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,7 +210,7 @@ func TestMacOSCoreSubjectEnvironment(t *testing.T) {
 import("fmt";"os")
 func main(){fmt.Println(os.Getenv("GODEBUG"))}`)
 	f := fixture(t, program)
-	p, err := coreCopies(t, f).Start(confine.Invocation{Paths: f.paths(t, false), Directory: f.home, Env: []string{"GODEBUG=inittrace=1"}})
+	p, err := coreCopies(t, f).Start(confine.Invocation{Workspace: coreWorkspace(t), Paths: f.paths(t, false), Directory: f.home, Env: []string{"GODEBUG=inittrace=1"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -226,7 +227,7 @@ func main(){fmt.Println(os.Getenv("GODEBUG"))}`)
 }
 func TestMacOSCoreFast(t *testing.T) {
 	f := fixture(t, buildPQL(t))
-	p, err := coreCopies(t, f).Start(confine.Invocation{Paths: f.paths(t, false), Directory: f.home, Fast: true})
+	p, err := coreCopies(t, f).Start(confine.Invocation{Workspace: coreWorkspace(t), Paths: f.paths(t, false), Directory: f.home, Fast: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,4 +241,22 @@ func TestMacOSCoreFast(t *testing.T) {
 	if run.End.Code != 0 || !run.Markers.Confinement || len(run.Stdout) != 0 || len(run.Stderr) != 0 {
 		t.Fatalf("fast=%+v", run)
 	}
+}
+
+func coreWorkspace(t *testing.T) *throwaway.Workspace {
+	t.Helper()
+	parent := t.TempDir()
+	if err := os.Chmod(parent, 0700); err != nil {
+		t.Fatal(err)
+	}
+	w, err := throwaway.BeginAt(parent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := w.Remove(); err != nil {
+			t.Error(err)
+		}
+	})
+	return w
 }
