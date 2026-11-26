@@ -55,6 +55,14 @@ func Build(in Input) (Object, error) {
 		if r.Keys != nil {
 			keys = r.Keys
 		}
+		// QE8: computations supply expected values, not subject targets.
+		subjectKeys := make([]Object, 0, len(keys))
+		for _, key := range keys {
+			if key["computation"] == nil {
+				subjectKeys = append(subjectKeys, key)
+			}
+		}
+		keys = subjectKeys
 		targets := Array{}
 		tier := "offline"
 		n := len(keys)

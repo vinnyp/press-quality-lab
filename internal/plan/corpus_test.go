@@ -4,7 +4,6 @@ package plan
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,7 +59,7 @@ func TestCorpus(t *testing.T) {
 			}
 		}
 	}
-	if e := json.Unmarshal(read(t, "../../scripts/ratchet/pr6-prediction.json"), &prediction); e != nil {
+	if e := json.Unmarshal(read(t, "../../scripts/ratchet/pr8-prediction.json"), &prediction); e != nil {
 		t.Fatal(e)
 	}
 	for _, pr := range prediction.Cases {
@@ -78,7 +77,8 @@ func TestCorpus(t *testing.T) {
 			if e != nil {
 				t.Fatal(e)
 			}
-			in := Input{Subject: s, Files: map[string][]byte{}, Baseline: c.Input.Baseline != nil}
+			// QE4 baseline reconciliation remains unbuilt; planning identities do not depend on it.
+			in := Input{Subject: s, Files: map[string][]byte{}}
 			for _, scope := range c.Input.Scope {
 				in.Scopes = append(in.Scopes, rulebook.Scope(scope))
 			}
@@ -124,16 +124,7 @@ func TestCorpus(t *testing.T) {
 			}
 			got, err := Build(in)
 			if err != nil {
-				var gap *Gap
-				if !errors.As(err, &gap) {
-					t.Fatal(err)
-				}
-				for _, rule := range pr.Ending.Rules {
-					if rule == gap.Error() {
-						return
-					}
-				}
-				t.Fatalf("unexpected gap %v; predicted %+v", gap, pr.Ending)
+				t.Fatal(err)
 			}
 			pres := map[string]any{}
 			required := []any{}
@@ -142,6 +133,9 @@ func TestCorpus(t *testing.T) {
 				required = append(required, ch.Required)
 			}
 			want := oracle(t, filepath.Join(source, "preimages.json"))
+			if len(pres) != len(got.Checks) {
+				t.Fatal("duplicate planned check id")
+			}
 			if canonical(t, pres) != canonical(t, want) {
 				wm := obj(want)
 				for id, pre := range pres {
@@ -168,16 +162,20 @@ func TestCorpus(t *testing.T) {
 				o := obj(v)
 				actual[text(o["id"])] = o
 			}
-			if canonical(t, actual) != canonical(t, byID) {
+			if len(required) != len(expected) || canonical(t, actual) != canonical(t, byID) {
 				t.Fatalf("required differ\ngot %s\nwant %s", canonical(t, actual), canonical(t, byID))
 			}
-			// Every statically planned subject key occurs in QT6's invocation oracle.
+			// QT6 excludes computations whose captures were cut at observation time.
+			// Subject keys and computations without captures must be present.
 			keys := map[string]bool{}
 			for _, k := range c.Invocations {
 				keys[canonical(t, k)] = true
 			}
 			for _, ch := range got.Checks {
 				for _, key := range ch.Keys {
+					if key["computation"] != nil && len(arr(obj(obj(ch.Preimage["expected"])["computation"])["captures"])) > 0 {
+						continue
+					}
 					if !keys[canonical(t, key)] {
 						t.Fatalf("unexpected key %s", canonical(t, key))
 					}

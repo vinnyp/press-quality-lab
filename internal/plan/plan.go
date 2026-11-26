@@ -29,6 +29,14 @@ func (g *Gap) Error() string {
 	return g.Rule + "." + g.Part
 }
 
+// Fault names a planning defect, distinct from an unbuilt rule.
+type Fault struct{ Rule, Cause string }
+
+func (f *Fault) Error() string { return f.Rule + ": " + f.Cause }
+
+// RuleID preserves the planning rule through caller classification.
+func (f *Fault) RuleID() string { return f.Rule }
+
 // Entry describes one caller-snapshotted seed entry. Digest, when supplied,
 // replaces Data; directories have neither.
 type Entry struct {
@@ -50,7 +58,7 @@ type Input struct {
 }
 
 // Check holds a required entry, its preimage and subject invocation keys.
-// Computation keys are intentionally absent: those are observation-time gaps.
+// Keys include subject and computation invocations.
 type Check struct {
 	ID       string
 	Preimage Object
@@ -194,11 +202,10 @@ func Build(in Input) (Plan, error) {
 	if in.Baseline {
 		return Plan{}, &Gap{"QE4", ""}
 	}
-	if placeholder(s) {
-		return Plan{}, &Gap{"QE2", "placeholders"}
-	}
 	var seed any
-	if s["seed"] != nil {
+	if placeholder(s["seed"]) {
+		seed = s["seed"]
+	} else if s["seed"] != nil {
 		d, err := SeedDigest(in.Seed)
 		if err != nil {
 			return Plan{}, err
@@ -246,10 +253,10 @@ func Build(in Input) (Plan, error) {
 		default:
 			for _, v := range commands {
 				c := obj(v)
-				if c["class"] != "safe" {
+				if c["class"] != "safe" && !placeholder(c["class"]) {
 					continue
 				}
-				if spec.probe == "byte_bound" && c["byte_bound"] != nil || spec.probe == "exit_codes" && c["exit_codes"] != nil || spec.probe == "store_unchanged" && c["writes"] == false {
+				if spec.probe == "byte_bound" && c["byte_bound"] != nil || spec.probe == "exit_codes" && c["exit_codes"] != nil || spec.probe == "store_unchanged" && (c["writes"] == false || placeholder(c["writes"])) {
 					candidates = append(candidates, c)
 				}
 			}
@@ -282,7 +289,7 @@ func Build(in Input) (Plan, error) {
 				for i, w := range cs {
 					b, err := jcs.Canonical(w)
 					if err != nil {
-						return Plan{}, &Gap{"QE2", ""}
+						return Plan{}, err
 					}
 					encoded[i] = string(b)
 					byEncoding[string(b)] = w
@@ -301,7 +308,9 @@ func Build(in Input) (Plan, error) {
 					params["bound"] = c["byte_bound"]
 				}
 			case "planted_secret":
-				if sec := obj(s["secret"]); sec != nil {
+				if placeholder(s["secret"]) {
+					params = Object{"secret": s["secret"]}
+				} else if sec := obj(s["secret"]); sec != nil {
 					cs := Array{}
 					for _, w := range arr(sec["commands"]) {
 						cmd := command(s, arr(w))
@@ -317,7 +326,7 @@ func Build(in Input) (Plan, error) {
 				}
 			}
 			if _, err := add(base(spec.probe, spec.dim, words, budget, params), true, spec.probe == "byte_bound", keys); err != nil {
-				return Plan{}, &Gap{"QE2", ""}
+				return Plan{}, err
 			}
 		}
 	}
@@ -344,40 +353,37 @@ func Build(in Input) (Plan, error) {
 				if !in.includes(dim) {
 					continue
 				}
-				if ch["precondition"] != nil {
-					return Plan{}, &Gap{"QA9", "preconditions"}
-				}
 				pred := text(ch["predicate"])
 				expected := obj(ch["expected"])
-				if pred == "stdout_empty" || pred == "row_count" && zero(expected["literal"]) {
-					return Plan{}, &Gap{"QE7", "asserts_emptiness"}
-				}
+				asserts := pred == "stdout_empty" || pred == "row_count" && zero(expected["literal"])
+				keys := []Object{SubjectKey(s, arr(st["words"]), "runbook", r["name"], st["name"])}
 				ex := Object{"precondition": nil}
-				if comp := obj(expected["computation"]); comp != nil {
-					if len(arr(comp["captures"])) > 0 {
-						return Plan{}, &Gap{"QE2", "captures"}
+				for _, source := range []struct {
+					name  string
+					value Object
+				}{
+					{"expected", expected}, {"precondition", obj(ch["precondition"])},
+				} {
+					if source.value == nil {
+						continue
 					}
-					files := Object{}
-					names := append(Array{}, arr(comp["declared_files"])...)
-					argv := arr(comp["argv"])
-					if len(argv) > 0 && !strings.HasPrefix(text(argv[0]), "/") {
-						names = append(names, argv[0])
-					}
-					for _, n := range names {
-						key := path.Clean(text(n))
-						digest, ok := in.FileDigests[key]
-						if !ok {
-							b, found := in.Files[key]
-							if !found {
-								return Plan{}, &Gap{"QE2", ""}
-							}
-							digest = hash(b)
+					comp := obj(source.value["computation"])
+					if comp == nil {
+						if source.name == "expected" {
+							ex["literal"] = expected["literal"]
 						}
-						files[text(n)] = digest
+						continue
 					}
-					ex["computation"] = Object{"argv": comp["argv"], "budget_seconds": comp["budget_seconds"], "captures": comp["captures"], "files": files}
-				} else {
-					ex["literal"] = expected["literal"]
+					fixed, err := in.computation(comp)
+					if err != nil {
+						return Plan{}, err
+					}
+					if source.name == "expected" {
+						ex["computation"] = fixed
+					} else {
+						ex["precondition"] = Object{"computation": fixed}
+					}
+					keys = append(keys, Object{"words": nil, "offline_args": Array{}, "env": Array{}, "home": "scratch", "runbook": r["name"], "step": st["name"], "computation": comp["argv"]})
 				}
 				pre := base(nil, dim, st["words"], st["budget_seconds"], Object{"exit_codes": ch["exit_codes"]})
 				pre["runbook"] = r["name"]
@@ -389,9 +395,13 @@ func Build(in Input) (Plan, error) {
 				pre["expected"] = ex
 				empty := pred == "stdout_not_contains" || pred == "stdout_bytes_at_most" || pred == "row_count" && expected["computation"] != nil
 				credit := credits(s, r, st, ch)
-				id, err := add(pre, credit, empty, []Object{SubjectKey(s, arr(st["words"]), "runbook", r["name"], st["name"])})
+				id, err := add(pre, credit, empty, keys)
 				if err != nil {
-					return Plan{}, &Gap{"QE2", ""}
+					return Plan{}, err
+				}
+				if asserts {
+					p.Checks[len(p.Checks)-1].Required["asserts_emptiness"] = true
+					p.Checks[len(p.Checks)-1].Required["precondition"] = "precondition computation printed true"
 				}
 				ids = append(ids, id)
 			}
@@ -404,6 +414,11 @@ func credits(s, r, st, ch Object) bool {
 	dim := text(ch["dimension"])
 	pred := text(ch["predicate"])
 	ex := obj(ch["expected"])
+	for _, source := range []Object{ex, obj(ch["precondition"])} {
+		if len(arr(obj(source["computation"])["captures"])) > 0 {
+			return false
+		}
+	}
 	switch dim {
 	case "pii-secret-hygiene", "side-effect-integrity":
 		return false
@@ -467,7 +482,10 @@ func credits(s, r, st, ch Object) bool {
 	return true
 }
 
-func zero(v any) bool { n, ok := v.(strictjson.Number); return ok && string(n) == "0" }
+func zero(v any) bool {
+	n, ok := v.(strictjson.Number)
+	return ok && (string(n) == "0" || string(n) == "-0")
+}
 
 // DiscoveryKey supplies a key for any node reached by discovery's help walk.
 func DiscoveryKey(words Array) Object {
@@ -478,3 +496,26 @@ func DiscoveryKey(words Array) Object {
 
 // CheckID returns QE2's canonical preimage digest.
 func CheckID(preimage Object) (string, error) { return jcs.Digest(preimage) }
+
+// computation fixes the executable and declared-file digests for QE2.
+func (in Input) computation(comp Object) (Object, error) {
+	files := Object{}
+	names := append(Array{}, arr(comp["declared_files"])...)
+	argv := arr(comp["argv"])
+	if len(argv) > 0 && !strings.HasPrefix(text(argv[0]), "/") {
+		names = append(names, argv[0])
+	}
+	for _, n := range names {
+		key := path.Clean(text(n))
+		digest, ok := in.FileDigests[key]
+		if !ok {
+			b, found := in.Files[key]
+			if !found {
+				return nil, &Fault{"QE2", "missing computation file digest"}
+			}
+			digest = hash(b)
+		}
+		files[text(n)] = digest
+	}
+	return Object{"argv": comp["argv"], "budget_seconds": comp["budget_seconds"], "captures": comp["captures"], "files": files}, nil
+}

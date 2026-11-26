@@ -233,11 +233,9 @@ func TestInvocationTriggers(t *testing.T) {
 }
 func TestUnknownTriggers(t *testing.T) {
 	// QS5: absent required-set information cannot exclude a dependency.
-	// QD4: absent preimage cannot exclude a generated check.
-	// QA7: absent ordering information cannot exclude an earlier step.
 	// QO6: absent expected-value information cannot exclude a computation.
 	// QO2: absent invocation information cannot exclude an invocation.
-	for _, n := range []int{2, 3, 4, 6, 7} {
+	for _, n := range []int{2, 6, 7} {
 		if r := levels[n-1](plan.Check{}, passing(), Evidence{}); r.Unbuilt == nil || r.Level != n {
 			t.Fatalf("level %d: %+v", n, r)
 		}

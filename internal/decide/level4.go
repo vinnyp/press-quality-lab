@@ -8,8 +8,10 @@ import (
 
 func level4(ch plan.Check, _ observe.Controls, _ Evidence) Result {
 	earlier, ok := ch.Preimage["earlier"].(strictjson.Array)
-	earlierUnknown := !ok
-	if earlierUnknown || len(earlier) > 0 {
+	if !ok {
+		panic("QE2: preimage lacks earlier array")
+	}
+	if len(earlier) > 0 {
 		return sentinel(4, "QA7")
 	}
 	return Result{}
