@@ -98,6 +98,9 @@ func TestSignalsEndGroupsAndCleanup(t *testing.T) {
 			if err := w.RecordGroup(throwaway.Process{PID: pid, StartTime: start}); err != nil {
 				t.Fatal(err)
 			}
+			release := make(chan struct{})
+			reapedDone := make(chan struct{})
+			var killStatus syscall.WaitStatus
 			d.Collect = func(plan.Plan, observe.Source) ([]collect.Check, error) {
 				ch <- sig
 				var status syscall.WaitStatus
@@ -106,12 +109,38 @@ func TestSignalsEndGroupsAndCleanup(t *testing.T) {
 					return nil, err
 				}
 				reaped = true
+				killStatus = status
+				close(reapedDone)
+				<-release
 				if !status.Signaled() || status.Signal() != syscall.SIGKILL {
 					return nil, fmt.Errorf("group not killed: %v", status)
 				}
 				return nil, nil
 			}
-			code, err := Run(o, d, io.Discard)
+			type result struct {
+				code int
+				err  error
+			}
+			returned := make(chan result, 1)
+			go func() { code, err := Run(o, d, io.Discard); returned <- result{code, err} }()
+			select {
+			case <-reapedDone:
+			case <-time.After(time.Second):
+				close(release)
+				t.Fatal("funnel did not end group")
+			}
+			select {
+			case r := <-returned:
+				close(release)
+				t.Fatalf("returned before collector release: %+v", r)
+			case <-time.After(50 * time.Millisecond):
+			}
+			close(release)
+			r := <-returned
+			code, err := r.code, r.err
+			if !killStatus.Signaled() || killStatus.Signal() != syscall.SIGKILL {
+				t.Fatalf("kill status %v", killStatus)
+			}
 			if code != 70 || err == nil || !strings.Contains(err.Error(), sig.String()) {
 				t.Fatalf("%d %v", code, err)
 			}
@@ -154,6 +183,10 @@ func TestCleanupFailureIsNamedAndRetried(t *testing.T) {
 	if err := w.Publish(throwaway.Process{PID: 41, StartTime: "old"}); err != nil {
 		t.Fatal(err)
 	}
+	original, readErr := os.ReadFile(filepath.Join(w.Path(), "process.json"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
 	d.Source = func() (observe.Source, func() error, error) {
 		return ReleasedSource{}, func() error { return os.Chmod(parent, 0500) }, nil
 	}
@@ -173,8 +206,9 @@ func TestCleanupFailureIsNamedAndRetried(t *testing.T) {
 	if !strings.Contains(output.String(), "cleanup failed; directory left behind: "+Escape(w.Path())+"\n") {
 		t.Fatalf("scorecard does not name directory: %q", output.String())
 	}
-	if _, err := os.Lstat(filepath.Join(w.Path(), "process.json")); !errors.Is(err, os.ErrNotExist) && err != nil {
-		t.Fatal(err)
+	got, readErr := os.ReadFile(filepath.Join(w.Path(), "process.json"))
+	if readErr != nil || !bytes.Equal(got, original) {
+		t.Fatalf("publication changed: %q %v", got, readErr)
 	}
 	if _, err := os.Lstat(w.Path()); err != nil {
 		t.Fatal("failed directory missing", err)

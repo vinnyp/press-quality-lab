@@ -48,9 +48,11 @@ func (w *Workspace) Remove() error {
 }
 
 type budget struct {
-	remaining int
-	deadline  time.Time
-	now       func() time.Time
+	// beforeDirectoryOpen is a deterministic test seam, scoped to one walk.
+	beforeDirectoryOpen func(int, string)
+	remaining           int
+	deadline            time.Time
+	now                 func() time.Time
 }
 
 func (b *budget) check(entry bool) error {

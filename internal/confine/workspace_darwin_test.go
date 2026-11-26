@@ -1,7 +1,9 @@
 package confine
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -76,5 +78,49 @@ func TestInvocationWorkspaceGroupLifecycle(t *testing.T) {
 	}
 	if string(data) != "{\"pid\":41,\"start_time\":\"engine\"}\n" {
 		t.Fatalf("ended group still recorded: %s", data)
+	}
+	if err := w.EndGroups(io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	spawned := 0
+	shutdownProcess, err := copies.startWith(Invocation{Workspace: w, Paths: Paths{Values: values}}, func(string, []string, string, []string, string) (Process, error) {
+		p, err := spawn("/bin/sh", []string{"sh", "-c", "sleep 30"}, "", []string{"PATH=/usr/bin:/bin"}, "test")
+		if err == nil {
+			t.Cleanup(func() {
+				if err := p.Kill(); err != nil {
+					t.Error(err)
+				}
+				if _, err := p.Wait(); err != nil {
+					t.Error(err)
+				}
+			})
+		}
+		if err == nil {
+			native, ok := p.(*process)
+			if !ok {
+				t.Fatal("not native")
+			}
+			spawned = native.pid
+		}
+		return p, err
+	})
+	if err == nil || shutdownProcess != nil || spawned == 0 {
+		t.Fatalf("shutdown spawn: %v %v pid=%d", shutdownProcess, err, spawned)
+	}
+	procs, lookupErr := unix.SysctlKinfoProcSlice("kern.proc.pid", spawned)
+	if lookupErr != nil && !errors.Is(lookupErr, unix.ESRCH) {
+		t.Fatal(lookupErr)
+	}
+	if len(procs) != 0 {
+		t.Fatal("spawn survived failed recording")
+	}
+}
+
+func TestStartRequiresWorkspace(t *testing.T) {
+	// QE20, KTD5: the real entry point refuses an unrecordable invocation.
+	called := false
+	p, err := (&Copies{}).startWith(Invocation{}, func(string, []string, string, []string, string) (Process, error) { called = true; return nil, nil })
+	if err == nil || p != nil || called {
+		t.Fatalf("missing workspace: %v %v %v", p, err, called)
 	}
 }

@@ -1,8 +1,10 @@
 package throwaway
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -24,3 +26,27 @@ func assertMemberExecuting(t *testing.T, pid int) {
 }
 
 func raceRestoreMode(root *os.Root, name string) error { return restoreMode(root, name) }
+
+func assertGroupEmpty(t *testing.T, pid int) {
+	t.Helper()
+	entries, err := os.ReadDir("/proc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		id, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue
+		}
+		fields, err := processFields(id)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if fields[2] == strconv.Itoa(pid) && fields[0] != "Z" && fields[0] != "X" {
+			t.Fatalf("live member %d", id)
+		}
+	}
+}

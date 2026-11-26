@@ -15,6 +15,12 @@ func Begin() (*Workspace, error) {
 		return nil, err
 	}
 	parent := filepath.Join(temp, fmt.Sprintf("pql-workspaces-%d", os.Getuid()))
+	return BeginAt(parent)
+}
+
+// BeginAt performs startup against an explicit parent, including the real sweep
+// and kernel identity publication. Tests supply a private temporary parent.
+func BeginAt(parent string) (*Workspace, error) {
 	if err := os.Mkdir(parent, 0700); err != nil && !errors.Is(err, os.ErrExist) {
 		return nil, err
 	}

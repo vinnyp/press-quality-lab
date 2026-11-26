@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 	"unicode"
 
 	"github.com/vinnyp/press-quality-lab/internal/collect"
@@ -45,6 +46,8 @@ func failure(code int, rule, cause string) *Error { return &Error{code, rule, ca
 // Dependencies exposes effects, including identity before any store resolution.
 // Source is constructed inside the funnel, so its trace is closed on all exits.
 type Dependencies struct {
+	EndGroups func(*throwaway.Workspace, io.Writer) error
+	Remove    func(*throwaway.Workspace) error
 	// Workspace is constructed after root refusal, inside the exit funnel.
 	Workspace         func() (*throwaway.Workspace, error)
 	SourceInWorkspace func(*throwaway.Workspace) (observe.Source, func() error, error)
@@ -72,6 +75,12 @@ func (ReleasedSource) Observe(observe.Key, observe.Spec) (observe.Run, error) {
 }
 
 func defaults(d Dependencies) Dependencies {
+	if d.EndGroups == nil {
+		d.EndGroups = (*throwaway.Workspace).EndGroups
+	}
+	if d.Remove == nil {
+		d.Remove = (*throwaway.Workspace).Remove
+	}
 	if d.Workspace == nil {
 		d.Workspace = throwaway.Begin
 	}
@@ -105,49 +114,82 @@ func defaults(d Dependencies) Dependencies {
 func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	code = 70
 	var closeSource func() error
-	var waitCollector func()
+	var waitCollector func() error
 	groupsEnded := true
 	var workspace *throwaway.Workspace
 	d = defaults(d)
 	signals := d.Signals
 	if signals == nil {
 		ch := make(chan os.Signal, 4)
-		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+		for _, sig := range []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT} {
+			if !signal.Ignored(sig) {
+				signal.Notify(ch, sig)
+			}
+		}
 		defer signal.Stop(ch)
 		signals = ch
 	}
+	interrupted := false
 	defer func() {
+		add := func(rule string, cause error) {
+			if cause != nil {
+				err = errors.Join(failure(70, rule, cause.Error()), err)
+				code = 70
+			}
+		}
 		if p := recover(); p != nil {
-			err = failure(70, "QE16", fmt.Sprintf("engine panic: %v", p))
-			code = 70
+			add("QE16", fmt.Errorf("engine panic: %v", p))
+		}
+		// Cleanup remains interruptible even when a filesystem operation blocks.
+		step := func(fn func() error) error {
+			done := make(chan error, 1)
+			go func() { done <- closeSafely(fn) }()
+			for {
+				select {
+				case e := <-done:
+					return e
+				case sig := <-signals:
+					if interrupted {
+						os.Exit(70)
+					}
+					interrupted = true
+					add("QE16", fmt.Errorf("interrupted by %s", sig))
+				}
+			}
 		}
 		if workspace != nil {
-			if endErr := workspace.EndGroups(d.Stderr); endErr != nil {
+			if endErr := step(func() error { return d.EndGroups(workspace, d.Stderr) }); endErr != nil {
 				groupsEnded = false
-				err = failure(70, "QH23", endErr.Error())
-				code = 70
+				add("QH23", endErr)
 			}
 		}
 		if waitCollector != nil {
-			waitCollector()
-		}
-		if closeSource != nil {
-			if closeErr := closeSafely(closeSource); closeErr != nil {
-				err = failure(70, "QE16", "trace close failed: "+closeErr.Error())
-				code = 70
+			if waitErr := step(waitCollector); waitErr != nil {
+				groupsEnded = false
+				add("QH23", waitErr)
 			}
 		}
-		if workspace != nil && groupsEnded {
-			if removeErr := workspace.Remove(); removeErr != nil {
+		if closeSource != nil && groupsEnded {
+			add("QE16", step(closeSource))
+		}
+		if workspace != nil {
+			if groupsEnded {
+				if removeErr := step(func() error { return d.Remove(workspace) }); removeErr != nil {
+					groupsEnded = false
+					add("QE20", removeErr)
+				}
+			}
+			if !groupsEnded {
 				_, reportErr := io.WriteString(out, "cleanup failed; directory left behind: "+Escape(workspace.Path())+"\n")
-				err = failure(70, "QE20", errors.Join(removeErr, reportErr).Error())
-				code = 70
+				add("QE20", reportErr)
 			}
 		}
 		select {
 		case sig := <-signals:
-			err = failure(70, "QE16", "interrupted by "+sig.String())
-			code = 70
+			if interrupted {
+				os.Exit(70)
+			}
+			add("QE16", fmt.Errorf("interrupted by %s", sig))
 		default:
 		}
 		if err != nil {
@@ -161,6 +203,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 			}
 		}
 	}()
+
 	_, effective := d.IDs()
 	if effective == 0 {
 		return 70, failure(70, "QH3", "effective user is root")
@@ -228,6 +271,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	}
 	checks, wait, collectErr := gatherSignals(d.Collect, p, source, signals)
 	waitCollector = wait
+	interrupted = wait != nil
 	err = collectErr
 	if err != nil {
 		return 70, err
@@ -347,7 +391,7 @@ func callJudge(fn func([]byte) ([]byte, int), input []byte) (strictjson.Object, 
 	return doc, code, nil
 }
 
-func gatherSignals(fn func(plan.Plan, observe.Source) ([]collect.Check, error), p plan.Plan, source observe.Source, signals <-chan os.Signal) ([]collect.Check, func(), error) {
+func gatherSignals(fn func(plan.Plan, observe.Source) ([]collect.Check, error), p plan.Plan, source observe.Source, signals <-chan os.Signal) ([]collect.Check, func() error, error) {
 	type result struct {
 		checks []collect.Check
 		err    error
@@ -367,7 +411,16 @@ func gatherSignals(fn func(plan.Plan, observe.Source) ([]collect.Check, error), 
 	case r := <-done:
 		return r.checks, nil, r.err
 	case sig := <-signals:
-		return nil, func() { <-done }, failure(70, "QE16", "interrupted by "+sig.String())
+		return nil, func() error {
+			timer := time.NewTimer(5 * time.Second)
+			defer timer.Stop()
+			select {
+			case r := <-done:
+				return r.err
+			case <-timer.C:
+				return errors.New("collector did not stop after signal")
+			}
+		}, failure(70, "QE16", "interrupted by "+sig.String())
 	}
 }
 

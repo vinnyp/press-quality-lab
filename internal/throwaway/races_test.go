@@ -38,6 +38,8 @@ func TestHomeSwapDuringCleanup(t *testing.T) {
 	if err := os.Chmod(outside, 0555); err != nil {
 		t.Fatal(err)
 	}
+	verifyMetadata := protectRaceOutside(t, outside)
+	defer verifyMetadata()
 	home := filepath.Join(w.Path(), "home")
 	if err := os.Mkdir(home, 0700); err != nil {
 		t.Fatal(err)
@@ -52,7 +54,7 @@ func TestHomeSwapDuringCleanup(t *testing.T) {
 		}
 	}()
 	// Positive control: same parent, directory and operation before substitution.
-	if err := restoreMode(root, "home"); err != nil {
+	if err := raceRestoreMode(root, "home"); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Rename(home, filepath.Join(w.Path(), "old")); err != nil {
@@ -61,8 +63,8 @@ func TestHomeSwapDuringCleanup(t *testing.T) {
 	if err := os.Symlink(outside, home); err != nil {
 		t.Fatal(err)
 	}
-	if err := restoreMode(root, "home"); err == nil {
-		t.Fatal("changed mode through outside link")
+	if err := raceRestoreMode(root, "home"); err != nil {
+		t.Logf("replacement refused: %v", err)
 	}
 	if err := w.Remove(); err != nil {
 		t.Fatal(err)
@@ -93,6 +95,8 @@ func TestLockedDirectorySwapBeforeMode(t *testing.T) {
 	if err := os.Chmod(outside, 0555); err != nil {
 		t.Fatal(err)
 	}
+	verifyMetadata := protectRaceOutside(t, outside)
+	defer verifyMetadata()
 	home := filepath.Join(w.Path(), "home")
 	if err := os.Mkdir(home, 0000); err != nil {
 		t.Fatal(err)
@@ -225,6 +229,8 @@ func TestThousandRacingWalks(t *testing.T) {
 	if err := os.Chmod(outside, 0555); err != nil {
 		t.Fatal(err)
 	}
+	verifyMetadata := protectRaceOutside(t, outside)
+	defer verifyMetadata()
 	exe, err := os.Executable()
 	if err != nil {
 		t.Fatal(err)
@@ -278,6 +284,9 @@ func TestThousandRacingWalks(t *testing.T) {
 		if err := os.Mkdir(w.Path(), 0700); err != nil && !errors.Is(err, os.ErrExist) {
 			t.Fatal(err)
 		}
+	}
+	if refusals == 0 {
+		t.Fatal("no racing walk was refused")
 	}
 	t.Logf("racing walks refused: %d of 1000", refusals)
 	stop()

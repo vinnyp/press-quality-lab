@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
@@ -144,6 +145,130 @@ func TestOSSignalsExit70(t *testing.T) {
 				t.Fatalf("group not reaped: %v", err)
 			}
 			group = 0
+		})
+	}
+}
+
+func TestCleanupSignalHelper(t *testing.T) {
+	mode := os.Getenv("PQL_CLEANUP_SIGNAL_HELPER")
+	if mode == "" {
+		return
+	}
+	// QE16, QE20, KTD17: subprocess permits testing immediate os.Exit.
+	if mode == "Ignored" {
+		signal.Ignore(syscall.SIGHUP)
+	}
+	o, d, _ := fixture(t)
+	d.SourceInWorkspace = func(w *throwaway.Workspace) (observe.Source, func() error, error) {
+		return ReleasedSource{}, func() error {
+			if mode == "Second" {
+				if _, err := fmt.Fprintln(os.Stdout, "cleanup "+w.Path()); err != nil {
+					return err
+				}
+				time.Sleep(30 * time.Second)
+			}
+			return nil
+		}, nil
+	}
+	d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {
+		if _, err := fmt.Fprintln(os.Stdout, "ready"); err != nil {
+			return nil, err
+		}
+		time.Sleep(200 * time.Millisecond)
+		return collect.Collect(p, s)
+	}
+	code, runErr := Run(o, d, io.Discard)
+	if runErr != nil {
+		os.Exit(91)
+	}
+	os.Exit(code)
+}
+
+func TestIgnoredAndSecondSignals(t *testing.T) {
+	// QE16, QE20, KTD17: inherited ignores persist; a second signal stops cleanup.
+	for _, mode := range []string{"Ignored", "Second"} {
+		t.Run(mode, func(t *testing.T) {
+			exe, err := os.Executable()
+			if err != nil {
+				t.Fatal(err)
+			}
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() {
+				if err := r.Close(); err != nil {
+					t.Error(err)
+				}
+			}()
+			pid, err := syscall.ForkExec(exe, []string{exe, "-test.run=^TestCleanupSignalHelper$"}, &syscall.ProcAttr{Env: append(os.Environ(), "PQL_CLEANUP_SIGNAL_HELPER="+mode, "TMPDIR="+t.TempDir()), Files: []uintptr{0, w.Fd(), 2}})
+			if closeErr := w.Close(); closeErr != nil {
+				t.Fatal(closeErr)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			reaped := false
+			defer func() {
+				if !reaped {
+					if err := syscall.Kill(pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
+						t.Error(err)
+					}
+					var status syscall.WaitStatus
+					if _, err := syscall.Wait4(pid, &status, 0, nil); err != nil {
+						t.Error(err)
+					}
+				}
+			}()
+			scanner := bufio.NewScanner(r)
+			if !scanner.Scan() || scanner.Text() != "ready" {
+				t.Fatal("missing readiness", scanner.Err())
+			}
+			sig := syscall.SIGHUP
+			if mode == "Second" {
+				sig = syscall.SIGTERM
+			}
+			if err := syscall.Kill(pid, sig); err != nil {
+				t.Fatal(err)
+			}
+			leftBehind := ""
+			if mode == "Second" {
+				if !scanner.Scan() || !strings.HasPrefix(scanner.Text(), "cleanup ") {
+					t.Fatal("cleanup not entered", scanner.Err())
+				}
+				leftBehind = strings.TrimPrefix(scanner.Text(), "cleanup ")
+				if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
+					t.Fatal(err)
+				}
+			}
+			deadline := time.Now().Add(time.Second)
+			for {
+				var status syscall.WaitStatus
+				got, err := syscall.Wait4(pid, &status, syscall.WNOHANG, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got == pid {
+					reaped = true
+					want := 4
+					if mode == "Second" {
+						want = 70
+					}
+					if !status.Exited() || status.ExitStatus() != want {
+						t.Fatalf("exit: %v want %d", status, want)
+					}
+					break
+				}
+				if time.Now().After(deadline) {
+					t.Fatal("signal handling did not finish")
+				}
+				time.Sleep(time.Millisecond)
+			}
+			if leftBehind != "" {
+				if _, err := os.Stat(leftBehind); err != nil {
+					t.Fatal("second signal removed workspace", err)
+				}
+			}
 		})
 	}
 }

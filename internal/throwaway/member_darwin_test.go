@@ -28,3 +28,16 @@ func raceRestoreMode(root *os.Root, name string) (err error) {
 	defer func() { err = errors.Join(err, parent.Close()) }()
 	return prepareAt(int(parent.Fd()), name)
 }
+
+func assertGroupEmpty(t *testing.T, pid int) {
+	t.Helper()
+	members, err := unix.SysctlKinfoProcSlice("kern.proc.pgrp", pid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, member := range members {
+		if member.Proc.P_stat != 5 {
+			t.Fatalf("live member %d", member.Proc.P_pid)
+		}
+	}
+}

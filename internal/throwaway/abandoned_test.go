@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -239,7 +238,7 @@ func TestLeaderGoneMemberIsNotSignalled(t *testing.T) {
 		t.Fatal("surviving member was killed", err)
 	}
 	assertMemberExecuting(t, member)
-	if _, err := os.Stat(filepath.Join(w.Path(), "process.json")); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(w.Path()); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("home not removed: %v", err)
 	}
 }

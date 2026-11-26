@@ -24,6 +24,9 @@ func removeWalkEntry(parent *os.Root, name string, b *budget) (err error) {
 			return err
 		}
 		root, openErr := parent.OpenRoot(name)
+		if errors.Is(openErr, os.ErrNotExist) {
+			return nil
+		}
 		if openErr != nil {
 			return openErr
 		}

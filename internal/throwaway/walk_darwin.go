@@ -32,6 +32,9 @@ func prepareAt(fd int, name string) error {
 	if err := unix.Fstatat(fd, name, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
 		return err
 	}
+	if st.Mode&unix.S_IFMT != unix.S_IFDIR && st.Nlink > 1 {
+		return nil
+	}
 	flags := st.Flags &^ uint32(unix.UF_IMMUTABLE|unix.UF_APPEND)
 	if err := setattrAt(fd, name, unix.ATTR_CMN_FLAGS, unsafe.Pointer(&flags), unsafe.Sizeof(flags)); err != nil {
 		return err
@@ -81,7 +84,13 @@ func removeAt(parent int, name string, b *budget) (err error) {
 	}
 	flags := 0
 	if st.Mode&unix.S_IFMT == unix.S_IFDIR {
+		if b.beforeDirectoryOpen != nil {
+			b.beforeDirectoryOpen(parent, name)
+		}
 		fd, err := unix.Openat(parent, name, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
 		if err != nil {
 			return err
 		}

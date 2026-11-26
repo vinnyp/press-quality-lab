@@ -13,7 +13,7 @@ import (
 func processFields(pid int) ([]string, error) {
 	b, err := os.ReadFile(fmt.Sprintf("/proc/%d/stat", pid))
 	if err != nil {
-		return nil, err
+		return nil, processLookupError(err)
 	}
 	i := strings.LastIndexByte(string(b), ')')
 	if i < 0 {
@@ -39,10 +39,6 @@ func ProcessStart(pid int) (string, error) {
 func EndGroup(pid int) error {
 	deadline := time.Now().Add(5 * time.Second)
 	for {
-		killErr := syscall.Kill(-pid, syscall.SIGKILL)
-		if killErr != nil && !errors.Is(killErr, syscall.ESRCH) && !errors.Is(killErr, syscall.EPERM) {
-			return killErr
-		}
 		entries, err := os.ReadDir("/proc")
 		if err != nil {
 			return err
@@ -71,6 +67,10 @@ func EndGroup(pid int) error {
 		if !live {
 			return nil
 		}
+		killErr := syscall.Kill(-pid, syscall.SIGKILL)
+		if killErr != nil && !errors.Is(killErr, syscall.ESRCH) && !errors.Is(killErr, syscall.EPERM) {
+			return killErr
+		}
 		if time.Now().After(deadline) {
 			return errors.Join(fmt.Errorf("process group %d did not end", pid), killErr)
 		}
@@ -81,3 +81,7 @@ func EndGroup(pid int) error {
 func openAt(dir int, name string, flags int, mode uint32) (int, error) {
 	return syscall.Openat(dir, name, flags, mode)
 }
+
+func renameAt(fd int, from, to string) error { return syscall.Renameat(fd, from, fd, to) }
+
+func unlinkAt(fd int, name string) error { return syscall.Unlinkat(fd, name) }

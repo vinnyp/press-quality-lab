@@ -9,13 +9,18 @@ import (
 
 // SweepOptions supplies process effects and the diagnostic destination. End
 // must wait until the verified group has no executing members before returning.
+type lookupFailure struct{ error }
+
+func (e *lookupFailure) Unwrap() error { return e.error }
+
 type SweepOptions struct {
 	End    func(int) error
 	Report io.Writer
 }
 
 // RecordGroup atomically records a live leader before handing an invocation to
-// its caller. The caller retains the leader unreaped until ForgetGroup.
+// its caller. The caller ends the group before reaping the leader, then calls
+// ForgetGroup.
 func (w *Workspace) RecordGroup(p Process) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -60,7 +65,7 @@ func endRecorded(groups []Process, lookup ProcessLookup, opts SweepOptions) erro
 	for _, g := range groups {
 		start, err := lookup(g.PID)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			problems = errors.Join(problems, err)
+			problems = errors.Join(problems, &lookupFailure{err})
 			continue
 		}
 		if err != nil || start != g.StartTime {

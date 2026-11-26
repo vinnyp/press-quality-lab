@@ -16,6 +16,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/plan"
 	"github.com/vinnyp/press-quality-lab/internal/store"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 )
 
 const validSubject = `{"subject_file_version":"1.0","binary":"bin/subject","facts":{"read_only":false,"has_destructive_ops":false,"store_backed":false,"has_cli":true,"bounding":"declared"},"commands":[{"words":[],"class":"safe","writes":false,"exit_codes":[0],"byte_bound":4096,"budget_seconds":10}],"declared_count":0,"seed":null,"store":null,"offline":[],"bookkeeping":[],"secret":null,"runbooks":[],"markers":[],"prompts":{"version":"none"}}`
@@ -34,7 +35,13 @@ func fixture(t *testing.T) (Options, Dependencies, *store.Record) {
 		t.Fatal(err)
 	}
 	saved := new(store.Record)
-	return Options{SubjectFile: path, Scope: []string{"conformance"}}, Dependencies{IDs: func() (int, int) { return 1000, 1000 }, Write: func(r store.Record) error { *saved = r; return nil }}, saved
+	return Options{SubjectFile: path, Scope: []string{"conformance"}}, Dependencies{Workspace: func() (*throwaway.Workspace, error) {
+		w, err := throwaway.BeginAt(filepath.Join(dir, "workspaces"))
+		if err == nil && !strings.HasPrefix(w.Path(), dir+string(os.PathSeparator)) {
+			t.Fatal("test resolved real workspace parent")
+		}
+		return w, err
+	}, IDs: func() (int, int) { return 1000, 1000 }, Write: func(r store.Record) error { *saved = r; return nil }}, saved
 }
 func assertFailure(t *testing.T, code int, err error, want int, rule, cause string) {
 	t.Helper()

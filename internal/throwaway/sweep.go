@@ -24,6 +24,14 @@ type Process struct {
 // the process is gone; permission failures and other uncertainty fail closed.
 type ProcessLookup func(pid int) (string, error)
 
+// processLookupError normalizes a kernel lookup racing with process exit.
+func processLookupError(err error) error {
+	if errors.Is(err, syscall.ESRCH) {
+		return os.ErrNotExist
+	}
+	return err
+}
+
 // Publish atomically marks a workspace as an engine-owned run. The caller must
 // supply the actual process start time, not the time this file is written.
 func (w *Workspace) Publish(p Process) error {
@@ -48,10 +56,6 @@ func (w *Workspace) publish(p Process, groups []Process) (err error) {
 		return err
 	}
 	defer func() { err = errors.Join(err, root.Close()) }()
-	f, err := root.OpenFile(".process-pending", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if err != nil {
-		return err
-	}
 	obj := strictjson.Object{"pid": p.PID, "start_time": p.StartTime}
 	if len(groups) > 0 {
 		a := strictjson.Array{}
@@ -62,8 +66,20 @@ func (w *Workspace) publish(p Process, groups []Process) (err error) {
 	}
 	data := strictjson.Write(obj)
 	if len(data) > 4096 {
-		return errors.Join(errors.New("process publication exceeds bound"), f.Close())
+		return errors.New("process publication exceeds bound")
 	}
+	f, err := root.OpenFile(".process-pending", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			removeErr := root.Remove(".process-pending")
+			if !errors.Is(removeErr, os.ErrNotExist) {
+				err = errors.Join(err, removeErr)
+			}
+		}
+	}()
 	_, err = f.Write(data)
 	if err == nil {
 		err = f.Sync()
@@ -104,50 +120,60 @@ func Sweep(parent string, lookup ProcessLookup, options ...SweepOptions) (err er
 		return err
 	}
 	defer func() { err = errors.Join(err, dir.Close()) }()
-	b := &budget{remaining: MaxWalkEntries, deadline: time.Now().Add(MaxWalkDuration), now: time.Now}
+	var uncertainLookups error
 	for {
-		if err = b.check(false); err != nil {
-			return err
-		}
 		entries, readErr := dir.ReadDir(1)
 		for _, entry := range entries {
-			if err = b.check(true); err != nil {
-				return err
-			}
 			name := entry.Name()
 			if !strings.HasPrefix(name, "pql-run-") {
 				continue
 			}
 			candidate, statErr := root.Lstat(name)
 			if statErr != nil {
-				return statErr
+				if errors.Is(statErr, os.ErrNotExist) {
+					continue
+				}
+				sweepReport(opts.Report, "cannot inspect", filepath.Join(parent, name), statErr)
+				continue
 			}
 			if !candidate.IsDir() {
 				continue
 			}
 			process, groups, found, processErr := published(root, name)
 			if processErr != nil {
-				return fmt.Errorf("inspect workspace %q: %w", filepath.Join(parent, name), processErr)
+				if !errors.Is(processErr, os.ErrNotExist) {
+					sweepReport(opts.Report, "cannot inspect", filepath.Join(parent, name), processErr)
+				}
+				continue
 			}
 			if !found {
 				continue
 			}
 			start, lookupErr := lookup(process.PID)
 			if lookupErr != nil && !errors.Is(lookupErr, os.ErrNotExist) {
-				return lookupErr
+				uncertainLookups = errors.Join(uncertainLookups, lookupErr)
+				continue
 			}
 			if lookupErr == nil && start == process.StartTime {
 				continue
 			}
 			if err = endRecorded(groups, lookup, opts); err != nil {
-				return fmt.Errorf("end groups for workspace %q: %w", filepath.Join(parent, name), err)
+				var uncertain *lookupFailure
+				if errors.As(err, &uncertain) {
+					uncertainLookups = errors.Join(uncertainLookups, err)
+				}
+				sweepReport(opts.Report, "cannot end", filepath.Join(parent, name), err)
+				err = nil
+				continue
 			}
+			b := &budget{remaining: MaxWalkEntries, deadline: time.Now().Add(MaxWalkDuration), now: time.Now}
 			if err = removeEntry(root, name, b); err != nil {
-				return fmt.Errorf("remove workspace %q: %w", filepath.Join(parent, name), err)
+				sweepReport(opts.Report, "cannot remove", filepath.Join(parent, name), err)
+				err = nil
 			}
 		}
 		if readErr == io.EOF {
-			return nil
+			return uncertainLookups
 		}
 		if readErr != nil {
 			return readErr
@@ -160,22 +186,10 @@ func published(parent *os.Root, name string) (p Process, groups []Process, found
 		return p, nil, false, err
 	}
 	defer func() { err = errors.Join(err, root.Close()) }()
-	info, err := root.Lstat("process.json")
-	if errors.Is(err, os.ErrNotExist) {
+	data, err := readPublication(root)
+	if errors.Is(err, os.ErrNotExist) || errors.Is(err, errNotRegular) {
 		return p, nil, false, nil
 	}
-	if err != nil {
-		return p, nil, false, err
-	}
-	if !info.Mode().IsRegular() || info.Size() > 4096 {
-		return p, nil, false, nil
-	}
-	f, err := root.Open("process.json")
-	if err != nil {
-		return p, nil, false, err
-	}
-	data, err := io.ReadAll(io.LimitReader(f, 4097))
-	err = errors.Join(err, f.Close())
 	if err != nil {
 		return p, nil, false, err
 	}
@@ -238,4 +252,12 @@ func privateParent(parent string) error {
 		return errors.New("workspace parent must be user-owned mode 0700 directory")
 	}
 	return nil
+}
+
+// E-19 makes diagnostics best effort: an unavailable stderr cannot turn a
+// stale candidate's cleanup failure into a failure of the new run.
+func sweepReport(report io.Writer, action, path string, cause error) {
+	if _, err := fmt.Fprintf(report, "%s workspace %q: %q\n", action, path, cause.Error()); err != nil {
+		return
+	}
 }

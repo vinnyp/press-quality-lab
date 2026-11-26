@@ -193,7 +193,7 @@ func drain(r io.ReadCloser) *capture {
 }
 
 type process struct {
-	workspace                                              *throwaway.Workspace
+	workspace                                              GroupWorkspace
 	waitMu                                                 sync.Mutex
 	waited                                                 bool
 	result                                                 observe.Run
@@ -239,6 +239,9 @@ func (c *Copies) Start(inv Invocation) (Process, error) {
 }
 
 func (c *Copies) startWith(inv Invocation, launch func(string, []string, string, []string, string) (Process, error)) (Process, error) {
+	if inv.Workspace == nil {
+		return nil, fmt.Errorf("invocation workspace required")
+	}
 	if !c.launcher.unchanged() || !c.program.unchanged() {
 		return &process{changed: true}, nil
 	}
@@ -318,6 +321,7 @@ func spawn(path string, args []string, directory string, env []string, marker st
 		return nil, errors.Join(err, null.Close(), stdout.Close(), outWrite.Close(), stderr.Close(), errWrite.Close())
 	}
 	unix.CloseOnExec(queue)
+	// Stated limit: SIGKILL between ForkExec and RecordGroup can leave an unrecorded subject.
 	pid, spawnErr := syscall.ForkExec(path, args, &syscall.ProcAttr{Dir: directory, Env: env, Files: []uintptr{null.Fd(), outWrite.Fd(), errWrite.Fd()}, Sys: &syscall.SysProcAttr{Setsid: true}})
 	p := &process{pid: pid, queue: queue, marker: marker}
 	var registerErr error
@@ -503,16 +507,16 @@ func endGroup(pid int) error {
 func endGroupWith(kill func() (bool, error), lookup func() ([]groupMember, error)) error {
 	deadline := time.Now().Add(5 * time.Second)
 	for {
-		_, killErr := kill()
-		if killErr != nil && !errors.Is(killErr, unix.EPERM) {
-			return killErr
-		}
 		members, err := lookup()
 		if err != nil {
 			return err
 		}
 		if groupEnded(members) {
 			return nil
+		}
+		_, killErr := kill()
+		if killErr != nil && !errors.Is(killErr, unix.EPERM) {
+			return killErr
 		}
 		if time.Now().After(deadline) {
 			return errors.Join(fmt.Errorf("process group did not end"), killErr)

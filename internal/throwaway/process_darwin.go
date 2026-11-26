@@ -12,11 +12,8 @@ import (
 // ProcessStart uses the kernel's creation timestamp, including microseconds.
 func ProcessStart(pid int) (string, error) {
 	procs, err := unix.SysctlKinfoProcSlice("kern.proc.pid", pid)
-	if errors.Is(err, unix.ESRCH) {
-		return "", os.ErrNotExist
-	}
 	if err != nil {
-		return "", err
+		return "", processLookupError(err)
 	}
 	if len(procs) == 0 {
 		return "", os.ErrNotExist
@@ -32,10 +29,6 @@ func ProcessStart(pid int) (string, error) {
 func EndGroup(pid int) error {
 	deadline := time.Now().Add(5 * time.Second)
 	for {
-		killErr := unix.Kill(-pid, unix.SIGKILL)
-		if killErr != nil && !errors.Is(killErr, unix.ESRCH) && !errors.Is(killErr, unix.EPERM) {
-			return killErr
-		}
 		procs, err := unix.SysctlKinfoProcSlice("kern.proc.pgrp", pid)
 		if err != nil {
 			return err
@@ -49,6 +42,10 @@ func EndGroup(pid int) error {
 		if !live {
 			return nil
 		}
+		killErr := unix.Kill(-pid, unix.SIGKILL)
+		if killErr != nil && !errors.Is(killErr, unix.ESRCH) && !errors.Is(killErr, unix.EPERM) {
+			return killErr
+		}
 		if time.Now().After(deadline) {
 			return errors.Join(fmt.Errorf("process group %d did not end", pid), killErr)
 		}
@@ -59,3 +56,7 @@ func EndGroup(pid int) error {
 func openAt(dir int, name string, flags int, mode uint32) (int, error) {
 	return unix.Openat(dir, name, flags, mode)
 }
+
+func renameAt(fd int, from, to string) error { return unix.Renameat(fd, from, fd, to) }
+
+func unlinkAt(fd int, name string) error { return unix.Unlinkat(fd, name, 0) }

@@ -6,10 +6,16 @@ import "github.com/vinnyp/press-quality-lab/internal/throwaway"
 
 import "github.com/vinnyp/press-quality-lab/internal/observe"
 
+// GroupWorkspace records groups before handoff and forgets them after reaping.
+type GroupWorkspace interface {
+	RecordGroup(throwaway.Process) error
+	ForgetGroup(int) error
+}
+
 // Invocation supplies a resolved profile and the exact program words. The loop
 // owns home creation, environment construction and invocation sequencing.
 type Invocation struct {
-	Workspace                  *throwaway.Workspace
+	Workspace                  GroupWorkspace
 	Paths                      Paths
 	Words, Env                 []string
 	Directory                  string

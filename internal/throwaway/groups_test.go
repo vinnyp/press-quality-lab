@@ -94,7 +94,7 @@ func TestSweepGroupFailureRetries(t *testing.T) {
 		return "group", nil
 	}
 	failed := errors.New("group did not end")
-	if err := Sweep(parent, lookup, SweepOptions{End: func(int) error { return failed }}); !errors.Is(err, failed) {
+	if err := Sweep(parent, lookup, SweepOptions{End: func(int) error { return failed }}); err != nil {
 		t.Fatalf("got %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(w.Path(), "process.json")); err != nil {

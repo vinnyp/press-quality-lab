@@ -223,3 +223,41 @@ func setNoACL(t *testing.T, path string) {
 		t.Fatalf("ACL teardown: %v", status)
 	}
 }
+
+func protectRaceOutside(t *testing.T, path string) func() {
+	t.Helper()
+	pid, err := syscall.ForkExec("/bin/chmod", []string{"chmod", "+a", "everyone deny delete", path}, &syscall.ProcAttr{Files: []uintptr{0, 1, 2}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var status syscall.WaitStatus
+	if _, err := syscall.Wait4(pid, &status, 0, nil); err != nil {
+		t.Fatal(err)
+	}
+	if status != 0 {
+		t.Fatalf("race ACL setup: %v", status)
+	}
+	if err := unix.Chflags(path, unix.UF_IMMUTABLE); err != nil {
+		t.Fatal(err)
+	}
+	var before unix.Stat_t
+	if err := unix.Lstat(path, &before); err != nil {
+		t.Fatal(err)
+	}
+	acl := aclBytes(t, path)
+	t.Cleanup(func() {
+		if err := unix.Chflags(path, 0); err != nil {
+			t.Error(err)
+		}
+		setNoACL(t, path)
+	})
+	return func() {
+		var after unix.Stat_t
+		if err := unix.Lstat(path, &after); err != nil {
+			t.Fatal(err)
+		}
+		if after.Flags != before.Flags || !bytes.Equal(acl, aclBytes(t, path)) {
+			t.Fatal("outside race flags or ACL changed")
+		}
+	}
+}
