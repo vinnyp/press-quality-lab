@@ -85,6 +85,11 @@ RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
 # An integer means observation support, needed only at that invocation's serving level.
 # override means the QS5 step after level 8, independent of its level-2 step.
 BUILD_PHASE = {
+    'QD2.bounds': 8,
+    'QD3': 8,
+    'QD5': 8,
+    'QO7.discovery': 8,
+    'QO7.planted_secret': 7,
     'QS5.final_override': 'override',
     'QS5.qd3_trigger': 'override',
     'QS8.safe_read': 'safe_read',
@@ -381,7 +386,20 @@ def check_ending(level, built, subject, preimage, gaps):
         if keys:
             return ending(70, keys, 'observation')
         applies = current == 1 or trigger(current, subject, preimage)
-        if current not in built['levels'] and applies:
+        capabilities = names(built.get('builds', []))
+        # QO7 combines planted-secret runs before their level-7 result is known.
+        if (current == 7 and preimage['probe'] == 'planted_secret' and applies and
+                current in built['levels'] and
+                not supports(capabilities, 'QO7.planted_secret')):
+            return ending(70, ['QO7'], 'sentinel')
+        discovery_built = (current == 8 and preimage['probe'] == 'discovery' and
+                           all(supports(capabilities, token) for token in (
+                               'QD2.bounds',
+                               'QD3',
+                               'QD5',
+                               'QO7.discovery',
+                           )))
+        if current not in built['levels'] and applies and not discovery_built:
             return ending(70, level_rules(current), 'sentinel')
     return ending(None, level_rules(level))
 
