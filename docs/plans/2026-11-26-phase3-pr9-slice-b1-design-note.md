@@ -17,8 +17,8 @@ This note follows the slice a note, `docs/plans/2026-11-25-phase3-pr8-slice-a-de
   - QO1 holds grade-wide;
   - the binary is a placeholder;
   - the private copy changed (QE8, `collection-contract.md` line 172).
-- **How discovery decides (U11).** When the engine could not confine any help request, QO1 decides discovery at level 1 (E-29). Otherwise each help request's end goes through level 7's per-invocation rules (QO2 to QO4), and the first such request in QD2's order decides discovery at level 7 (QO7). Every other end of a request, including a crash, a non-zero exit, an engine kill outside the budget and a `SIGKILL` with a memory or code-signing exit detail, is QD5 (QO7, line 163; the plan's KTD11 is amended to match).
-  - **QD4** is level 3. It holds only when the walk ran to its end, no help request was decided by QO1 to QO4, no help was unreadable (QD5), no bound of QD2 stopped the walk, and a declared command was not found. It then decides discovery and every other generated check. A walk cut short by a bound or an unreadable help leaves the other generated checks to their own invocations, whatever level decides discovery's own check (E-30).
+- **How discovery decides (U11).** When the engine could not confine one or more help requests, QO1 decides discovery at level 1 (E-29), ahead of an earlier request that QO2 to QO4 decide. Otherwise each help request's end goes through level 7's per-invocation rules (QO2 to QO4), and the first such request in QD2's order decides discovery at level 7 (QO7). Every other end of a request, including a crash, a non-zero exit, an engine kill outside the budget and a `SIGKILL` with a memory or code-signing exit detail, is QD5 (QO7, line 163; the plan's KTD11 is amended to match).
+  - **QD4** is level 3. It holds only when the walk ran, no help request was decided by QO1 to QO4, no bound of QD2 stopped the walk, neither case of QD5 holds for any help (an unreadable help, or a bare help with no section while commands are declared), and a declared command was not found. It then decides discovery and every other generated check. When a bound stopped the walk or a case of QD5 holds, the other generated checks stand on their own invocations, whatever level decides discovery's own check (E-30).
   - **QD3 and QD5, and the walk's bounds,** decide discovery at level 8.
 - **QS5's QD3 trigger (U11).** A command discovery found but the file does not declare makes every otherwise held check on an always-applicable dimension `placeholder_unfilled`. This holds only when every declared command was found, and it comes after every runbook, as the final override does.
 - **The invocation outcome rules (U44).**
@@ -40,7 +40,7 @@ This note follows the slice a note, `docs/plans/2026-11-25-phase3-pr8-slice-a-de
   - whether the system reported a memory or a code-signing kill.
 
   The darwin source keeps the raw exit detail as evidence, and an untagged decoder turns it into the memory and code-signing facts. The scripted source fills the same facts from the recording's `by` field, and applies QT4's `kill_attribution` overrides to them. A run whose `by` contradicts its marker makes the recording invalid, exit 2 (E-31). No source-specific file names a decision value (KTD13's guard).
-- **The loop serves invocations.** Discovery's walk observes each help request as it goes. For each other check that reaches level 7, the loop observes its invocations in QE8's target order. KTD2.6's trace records every served key.
+- **The loop serves invocations.** Discovery's walk observes each help request as it goes. For each other check that reaches level 7, as the prediction's per-check ending gives it, the loop observes its invocations in QE8's target order. A check decided at levels 1 to 5, stopped at QA7 (level 4) or QO6 (level 6), or whose level 7 is still an unbuilt sentinel, serves none. So the planted-secret probe serves no `planted`-home key until slice b2. KTD2.6's trace records every served key.
 
 ## Evidence rules
 
@@ -135,7 +135,7 @@ A rule leaves the list only when a test proves its whole text. Each mutation bel
 3. **The trace.** The served keys must equal a set derived from the case, never from the engine:
    - when the walk runs, discovery's help requests, in QD2's order. That order is derived by an independent reader of each recorded help's listing, not taken from `case.json`'s list, whose order QT5 does not fix;
    - when it does not, no discovery key, and one target that did not run;
-   - for every other check that reaches level 7, whether level 7 decides it, a later level does, or it stops at a level-8 sentinel, its targets.
+   - for every other check that reaches level 7 and whose level 7 is built, whether level 7 decides it, a later level does, or it stops at a level-8 sentinel, its targets that are invocations. A target named by a check's own id, as for a planted secret with no commands (`case-144`), is never a served key.
 
    Every check is gathered, so this is the whole run's set, for a pending case as for a predicted one. A key outside it, such as an invocation of a command whose class is a placeholder or of a check QD4 decides, fails the test.
 4. **Discovery's rules from the text, one row each:**
@@ -149,15 +149,17 @@ A rule leaves the list only when a test proves its whole text. Each mutation bel
    - a headingless help below the bare binary with a declared command under it (E-26);
    - a missing declared command (AE27).
 5. **QD4 against the other deciders,** in pairs that test each order the text sets:
-   - QD5 or a bound decides discovery while the walk also missed a declared command: the other generated checks stand on their own invocations (QD4's second sentence);
+   - QD5, either of its cases (`case-046`'s bare help with no section included), or a bound decides discovery while the walk also missed a declared command: the other generated checks stand on their own invocations (QD4's second sentence);
    - a help request below the bare binary is decided at level 7 while a declared command is missing: QD4 does not hold;
    - `declared_count` is a placeholder and a declared command is missing: the walk runs, and QD4 decides the other generated checks;
    - `declared_count` is a placeholder, a bound or an unreadable help cuts the walk short, and a declared command is missing: the other generated checks stand on their own invocations (E-30);
-   - `declared_count` is a placeholder and the bare `--help` is never confined: QO1 decides discovery (E-29).
+   - `declared_count` is a placeholder and the bare `--help` is never confined: QO1 decides discovery (E-29);
+   - a help request below the bare binary is decided by QO2, and a later sibling is never confined: QO1 decides discovery at level 1, not `could_not_start` (E-29);
+   - `declared_count` is a placeholder, a help below the bare binary exits non-zero but lists a command, and a declared command is never found: the other generated checks stand on their own invocations (E-30).
 6. **The attribution function.**
-   - **Unit rows** form a full table over the raw facts: marker seen or not, × exit or signal (`SIGKILL` or another), × engine kill, × budget expired, × still running at the budget, × exit detail. Each row cites the clause that sets its expected value (QH6, E-28, QH21, QO3, QO4 or QO5). Every row without the marker, an exit 0 and a non-zero exit included, expects QO1. The table includes the rows the scripted source cannot produce, and the exit-detail decoder has rows of its own.
+   - **Unit rows** form a full table over the raw facts: the marker seen or not, × the could-not-start marker seen or not, × exit or signal (`SIGKILL` or another), × engine kill, × budget expired, × still running at the budget, × exit detail. Each row cites the clause that sets its expected value (QH6, QH7, E-28, QH21, QO2, QO3, QO4 or QO5). Every row without the marker, an exit 0 and a non-zero exit included, expects QO1, which wins over QO2 by precedence. A combination no clause defines (a signal other than `SIGKILL` with an engine kill, "still running" without the budget expired, an exit with an exit detail) is made unrepresentable by the type where it can be, and otherwise expects an engine fault. The table includes the rows the scripted source cannot produce, and the exit-detail decoder has rows of its own.
    - **A seam check** feeds the scripted source's facts for every recorded invocation through the function. It compares the result with the recording's `by` field, or with the host's `kill_attribution` where one replaces it (`case-078`, `case-079`, `case-089`). This shows the reader and the function agree, not that either is right; the unit rows do that.
-7. **QS5's QD3 trigger** is tested in three cases:
+7. **QS5's QD3 trigger** is tested in four cases:
    - every declared command was found and one more was found: it triggers;
    - one declared command was missing: QD4 decides instead;
    - QD5 or a bound decides discovery while one more was found: it triggers (see the reading above);

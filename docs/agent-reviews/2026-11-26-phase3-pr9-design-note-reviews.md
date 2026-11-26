@@ -47,7 +47,7 @@
 | 15 | The KTD11 amendment also settled a planted-secret engine kill, which the text leaves open, in a direction that could pass an engine fault | Confirmed: only QO5 and QO6 name an engine kill outside the budget | The amendment is limited to discovery; the planted-secret reading goes to the owner before U37 |
 | 16 | E-28 had no test row, and "before the marker" was missing from QD5's rows | Confirmed | Control 6 is a full raw-fact table with each row's clause; QD5's rows say "after the marker" |
 | 17 | The trace control tested containment, and its expected set left out checks that stop at a level-8 sentinel | Confirmed against QT5 | Control 3 compares an exact, case-derived set, with the help order from an independent reader |
-| 18 | The planted secret's level-8 list was QO7, not the probe table's QP10 to QP13, so the note's table did not match the JSON | Reproduced | Lists tied to the table, the test reads the table, and the note's table is regenerated |
+| 18 | The planted secret's level-8 list was QO7, not the probe table's QP10 to QP13, so the note's table did not match the JSON | Reproduced | Lists tied to the table, the test holds the table's rows as literals citing its lines, and the note's table is regenerated |
 | 19 | E-28's wording also covered computations, against QO6 | Confirmed | Scoped to the subject |
 | 20 | A help request's QO1 sat at both level 1 and level 7 | Two-way | Put to the owner, who ruled E-29: QO1 at level 1 wins |
 | 21 | QD4's second sentence when level 2 decides discovery | Two-way | Put to the owner, who ruled E-30: the walk's facts decide |
