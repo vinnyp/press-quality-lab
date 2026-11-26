@@ -132,6 +132,10 @@ A rule leaves the list only when a test proves its whole text. The mutation belo
    - Mutation: skip the containment check after resolving.
 7. **Level 2 and the runner agree, independently.** U10 completes `internal/decide`'s level 2. The corpus runner's placeholder classifier, `decide`'s level 2 and the prediction script's dependency test are three implementations, each written separately from QS5's text, and neither imports another. A test compares them on every case, and where they disagree the text decides (KTD2.8). Once U39 fixes every preimage, the level 3 and level 4 sentinels stop accepting a preimage that lacks `probe` or `earlier`: a missing key is an engine fault.
 
+## Readings the build settled from the text
+
+- **The bare binary as a secret command.** An undeclared bare binary may be a secret command. QS6 says a secret command "must name a command the file declares, or be the bare binary itself" (`collection-rules.md` line 89). QP10's "equal to a declared command's words (QS6)" (line 229) refers to that rule. Line 35 makes the bare binary "a command of every subject, whether or not the file declares it", and it is `safe` without an entry (judge errata E-4). So `commands: []` with `secret.commands: [[]]` is accepted, and secret words that no command has are refused under QS6.
+
 ## Stated limits of this slice
 
 - QA5's place in the README is reviewed by eye; its text is tested.
