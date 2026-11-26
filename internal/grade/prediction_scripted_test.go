@@ -78,9 +78,17 @@ func TestPredictedCheckEndings(t *testing.T) {
 			o := Options{SubjectFile: filepath.Join(layout.Subject, c.Input.SubjectFile), Scope: c.Input.Scope, Baseline: layout.Baseline, Anchor: c.Input.Request == "anchor", Scripted: true}
 			in, err := planningInput(o, s)
 			if err != nil {
-				t.Fatal(err)
+				var fault *Error
+				if prediction.Ending.Phase != "safe_read" || !errors.As(err, &fault) || fault.Code != 70 || !allowedRule(prediction.Ending, fault.Rule) {
+					t.Fatalf("snapshot %v; want %+v", err, prediction.Ending)
+				}
+				counts["safe_read"]++
+				return
 			}
-			p, err := plan.Build(in)
+			if prediction.Ending.Phase == "safe_read" {
+				t.Fatal("predicted safe-read refusal reached planning")
+			}
+			p, err := plan.Build(in.Input)
 			if err != nil {
 				var gap *plan.Gap
 				if !errors.As(err, &gap) || !allowedRule(prediction.Ending, gap.Rule) {
@@ -161,7 +169,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 			counts["decide"]++
 		})
 	}
-	if !reflect.DeepEqual(counts, map[string]int{"decide": 94, "planning": 24, "derivation": 31}) {
+	if !reflect.DeepEqual(counts, map[string]int{"decide": 94, "planning": 24, "derivation": 29, "safe_read": 2}) {
 		t.Fatalf("phase counts %v", counts)
 	}
 }

@@ -20,6 +20,7 @@ type Error struct {
 	Rule, Detail string
 }
 
+func (e *Error) RuleID() string        { return e.Rule }
 func (e *Error) Error() string         { return fmt.Sprintf("%s: %s", e.Rule, e.Detail) }
 func reject(rule, detail string) error { return &Error{Code: 2, Rule: rule, Detail: detail} }
 

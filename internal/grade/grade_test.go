@@ -227,7 +227,7 @@ func TestFunnel(t *testing.T) {
 					return nil
 				}
 				if row == "Fault" {
-					return nil, close, errors.New("QT5: missing invocation")
+					return nil, close, failure(70, "QT5", "missing invocation")
 				}
 				return source{panicControls: row == "CollectorPanic"}, close, nil
 			}

@@ -151,3 +151,27 @@ func TestWorkspacePrivateParent(t *testing.T) {
 		t.Fatalf("failed publication left %d entries", len(entries))
 	}
 }
+
+func TestCanonicalPath(t *testing.T) {
+	// QE17: require a clean absolute subject path before creating any record.
+	s, err := New(filepath.Join(t.TempDir(), "store"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"subject.json", "/synthetic/../subject.json", "/synthetic/./subject.json"} {
+		if _, err := s.Write(Record{SubjectFilePath: path}); !errors.Is(err, ErrNotStored) || !strings.Contains(err.Error(), "canonical subject path required") {
+			t.Fatalf("%q: %v", path, err)
+		}
+	}
+	path, err := s.Write(Record{SubjectFilePath: "/synthetic/subject.json"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"subject_file_path":"/synthetic/subject.json"`) {
+		t.Fatalf("control: %s", b)
+	}
+}

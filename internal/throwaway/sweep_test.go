@@ -153,7 +153,11 @@ func TestInvalidPublication(t *testing.T) {
 }
 func TestPublishRequiresIdentity(t *testing.T) {
 	// QE20: publication includes both the process id and its kernel start time.
-	w, err := Create(t.TempDir())
+	parent := t.TempDir()
+	if err := os.Chmod(parent, 0700); err != nil {
+		t.Fatal(err)
+	}
+	w, err := Create(parent)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,6 +165,16 @@ func TestPublishRequiresIdentity(t *testing.T) {
 		if err := w.Publish(p); err == nil {
 			t.Fatal("invalid identity published")
 		}
+	}
+	if err := w.Publish(Process{PID: 41, StartTime: "valid"}); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(w.Path(), "process.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "{\"pid\":41,\"start_time\":\"valid\"}\n" {
+		t.Fatalf("publication %s", data)
 	}
 }
 func TestSweepRequiresPrivateParent(t *testing.T) {

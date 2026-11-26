@@ -104,12 +104,30 @@ func TestFacts(t *testing.T) {
 func TestStrictReading(t *testing.T) {
 	// QS2: each strict-reading clause and an otherwise unnamed schema refusal.
 	b := baseline(t)
+	literal := func(raw string) []byte {
+		o := parsedFixture(t)
+		firstCheck(o)["expected"] = strictjson.Object{"literal": "REPLACE_LITERAL"}
+		return []byte(strings.Replace(string(strictjson.Write(o)), `"REPLACE_LITERAL"`, raw, 1))
+	}
+	// The literal sits under eight containers; 57 nested arrays make depth 65.
+	for name, raw := range map[string]string{
+		"depth_at_bound":    strings.Repeat("[", 56) + "0" + strings.Repeat("]", 56),
+		"number_at_bound":   strings.Repeat("1", 32),
+		"exponent_at_bound": "1e0001",
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := Parse(literal(raw)); err != nil {
+				t.Fatalf("at bound: %v", err)
+			}
+		})
+	}
+
 	inputs := map[string][]byte{
 		"duplicate": append([]byte(`{"subject_file_version":"1.0",`), b[1:]...),
-		"utf8":      {0xff}, "surrogate": []byte(`"\ud800"`), "trailing": append(append([]byte{}, b...), '0'),
+		"utf8":      {0xff}, "surrogate": []byte(strings.Replace(string(b), `"none"`, `"\ud800"`, 1)), "trailing": append(append([]byte{}, b...), '0'),
 		"size":          []byte(strings.Repeat(" ", 16<<20) + string(b)),
-		"depth":         []byte(strings.Repeat("[", 65) + strings.Repeat("]", 65)),
-		"number_length": []byte(strings.Repeat("1", 33)), "exponent": []byte(`1e00001`), "syntax": []byte(`{"x":01}`),
+		"depth":         literal(strings.Repeat("[", 57) + "0" + strings.Repeat("]", 57)),
+		"number_length": literal(strings.Repeat("1", 33)), "exponent": literal(`1e00001`), "syntax": []byte(`{"x":01}`),
 		"schema": []byte(strings.Replace(string(b), `"version": "none"`, `"version": 0`, 1)),
 	}
 	for name, b := range inputs {

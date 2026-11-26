@@ -84,6 +84,8 @@ RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
 # None means pre-collection construction/pre-check; record means after collection.
 # An integer means observation support, needed only at that invocation's serving level.
 BUILD_PHASE = {
+    'QS8.safe_read': 'safe_read',
+    'QS9.safe_read': 'safe_read',
     'QE2.slice': None, 'QE2.placeholders': None, 'QE2.captures': None,
     'QE3.declared_commands': None, 'QE3.runbooks': None, 'QE3.scope': None,
     'QE3.placeholder_candidates': None, 'QP1': None,
@@ -388,6 +390,53 @@ def required_dependencies(subject, document, preimages):
                 'QE2', 'QE3', 'QE4', 'QE5', 'QE6', 'QE7', 'QP1', 'QA9', 'QA3', 'QA7'}}
 
 
+def safe_read_refusal(case, directory, built):
+    """Pre-collection safe-read faults, before planning and the pre-check.
+
+    Corpus inputs are assembled from the named form plus fixture overlays.
+    This phase models read safety only; store/seed relations remain U9 work.
+    """
+    subject = load(directory / case['input']['subject_file'])
+    capabilities = names(built['builds'])
+    if supports(capabilities, 'QS8.safe_read'):
+        named = [subject.get('binary')]
+
+        def visit(value):
+            if isinstance(value, dict):
+                if 'argv' in value:
+                    named.extend(value.get('declared_files', []))
+                    if value['argv'] and not value['argv'][0].startswith('/'):
+                        named.append(value['argv'][0])
+                for child in value.values():
+                    visit(child)
+            elif isinstance(value, list):
+                for child in value:
+                    visit(child)
+        visit(subject)
+        for name in named:
+            if not isinstance(name, str):
+                continue
+            parts = []
+            unsafe = name.startswith('/')
+            for part in name.split('/'):
+                if part == '..':
+                    if not parts:
+                        unsafe = True
+                    else:
+                        parts.pop()
+                elif part not in ('', '.'):
+                    parts.append(part)
+            if unsafe:
+                return 'QS8'
+    seed = subject.get('seed')
+    if isinstance(seed, str) and supports(capabilities, 'QS9.safe_read'):
+        for fixture in case['input'].get('fixtures', []):
+            if (fixture['kind'] == 'link' and
+                    (fixture['path'] == seed or fixture['path'].startswith(seed + '/'))):
+                return 'QS9'
+    return None
+
+
 def predict_case(directory, built):
     case = load(directory / 'case.json')
     row = {'case': case['id'], 'kind': case['kind'], 'predicted': False}
@@ -444,6 +493,14 @@ def predict_case(directory, built):
                     ['builds lacks ' + r for r in sorted(record)])
         result = {'levels': sorted({c['deciding_level'] for c in checks}),
                   'blockers': blockers, 'detail': '', 'checks': checks, 'ending': case_end}
+    # Built schema refusals precede filesystem snapshots. Pending semantic
+    # refusals can instead encounter a safe-read engine fault.
+    if result['blockers']:
+        refusal = safe_read_refusal(case, directory, built)
+        if refusal:
+            result['ending'] = ending(70, [refusal], 'safe_read')
+            result['blockers'] = ['safe-read refusal: ' + refusal]
+            result['checks'] = []
     return dict(row, **result, predicted=not result['blockers'])
 
 
