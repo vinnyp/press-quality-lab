@@ -126,12 +126,11 @@ func (c *Copies) CopyPaths() (launcher, program string) {
 	return c.launcher.path, c.program.path
 }
 
-// StreamCap is an interim per-stream memory cap. U30 owns final heads,
-// counts and digests; drains continue consuming every byte beyond this cap.
+// StreamCap is QE10's per-stream keep bound; drains count every byte.
 const StreamCap = 1 << 20
 
 // PostExitDrainGrace bounds inherited writers after group ending and reap.
-// U30 owns the final draining design.
+// This also bounds writers that escaped a computation's process group.
 const PostExitDrainGrace = 100 * time.Millisecond
 
 type capture struct {
@@ -155,7 +154,9 @@ func (c *capture) setDeadline(deadline time.Time) error {
 	return c.reader.SetReadDeadline(deadline)
 }
 
-func drain(r io.ReadCloser) *capture {
+func drain(r io.ReadCloser) *capture { return drainLimit(r, StreamCap) }
+
+func drainLimit(r io.ReadCloser, limit int) *capture {
 	c := &capture{done: make(chan struct{})}
 	if reader, ok := r.(*os.File); ok {
 		c.reader = reader
@@ -177,7 +178,7 @@ func drain(r io.ReadCloser) *capture {
 		for {
 			n, err := r.Read(buf)
 			c.seen += int64(n)
-			keep := min(n, StreamCap-len(c.head))
+			keep := min(n, limit-len(c.head))
 			c.head = append(c.head, buf[:keep]...)
 			if err != nil {
 				if errors.Is(err, os.ErrDeadlineExceeded) {
@@ -198,6 +199,9 @@ type process struct {
 	waited                                                 bool
 	result                                                 observe.Run
 	waitError                                              error
+	budgetTimer                                            *time.Timer
+	budgetError                                            error
+	budgetExpired, runningAtBudget                         bool
 	pid, queue                                             int
 	stdout, stderr                                         *capture
 	marker                                                 string
@@ -249,7 +253,11 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if err != nil {
 		return nil, err
 	}
-	hidden, err := LauncherArgs(marker, c.program.path, inv.Words, inv.Env)
+	environment, err := invocationEnvironment(inv.Paths.Values["HOME"], os.Getuid(), inv.Env)
+	if err != nil {
+		return nil, err
+	}
+	hidden, err := LauncherArgs(marker, c.program.path, inv.Words, environment)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +279,7 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if err != nil {
 		return nil, err
 	}
-	if err := argumentSize(append([]string{c.program.path}, inv.Words...), inv.Env, int(limit)); err != nil {
+	if err := argumentSize(append([]string{c.program.path}, inv.Words...), environment, int(limit)); err != nil {
 		return nil, err
 	}
 	argv, env := append([]string{SandboxExec}, args...), EngineEnvironment()
@@ -300,6 +308,13 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 		}
 		real.workspace = inv.Workspace
 	}
+	if inv.Budget > 0 {
+		real, ok := p.(*process)
+		if !ok {
+			return nil, fmt.Errorf("budget requires recordable process")
+		}
+		real.armBudget(inv.Budget)
+	}
 	return p, nil
 }
 
@@ -312,7 +327,8 @@ func spawn(path string, args []string, directory string, env []string, marker st
 	if err != nil {
 		return nil, errors.Join(err, stdout.Close(), outWrite.Close())
 	}
-	null, err := os.Open(os.DevNull)
+	plan := planLaunch(directory, env)
+	null, err := os.Open(plan.stdin)
 	if err != nil {
 		return nil, errors.Join(err, stdout.Close(), outWrite.Close(), stderr.Close(), errWrite.Close())
 	}
@@ -322,7 +338,9 @@ func spawn(path string, args []string, directory string, env []string, marker st
 	}
 	unix.CloseOnExec(queue)
 	// Stated limit: SIGKILL between ForkExec and RecordGroup can leave an unrecorded subject.
-	pid, spawnErr := syscall.ForkExec(path, args, &syscall.ProcAttr{Dir: directory, Env: env, Files: []uintptr{null.Fd(), outWrite.Fd(), errWrite.Fd()}, Sys: &syscall.SysProcAttr{Setsid: true}})
+	plan.attributes.Files = []uintptr{null.Fd(), outWrite.Fd(), errWrite.Fd()}
+	plan.attributes.Sys = &syscall.SysProcAttr{Setsid: plan.newSession}
+	pid, spawnErr := syscall.ForkExec(path, args, &plan.attributes)
 	p := &process{pid: pid, queue: queue, marker: marker}
 	var registerErr error
 	if spawnErr == nil {
@@ -335,7 +353,9 @@ func spawn(path string, args []string, directory string, env []string, marker st
 	if spawnErr != nil {
 		return nil, errors.Join(spawnErr, closeErr, unix.Close(queue), stdout.Close(), stderr.Close())
 	}
-	p.stdout, p.stderr = drain(stdout), drain(stderr)
+	p.stdout = drain(stdout)
+	// Reserve space for both protocol lines before applying the subject cap.
+	p.stderr = drainLimit(stderr, StreamCap+len(MarkerPrefix+marker+"\n")+len(FailurePrefix+marker+"\n"))
 	if err := errors.Join(registerErr, closeErr); err != nil {
 		killErr := p.Kill()
 		_, waitErr := p.Wait()
@@ -371,6 +391,10 @@ func killGroup(pgid int) (bool, error) {
 func (p *process) Kill() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	return p.killLocked()
+}
+
+func (p *process) killLocked() error {
 	if p.changed || p.reaped {
 		return nil
 	}
@@ -397,6 +421,28 @@ func (p *process) Kill() error {
 	}
 	return err
 }
+
+func (p *process) armBudget(budget time.Duration) {
+	p.budgetTimer = time.AfterFunc(budget, p.expireBudget)
+}
+
+// expireBudget samples the unreaped leader under the same lock as engine kills.
+func (p *process) expireBudget() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.reaped || p.observed {
+		return
+	}
+	p.budgetExpired = true
+	proc, err := unix.SysctlKinfoProc("kern.proc.pid", p.pid)
+	if err != nil {
+		p.budgetError = err
+		return
+	}
+	p.runningAtBudget = proc.Proc.P_stat != zombieState
+	p.budgetError = p.killLocked()
+}
+
 func (p *process) Wait() (observe.Run, error) {
 	p.waitMu.Lock()
 	defer p.waitMu.Unlock()
@@ -442,8 +488,12 @@ func (p *process) wait() (observe.Run, error) {
 	if waitErr != nil {
 		waitErr = errors.Join(waitErr, p.Kill())
 	}
+	if p.budgetTimer != nil {
+		p.budgetTimer.Stop()
+	}
 	p.mu.Lock()
 	killed := p.killed
+	budgetExpired, runningAtBudget, budgetErr := p.budgetExpired, p.runningAtBudget, p.budgetError
 	p.observed = true
 	groupErr := endGroup(p.pid)
 	var status syscall.WaitStatus
@@ -458,7 +508,7 @@ func (p *process) wait() (observe.Run, error) {
 		p.reaped = true
 	}
 	p.mu.Unlock()
-	run := observe.Run{End: observe.End{Code: status.ExitStatus(), ExitDetail: detail, EngineKilled: killed}}
+	run := observe.Run{End: observe.End{Code: status.ExitStatus(), ExitDetail: detail, EngineKilled: killed, BudgetExpired: budgetExpired, RunningAtBudget: runningAtBudget}}
 	if status.Signaled() {
 		run.End.Signal = int(status.Signal())
 	}
@@ -478,14 +528,15 @@ func (p *process) wait() (observe.Run, error) {
 	run.OutputCutAfterExit = p.stdout.cutAfterExit || p.stderr.cutAfterExit
 	run.Stdout = p.stdout.head
 	run.StdoutSeen, run.StderrSeen = p.stdout.seen, p.stderr.seen
-	run.StdoutCut, run.StderrCut = p.stdout.seen > StreamCap, p.stderr.seen > StreamCap
 	run.Markers, run.Stderr = observe.ParseMarkers(p.stderr.head, MarkerPrefix+p.marker, FailurePrefix+p.marker)
 	run.StderrSeen -= int64(len(p.stderr.head) - len(run.Stderr))
+	run.Stderr = run.Stderr[:min(len(run.Stderr), StreamCap)]
+	run.StdoutCut, run.StderrCut = run.StdoutSeen > StreamCap, run.StderrSeen > StreamCap
 	var forgetErr error
 	if p.workspace != nil && groupErr == nil && reapErr == nil {
 		forgetErr = p.workspace.ForgetGroup(p.pid)
 	}
-	return run, errors.Join(forgetErr, deadlineErr, waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
+	return run, errors.Join(budgetErr, forgetErr, deadlineErr, waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
 }
 
 func groupMembers(pid int) ([]groupMember, error) {
