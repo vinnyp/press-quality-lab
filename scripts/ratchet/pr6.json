@@ -168,6 +168,14 @@
     {
       "rule": "QA3.slice",
       "why": "U33 fixes the slice required entries, including crediting in 003/004; capture and full route crediting remain with U39."
+    },
+    {
+      "rule": "QS8.safe_read",
+      "why": "Planning snapshots named regular files within the subject directory before the pre-check; unsafe reads exit 70 pending U9."
+    },
+    {
+      "rule": "QS9.safe_read",
+      "why": "Planning refuses seed links and special files before opening them; unsafe reads exit 70 pending U9."
     }
   ]
 }

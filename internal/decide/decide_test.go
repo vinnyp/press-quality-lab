@@ -64,7 +64,7 @@ func TestTriggers(t *testing.T) {
 	// QD4: generated checks only.
 	// QA7: an earlier runbook step.
 	// QH8: any private copy can change.
-	// QO6: expected computation or capture.
+	// QO6: expected computation, precondition or capture.
 	// QO2: invocation-level rules only for a check with invocations.
 	// QA9: own rule is always reached when earlier levels pass.
 	p := corpusPlan(t, "case-004")
@@ -92,6 +92,8 @@ func TestTriggers(t *testing.T) {
 		{"Earlier", 4, earlier, &generated, "QA7"},
 		{"PrivateCopy", 5, authored, nil, "QH8"},
 		{"Computation", 6, computation, &generated, "QO6"},
+		{"Precondition", 6, plan.Check{Preimage: plan.Object{"expected": plan.Object{"precondition": plan.Object{"argv": plan.Array{"/bin/echo"}}}}}, &generated, "QO6"},
+		{"Captures", 6, plan.Check{Preimage: plan.Object{"expected": plan.Object{"literal": plan.Object{"captures": plan.Array{"step"}}}}}, &generated, "QO6"},
 		{"Invocation", 7, authored, &empty, "QO2"},
 		{"OwnRule", 8, authored, nil, "QA9"},
 	} {

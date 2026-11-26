@@ -20,6 +20,23 @@ class PredictorTests(unittest.TestCase):
     def case(self, number, built=None):
         return predictor.predict_case(KIT / 'cases' / f'case-{number:03d}', built or BUILT)
 
+    def test_safe_read_phase(self):
+        # QS8, QS9: safe snapshots stop before planning; semantic store checks wait.
+        for number, rule in ((110, 'QS8'), (112, 'QS9')):
+            with self.subTest(number=number):
+                row = self.case(number)
+                self.assertEqual(row['ending'], {
+                    'exit_code': 70, 'rules': [rule], 'phase': 'safe_read'})
+                self.assertFalse(row['predicted'])
+                built = copy.deepcopy(BUILT)
+                built['builds'] = [r for r in built['builds']
+                                   if r['rule'] != rule + '.safe_read']
+                self.assertNotEqual(self.case(number, built)['ending']['phase'], 'safe_read')
+        self.assertNotEqual(self.case(111)['ending']['phase'], 'safe_read')
+        case = predictor.load(KIT / 'cases/case-112/case.json')
+        case['input']['fixtures'] = []
+        self.assertIsNone(predictor.safe_read_refusal(case, KIT / 'cases/case-112', BUILT))
+
     def test_level_two_is_required_and_changes_prediction(self):
         built = copy.deepcopy(BUILT)
         # U39's construction capabilities are supplied independently of levels.
@@ -336,11 +353,11 @@ class PredictorTests(unittest.TestCase):
             self.assertEqual(self.case(3, built)['ending'],
                              {'exit_code': 70, 'rules': [rule], 'phase': 'record'})
             self.assertEqual(self.case(59, built)['ending']['phase'], 'sentinel')
-        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 6, 7, 'record'})
+        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 6, 7, 'record', 'safe_read'})
         for rule in predictor.names(BUILT['builds']):
             self.assertEqual(sum(rule in {r for r, phase in predictor.BUILD_PHASE.items()
                                          if phase == candidate}
-                                 for candidate in (None, 6, 7, 'record')), 1)
+                                 for candidate in (None, 6, 7, 'record', 'safe_read')), 1)
 
     def test_reason_table_covers_corpus(self):
         observed = set()

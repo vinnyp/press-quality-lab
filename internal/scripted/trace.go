@@ -4,7 +4,6 @@ package scripted
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
@@ -74,10 +73,10 @@ func (t *Trace) append(kind string, value any) error {
 }
 func (t *Trace) Required(value any) error {
 	if t.required {
-		return fmt.Errorf("QT5: required trace already fixed")
+		return &Error{Code: 70, Rule: "QT5", Detail: "required trace already fixed"}
 	}
 	if _, ok := wire(value).(array); !ok {
-		return fmt.Errorf("QT5: required trace must be an array")
+		return &Error{Code: 70, Rule: "QT5", Detail: "required trace must be an array"}
 	}
 	if err := t.append("required", value); err != nil {
 		return err
@@ -87,16 +86,16 @@ func (t *Trace) Required(value any) error {
 }
 func (t *Trace) Served(key observe.Key) error {
 	if !t.required && t.writer != nil {
-		return fmt.Errorf("QT5: invocation before required trace")
+		return &Error{Code: 70, Rule: "QT5", Detail: "invocation before required trace"}
 	}
 	return t.append("served", key)
 }
 func (t *Trace) Home(home string) error {
 	if !t.required {
-		return fmt.Errorf("QT5: home before required trace")
+		return &Error{Code: 70, Rule: "QT5", Detail: "home before required trace"}
 	}
 	if home == "" {
-		return fmt.Errorf("QT5: empty home trace")
+		return &Error{Code: 70, Rule: "QT5", Detail: "empty home trace"}
 	}
 	return t.append("home", home)
 }

@@ -35,6 +35,7 @@ type Error struct {
 	Rule, Cause string
 }
 
+func (e *Error) RuleID() string                   { return e.Rule }
 func (e *Error) Error() string                    { return "rejected: " + e.Rule + ": " + Escape(e.Cause) }
 func failure(code int, rule, cause string) *Error { return &Error{code, rule, cause} }
 
@@ -58,7 +59,7 @@ type ReleasedSource struct{}
 
 func (ReleasedSource) Controls() (observe.Controls, error) { return observe.Controls{}, nil }
 func (ReleasedSource) Observe(observe.Key, observe.Spec) (observe.Run, error) {
-	return observe.Run{}, errors.New("QO1: released source must never observe")
+	return observe.Run{}, failure(70, "QO1", "released source must never observe")
 }
 
 func defaults(d Dependencies) Dependencies {
@@ -128,7 +129,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if err != nil {
 		return 70, err
 	}
-	p, err := plan.Build(in)
+	p, err := plan.Build(in.Input)
 	if err != nil {
 		return 70, err
 	}
@@ -217,14 +218,8 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		}
 		r.SeedDigest = &digest
 	}
-	if binary, ok := s["binary"].(string); ok {
-		bytes, binaryErr := readAllFile(filepath.Join(filepath.Dir(o.SubjectFile), binary), d.Open)
-		if binaryErr != nil {
-			return 70, failure(70, "QE17", "binary unreadable")
-		}
-		digest := fmt.Sprintf("%x", sha256.Sum256(bytes))
-		r.BinaryDigest = &digest
-	}
+	r.BinaryDigest = in.BinaryDigest
+
 	storeErr := persist(d, r)
 	if !rejected {
 		if _, err := io.WriteString(out, Escape(strings.TrimSuffix(string(strictjson.Write(output)), "\n"))+"\n"); err != nil {
@@ -321,11 +316,11 @@ func classify(err error) *Error {
 	if errors.As(err, &fault) {
 		return failure(70, fault.Rule, "record cannot be built")
 	}
-	// Source errors use a rule-prefixed error without importing a selected source.
-	rule, _, found := strings.Cut(err.Error(), ":")
-	if found && len(rule) >= 3 && len(rule) <= 5 && rule[0] == 'Q' {
-		return failure(70, rule, "engine source fault")
+	var sourceFault interface{ RuleID() string }
+	if errors.As(err, &sourceFault) {
+		return failure(70, sourceFault.RuleID(), "engine source fault")
 	}
+
 	return failure(70, "QE16", err.Error())
 }
 
@@ -349,15 +344,6 @@ func readFile(path string, open func(string) (io.ReadCloser, error)) ([]byte, er
 	}
 	data, readErr := io.ReadAll(io.LimitReader(f, (16<<20)+1))
 	return data, errors.Join(readErr, f.Close())
-}
-
-func readAllFile(path string, open func(string) (io.ReadCloser, error)) ([]byte, error) {
-	f, err := open(path)
-	if err != nil {
-		return nil, err
-	}
-	b, err := io.ReadAll(f)
-	return b, errors.Join(err, f.Close())
 }
 
 func stringValue(v any) string {

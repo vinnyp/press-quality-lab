@@ -100,6 +100,14 @@
       {
         "rule": "QA3.slice",
         "why": "U33 fixes the slice required entries, including crediting in 003/004; capture and full route crediting remain with U39."
+      },
+      {
+        "rule": "QS8.safe_read",
+        "why": "Planning snapshots named regular files within the subject directory before the pre-check; unsafe reads exit 70 pending U9."
+      },
+      {
+        "rule": "QS9.safe_read",
+        "why": "Planning refuses seed links and special files before opening them; unsafe reads exit 70 pending U9."
       }
     ],
     "levels": [
@@ -29616,48 +29624,16 @@
     },
     {
       "blockers": [
-        "rejects lacks QS8.semantic"
+        "safe-read refusal: QS8"
       ],
       "case": "case-110",
+      "checks": [],
       "detail": "case-110/subject.json:3; QS8 line 100: binary leaves assembled directory; violations: QS8.semantic",
       "ending": {
         "exit_code": 70,
-        "phase": "unrefused",
+        "phase": "safe_read",
         "rules": [
-          "QA3.capture_crediting",
-          "QA7",
-          "QA9",
-          "QA9.preconditions",
-          "QD2",
-          "QD3",
-          "QD4",
-          "QD5",
-          "QE2",
-          "QE2.captures",
-          "QE2.placeholders",
-          "QE3.placeholder_candidates",
-          "QE4",
-          "QE6",
-          "QE7.asserts_emptiness",
-          "QH8",
-          "QO2",
-          "QO3",
-          "QO4",
-          "QO5",
-          "QO6",
-          "QO7",
-          "QP10",
-          "QP11",
-          "QP12",
-          "QP13",
-          "QP2",
-          "QP3",
-          "QP4",
-          "QP6",
-          "QP7",
-          "QP8",
-          "QP9",
-          "QS5"
+          "QS8"
         ]
       },
       "kind": "derivation-only",
@@ -29716,48 +29692,16 @@
     },
     {
       "blockers": [
-        "rejects lacks QS9.semantic"
+        "safe-read refusal: QS9"
       ],
       "case": "case-112",
+      "checks": [],
       "detail": "case-112/subject.json:82; QS9 lines 101-104: case fixture adds seed/linked.json as a symbolic link; violations: QS9.semantic",
       "ending": {
         "exit_code": 70,
-        "phase": "unrefused",
+        "phase": "safe_read",
         "rules": [
-          "QA3.capture_crediting",
-          "QA7",
-          "QA9",
-          "QA9.preconditions",
-          "QD2",
-          "QD3",
-          "QD4",
-          "QD5",
-          "QE2",
-          "QE2.captures",
-          "QE2.placeholders",
-          "QE3.placeholder_candidates",
-          "QE4",
-          "QE6",
-          "QE7.asserts_emptiness",
-          "QH8",
-          "QO2",
-          "QO3",
-          "QO4",
-          "QO5",
-          "QO6",
-          "QO7",
-          "QP10",
-          "QP11",
-          "QP12",
-          "QP13",
-          "QP2",
-          "QP3",
-          "QP4",
-          "QP6",
-          "QP7",
-          "QP8",
-          "QP9",
-          "QS5"
+          "QS9"
         ]
       },
       "kind": "derivation-only",

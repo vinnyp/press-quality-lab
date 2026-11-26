@@ -5,9 +5,6 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/plan"
 )
 
-func level5(ch plan.Check, _ observe.Controls, _ Evidence) Result {
-	if true {
-		return sentinel(5, "QH8")
-	}
-	return Result{}
+func level5(_ plan.Check, _ observe.Controls, _ Evidence) Result {
+	return sentinel(5, "QH8")
 }
