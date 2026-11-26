@@ -18,7 +18,7 @@ This note follows the thin slice's design note, `docs/plans/2026-11-25-phase3-pr
   - errata E-9 orders them;
   - QS8's home is the account's home from the user record (E-8);
   - a link in the path that names the seed is resolved, and of links on that path or within the seed, only a link the seed contains rejects the file, while QS9's other rejections stand (E-17);
-  - a named file that is regular and inside the directory but cannot be read rejects the file under QS8 with exit 2 (E-18).
+  - a binary, computation executable or declared file that is regular and inside the directory but cannot be read rejects the file under QS8, and an unreadable entry inside the seed under QS9, both with exit 2 (E-18).
 
   The owner ruled on E-17 and E-18 on 2026-11-25. PR6's interim exit-70 safe-read refusals become these exit-2 refusals.
 - **Placeholders and `pql create` (U10).** U10 builds:
@@ -88,14 +88,15 @@ A rule leaves the list only when a test proves its whole text. The mutation belo
 | Rule | Proof | Its mutation |
 |---|---|---|
 | QS3 | U9's fixture per clause | accept a file without `commands` |
-| QS8 | U9's fixtures: an escape, a directory, an unresolved link, a special file and an unreadable file (E-18). A fixture whose `$HOME` differs from the account's home tests the home clause both ways (E-8) | read the home from `$HOME` |
+| QS8 | U9's fixtures, each for the binary, a computation's executable and a declared file: an escape, a directory, an unresolved link, a missing file, a special file and an unreadable file (E-18). The home clause is tested both ways with a fixture whose `$HOME` differs from the account's home (E-8), and with the subject directory at and above that home | read the home from `$HOME` |
 | QS10 | U9's fixture per clause | accept two runbooks with one name |
 | QS11 | U9's fixtures for size and depth, each side of the 64 KiB bound in RFC 8785 form; `internal/jcs` vectors showing that `0.1` and `0.10` enter a check id as `0.1` and `-0` as `0` | drop the depth count |
-| QS12 | U9's fixture per clause | accept the rule's refused input |
-| QA5 | the warning's exact text on the terminal and in the help of `grade` and `anchor` (a stated-limit route covers the README, CASES.md) | omit the warning from `anchor`'s help |
+| QS12 | U9's fixture per clause | skip comparing a seed file's digest with the binary's |
+| QA5 | the warning's exact text on the terminal, in the help of `grade` and `anchor`, and in the README, each asserted by a test | omit the warning from `anchor`'s help |
 | QE2 | every preimage equals `preimages.json` for every judge-checked case; QE2's four worked ids; synthetic fixtures, written from QE2's text, for the shapes the corpus lacks: a byte-bound, exit-codes or store-unchanged probe check with no command (`words` and `budget_seconds` null, `parameters` empty), and a planted-secret probe whose secret is `null` or a placeholder | write `words: []` for a probe with no command |
-| QE3, QE7 | the required set and every required entry equal `input.json` for every judge-checked case, and for the synthetic fixtures above | omit a probe that runs no command |
-| QA3 | a test per row of `credit-and-routes.md` §2's credit conditions, each where the condition holds and where it fails | credit a check whose condition fails |
+| QE3 | the required set equals `input.json` for every judge-checked case and for the synthetic fixtures above | omit a probe that runs no command |
+| QE7 | every required entry equals `input.json` for every judge-checked case and for the synthetic fixtures above | swap a required entry's `kind` |
+| QA3 | a test per row of `credit-and-routes.md` §2's credit conditions, each where the condition holds and where it fails, and a row for self-agreement through captures | credit a check whose condition fails |
 
 **Stay listed**, each with what it still lacks:
 
@@ -112,20 +113,26 @@ A rule leaves the list only when a test proves its whole text. The mutation belo
 ## Controls
 
 1. **The ratchet.** All 35 predicted cases leave `internal/corpusrunner/pending.txt` and must pass, and every other case must still fail. A case that passes outside the prediction is traced to its rule.
-2. **Every check's ending, and the `required` layer.** PR6's in-process test and the runner's pending-ending check move to this slice's prediction file. Three Go readers currently name `pr6-prediction.json`, and they switch with it. For every judge-checked case, the required set read from the trace equals `input.json`'s `required` (KTD2.7, switched on by U39).
+2. **Every check's ending, and the `required` layer.** PR6's in-process test and the runner's pending-ending check move to this slice's prediction file. Three Go readers currently name `pr6-prediction.json`, and they switch with it. For each of the 118 judge-checked cases that run, the required set read from the trace equals `input.json`'s `required` (KTD2.7, switched on by U39).
 3. **One fixture per rule clause (U9).** Each refusal is tested from a fixture that a positive control in the same test shows to be accepted, varying only the clause under test (`CODING_STANDARDS.md`, Tests). A file that breaks two named rules names the first in E-9's order.
 4. **Placeholders, from QS5's text, never from `create`'s code (AE20).**
    - **Unit tests in isolation.** `decide`'s level 2 and final override, and `plan`'s candidate checks, are tested for each placeholder position QS5 allows, one position at a time: the binary, each fact, `declared_count`, the seed, the store, the secret, and a command's class and `writes`. The class and `writes` row includes an authored step whose command carries the placeholder, so that discovery and unrelated commands are not affected.
-   - **`create`'s output.** The build states field by field what `create` writes: the binary named, and a placeholder in every other position QS5 allows. `commands` takes whatever form the schema and QS5 accept. U9 must accept the file, and the build states whether every check of `create` then `grade` ends at level 2. If any check passes level 2, the plan's own rule applies and that test moves to the slice that builds its later levels.
+   - **`create`'s output**, stated here so that no test can move out of the slice:
+     - the binary, named;
+     - a placeholder for each of the five facts, `declared_count`, the seed, the store and the secret;
+     - `commands: []`, since QS5 allows no placeholder in that position;
+     - `runbooks`, `markers` and every other field at its schema's empty value.
+
+     U9 must accept the file. `grade` on it, through the scripted build with a passing host and a recording, must give `placeholder_unfilled` at level 2 for every check, because a placeholder seed or store stops every check but discovery, a placeholder `declared_count` stops discovery, and a placeholder secret stops the planted-secret probe. It exits with the judge's code, and the trace shows the limits KTD2.6 sets. The plan's rule for moving the test out of the slice therefore does not apply.
    - **Why an engine that marks everything `placeholder_unfilled` would fail.** `case-061` and `case-062` stay pending: 28 of their checks end at level 2 and one at level 8.
 5. **`create` never runs the subject.** A sentinel binary that writes to an absolute path set inside it must leave no file after `create`, and a positive control runs it directly and sees the file.
 6. **E-17's resolved seed path**, all rows sharing one fixture:
    - **Accepted:** a link in the seed's name, a link in an intermediate component (`p/seed` through a linked `p`), and a subject directory whose own path contains a link (macOS's `/var` to `/private/var`).
-   - **Refused with exit 2 under QS9:** a link the seed contains; a seed-name link whose target leaves the subject directory; a seed-name link whose target is a regular file.
+   - **Refused with exit 2 under QS9:** a link the seed contains; a seed-name link whose target leaves the subject directory; a seed-name link whose target is a regular file; a seed-name link that does not resolve.
    - Mutation: skip the containment check after resolving.
-7. **Level 2 and the runner agree.** U10 completes `internal/decide`'s level 2, and the corpus runner's own placeholder classifier is checked against it, so the two cannot drift. Once U39 fixes every preimage, the level 3 and level 4 sentinels stop accepting a preimage that lacks `probe` or `earlier`: a missing key is an engine fault.
+7. **Level 2 and the runner agree, independently.** U10 completes `internal/decide`'s level 2. The corpus runner's placeholder classifier, `decide`'s level 2 and the prediction script's dependency test are three implementations, each written separately from QS5's text, and neither imports another. A test compares them on every case, and where they disagree the text decides (KTD2.8). Once U39 fixes every preimage, the level 3 and level 4 sentinels stop accepting a preimage that lacks `probe` or `earlier`: a missing key is an engine fault.
 
 ## Stated limits of this slice
 
-- QA5's README placement is reviewed by eye; its text is tested.
+- QA5's place in the README is reviewed by eye; its text is tested.
 - QS5's final override reaches corpus cases only once level 8 exists (slices b2 and c); until then unit tests prove it.

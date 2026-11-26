@@ -41,3 +41,21 @@
 | 14 | QS11's proof should show how `0.1`, `0.10` and `-0` enter a check id | agy (Nit), measurement | Confirmed against line 114 | Added to QS11's proof |
 | 15 | Wording: "passed every level through 8", "every case", the hand audit, the sentinel's path | measurement (Nit) | Confirmed | Fixed |
 | 16 | The agy reviewer could not run the script | agy (Minor) | Tool error on its side | No change; the measurement reviewer ran it and its output was byte-identical |
+
+## Round 2 (delta, 3524507 to abd8fe7)
+
+**Verdicts.** No Blocker or Major remains in either review, and every round-1 disposition holds.
+- **measurement:** five Minors and five Nits. It reproduced the prediction byte for byte and confirmed the split of QS5's override in both directions.
+- **agy:** sound to proceed to build, with two Minors and two Nits.
+
+**The design gate is passed.**
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 17 | E-18 listed the binary, seed files and declared files, but QS8's named files are the binary, a computation's executable and a declared file, and the seed is QS9's | measurement (Minor), agy (Minor) | Confirmed against QS8, QS9 and QS12 | Put to the owner, who ruled on 2026-11-25: QS8 for its three kinds and QS9 for an unreadable entry in the seed, both exit 2. E-18 and the note match |
+| 18 | `create`'s output was left to the build | measurement (Minor) | Confirmed; the schema sets no minimum on `commands` | The note states it field by field and derives that every check ends at level 2 |
+| 19 | Comparing the runner's classifier with `decide` could turn into the runner calling `decide` | measurement (Minor) | Confirmed against KTD2.3 | Control 7: three independent implementations from QS5's text, and the text decides a disagreement |
+| 20 | QA5's README text was checked by eye | measurement (Minor) | Confirmed | The README text is now asserted by a test |
+| 21 | QS8's fixtures did not cover each kind of named file, a missing file, or a subject directory above the home | measurement (Minor) | Confirmed | Added |
+| 22 | QE3 and QE7 shared one mutation | agy (Minor) | Confirmed | A separate row and mutation for each |
+| 23 | Nits: QS12's mutation was vague, QA3 had no captures row, there was no dangling-link row, the predictor's split was tested one way, and the count 118 | measurement (Nit), agy (Nit) | Confirmed | Fixed in the note; the predictor's other direction comes with the build |
