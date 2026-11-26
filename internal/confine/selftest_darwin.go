@@ -41,6 +41,15 @@ func SelfTestHidden(name, target, pidText string) int {
 	if name == "tcp" || name == "unix" || name == "udp" || name == "bind" || name == "listen" {
 		return selfTestNetwork(name, target)
 	}
+	var priority int
+	if name == "priority" {
+		// Reading the current value is setup; QH9's refused scheduling
+		// operation is setting the other process's priority, even unchanged.
+		priority, err = unix.Getpriority(unix.PRIO_PROCESS, pid)
+		if err != nil {
+			return selfTestError(err)
+		}
+	}
 	if err := selfTestOutput("attempt_" + name + "\n"); err != nil {
 		return LauncherFailed
 	}
@@ -94,7 +103,7 @@ func SelfTestHidden(name, target, pidText string) int {
 		_, _, e := serviceSyscall6(codeSignatureAddr, uintptr(pid), 0, uintptr(unsafe.Pointer(&status)), 4, 0, 0)
 		err = e
 	case "priority":
-		_, err = unix.Getpriority(unix.PRIO_PROCESS, pid)
+		err = unix.Setpriority(unix.PRIO_PROCESS, pid, priority)
 	case "setsid":
 		_, err = unix.Setsid()
 	case "setpgid":
