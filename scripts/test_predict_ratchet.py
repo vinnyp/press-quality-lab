@@ -20,6 +20,59 @@ class PredictorTests(unittest.TestCase):
     def case(self, number, built=None):
         return predictor.predict_case(KIT / 'cases' / f'case-{number:03d}', built or BUILT)
 
+    def test_pr8_final_override_is_independent_of_level_two(self):
+        # QS5: final override follows level 8; building level 2 alone is insufficient.
+        built = json.loads(Path(__file__).with_name('ratchet').joinpath('pr8.json').read_text())
+        row = self.case(61, built)
+        self.assertFalse(row['predicted'])
+        built['levels'] = list(range(1, 8))
+        row = self.case(61, built)
+        self.assertFalse(row['predicted'])
+        self.assertTrue(any(c['ending']['phase'] == 'sentinel' and
+                            c['deciding_level'] == 8 for c in row['checks']))
+        built['levels'] = list(range(1, 9))
+        row = self.case(61, built)
+        self.assertTrue(row['predicted'])
+        self.assertTrue(any(c['ending'] == {'exit_code': None, 'rules': ['QS5'],
+                                          'phase': 'deciding'} for c in row['checks']
+                            if c['deciding_level'] == 8))
+        built['builds'] = [r for r in built['builds'] if r['rule'] != 'QS5.final_override']
+        row = self.case(61, built)
+        self.assertFalse(row['predicted'])
+        self.assertIn('QS5.final_override', row['ending']['rules'])
+
+    def test_pr8_seed_name_links_are_resolved(self):
+        # QS9, E-17: a link naming the seed is resolved; a contained link rejects.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
+        case = predictor.load(KIT / 'cases/case-112/case.json')
+        subject = predictor.load(KIT / 'cases/case-112/subject.json')
+        self.assertEqual(self.case(112, built)['ending'], {
+            'exit_code': 2, 'rules': ['QS9'], 'phase': 'deciding'})
+        case['input']['fixtures'] = [{'kind': 'link', 'path': subject['seed'],
+                                      'target': 'actual_seed'}]
+        with patch.object(predictor, 'load', return_value=subject):
+            self.assertIsNone(predictor.safe_read_refusal(case, KIT / 'cases/case-112', built))
+        self.assertNotIn('QS9.safe_read', predictor.names(built['builds']))
+        self.assertIn('QS9', predictor.names(built['rejects']))
+
+    def test_pr6_prediction_history(self):
+        # KTD1: earlier slice predictions remain reproducible.
+        expected = predictor.load(Path(__file__).with_name('ratchet') / 'pr6-prediction.json')
+        self.assertEqual(predictor.predict(BUILT), expected)
+
+    def test_pr8_rejections_and_construction(self):
+        # QS1 to QS12, QP7, QP10, QA4, QA9; U39's construction precedes collection.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
+        result = predictor.predict(built)
+        derivations = [r for r in result['cases'] if r['kind'] == 'derivation-only']
+        self.assertEqual(len(derivations), 31)
+        self.assertTrue(all(r['predicted'] for r in derivations))
+        self.assertTrue(self.case(60, built)['predicted'])
+        self.assertTrue(self.case(90, built)['predicted'])
+        self.assertFalse(any(r['ending']['phase'] == 'planning' and
+                             any(x != 'QE4' and x != 'QE4.anchor' for x in r['ending']['rules'])
+                             for r in result['cases']))
+
     def test_safe_read_phase(self):
         # QS8, QS9: safe snapshots stop before planning; semantic store checks wait.
         for number, rule in ((110, 'QS8'), (112, 'QS9')):
@@ -353,7 +406,7 @@ class PredictorTests(unittest.TestCase):
             self.assertEqual(self.case(3, built)['ending'],
                              {'exit_code': 70, 'rules': [rule], 'phase': 'record'})
             self.assertEqual(self.case(59, built)['ending']['phase'], 'sentinel')
-        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 6, 7, 'record', 'safe_read'})
+        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 6, 7, 'record', 'safe_read', 'override'})
         for rule in predictor.names(BUILT['builds']):
             self.assertEqual(sum(rule in {r for r, phase in predictor.BUILD_PHASE.items()
                                          if phase == candidate}

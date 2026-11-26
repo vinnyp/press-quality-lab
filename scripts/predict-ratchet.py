@@ -83,7 +83,9 @@ RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
 
 # None means pre-collection construction/pre-check; record means after collection.
 # An integer means observation support, needed only at that invocation's serving level.
+# override means the QS5 step after level 8, independent of its level-2 step.
 BUILD_PHASE = {
+    'QS5.final_override': 'override',
     'QS8.safe_read': 'safe_read',
     'QS9.safe_read': 'safe_read',
     'QE2.slice': None, 'QE2.placeholders': None, 'QE2.captures': None,
@@ -394,7 +396,9 @@ def safe_read_refusal(case, directory, built):
     """Pre-collection safe-read faults, before planning and the pre-check.
 
     Corpus inputs are assembled from the named form plus fixture overlays.
-    This phase models read safety only; store/seed relations remain U9 work.
+    This legacy phase preserves PR6's faults until U9 supplies full refusals.
+    PR8 retires both safe-read tokens; its QS9 audit rejects contained links,
+    not links naming the seed (errata E-17).
     """
     subject = load(directory / case['input']['subject_file'])
     capabilities = names(built['builds'])
@@ -475,8 +479,14 @@ def predict_case(directory, built):
                 gaps.add('QT5.computation_keys')
             check_end = check_ending(level, built, subject, preimage, gaps)
             if (check_end['phase'] == 'deciding' and level == 8 and
-                    evidence['reason'] == 'placeholder_unfilled' and 2 not in built['levels']):
-                check_end = ending(70, ['QS5'], 'sentinel')
+                    evidence['reason'] == 'placeholder_unfilled'):
+                # QS5's final override follows level 8, independently of level 2.
+                # An unbuilt earlier level still wins; this is reachable only
+                # after check_ending has passed every level through 8.
+                if not supports(names(built['builds']), 'QS5.final_override'):
+                    check_end = ending(70, ['QS5.final_override'], 'observation')
+                else:
+                    check_end = ending(None, ['QS5'])
             checks.append({'id': check, 'deciding_level': level, 'ending': check_end})
         planning = {r for c in checks if c['ending']['phase'] == 'planning'
                     for r in c['ending']['rules']}
