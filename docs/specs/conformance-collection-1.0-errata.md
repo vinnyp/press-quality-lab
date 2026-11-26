@@ -116,3 +116,7 @@ QH12 rejects a subject file whose offline setting sets an environment variable w
 ### E-22. A placeholder-shaped value inside a literal
 
 QS5 defines a placeholder by its shape and rejects one outside its allowed positions. A `literal` is the output the author expects the subject to produce, and may be any JSON value. **An object inside a `literal` is data, never a placeholder, whatever its shape: it does not reject the file, and no rule treats it as a value the author has not supplied. Placeholder detection looks only at the positions QS5 allows.** The owner ruled on 2026-11-26. No case of the corpus has such a literal, so no record changes.
+
+### E-23. An absolute executable the engine cannot read
+
+QS12 compares the content of "an executable a computation names" with the binary's, and QA4 lets that executable be an absolute path under `/bin` or `/usr/bin`. E-18 covers a file the engine cannot read only for QS8's kinds, which are relative. **An absolute executable that exists but that the engine cannot read as a regular file, such as an execute-only file, rejects the subject file under QS12, with exit 2, because the engine cannot show that its content differs from the binary's. One that does not exist is not compared, and its computation fails at run time under QA6.** The owner ruled on 2026-11-26. No case of the corpus names such an executable, so no record changes.
