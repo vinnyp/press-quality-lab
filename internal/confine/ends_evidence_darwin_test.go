@@ -177,8 +177,10 @@ func (evidenceWorkspace) ForgetGroup(int) error               { return nil }
 func TestMacOSEnvironmentDescriptorProbe(t *testing.T) {
 	// QH12, QH13: the real launcher filters engine variables and closes inherited
 	// descriptors. A launcher built with the close loop removed is a knock-out.
-	for _, name := range []string{"PQL_SENTINEL", "DYLD_X", "XDG_CONFIG_HOME"} {
-		t.Setenv(name, "foreign")
+	launcherEnvironment := []string{
+		"PQL_SENTINEL=foreign",
+		"DYLD_X=foreign",
+		"XDG_CONFIG_HOME=foreign",
 	}
 	root, launcher := evidenceLauncher(t)
 	program := evidenceProgram(t, `package main
@@ -219,7 +221,11 @@ func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.
 			if err != nil {
 				t.Fatal(err)
 			}
-			hidden, err := confine.LauncherArgs("probe", p, nil, environment)
+			marker, err := confine.NewMarker()
+			if err != nil {
+				t.Fatal(err)
+			}
+			hidden, err := confine.LauncherArgs(marker, p, nil, environment)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -268,7 +274,7 @@ func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.
 			if inv.Paths.Values["LAUNCHER"] != l {
 				t.Fatal("wrong private launcher")
 			}
-			pid, err := syscall.ForkExec(confine.SandboxExec, append([]string{confine.SandboxExec}, args...), &syscall.ProcAttr{Dir: inv.Directory, Env: confine.EngineEnvironment(), Files: files, Sys: &syscall.SysProcAttr{Setsid: true}})
+			pid, err := syscall.ForkExec(confine.SandboxExec, append([]string{confine.SandboxExec}, args...), &syscall.ProcAttr{Dir: inv.Directory, Env: launcherEnvironment, Files: files, Sys: &syscall.SysProcAttr{Setsid: true}})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -290,7 +296,7 @@ func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.
 			if err != nil {
 				t.Fatal(err)
 			}
-			if status.ExitStatus() != 0 || string(stdout) != row.want || string(diagnostics) != "pql-launch:probe\n" {
+			if status.ExitStatus() != 0 || string(stdout) != row.want || string(diagnostics) != confine.MarkerPrefix+marker+"\n" {
 				t.Fatalf("probe end=%v stdout=%q stderr=%q", status, stdout, diagnostics)
 			}
 		})
