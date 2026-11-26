@@ -127,14 +127,14 @@ def placeholder(value):
     return isinstance(value, dict) and set(value) == {'placeholder'}
 
 
-def contains_placeholder(value):
-    if placeholder(value):
+def contains_placeholder(subject):
+    if any(placeholder(subject.get(k)) for k in
+           ('binary', 'declared_count', 'seed', 'store', 'secret')):
         return True
-    if isinstance(value, dict):
-        return any(contains_placeholder(v) for v in value.values())
-    if isinstance(value, list):
-        return any(contains_placeholder(v) for v in value)
-    return False
+    if any(placeholder(v) for v in subject.get('facts', {}).values()):
+        return True
+    return any(placeholder(c.get(k)) for c in subject.get('commands', [])
+               for k in ('class', 'writes'))
 
 
 def depends(subject, preimage):

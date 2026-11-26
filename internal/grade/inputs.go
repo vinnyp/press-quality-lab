@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -23,31 +25,72 @@ type snapshot struct {
 	BinaryDigest *string
 }
 
-// planningInput snapshots the binary, seed and declared computation inputs. It
-// never opens a subject executable for execution, or creates a subject home.
-func planningInput(o Options, s subject.File) (in snapshot, err error) {
+type inputAccess struct {
+	systemPath   func(string) bool
+	openAbsolute func(string) (*os.File, error)
+	home         func() (string, error)
+	open         func(*os.Root, string) (*os.File, error)
+}
+
+func accountHome() (string, error) {
+	// LookupId fails closed instead of accepting os/user's pure-Go $HOME fallback.
+	var account *user.User
+	var err error
+	if runtime.GOOS == "darwin" {
+		account, err = user.Current()
+	} else {
+		account, err = user.LookupId(strconv.Itoa(os.Getuid()))
+	}
+	if err != nil {
+		return "", err
+	}
+	return account.HomeDir, nil
+}
+
+// planningInput snapshots binary, seed and computation files without execution.
+func planningInput(o Options, s subject.File) (snapshot, error) {
+	return planningInputWith(o, s, inputAccess{})
+}
+
+func planningInputWith(o Options, s subject.File, access inputAccess) (in snapshot, err error) {
 	in.Input = plan.Input{Subject: s, Baseline: o.Baseline != "", Anchor: o.Anchor, FileDigests: map[string]string{}}
 	for _, token := range o.Scope {
 		in.Scopes = append(in.Scopes, rulebook.Scope(token))
 	}
-	directory, e := filepath.EvalSymlinks(filepath.Dir(o.SubjectFile))
+	directory, e := filepath.Abs(filepath.Dir(o.SubjectFile))
+	if e != nil {
+		return in, e
+	}
+	directory, e = filepath.EvalSymlinks(directory)
 	if e != nil {
 		return in, safeReadFailure("QS8", "subject directory", e)
 	}
-	directory, e = filepath.Abs(directory)
+	if access.home == nil {
+		access.home = accountHome
+	}
+	home, e := access.home()
 	if e != nil {
 		return in, e
 	}
-	account, e := user.Current()
+	home, e = filepath.EvalSymlinks(home)
 	if e != nil {
 		return in, e
 	}
-	home, e := filepath.EvalSymlinks(account.HomeDir)
+	directoryInfo, e := os.Stat(directory)
 	if e != nil {
-		return in, e
+		return in, safeReadFailure("QS8", "subject directory", e)
 	}
-	if inside(directory, home) {
-		return in, safeReadFailure("QS8", "subject directory", errEscape)
+	for ancestor := home; ; ancestor = filepath.Dir(ancestor) {
+		info, e := os.Stat(ancestor)
+		if e != nil {
+			return in, e
+		}
+		if os.SameFile(directoryInfo, info) {
+			return in, safeReadFailure("QS8", "subject directory", errHome)
+		}
+		if filepath.Dir(ancestor) == ancestor {
+			break
+		}
 	}
 	root, err := os.OpenRoot(directory)
 	if err != nil {
@@ -55,14 +98,23 @@ func planningInput(o Options, s subject.File) (in snapshot, err error) {
 	}
 	defer func() { err = errors.Join(err, root.Close()) }()
 	resolve := func(name string) (string, error) { return resolveInput(directory, name) }
-	open := func(name string) (*os.File, error) { return root.OpenFile(name, os.O_RDONLY|syscall.O_NONBLOCK, 0) }
+	open := func(name string) (*os.File, error) {
+		if access.open != nil {
+			return access.open(root, name)
+		}
+		return root.OpenFile(name, os.O_RDONLY|syscall.O_NONBLOCK, 0)
+	}
 
 	// Only digests enter the plan; streaming keeps seed and named-file sizes
 	// out of the engine's memory budget without imposing a specification limit.
+	memo := map[string]string{}
 	digest := func(name string) (string, error) {
 		resolved, e := resolve(name)
 		if e != nil {
 			return "", e
+		}
+		if sum, ok := memo[filepath.Join(directory, resolved)]; ok {
+			return sum, nil
 		}
 		f, e := openRegular(root, resolved, open)
 		if e != nil {
@@ -71,7 +123,11 @@ func planningInput(o Options, s subject.File) (in snapshot, err error) {
 		h := sha256.New()
 		_, e = io.Copy(h, f)
 		e = errors.Join(e, f.Close())
-		return fmt.Sprintf("%x", h.Sum(nil)), e
+		sum := fmt.Sprintf("%x", h.Sum(nil))
+		if e == nil {
+			memo[filepath.Join(directory, resolved)] = sum
+		}
+		return sum, e
 	}
 	if binary, ok := s["binary"].(string); ok {
 		sum, e := digest(binary)
@@ -156,10 +212,27 @@ func planningInput(o Options, s subject.File) (in snapshot, err error) {
 			return in, safeReadFailure("QS9", "seed", err)
 		}
 	}
-	return in, validateFileContents(s, in, root, resolve, open)
+	return in, validateFileContents(s, in, root, resolve, open, access, memo)
 }
 
-func openInput(path string) (io.ReadCloser, error) { return os.Open(path) }
+func openInput(path string) (io.ReadCloser, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, errSpecial
+	}
+	f, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NONBLOCK, 0)
+	if err != nil {
+		return nil, err
+	}
+	info, err = f.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		return nil, errors.Join(err, errSpecial, f.Close())
+	}
+	return f, nil
+}
 
 // openRegular checks type before opening so static special files are never
 // opened. The descriptor check also rejects a replacement during the open.
@@ -186,6 +259,7 @@ func openRegular(root *os.Root, name string, open func(string) (*os.File, error)
 }
 
 var (
+	errHome    = errors.New("home")
 	errEscape  = errors.New("escape")
 	errLink    = errors.New("link")
 	errSpecial = errors.New("special")
@@ -195,6 +269,10 @@ var (
 func safeReadFailure(rule, kind string, err error) *Error {
 	category := "special"
 	switch {
+	case errors.Is(err, os.ErrPermission):
+		category = "unreadable"
+	case errors.Is(err, errHome):
+		category = "home"
 	case errors.Is(err, errEscape):
 		category = "escape"
 	case errors.Is(err, os.ErrNotExist):
@@ -211,7 +289,7 @@ func inside(directory, target string) bool {
 }
 
 // validateFileContents gathers file evidence; subject owns the content rules.
-func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve func(string) (string, error), open func(string) (*os.File, error)) error {
+func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve func(string) (string, error), open func(string) (*os.File, error), access inputAccess, digests map[string]string) error {
 	evidence := subject.FileEvidence{BinaryDigest: in.BinaryDigest}
 	for _, digest := range in.FileDigests {
 		evidence.NamedDigests = append(evidence.NamedDigests, digest)
@@ -223,6 +301,15 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 			seedFiles[entry.Path] = true
 		}
 	}
+	if access.systemPath == nil {
+		access.systemPath = func(name string) bool {
+			return strings.HasPrefix(filepath.Clean(name), "/bin/") || strings.HasPrefix(filepath.Clean(name), "/usr/bin/")
+		}
+	}
+	if access.openAbsolute == nil {
+		access.openAbsolute = func(name string) (*os.File, error) { return os.OpenFile(name, os.O_RDONLY|syscall.O_NONBLOCK, 0) }
+	}
+	seen := map[string]bool{}
 	if in.BinaryDigest != nil {
 		for _, computation := range subject.Computations(s) {
 			argv := inputArray(computation["argv"])
@@ -230,24 +317,55 @@ func validateFileContents(s subject.File, in snapshot, root *os.Root, resolve fu
 				continue
 			}
 			name, ok := argv[0].(string)
-			if !ok || !(strings.HasPrefix(filepath.Clean(name), "/bin/") || strings.HasPrefix(filepath.Clean(name), "/usr/bin/")) {
+			if !ok || !access.systemPath(name) {
 				continue
 			}
-			info, e := os.Stat(name)
-			if e != nil || !info.Mode().IsRegular() {
+			resolved, e := filepath.EvalSymlinks(name)
+			if errors.Is(e, os.ErrNotExist) {
 				continue
 			}
-			f, e := os.OpenFile(name, os.O_RDONLY|syscall.O_NONBLOCK, 0)
 			if e != nil {
+				return e
+			}
+			if seen[resolved] {
 				continue
 			}
+			seen[resolved] = true
+			if sum, exists := digests[resolved]; exists {
+				evidence.NamedDigests = append(evidence.NamedDigests, sum)
+				continue
+			}
+			info, e := os.Stat(resolved)
+			if errors.Is(e, os.ErrNotExist) {
+				continue
+			}
+			if e != nil {
+				return e
+			}
+			if !info.Mode().IsRegular() {
+				return errSpecial
+			}
+			f, e := access.openAbsolute(resolved)
+			if errors.Is(e, os.ErrNotExist) {
+				continue
+			}
+			if e != nil {
+				return e
+			}
+			info, e = f.Stat()
+			if e != nil || !info.Mode().IsRegular() {
+				return errors.Join(e, errSpecial, f.Close())
+			}
+
 			h := sha256.New()
 			_, e = io.Copy(h, f)
 			e = errors.Join(e, f.Close())
 			if e != nil {
 				return e
 			}
-			evidence.NamedDigests = append(evidence.NamedDigests, fmt.Sprintf("%x", h.Sum(nil)))
+			sum := fmt.Sprintf("%x", h.Sum(nil))
+			digests[resolved] = sum
+			evidence.NamedDigests = append(evidence.NamedDigests, sum)
 		}
 	}
 

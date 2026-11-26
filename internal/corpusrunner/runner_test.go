@@ -214,7 +214,7 @@ func readTrace(path string) (trace, error) {
 	return tr, nil
 }
 
-func placeholder(v any) bool { _, ok := object(v)["placeholder"]; return ok }
+func placeholder(v any) bool { o := object(v); _, ok := o["placeholder"]; return len(o) == 1 && ok }
 func discovery(k map[string]any) bool {
 	words := list(k["words"])
 	if k["home"] != "empty" || k["computation"] != nil || len(words) == 0 {
@@ -269,16 +269,20 @@ func levelTwoPlaceholder(subject, pre map[string]any) bool {
 }
 
 func hasPlaceholder(value any) bool {
-	if placeholder(value) {
-		return true
-	}
-	for _, v := range object(value) {
-		if hasPlaceholder(v) {
+	s := object(value)
+	for _, key := range []string{"binary", "declared_count", "seed", "store", "secret"} {
+		if placeholder(s[key]) {
 			return true
 		}
 	}
-	for _, v := range list(value) {
-		if hasPlaceholder(v) {
+	for _, v := range object(s["facts"]) {
+		if placeholder(v) {
+			return true
+		}
+	}
+	for _, v := range list(s["commands"]) {
+		c := object(v)
+		if placeholder(c["class"]) || placeholder(c["writes"]) {
 			return true
 		}
 	}

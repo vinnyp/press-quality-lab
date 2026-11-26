@@ -25,6 +25,18 @@ class PredictorTests(unittest.TestCase):
     def case(self, number, built=None):
         return predictor.predict_case(KIT / 'cases' / f'case-{number:03d}', built or BUILT)
 
+    def test_pr8_literal_placeholder_data(self):
+        # QS5, E-22: the prediction classifier inspects only allowed positions.
+        for literal in ({'placeholder': 'x'}, {'placeholder': 'x', 'k': 1}):
+            with self.subTest(literal=literal):
+                subject = {'runbooks': [{'steps': [{'checks': [
+                    {'expected': {'literal': literal}}]}]}]}
+                self.assertFalse(predictor.contains_placeholder(subject))
+                subject['binary'] = {'placeholder': 'x', 'k': 1}
+                self.assertFalse(predictor.contains_placeholder(subject))
+                subject['binary'] = {'placeholder': 'Supply binary.'}
+                self.assertTrue(predictor.contains_placeholder(subject))
+
     def test_pr8_placeholder_dependencies(self):
         # QS5, KTD2.8: the dependency classifier produces the shared oracle.
         built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')

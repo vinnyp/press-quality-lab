@@ -27,7 +27,7 @@ func text(v any) string {
 	}
 	return ""
 }
-func placeholder(v any) bool { _, ok := obj(v)["placeholder"]; return ok }
+func placeholder(v any) bool { o := obj(v); _, ok := o["placeholder"]; return len(o) == 1 && ok }
 func key(v any) string       { return string(strictjson.Write(v)) }
 
 // HomePath implements the specification's definition of a path relative to home.
@@ -88,6 +88,11 @@ func semantic(o File, bad map[string]bool) {
 	envs := map[string]map[string]bool{}
 	for _, v := range arr(o["offline"]) {
 		setting := obj(v)
+		for name := range obj(setting["env"]) {
+			if strings.HasPrefix(name, "DYLD_") || strings.HasPrefix(name, "__CF_") {
+				bad["QS7"] = true
+			}
+		}
 		for _, a := range arr(setting["args"]) {
 			switch a {
 			case "--help",
@@ -145,7 +150,11 @@ func semantic(o File, bad map[string]bool) {
 		}
 		for _, w := range arr(secret["commands"]) {
 			if !declared(w) {
-				bad["QS6"] = true
+				if !invocation(w) {
+					bad["QS6"] = true
+				} else {
+					bad["QP10"] = true
+				}
 			}
 			if commands[key(w)]["class"] == "destructive" {
 				bad["QP10"] = true
@@ -243,7 +252,6 @@ func computationRules(c strictjson.Object, earlier map[string]bool, bad map[stri
 			s = s[start+9:]
 			end := strings.IndexByte(s, '}')
 			if end < 0 {
-				bad["QA4"] = true
 				break
 			}
 			name := s[:end]

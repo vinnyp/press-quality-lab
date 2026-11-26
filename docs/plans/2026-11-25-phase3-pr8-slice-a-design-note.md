@@ -134,7 +134,10 @@ A rule leaves the list only when a test proves its whole text. The mutation belo
 
 ## Readings the build settled from the text
 
-- **The bare binary as a secret command.** An undeclared bare binary may be a secret command. QS6 says a secret command "must name a command the file declares, or be the bare binary itself" (`collection-rules.md` line 89). QP10's "equal to a declared command's words (QS6)" (line 229) refers to that rule. Line 35 makes the bare binary "a command of every subject, whether or not the file declares it", and it is `safe` without an entry (judge errata E-4). So `commands: []` with `secret.commands: [[]]` is accepted, and secret words that no command has are refused under QS6.
+- **The bare binary as a secret command.** An undeclared bare binary may be a secret command. QS6 says a secret command "must name a command the file declares, or be the bare binary itself" (`collection-rules.md` line 89). QP10's "equal to a declared command's words (QS6)" (line 229) refers to that rule. Line 35 makes the bare binary "a command of every subject, whether or not the file declares it", and it is `safe` without an entry (judge errata E-4). So `commands: []` with `secret.commands: [[]]` is accepted. Secret words whose longest declared prefix is the bare binary are refused under QS6; secret words that extend a declared command but equal none are refused under QP10.
+- **Absolute computation executables under QS12.** QA4 allows an executable relative to the subject file's directory or under `/bin` or `/usr/bin` (`collection-rules.md` line 270), and QS12 names "an executable a computation names" with no qualifier (line 115), so absolute executables are compared too. A missing one cannot equal the binary and fails at run time under QA6; any other error reading one is an engine fault, exit 70.
+- **An unterminated capture token.** QA4 replaces three tokens "wherever they appear" (line 271). `{CAPTURE:` with no closing `}` is not one of them, so it is literal text and the file is accepted.
+- **Named rules for schema-only violations.** E-9 names the rule whose condition the file breaks. A violation that only the schema states, such as a budget outside its bounds or an environment name outside the grammar, names QS2 unless the named rule's own clause states it.
 
 ## Stated limits of this slice
 

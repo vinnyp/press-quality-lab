@@ -113,22 +113,9 @@ func text(v any) string {
 }
 func same(a, b any) bool { return reflect.DeepEqual(a, b) }
 func placeholder(v any) bool {
-	if o := obj(v); o != nil {
-		if _, ok := o["placeholder"]; ok {
-			return true
-		}
-		for _, x := range o {
-			if placeholder(x) {
-				return true
-			}
-		}
-	}
-	for _, x := range arr(v) {
-		if placeholder(x) {
-			return true
-		}
-	}
-	return false
+	o := obj(v)
+	_, ok := o["placeholder"]
+	return len(o) == 1 && ok
 }
 func (in Input) includes(d string) bool {
 	for _, s := range in.Scopes {
@@ -352,9 +339,6 @@ func Build(in Input) (Plan, error) {
 			for i, cv := range arr(st["checks"]) {
 				ch := obj(cv)
 				dim := text(ch["dimension"])
-				if !in.includes(dim) {
-					continue
-				}
 				pred := text(ch["predicate"])
 				expected := obj(ch["expected"])
 				asserts := pred == "stdout_empty" || pred == "row_count" && zero(expected["literal"])
@@ -396,6 +380,14 @@ func Build(in Input) (Plan, error) {
 				pre["path"] = ch["path"]
 				pre["expected"] = ex
 				empty := pred == "stdout_not_contains" || pred == "stdout_bytes_at_most" || pred == "row_count" && expected["computation"] != nil
+				if !in.includes(dim) {
+					id, err := CheckID(pre)
+					if err != nil {
+						return Plan{}, err
+					}
+					ids = append(ids, id)
+					continue
+				}
 				credit := credits(s, r, st, ch)
 				id, err := add(pre, credit, empty, keys)
 				if err != nil {

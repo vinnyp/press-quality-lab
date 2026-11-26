@@ -36,7 +36,7 @@ func Resolve(ch plan.Check, controls observe.Controls, facts Evidence) Result {
 	for _, step := range levels {
 		r := step(ch, controls, facts)
 		if r.Level != 0 {
-			return FinalOverride(ch, r)
+			return r
 		}
 	}
 	panic("precedence table has no terminal level")
@@ -52,23 +52,23 @@ func object(v any) strictjson.Object {
 	return o
 }
 
-// dependency finds any placeholder for QS5's final override.
+// dependency inspects only the positions QS5 permits, excluding literal data.
 func dependency(v any) bool {
-	switch x := v.(type) {
-	case strictjson.Object:
-		if _, ok := x["placeholder"]; ok {
+	s := object(v)
+	for _, key := range []string{"binary", "declared_count", "seed", "store", "secret"} {
+		if placeholder(s[key]) {
 			return true
 		}
-		for _, v := range x {
-			if dependency(v) {
-				return true
-			}
+	}
+	for _, value := range object(s["facts"]) {
+		if placeholder(value) {
+			return true
 		}
-	case strictjson.Array:
-		for _, v := range x {
-			if dependency(v) {
-				return true
-			}
+	}
+	for _, value := range array(s["commands"]) {
+		c := object(value)
+		if placeholder(c["class"]) || placeholder(c["writes"]) {
+			return true
 		}
 	}
 	return false

@@ -96,9 +96,14 @@ func (s *shape) check(v any, failures map[string]bool) {
 		return
 	}
 	if o, ok := v.(strictjson.Object); ok {
-		if _, present := o["placeholder"]; present {
-			if s.placeholder && len(o) == 1 && str(1, 4096).valid(o["placeholder"]) {
-				return
+		if _, present := o["placeholder"]; present && len(o) == 1 {
+			if s.placeholder {
+				if description, ok := o["placeholder"].(string); ok && description != "" {
+					if utf8.RuneCountInString(description) > 4096 {
+						failures["QS2"] = true
+					}
+					return
+				}
 			}
 			failures["QS5"] = true
 			return
@@ -127,7 +132,11 @@ func (s *shape) check(v any, failures map[string]bool) {
 	case "string":
 		x, ok := v.(string)
 		if !ok || utf8.RuneCountInString(x) < s.min || utf8.RuneCountInString(x) > s.max {
-			bad()
+			if ok && utf8.RuneCountInString(x) > s.max && s.max == 4096 && len(s.values) == 0 {
+				failures["QS2"] = true
+			} else {
+				bad()
+			}
 			return
 		}
 		if len(s.values) > 0 {
@@ -189,10 +198,12 @@ func (s *shape) check(v any, failures map[string]bool) {
 			return
 		}
 		if len(a) < s.min || len(a) > s.max {
-			if s.rule == "QS11" {
+			if s.rule == "QP10" && len(a) < s.min {
+				failures["QP10"] = true
+			} else if s.rule == "QS11" {
 				failures["QS11"] = true
 			} else {
-				bad()
+				failures["QS2"] = true
 			}
 		}
 		for _, x := range a {
@@ -204,13 +215,17 @@ func (s *shape) check(v any, failures map[string]bool) {
 			bad()
 			return
 		}
-		if s.rule == "QP10" && o["kind"] == "seeded_state" && o["reason"] == nil {
+		if s.rule == "QP10" && o["kind"] == "seeded_state" && text(o["reason"]) == "" {
 			failures["QP10"] = true
 		}
 		for key, c := range s.fields {
 			x, present := o[key]
 			if !present {
-				bad()
+				if s.rule == "QP10" && key == "reason" && o["kind"] != "seeded_state" {
+					failures["QS2"] = true
+				} else {
+					bad()
+				}
 				continue
 			}
 			c.check(x, failures)
@@ -218,7 +233,7 @@ func (s *shape) check(v any, failures map[string]bool) {
 		for key, x := range o {
 			if _, present := s.fields[key]; !present {
 				if s.item == nil {
-					bad()
+					failures["QS2"] = true
 				} else {
 					s.item.check(x, failures)
 					if !envName(key) {
@@ -252,40 +267,27 @@ func runbookName() *shape                 { s := name(); s.pattern = "name"; ret
 func relative() *shape                    { s := str(1, 4096); s.pattern = "relative"; s.rule = "QS9"; return s }
 func codes() *shape                       { return optional(array(1, 256, integer(0, 255))) }
 func computation() *shape {
-	return underRule("QA4", object("QA4", map[string]*shape{"argv": array(1, 64, str(0, 4096)), "budget_seconds": integer(1, 600), "declared_files": array(0, 64, str(1, 4096)), "captures": array(0, 64, name())}))
+	return object("QA4", map[string]*shape{"argv": array(1, 64, str(0, 4096)), "budget_seconds": integer(1, 600), "declared_files": array(0, 64, str(1, 4096)), "captures": array(0, 64, name())})
 }
 func dimension() *shape {
 	return enumeration("availability", "execution", "graceful-failure", "robustness", "response-correctness", "determinism", "provenance-honesty", "completeness-signaling", "output-conformance", "flag-conformance", "bounding", "discoverability", "error-message-quality", "token-economy", "side-effect-integrity", "idempotency", "destructive-guard", "pii-secret-hygiene")
 }
 
-// underRule attributes the schema constraints within a named declaration.
-func underRule(rule string, s *shape) *shape {
-	if s.rule == "" {
-		s.rule = rule
-	}
-	for _, child := range s.fields {
-		underRule(rule, child)
-	}
-	if s.item != nil {
-		underRule(rule, s.item)
-	}
-	return s
-}
 func subjectShape() *shape {
 	facts := object("QS4", map[string]*shape{})
 	for _, key := range []string{"read_only", "has_destructive_ops", "store_backed", "has_cli"} {
 		facts.fields[key] = fill(named("QS4", &shape{kind: "boolean"}))
 	}
 	facts.fields["bounding"] = fill(named("QS4", enumeration("none", "declared")))
-	command := underRule("QS6", object("QS6", map[string]*shape{"words": named("QS6", words()), "class": fill(named("QS6", enumeration("safe", "destructive"))), "writes": fill(named("QS6", &shape{kind: "boolean"})), "exit_codes": named("QS6", codes()), "byte_bound": optional(named("QS6", integer(1, 1073741824))), "budget_seconds": named("QS6", integer(1, 3600))}))
+	command := object("QS6", map[string]*shape{"words": named("QS6", words()), "class": fill(named("QS6", enumeration("safe", "destructive"))), "writes": fill(named("QS6", &shape{kind: "boolean"})), "exit_codes": named("QS6", codes()), "byte_bound": optional(integer(1, 1073741824)), "budget_seconds": integer(1, 3600)})
 	expected := &shape{choices: []*shape{object("", map[string]*shape{"literal": {kind: "any"}}), object("QA4", map[string]*shape{"computation": computation()})}}
 	check := object("", map[string]*shape{"dimension": dimension(), "predicate": named("QA9", enumeration("exit_code", "stdout_equals", "stdout_json_equals", "stdout_contains", "stdout_not_contains", "stderr_contains", "stdout_bytes_at_most", "json_path_equals", "row_count", "stdout_empty")), "path": optional(str(0, 1024)), "expected": expected, "precondition": optional(object("", map[string]*shape{"computation": computation()})), "exit_codes": codes()})
 	step := object("", map[string]*shape{"name": runbookName(), "words": words(), "budget_seconds": integer(1, 3600), "checks": array(1, 64, check)})
 	env := &shape{kind: "object", max: 64, item: str(0, 4096)}
-	secret := optional(fill(underRule("QP10", object("QP10", map[string]*shape{"path": relative(), "kind": named("QP10", enumeration("credential", "seeded_state")), "reason": optional(named("QP10", str(1, 4096))), "token": named("QP10", str(8, 256)), "commands": named("QP10", array(1, 64, words()))}))))
+	secret := optional(fill(object("QP10", map[string]*shape{"path": relative(), "kind": named("QP10", enumeration("credential", "seeded_state")), "reason": optional(str(1, 4096)), "token": named("QP10", str(8, 256)), "commands": named("QP10", array(1, 64, words()))})))
 	return object("QS3", map[string]*shape{
 		"subject_file_version": {kind: "any"}, "binary": fill(str(1, 4096)), "facts": facts, "commands": named("QS11", array(0, 512, command)), "declared_count": fill(integer(0, 100000)), "seed": fill(optional(str(1, 4096))), "store": fill(optional(relative())),
-		"offline": array(0, 256, underRule("QS7", object("QS7", map[string]*shape{"applies_to": array(1, 1024, words()), "args": array(0, 64, str(0, 4096)), "env": env}))), "bookkeeping": array(0, 256, relative()), "secret": secret,
+		"offline": array(0, 256, object("QS7", map[string]*shape{"applies_to": array(1, 1024, words()), "args": array(0, 64, str(0, 4096)), "env": env})), "bookkeeping": array(0, 256, relative()), "secret": secret,
 		"runbooks": array(0, 1024, object("", map[string]*shape{"name": runbookName(), "steps": array(1, 256, step)})), "markers": named("QS11", array(0, 1024, object("", map[string]*shape{"record": name(), "dimension": dimension()}))), "prompts": object("", map[string]*shape{"version": str(0, 64)}),
 	})
 }

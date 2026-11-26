@@ -103,6 +103,9 @@ func TestNamedFileForms(t *testing.T) {
 						t.Fatal(e)
 					}
 				case "Unreadable":
+					if os.Geteuid() == 0 {
+						t.Skip("root bypasses permission bits")
+					}
 					if e := os.Chmod(filepath.Join(dir, name), 0000); e != nil {
 						t.Fatal(e)
 					}
@@ -186,10 +189,16 @@ func TestSeedResolvedPaths(t *testing.T) {
 			case "Reserved":
 				writeInput(t, filepath.Join(dir, "real", "seed", ".pql-tmp", "data"), "data")
 			case "UnreadableFile":
+				if os.Geteuid() == 0 {
+					t.Skip("root bypasses permission bits")
+				}
 				if e := os.Chmod(filepath.Join(dir, "real", "seed", "data"), 0000); e != nil {
 					t.Fatal(e)
 				}
 			case "UnreadableDirectory":
+				if os.Geteuid() == 0 {
+					t.Skip("root bypasses permission bits")
+				}
 				if e := os.Mkdir(filepath.Join(dir, "real", "seed", "locked"), 0000); e != nil {
 					t.Fatal(e)
 				}
@@ -209,6 +218,17 @@ func TestSeedResolvedPaths(t *testing.T) {
 				}
 			}
 			expectInputRule(t, o, s, want)
+			if row == "ContainedLink" || row == "Special" {
+				_, err := planningInput(o, s)
+				var refusal *Error
+				cause := "seed cannot be safely read: special"
+				if row == "ContainedLink" {
+					cause = "seed cannot be safely read: link"
+				}
+				if !errors.As(err, &refusal) || refusal.Cause != cause {
+					t.Fatal(err)
+				}
+			}
 		})
 	}
 }

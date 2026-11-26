@@ -58,14 +58,16 @@ type Dependencies struct {
 	SourceInWorkspace func(*throwaway.Workspace) (observe.Source, func() error, error)
 	Stderr            io.Writer
 	// Signals permits deterministic tests; nil subscribes to the four signals.
-	Signals   <-chan os.Signal
-	IDs       func() (real, effective int)
-	Open      func(string) (io.ReadCloser, error)
-	Source    func() (observe.Source, func() error, error)
-	Judge     func([]byte) ([]byte, int)
-	StoreRoot func() (string, error)
-	Write     func(store.Record) error
-	Collect   func(plan.Plan, observe.Source) ([]collect.Check, error)
+	Signals        <-chan os.Signal
+	OpenSystemFile func(string) (*os.File, error) // Nil opens absolute computation executables nonblocking.
+	AccountHome    func() (string, error)         // Nil uses the system account record, never an environment fallback.
+	IDs            func() (real, effective int)
+	Open           func(string) (io.ReadCloser, error)
+	Source         func() (observe.Source, func() error, error)
+	Judge          func([]byte) ([]byte, int)
+	StoreRoot      func() (string, error)
+	Write          func(store.Record) error
+	Collect        func(plan.Plan, observe.Source) ([]collect.Check, error)
 }
 
 func UserIDs() (int, int) { return os.Getuid(), os.Geteuid() }
@@ -227,7 +229,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	var in snapshot
 	var inputErr error
 	s, parseErr := subject.ParseWithFiles(data, func(s subject.File) []string {
-		in, inputErr = planningInput(o, s)
+		in, inputErr = planningInputWith(o, s, inputAccess{home: d.AccountHome, openAbsolute: d.OpenSystemFile})
 		var refusal *Error
 		if errors.As(inputErr, &refusal) && refusal.Code == 2 {
 			return []string{refusal.Rule}

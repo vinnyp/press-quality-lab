@@ -62,6 +62,7 @@ func TestCorpus(t *testing.T) {
 	if e := json.Unmarshal(read(t, "../../scripts/ratchet/pr8-prediction.json"), &prediction); e != nil {
 		t.Fatal(e)
 	}
+	checked := 0
 	for _, pr := range prediction.Cases {
 		source := filepath.Join(kit, "cases", pr.Case)
 		var c caseassembly.Case
@@ -71,6 +72,7 @@ func TestCorpus(t *testing.T) {
 		if c.Kind != "judge-checked" {
 			continue
 		}
+		checked++
 		t.Run(strings.ReplaceAll(c.ID, "-", "_"), func(t *testing.T) {
 			l := caseassembly.Assemble(t, kit, source, c)
 			s, e := subject.Parse(read(t, filepath.Join(l.Subject, c.Input.SubjectFile)))
@@ -182,6 +184,9 @@ func TestCorpus(t *testing.T) {
 				}
 			}
 		})
+	}
+	if checked != 121 {
+		t.Fatalf("judge-checked cases %d; want 121", checked)
 	}
 }
 

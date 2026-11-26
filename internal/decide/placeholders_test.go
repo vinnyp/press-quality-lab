@@ -64,21 +64,20 @@ func TestPlaceholderOverride(t *testing.T) {
 		t.Run(strings.ReplaceAll(dim, "-", "_"), func(t *testing.T) {
 			for _, outcome := range []Outcome{"held", "not_held", NotObserved} {
 				for _, ph := range []bool{false, true} {
-					for _, observed := range []bool{false, true} {
-						s := plan.Object{"facts": plan.Object{"has_cli": true}}
-						if ph {
-							s["facts"] = plan.Object{"has_cli": plan.Object{"placeholder": "State whether a CLI exists."}}
-						}
-						ch := plan.Check{Subject: s, Preimage: plan.Object{"dimension": dim}, Required: plan.Object{"precondition": observed}}
-						before := Result{Outcome: outcome, Level: 8}
-						want := before
-						excluded := dim == "bounding" || dim == "idempotency" || dim == "destructive-guard" || dim == "side-effect-integrity" || dim == "flag-conformance"
-						if ph && outcome == "held" && !excluded {
-							want = Result{Outcome: NotObserved, Reason: "placeholder_unfilled", Level: 8}
-						}
-						if got := FinalOverride(ch, before); got != want {
-							t.Fatalf("%s ph=%v observed=%v: %+v want %+v", outcome, ph, observed, got, want)
-						}
+					// Observed preconditions belong to record.Resolution; FinalOverride never reads them.
+					s := plan.Object{"facts": plan.Object{"has_cli": true}}
+					if ph {
+						s["facts"] = plan.Object{"has_cli": plan.Object{"placeholder": "State whether a CLI exists."}}
+					}
+					ch := plan.Check{Subject: s, Preimage: plan.Object{"dimension": dim}, Required: plan.Object{}}
+					before := Result{Outcome: outcome, Level: 8}
+					want := before
+					excluded := dim == "bounding" || dim == "idempotency" || dim == "destructive-guard" || dim == "side-effect-integrity" || dim == "flag-conformance"
+					if ph && outcome == "held" && !excluded {
+						want = Result{Outcome: NotObserved, Reason: "placeholder_unfilled", Level: 8}
+					}
+					if got := FinalOverride(ch, before); got != want {
+						t.Fatalf("%s ph=%v: %+v want %+v", outcome, ph, got, want)
 					}
 				}
 			}

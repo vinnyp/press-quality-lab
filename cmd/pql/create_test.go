@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -80,5 +81,13 @@ func TestCreateNeverRuns(t *testing.T) {
 	}
 	if data, err := os.ReadFile(marker); err != nil || string(data) != "ran" {
 		t.Fatalf("control: %q %v", data, err)
+	}
+}
+
+func TestPR8CreateUTF8(t *testing.T) {
+	// QS2: invalid UTF-8 cannot be silently replaced while creating a subject file.
+	var out, errout bytes.Buffer
+	if code := run([]string{"create", string([]byte{255})}, strings.NewReader(""), &out, &errout); code != 2 || out.Len() != 0 || errout.String() != "pql: rejected: QS2: binary path is not valid UTF-8\n" {
+		t.Fatalf("%d %q %q", code, out.String(), errout.String())
 	}
 }

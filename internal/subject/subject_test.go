@@ -165,14 +165,14 @@ func TestSchemaRules(t *testing.T) {
 		name, rule string
 		change     func(strictjson.Object)
 	}{
-		{"command_budget", "QS6", func(o strictjson.Object) {
+		{"command_budget", "QS2", func(o strictjson.Object) {
 			testObject(testArray(o["commands"])[0])["budget_seconds"] = strictjson.Number("1.0")
 		}},
-		{"offline_argument", "QS7", func(o strictjson.Object) {
+		{"offline_argument", "QS2", func(o strictjson.Object) {
 			o["offline"] = strictjson.Array{strictjson.Object{"applies_to": strictjson.Array{strictjson.Array{}}, "args": strictjson.Array{false}, "env": strictjson.Object{}}}
 		}},
 		{"absolute_store", "QS9", func(o strictjson.Object) { o["store"] = "/store" }},
-		{"computation_budget", "QA4", func(o strictjson.Object) {
+		{"computation_budget", "QS2", func(o strictjson.Object) {
 			c := firstCheck(o)
 			c["expected"] = strictjson.Object{"computation": strictjson.Object{"argv": strictjson.Array{"/bin/echo"}, "budget_seconds": strictjson.Number("601"), "declared_files": strictjson.Array{}, "captures": strictjson.Array{}}}
 		}},
@@ -239,7 +239,7 @@ func TestSchemaBounds(t *testing.T) {
 			_, err := Parse(strictjson.Write(o))
 			want := ""
 			if n == 0 || n == 3601 {
-				want = "QS6"
+				want = "QS2"
 			}
 			assertRule(t, err, want)
 		})

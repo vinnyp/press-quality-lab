@@ -18,7 +18,7 @@ func array(v any) strictjson.Array {
 
 func level2(ch plan.Check, _ observe.Controls, _ Evidence) Result {
 	if ch.Subject == nil {
-		return Result{}
+		panic("QS5: check lacks subject")
 	}
 	s := ch.Subject
 	blocked := placeholder(s["binary"])

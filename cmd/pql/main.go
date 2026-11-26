@@ -8,6 +8,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/subject"
 	"io"
 	"os"
+	"unicode/utf8"
 
 	"github.com/vinnyp/press-quality-lab/internal/grade"
 	"github.com/vinnyp/press-quality-lab/internal/judge"
@@ -86,6 +87,9 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return nil
 		},
 		RunE: func(_ *cobra.Command, args []string) error {
+			if !utf8.ValidString(args[0]) {
+				return &rejectionError{code: 2, rule: "QS2", cause: "binary path is not valid UTF-8"}
+			}
 			encoder := json.NewEncoder(stdout)
 			encoder.SetIndent("", "  ")
 			return encoder.Encode(subject.Create(args[0]))
