@@ -55,12 +55,37 @@ Two delta reviews: code and security, and test. Every round-1 fix had a test tha
 
 20 mutations, each turning a named test red, are recorded with round 2's fix.
 
+## Round 3 (delta, dc1f8fd to c02ab20)
+
+One delta review, code and test lens. Every round-2 test failed without its fix.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 20 | A subject file that is itself a link: the binary came from the link's directory, the record named the target's path | code (Major) | Reproduced. The whole sealed folder leaves it open | Put to the owner, who ruled E-24: every link in the subject file's path is resolved once, and that path's directory holds the file. Fixed: one physical derivation and one root for the identity check, the home comparison and every read |
+| 21 | Capture tokens whose text could not be a step name were read inconsistently | code (Minor) | Two-way | Put to the owner, who ruled E-25: a token is `{CAPTURE:`, a step-name-pattern run, then `}`, and anything else is literal. Fixed |
+| 22 | E-23's resolve, stat and read errors were untested, and two could fail open; `ENOTDIR` was treated as an existing file | code (Minor) | Reproduced by mutation | Fixed, each with a test |
+| 23 | An overflowing integer budget named QS6; an `applies_to` element that is not a list named QS2; a dangling-link or relative account home was handled loosely; an unstatable subject reader skipped the identity check | code (Minor) | Reproduced | Fixed. The absent-home reading is in the design note |
+
+16 mutations, each turning a named test red, are recorded with round 3's fix.
+
+## Round 4 (confirmation, c02ab20 to f29ffaa)
+
+No Blocker or Major remained. Each round-3 fix was reproduced against its ruling.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 24 | The identity check's `Stat` followed a link swapped in under the subject file's name after resolution | code (Minor) | Reproduced | Fixed: `Lstat`, tested through a hook in that window |
+| 25 | The capture scan covered a computation's first argument | code (Nit) | Settled by the text: QA4 line 271 replaces tokens in "its other arguments" | Fixed, and the reading added to the design note |
+| 26 | Five behaviours had no test: the shared root in the home comparison, the relative `link/..` path, a nested unlisted capture, an uppercase exponent, a non-string word | code (Minor) | Reproduced by mutation | Rows added. Each fails under its mutation |
+
+9 mutations, each turning a named test red, are recorded with round 4's fix.
+
 ## Owner rulings during this review
 
-E-21, E-22 and E-23, in `docs/specs/conformance-collection-1.0-errata.md`.
+E-21 to E-25, in `docs/specs/conformance-collection-1.0-errata.md`.
 
 ## Evidence
 
-- `gate.sh`, `check.sh` and `scan.sh` pass at c02ab20.
+- `gate.sh`, `check.sh` and `scan.sh` pass at 688a95b, the last code commit; the commit adding this log changes nothing else.
 - 35 predicted cases pass, 114 pending judge-checked cases end where `scripts/ratchet/pr8-prediction.json` says, and the prediction regenerates byte-identical.
-- macOS evidence at c02ab20: 590 passed, 0 failed, no temporary directory left behind.
+- macOS evidence at 688a95b: 609 passed, 0 failed, no temporary directory left behind.
