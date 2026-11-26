@@ -128,3 +128,11 @@ QS8 names files relative to "the directory that holds the subject file", E-17 re
 ### E-25. Text that cannot be a capture token
 
 QA4 replaces `{CAPTURE:<step>}`, and a capture that names a step other than a listed earlier one rejects the subject file. The schema's step names exclude `{`, `}` and `:`. **A capture token is `{CAPTURE:`, then text that matches the schema's step-name pattern, then `}`. Any other text, an unterminated `{CAPTURE:` included, is literal and left as written. A token whose name is not a listed earlier step of its runbook rejects the file under QA4.** The owner ruled on 2026-11-26. No case of the corpus has such text, so no record changes.
+
+### E-26. A help with no recognised heading below the bare binary
+
+`credit-and-routes.md` §5 says "A help with no section heading belongs to a leaf command (QD2). Every other form, a man-page style help included, is not read", and QD5 makes discovery not observed when a help cannot be read. A man-page style help without a recognised heading also has no section heading. At the bare binary both readings give QD5. Below it they differ. **A help request that exits 0 with output and has no section heading belongs to a leaf command, wherever it is in the walk. A declared command below it is therefore not found, and QD4 decides. "Every other form" covers only output the heading test cannot classify.** The owner ruled on 2026-11-26. No case of the corpus has a headingless help below the bare binary with a declared command beneath it, so no record changes.
+
+### E-27. Where a help line's description starts
+
+§5 makes a command line hidden when its "description begins `(hidden)`, `[hidden]` or `HIDDEN`", and takes the command from the line's first word, with a trailing comma removed. It does not say where the description starts. Some generators print aliases after the name, as in `  account, a   Show the account`. **A command line's description is the text after the first run of two or more spaces that follows its first word. A line with no such run has no description, and is not hidden.** The owner ruled on 2026-11-26. No case of the corpus has an aliased hidden command, so no record changes.
