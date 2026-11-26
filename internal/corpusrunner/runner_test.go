@@ -597,6 +597,7 @@ func pendingSet(data string) map[string]bool {
 
 func TestCorpus(t *testing.T) {
 	// QT6, QE19, QO1: execute the real command and independently compare its record and trace.
+	// QE3, QE7: every judge-checked required set matches the trace (KTD2.7).
 	binary := filepath.Join(t.TempDir(), "pql")
 	build := exec.Command("go", "build", "-tags", "scripted", "-o", binary, "../../cmd/pql")
 	if output, err := build.CombinedOutput(); err != nil {
@@ -649,7 +650,7 @@ func TestCorpus(t *testing.T) {
 			if err := checkTrace(c, subject, want, preimages, r.Trace); err != nil {
 				t.Fatal(err)
 			}
-			if c.ID == "case-003" || c.ID == "case-004" {
+			if c.Kind == "judge-checked" {
 				if err := checkRequired(r.Trace, want); err != nil {
 					t.Fatal(err)
 				}
@@ -669,6 +670,7 @@ func TestCorpus(t *testing.T) {
 			if err := ratchet(pending[c.ID], failure); err != nil {
 				t.Fatal(err)
 			}
+			t.Logf("result %s exit=%d rule=%s pending=%v required=%d", c.ID, r.Exit, r.Rule, pending[c.ID], len(r.Trace.Required))
 			if pending[c.ID] {
 				t.Logf("pending: exit=%d rule=%s comparison=%v", r.Exit, r.Rule, failure)
 			}

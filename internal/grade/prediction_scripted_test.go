@@ -44,12 +44,13 @@ func TestPredictedCheckEndings(t *testing.T) {
 			Kind   string          `json:"kind"`
 			Ending predictedEnding `json:"ending"`
 			Checks []struct {
+				Level  int             `json:"deciding_level"`
 				ID     string          `json:"id"`
 				Ending predictedEnding `json:"ending"`
 			} `json:"checks"`
 		} `json:"cases"`
 	}
-	if err := caseassembly.Read("../../scripts/ratchet/pr6-prediction.json", &predictions); err != nil {
+	if err := caseassembly.Read("../../scripts/ratchet/pr8-prediction.json", &predictions); err != nil {
 		t.Fatal(err)
 	}
 	counts := map[string]int{}
@@ -69,7 +70,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 				t.Fatal(err)
 			}
 			// U9 moves all subject-file derivation refusals ahead of planning.
-			// Judge-checked predictions remain PR6's until the dispatcher moves U39.
+			// Judge-checked endings follow the PR8 prediction.
 			expectedRule := stringValue(c.Expect["rule"])
 			if prediction.Kind == "derivation-only" && (strings.HasPrefix(expectedRule, "QS") || expectedRule == "QP7" || expectedRule == "QP10" || expectedRule == "QA4" || expectedRule == "QA9") {
 				options := Options{SubjectFile: filepath.Join(layout.Subject, c.Input.SubjectFile), Scope: c.Input.Scope, Scripted: true}
@@ -173,8 +174,8 @@ func TestPredictedCheckEndings(t *testing.T) {
 						continue
 					}
 					if want.Ending.Phase == "deciding" {
-						if check.Result.Unbuilt != nil || check.Result.Level != 1 || check.Result.Outcome != "not_observed" || check.Result.Reason != "network_unverifiable" {
-							t.Errorf("check %s: %+v; want QO1", want.ID, check.Result)
+						if check.Result.Unbuilt != nil || check.Result.Level != want.Level || check.Result.Outcome != "not_observed" || (want.Level == 1 && check.Result.Reason != "network_unverifiable") || (want.Level == 2 && check.Result.Reason != "placeholder_unfilled") {
+							t.Errorf("check %s: %+v; want level %d", want.ID, check.Result, want.Level)
 						}
 					} else if check.Result.Unbuilt == nil || !allowedRule(want.Ending, check.Result.Unbuilt.Rule) {
 						t.Errorf("check %s: %+v; want %+v", want.ID, check.Result, want.Ending)
@@ -184,7 +185,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 			counts["decide"]++
 		})
 	}
-	if !reflect.DeepEqual(counts, map[string]int{"decide": 94, "planning": 24, "derivation": 31}) {
+	if !reflect.DeepEqual(counts, map[string]int{"decide": 111, "planning": 7, "derivation": 31}) {
 		t.Fatalf("phase counts %v", counts)
 	}
 }

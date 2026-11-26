@@ -535,8 +535,15 @@ def predict(built, cases=None):
         raise ValueError('levels must be integers from 1 to 8')
     rows = [predict_case(d, built) for d in sorted((cases or KIT / 'cases').iterdir())
             if d.is_dir()]
-    return {'predicted': [r['case'] for r in rows if r['predicted']], 'cases': rows,
-            'reason_to_level': REASON_LEVELS, 'built': built}
+    result = {'predicted': [r['case'] for r in rows if r['predicted']], 'cases': rows,
+              'reason_to_level': REASON_LEVELS, 'built': built}
+    if 'QS5.final_override' in names(built['builds']):
+        result['placeholder_dependencies'] = {
+            d.name: {key: depends(load(d / 'subject.json'), pre)
+                     for key, pre in load(d / 'preimages.json').items()}
+            for d in sorted((cases or KIT / 'cases').iterdir())
+            if (d / 'preimages.json').exists()}
+    return result
 
 
 def main():

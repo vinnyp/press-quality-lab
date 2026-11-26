@@ -36,7 +36,7 @@ func Resolve(ch plan.Check, controls observe.Controls, facts Evidence) Result {
 	for _, step := range levels {
 		r := step(ch, controls, facts)
 		if r.Level != 0 {
-			return r
+			return FinalOverride(ch, r)
 		}
 	}
 	panic("precedence table has no terminal level")
@@ -52,7 +52,7 @@ func object(v any) strictjson.Object {
 	return o
 }
 
-// dependency finds placeholders carried by required-set dependency metadata.
+// dependency finds any placeholder for QS5's final override.
 func dependency(v any) bool {
 	switch x := v.(type) {
 	case strictjson.Object:

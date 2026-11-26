@@ -25,7 +25,7 @@ func readPredictions(t *testing.T) map[string]prediction {
 	var document struct {
 		Cases []prediction `json:"cases"`
 	}
-	read(t, "../../scripts/ratchet/pr6-prediction.json", &document)
+	read(t, "../../scripts/ratchet/pr8-prediction.json", &document)
 	out := map[string]prediction{}
 	for _, p := range document.Cases {
 		out[p.Case] = p

@@ -88,6 +88,7 @@ func newCollectionCommand(name string) *cobra.Command {
 				options.Scope = strings.Split(scope, ",")
 				return runGrade(options)
 			}
+			options.Scope = []string{"conformance"}
 			return runAnchor(options)
 		},
 	}

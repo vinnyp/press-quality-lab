@@ -140,7 +140,9 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if inputErr != nil {
 		return 70, inputErr
 	}
-	p, err := plan.Build(in.Input)
+	fixed := in.Input
+	fixed.Baseline, fixed.Anchor = false, false
+	p, err := plan.Build(fixed)
 	if err != nil {
 		return 70, err
 	}
@@ -156,11 +158,40 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	for _, ch := range p.Checks {
 		required = append(required, ch.Required)
 	}
+	rawFacts, factsOK := s["facts"].(strictjson.Object)
+	if !factsOK {
+		return 70, failure(70, "QE16", "parsed subject facts lost")
+	}
+	facts := strictjson.Object{}
+	for key, value := range rawFacts {
+		if _, ok := value.(strictjson.Object); ok {
+			facts[key] = nil
+		} else {
+			facts[key] = value
+		}
+	}
+	if in.Baseline || in.Anchor {
+		source, closer, sourceErr := d.Source()
+		closeSource = closer
+		if sourceErr != nil {
+			return 70, sourceErr
+		}
+		if traced, ok := source.(interface{ Required(any) error }); ok {
+			if err := traced.Required(required); err != nil {
+				return 70, err
+			}
+		}
+		part := ""
+		if in.Anchor {
+			part = "anchor"
+		}
+		return 70, &plan.Gap{Rule: "QE4", Part: part}
+	}
 	tier := "live"
 	if o.Scripted {
 		tier = "scripted"
 	}
-	pre := strictjson.Object{"request": request, "scope": scopes, "claimed_tier": tier, "subject_facts": s["facts"], "markers": s["markers"], "required": required, "evidence": strictjson.Array{}, "baseline": nil, "retired": strictjson.Array{}, "accepted_regressions": strictjson.Array{}, "trials": strictjson.Array{}}
+	pre := strictjson.Object{"request": request, "scope": scopes, "claimed_tier": tier, "subject_facts": facts, "markers": s["markers"], "required": required, "evidence": strictjson.Array{}, "baseline": nil, "retired": strictjson.Array{}, "accepted_regressions": strictjson.Array{}, "trials": strictjson.Array{}}
 	preOutput, _, err := callJudge(d.Judge, strictjson.Write(pre))
 	if err != nil {
 		return 70, err
@@ -190,9 +221,8 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		}
 		results[ch.Plan.ID] = record.Resolution{Result: ch.Result}
 	}
-	facts, factsOK := s["facts"].(strictjson.Object)
 	markers, markersOK := s["markers"].(strictjson.Array)
-	if !factsOK || !markersOK {
+	if !markersOK {
 		return 70, failure(70, "QE16", "parsed subject shape lost")
 	}
 	input, err := record.Build(record.Input{Plan: p, Results: results, Request: request, Scope: scopes, SubjectFacts: facts, Markers: markers, Scripted: o.Scripted})

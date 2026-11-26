@@ -25,6 +25,14 @@ class PredictorTests(unittest.TestCase):
     def case(self, number, built=None):
         return predictor.predict_case(KIT / 'cases' / f'case-{number:03d}', built or BUILT)
 
+    def test_pr8_placeholder_dependencies(self):
+        # QS5, KTD2.8: the dependency classifier produces the shared oracle.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
+        expected = predictor.load(Path(__file__).with_name('ratchet') / 'pr8-prediction.json')
+        actual = predictor.predict(built)['placeholder_dependencies']
+        self.assertEqual(len(actual), 121)
+        self.assertEqual(actual, expected['placeholder_dependencies'])
+
     def test_pr8_final_override_is_independent_of_level_two(self):
         # QS5: final override follows level 8; building level 2 alone is insufficient.
         built = json.loads(Path(__file__).with_name('ratchet').joinpath('pr8.json').read_text())
@@ -63,6 +71,18 @@ class PredictorTests(unittest.TestCase):
         built['builds'] = [r for r in built['builds']
                            if not isinstance(r, dict) or r['rule'] != 'QS5.final_override']
         self.assertTrue(self.case(22, built)['predicted'])
+
+    def test_pr8_placeholder_override_converse(self):
+        # QS5: the QD3 trigger cannot implement the placeholder override.
+        built = predictor.load(Path(__file__).with_name('ratchet') / 'pr8.json')
+        built['levels'] = list(range(1, 9))
+        self.assertTrue(self.case(61, built)['predicted'])
+        built['builds'] = [r for r in built['builds']
+                           if not isinstance(r, dict) or r['rule'] != 'QS5.final_override']
+        built['builds'].append('QS5.qd3_trigger')
+        row = self.case(61, built)
+        self.assertFalse(row['predicted'])
+        self.assertIn('QS5.final_override', row['ending']['rules'])
 
     def test_pr6_prediction_history(self):
         # KTD1: earlier slice predictions remain reproducible.

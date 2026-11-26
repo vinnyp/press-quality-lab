@@ -2,8 +2,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/vinnyp/press-quality-lab/internal/subject"
 	"io"
 	"os"
 
@@ -75,7 +77,21 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		},
 	}
 	judgeCmd.SetOut(stderr)
-	root.AddCommand(judgeCmd, newCollectionCommand("grade"), newCollectionCommand("anchor"))
+	createCmd := &cobra.Command{
+		Use: "create <binary>", Short: "Write a subject file with placeholders",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return &usageError{errors.New("create requires one binary path")}
+			}
+			return nil
+		},
+		RunE: func(_ *cobra.Command, args []string) error {
+			encoder := json.NewEncoder(stdout)
+			encoder.SetIndent("", "  ")
+			return encoder.Encode(subject.Create(args[0]))
+		},
+	}
+	root.AddCommand(createCmd, judgeCmd, newCollectionCommand("grade"), newCollectionCommand("anchor"))
 	root.SetHelpCommand(&cobra.Command{
 		Use: "help [command]", Short: "Help about any command",
 		Args: func(_ *cobra.Command, args []string) error {
