@@ -116,6 +116,7 @@ func TestInvalidPublication(t *testing.T) {
 	for _, row := range []struct{ name, contents string }{
 		{"Malformed", "broken"},
 		{"Empty", "{}"},
+		{"NegativePID", "{\"pid\":-1,\"start_time\":\"old\"}"},
 		{"BadPID", "{\"pid\":0,\"start_time\":\"old\"}"},
 		{"BadStart", "{\"pid\":41,\"start_time\":false}"},
 		{"Extra", "{\"pid\":41,\"start_time\":\"old\",\"extra\":true}"},
@@ -161,7 +162,7 @@ func TestPublishRequiresIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, p := range []Process{{PID: 0, StartTime: "old"}, {PID: 41}} {
+	for _, p := range []Process{{PID: -1, StartTime: "old"}, {PID: 0, StartTime: "old"}, {PID: 41}} {
 		if err := w.Publish(p); err == nil {
 			t.Fatal("invalid identity published")
 		}

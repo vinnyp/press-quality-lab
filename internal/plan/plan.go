@@ -29,21 +29,24 @@ func (g *Gap) Error() string {
 	return g.Rule + "." + g.Part
 }
 
-// Entry describes one caller-snapshotted seed entry. Directories have nil Data.
+// Entry describes one caller-snapshotted seed entry. Digest, when supplied,
+// replaces Data; directories have neither.
 type Entry struct {
 	Path      string
 	Directory bool
 	Data      []byte
+	Digest    string
 }
 
-// Input contains only parsed values and caller-supplied file contents.
+// Input contains parsed values and caller-supplied file contents or digests.
 type Input struct {
-	Subject  subject.File
-	Scopes   []rulebook.Scope
-	Seed     []Entry
-	Files    map[string][]byte
-	Baseline bool
-	Anchor   bool
+	Subject     subject.File
+	Scopes      []rulebook.Scope
+	Seed        []Entry
+	Files       map[string][]byte
+	FileDigests map[string]string
+	Baseline    bool
+	Anchor      bool
 }
 
 // Check holds a required entry, its preimage and subject invocation keys.
@@ -65,7 +68,10 @@ func SeedDigest(entries []Entry) (string, error) {
 	a := Array{}
 	for _, e := range entries {
 		kind := "file"
-		var d any = hash(e.Data)
+		var d any = e.Digest
+		if e.Digest == "" {
+			d = hash(e.Data)
+		}
 		if e.Directory {
 			kind = "directory"
 			d = nil
@@ -358,11 +364,16 @@ func Build(in Input) (Plan, error) {
 						names = append(names, argv[0])
 					}
 					for _, n := range names {
-						b, ok := in.Files[path.Clean(text(n))]
+						key := path.Clean(text(n))
+						digest, ok := in.FileDigests[key]
 						if !ok {
-							return Plan{}, fmt.Errorf("QE2: missing computation file")
+							b, found := in.Files[key]
+							if !found {
+								return Plan{}, &Gap{"QE2", ""}
+							}
+							digest = hash(b)
 						}
-						files[text(n)] = hash(b)
+						files[text(n)] = digest
 					}
 					ex["computation"] = Object{"argv": comp["argv"], "budget_seconds": comp["budget_seconds"], "captures": comp["captures"], "files": files}
 				} else {

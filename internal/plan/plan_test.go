@@ -8,9 +8,19 @@ import (
 
 func TestSeedDigest(t *testing.T) {
 	// QE2: the worked seed digest is independent of entry order.
-	got, err := SeedDigest([]Entry{{Path: "data.json", Data: []byte("{\"widgets\":[]}\n")}})
-	if err != nil || got != "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee" {
-		t.Fatalf("%s %v", got, err)
+	for _, row := range []struct {
+		name  string
+		entry Entry
+	}{
+		{"Bytes", Entry{Path: "data.json", Data: []byte("{\"widgets\":[]}\n")}},
+		{"Digest", Entry{Path: "data.json", Digest: "3890b1a054e609ad21a23184fc351862f3aed55501fdf682bc1d2cec95dacff2"}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			got, err := SeedDigest([]Entry{row.entry})
+			if err != nil || got != "d450f3278f1a38baa7d5306dc2a5fd3de089508bdd1f4b22e1d8d5355b5fc2ee" {
+				t.Fatalf("%s %v", got, err)
+			}
+		})
 	}
 }
 func TestSubjectKey(t *testing.T) {
