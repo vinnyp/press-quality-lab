@@ -104,3 +104,11 @@ QS8 rejects a named file that leaves the subject file's directory, a directory, 
 ### E-20. A planted-secret token that overlaps itself
 
 QP10 requires the planted secret's `token` to appear exactly once in the seed's copy of its file, and does not say how an occurrence that overlaps another is counted. **Each position at which the token starts is one occurrence, so a token that overlaps itself, such as `aaaaaaaa` in nine `a`s, appears more than once and rejects the file under QP10.** The owner ruled on 2026-11-26. No case of the corpus has such a token, so no record changes.
+
+### E-21. The rule a reserved environment prefix names
+
+QH12 rejects a subject file whose offline setting sets an environment variable whose name begins `DYLD_` or `__CF_`. E-9's order of named rules does not list QH12, and QS7, the rule for offline settings, cites QH12 for its reserved names. **Such a refusal names QS7, with exit 2, in QS7's place in E-9's order.** The owner ruled on 2026-11-26. No case of the corpus sets such a variable, so no record changes.
+
+### E-22. A placeholder-shaped value inside a literal
+
+QS5 defines a placeholder by its shape and rejects one outside its allowed positions. A `literal` is the output the author expects the subject to produce, and may be any JSON value. **An object inside a `literal` is data, never a placeholder, whatever its shape: it does not reject the file, and no rule treats it as a value the author has not supplied. Placeholder detection looks only at the positions QS5 allows.** The owner ruled on 2026-11-26. No case of the corpus has such a literal, so no record changes.
