@@ -52,7 +52,7 @@ func main(){
  case "exec":fmt.Println("attempt_exec");e:=syscall.Exec(os.Args[2],[]string{os.Args[2]},os.Environ());fmt.Println("returned",e)
  case "read":fmt.Println("attempt_read");b,e:=os.ReadFile(os.Args[2]);fmt.Printf("returned %s %v\n",b,e)
  case "write":fmt.Println("attempt_write");e:=os.WriteFile(os.Args[2],[]byte("changed"),0600);fmt.Println("returned",e)
- case "network":fmt.Println("attempt_network");fd,e:=syscall.Socket(syscall.AF_INET,syscall.SOCK_STREAM,0);fmt.Println("returned",fd,e);if e==nil{check(syscall.Close(fd))}
+ case "tcp","unix","udp","bind","listen":network(os.Args[1],os.Args[2])
  case "group":
   p,e:=os.StartProcess(os.Args[0],[]string{os.Args[0],"groupchild"},&os.ProcAttr{Env:os.Environ(),Files:[]*os.File{os.Stdin,os.Stdout,os.Stderr}});check(e);wait(filepath.Join(os.Getenv("HOME"),"ready"));fmt.Printf("group_spawned=%d\n",p.Pid)
  case "groupchild":write(filepath.Join(os.Getenv("HOME"),"ready"),strconv.Itoa(os.Getpid()));time.Sleep(8*time.Second);fmt.Println("group_child_survived")
@@ -73,7 +73,7 @@ func main(){
   ch:=make(chan os.Signal,1);signal.Notify(ch,syscall.SIGUSR1);home:=os.Getenv("HOME");write(filepath.Join(home,"protected"),"later_value");write(filepath.Join(home,"ready"),strconv.Itoa(os.Getpid()));wait(filepath.Join(home,"release"));b,e:=os.ReadFile(filepath.Join(home,"protected"));check(e);if string(b)!="later_value"{panic("later file changed")}
   select{case s:=<-ch:fmt.Println("later_signalled",s);default:fmt.Println("later_clean")}
  }
-}`
+}` + computationNetworkFunctions
 
 func computationInvocation(t *testing.T, launcher, program, subject string) (*confine.Copies, confine.Invocation) {
 	t.Helper()
@@ -103,6 +103,8 @@ func computationRun(t *testing.T, c *confine.Copies, inv confine.Invocation) obs
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Raw confine results carry the launcher marker in Markers.Confinement;
+	// End.AfterMarker is a projected/scripted field, not set by Process.Wait.
 	if !r.Markers.Confinement || r.End.BudgetExpired || r.End.EngineKilled {
 		t.Fatalf("invalid evidence: end=%+v markers=%+v stderr=%q", r.End, r.Markers, r.Stderr)
 	}
@@ -140,9 +142,15 @@ func TestMacOSComputationOperations(t *testing.T) {
 		{"Setsid", "setsid", ""}, {"Setpgid", "setpgid", ""},
 		{"SubjectExec", "exec", subject}, {"CopyExec", "exec", subjectCopy},
 		{"SubjectRead", "read", subject}, {"CopyRead", "read", subjectCopy},
-		{"SeedWrite", "write", seed}, {"Network", "network", ""},
+		{"SeedWrite", "write", seed},
+		{"TCPConnect", "tcp", ""}, {"UnixConnect", "unix", ""},
+		{"UDPSend", "udp", ""}, {"Bind", "bind", ""}, {"Listen", "listen", ""},
 	} {
 		t.Run(row.name, func(t *testing.T) {
+			switch row.op {
+			case "tcp", "unix", "udp", "bind", "listen":
+				row.path, _ = networkDecoy(t, row.op)
+			}
 			inv.Words = []string{row.op, row.path}
 			r := computationRun(t, c, inv)
 			if r.End.Signal != int(syscall.SIGKILL) || string(r.Stdout) != "attempt_"+row.op+"\n" {
