@@ -3,6 +3,7 @@
 package confine_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -79,6 +80,12 @@ func evidencePaths(t *testing.T, home, launcher, program string) confine.Paths {
 func evidenceLauncher(t *testing.T) (string, string) {
 	t.Helper()
 	root, err := filepath.Abs("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Go resolves the working directory before matching overlay source paths.
+	// In particular, /tmp and /private/tmp name the same tree on macOS.
+	root, err = filepath.EvalSymlinks(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -210,6 +217,17 @@ func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.
 	}
 	broken := filepath.Join(dir, "pql")
 	evidenceBuild(t, root, broken, "-overlay", overlayPath, "./cmd/pql")
+	goodBytes, err := os.ReadFile(launcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	brokenBytes, err := os.ReadFile(broken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(goodBytes, brokenBytes) {
+		t.Fatal("close-loop knock-out produced an unchanged launcher")
+	}
 	for _, row := range []struct{ name, launcher, want string }{
 		{"Closing", launcher, "sentinels_clear=true fd_closed=true\n"},
 		{"Knockout", broken, "sentinels_clear=true fd_closed=false\n"},
@@ -217,6 +235,17 @@ func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.
 		t.Run(row.name, func(t *testing.T) {
 			c, inv := evidenceInvocation(t, row.launcher, program)
 			l, p := c.CopyPaths()
+			copiedBytes, err := os.ReadFile(l)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantBytes := goodBytes
+			if row.launcher == broken {
+				wantBytes = brokenBytes
+			}
+			if !bytes.Equal(copiedBytes, wantBytes) {
+				t.Fatal("private launcher differs from the selected build")
+			}
 			environment, err := confine.Environment(inv.Paths.Values["HOME"], os.Getuid(), nil)
 			if err != nil {
 				t.Fatal(err)
