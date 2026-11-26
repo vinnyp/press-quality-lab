@@ -1,0 +1,4 @@
+# Verified false positives in pushed history. Each line is one gitleaks fingerprint (commit:file:rule:line); it allows that single finding and nothing else.
+# b2fe47a listed two rule-token strings ending in "_keys" on one line, which the generic-api-key rule reads as a credential; the tree no longer holds that line. 209faed's first version of this file quoted the same strings in a comment. Neither pushed commit can be rewritten without a force-push.
+b2fe47abde677f568f691a8976132ad59680bec1:scripts/predict-ratchet.py:generic-api-key:211
+209faed8f51c8e4698c79933e02b1b46cf31586a:.gitleaksignore:generic-api-key:2

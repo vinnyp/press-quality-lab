@@ -1,30 +1,32 @@
 package judge
 
+import "github.com/vinnyp/press-quality-lab/internal/rulebook"
+
 // Dimension is a routing destination in the fixed dimension table.
-type Dimension string
+type Dimension = rulebook.Dimension
 
 const (
-	Availability            Dimension = "availability"
-	Execution               Dimension = "execution"
-	GracefulFailure         Dimension = "graceful-failure"
-	Robustness              Dimension = "robustness"
-	ResponseCorrectness     Dimension = "response-correctness"
-	Determinism             Dimension = "determinism"
-	CLIMCPParity            Dimension = "cli-mcp-parity"
-	ProvenanceHonesty       Dimension = "provenance-honesty"
-	CompletenessSignaling   Dimension = "completeness-signaling"
-	OutputConformance       Dimension = "output-conformance"
-	FlagConformance         Dimension = "flag-conformance"
-	Bounding                Dimension = "bounding"
-	Discoverability         Dimension = "discoverability"
-	ErrorMessageQuality     Dimension = "error-message-quality"
-	TokenEconomy            Dimension = "token-economy"
-	SideEffectIntegrity     Dimension = "side-effect-integrity"
-	Idempotency             Dimension = "idempotency"
-	DestructiveGuard        Dimension = "destructive-guard"
-	PIISecretHygiene        Dimension = "pii-secret-hygiene"
-	Steering                Dimension = "steering"
-	ToolDescriptionEfficacy Dimension = "tool-description-efficacy"
+	Availability            = rulebook.Availability
+	Execution               = rulebook.Execution
+	GracefulFailure         = rulebook.GracefulFailure
+	Robustness              = rulebook.Robustness
+	ResponseCorrectness     = rulebook.ResponseCorrectness
+	Determinism             = rulebook.Determinism
+	CLIMCPParity            = rulebook.CLIMCPParity
+	ProvenanceHonesty       = rulebook.ProvenanceHonesty
+	CompletenessSignaling   = rulebook.CompletenessSignaling
+	OutputConformance       = rulebook.OutputConformance
+	FlagConformance         = rulebook.FlagConformance
+	Bounding                = rulebook.Bounding
+	Discoverability         = rulebook.Discoverability
+	ErrorMessageQuality     = rulebook.ErrorMessageQuality
+	TokenEconomy            = rulebook.TokenEconomy
+	SideEffectIntegrity     = rulebook.SideEffectIntegrity
+	Idempotency             = rulebook.Idempotency
+	DestructiveGuard        = rulebook.DestructiveGuard
+	PIISecretHygiene        = rulebook.PIISecretHygiene
+	Steering                = rulebook.Steering
+	ToolDescriptionEfficacy = rulebook.ToolDescriptionEfficacy
 )
 
 // Group names a fixed group of dimensions.
@@ -40,13 +42,13 @@ const (
 )
 
 // Scope names a requested part.
-type Scope string
+type Scope = rulebook.Scope
 
 const (
-	ConformanceScope Scope = "conformance"
-	DestructiveScope Scope = "destructive"
-	SteeringScope    Scope = "steering"
-	CompareScope     Scope = "compare"
+	ConformanceScope = rulebook.ConformanceScope
+	DestructiveScope = rulebook.DestructiveScope
+	SteeringScope    = rulebook.SteeringScope
+	CompareScope     = rulebook.CompareScope
 )
 
 // Kind identifies a required check's evaluation method.

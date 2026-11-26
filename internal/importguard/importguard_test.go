@@ -29,6 +29,7 @@ type listedPackage struct {
 	Imports    []string
 	Deps       []string
 	CgoFiles   []string
+	Standard   bool
 }
 
 func packagesFrom(r io.Reader) ([]listedPackage, error) {
@@ -56,10 +57,25 @@ func packageName(s string) string {
 
 func dependencyProblems(packages []listedPackage, target string) []string {
 	var problems []string
+	standard := map[string]bool{}
+	for _, p := range packages {
+		standard[packageName(p.ImportPath)] = p.Standard
+	}
 	for _, p := range packages {
 		name := packageName(p.ImportPath)
 		if !strings.HasPrefix(name, module+"/") {
 			continue
+		}
+		if name == module+"/internal/plan" || name == module+"/internal/rulebook" {
+			for _, dep := range append(append([]string(nil), p.Imports...), p.Deps...) {
+				dep = packageName(dep)
+				if name == module+"/internal/plan" && dep == module+"/internal/judge" {
+					problems = append(problems, name+": forbidden dependency "+dep)
+				}
+				if name == module+"/internal/rulebook" && !standard[dep] {
+					problems = append(problems, name+": nonstandard dependency "+dep)
+				}
+			}
 		}
 		for _, raw := range p.Imports {
 			dep := packageName(raw)
@@ -75,7 +91,10 @@ func dependencyProblems(packages []listedPackage, target string) []string {
 			if name == module+"/internal/collect" && (dep == module+"/internal/store" || dep == module+"/internal/judge") {
 				problems = append(problems, name+": forbidden dependency "+dep)
 			}
-			if (dep == module+"/internal/scripted" || dep == module+"/internal/confine") && !strings.HasPrefix(name, module+"/cmd/pql") && name != dep && name != dep+".test" && !strings.HasSuffix(name, "_test") {
+			// go list -test also emits augmented packages whose Imports and
+			// Deps include test files. Only the original package selects the
+			// binary's source; all other rules still inspect test variants.
+			if p.ImportPath == name && (dep == module+"/internal/scripted" || dep == module+"/internal/confine") && !strings.HasPrefix(name, module+"/cmd/pql") && name != dep && name != dep+".test" && !strings.HasSuffix(name, "_test") {
 				problems = append(problems, name+": source selected outside cmd/pql")
 			}
 		}
@@ -414,6 +433,48 @@ func TestDependencyClassifier(t *testing.T) {
 		if _, err := packagesFrom(strings.NewReader(input)); err == nil {
 			t.Errorf("accepted %q", input)
 		}
+	}
+}
+
+func TestSourceSelectionClassifier(t *testing.T) {
+	// KTD11: only production imports choose the binary's source.
+	for _, tc := range []struct {
+		name, path string
+		want       []string
+	}{
+		{"ProductionScripted", module + "/internal/grade", []string{module + "/internal/grade: source selected outside cmd/pql"}},
+		{"TestScripted", module + "/internal/grade [" + module + "/internal/grade.test]", nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			packages := []listedPackage{{ImportPath: tc.path, Imports: []string{module + "/internal/scripted"}, Deps: []string{module + "/internal/scripted"}}}
+			if got := dependencyProblems(packages, "darwin"); !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestScopeDependencyClassifier(t *testing.T) {
+	// KTD11: plan cannot reach judge; rulebook imports only the standard library.
+	for _, tc := range []struct {
+		name string
+		pkg  listedPackage
+		want []string
+	}{
+		{"PlanDirect", listedPackage{ImportPath: module + "/internal/plan", Imports: []string{module + "/internal/judge"}}, []string{module + "/internal/plan: forbidden dependency " + module + "/internal/judge"}},
+		{"PlanTransitive", listedPackage{ImportPath: module + "/internal/plan", Deps: []string{module + "/internal/judge"}}, []string{module + "/internal/plan: forbidden dependency " + module + "/internal/judge"}},
+		{"RulebookInternal", listedPackage{ImportPath: module + "/internal/rulebook", Imports: []string{module + "/internal/jcs"}}, []string{module + "/internal/rulebook: nonstandard dependency " + module + "/internal/jcs"}},
+		{"RulebookExternal", listedPackage{ImportPath: module + "/internal/rulebook", Imports: []string{"example.invalid/library"}}, []string{module + "/internal/rulebook: nonstandard dependency example.invalid/library"}},
+		{"RulebookTransitive", listedPackage{ImportPath: module + "/internal/rulebook", Deps: []string{module + "/internal/jcs"}}, []string{module + "/internal/rulebook: nonstandard dependency " + module + "/internal/jcs"}},
+		{"RulebookStandard", listedPackage{ImportPath: module + "/internal/rulebook", Imports: []string{"fmt"}, Deps: []string{"fmt"}}, nil},
+		{"PlanLeaf", listedPackage{ImportPath: module + "/internal/plan", Imports: []string{module + "/internal/rulebook"}}, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			packages := []listedPackage{tc.pkg, {ImportPath: "fmt", Standard: true}}
+			if got := dependencyProblems(packages, "darwin"); !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
 	}
 }
 

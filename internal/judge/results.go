@@ -1,6 +1,10 @@
 package judge
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
+)
 
 func checkOutput(id string) object {
 	return object{"id": id, "result": OutOfScope, "rule": nil, "reason": nil, "detail": nil, "k": nil, "n": nil, "to_run": nil, "lower": nil, "upper": nil, "d_lo": nil, "d_hi": nil}
@@ -280,11 +284,5 @@ func (r *request) evaluate() (object, int) {
 
 // AlwaysApplicable reports whether a dimension has no structural deciding fact (§6).
 func AlwaysApplicable(d Dimension) bool {
-	switch d {
-	case Bounding, Idempotency, DestructiveGuard, SideEffectIntegrity, FlagConformance:
-		return false
-	case Availability, Execution, GracefulFailure, Robustness, ResponseCorrectness, Determinism, CLIMCPParity, ProvenanceHonesty, CompletenessSignaling, OutputConformance, Discoverability, ErrorMessageQuality, TokenEconomy, PIISecretHygiene, Steering, ToolDescriptionEfficacy:
-		return true
-	}
-	panic("unknown dimension")
+	return rulebook.AlwaysApplicable(d)
 }

@@ -1,6 +1,10 @@
 package judge
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
+)
 
 type poolKey struct {
 	id        string
@@ -338,22 +342,5 @@ func modelEvaluator(kind EvaluatorKind) bool {
 
 // ScopeIncludes reports whether a scope part includes a dimension (rulebook §3).
 func ScopeIncludes(scope Scope, d Dimension) bool {
-	switch scope {
-	case ConformanceScope, DestructiveScope, SteeringScope, CompareScope:
-	default:
-		panic("unknown scope")
-	}
-	switch d {
-	case CLIMCPParity:
-		return false
-	case DestructiveGuard:
-		return scope == DestructiveScope
-	case Steering:
-		return scope == SteeringScope
-	case ToolDescriptionEfficacy:
-		return scope == CompareScope
-	case Availability, Execution, GracefulFailure, Robustness, ResponseCorrectness, Determinism, ProvenanceHonesty, CompletenessSignaling, OutputConformance, FlagConformance, Bounding, Discoverability, ErrorMessageQuality, TokenEconomy, SideEffectIntegrity, Idempotency, PIISecretHygiene:
-		return scope == ConformanceScope
-	}
-	panic("unknown dimension")
+	return rulebook.ScopeIncludes(scope, d)
 }
