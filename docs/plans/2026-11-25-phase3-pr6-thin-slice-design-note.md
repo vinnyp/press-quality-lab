@@ -221,7 +221,7 @@ On darwin it records `kern.osproductversion`, `kern.osversion` and `hw.machine`.
   - **On a scripted run,** such a file stops at an unbuilt level whenever its host passes.
 
   The owner accepted this interim behaviour on 2026-11-25, after the code review raised it. U9 removes it.
-- **An open reading for U9: a link on the seed's path.** QS9 rejects a seed that "holds a link". It does not say whether a link in the path that names the seed counts, for example a seed `seed` that is itself a link to a directory inside the subject directory, or a seed `p/seed` whose parent `p` is a link. Until U9 builds the exit-2 refusal, the engine refuses both with exit 70, which fails closed and gives no wrong verdict. The reading goes to the owner when U9 builds the refusal.
+- **A link on the seed's path,** settled by the owner on 2026-11-25 as errata E-17: such a link is resolved, and only a link or special file inside the seed rejects the file. PR6 refused both forms with exit 70; U9, in PR8, builds QS9 as E-17 reads it.
 
 ## Limits the script carries into later slices
 

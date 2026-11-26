@@ -92,3 +92,7 @@ QO1's grade-wide conditions, a failed self-test (QH9), confinement that could no
 ### E-16. A version that is not a string
 
 QS1 says the file states its version in `subject_file_version`, "which is `1.0` for this specification", and the specification calls its version "this string". **A `subject_file_version` that is not the string `1.0`, the number `1.0` included, is another version and is rejected under QS1,** which E-9 checks before QS2. The owner ruled on this reading on 2026-11-25. No case of the corpus has such a file, so no record changes.
+
+### E-17. A link in the path that names the seed
+
+QS9 names the seed by a path "inside" the subject file's directory, and a path is inside a directory "after every link in the path is resolved" (§1's definitions). QS9 also rejects a seed that "holds a link". **A link in the path that names the seed, the seed's own name included, is resolved, and the seed must then be a directory inside the subject file's directory. Only a link or a special file the seed directory contains rejects the file under QS9.** The owner ruled on 2026-11-25. No case of the corpus has a link in a seed's name, so no record changes.
