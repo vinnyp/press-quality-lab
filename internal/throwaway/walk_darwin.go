@@ -32,6 +32,8 @@ func prepareAt(fd int, name string) error {
 	if err := unix.Fstatat(fd, name, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
 		return err
 	}
+	// Preserve outside inode metadata. The confinement.md file-link kill
+	// prevents subjects from creating these multiply-linked leaves.
 	if st.Mode&unix.S_IFMT != unix.S_IFDIR && st.Nlink > 1 {
 		return nil
 	}

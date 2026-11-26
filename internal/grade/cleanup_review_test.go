@@ -50,16 +50,23 @@ func TestFunnelEndFailureKeepsPublication(t *testing.T) {
 				}
 				return errors.New("ending failed")
 			}
+			closed := false
+			d.Source = func() (observe.Source, func() error, error) {
+				return ReleasedSource{}, func() error { closed = true; return nil }, nil
+			}
 			var output bytes.Buffer
 			code, err := Run(o, d, &output)
 			if mode == "Control" {
-				if code != 4 || err != nil || !called {
+				if code != 4 || err != nil || !called || !closed {
 					t.Fatalf("control: %d %v called=%v", code, err, called)
 				}
 				if _, err := os.Stat(w.Path()); !errors.Is(err, os.ErrNotExist) {
 					t.Fatalf("control directory remains: %v", err)
 				}
 				return
+			}
+			if closed {
+				t.Fatal("source closed while groups may still hold it")
 			}
 			var classified *Error
 			if code != 70 || !errors.As(err, &classified) || classified.Rule != "QH23" || !called {
@@ -96,6 +103,11 @@ func TestSignalCollectorWaitBound(t *testing.T) {
 	o, d, _ := fixture(t)
 	signals := make(chan os.Signal, 1)
 	d.Signals = signals
+	d.CollectorWait = 10 * time.Millisecond
+	closed := false
+	d.Source = func() (observe.Source, func() error, error) {
+		return ReleasedSource{}, func() error { closed = true; return nil }, nil
+	}
 	release := make(chan struct{})
 	done := make(chan struct{})
 	d.Collect = func(plan.Plan, observe.Source) ([]collect.Check, error) {
@@ -114,11 +126,14 @@ func TestSignalCollectorWaitBound(t *testing.T) {
 	var r result
 	select {
 	case r = <-returned:
-	case <-time.After(6 * time.Second):
+	case <-time.After(time.Second):
 		close(release)
 		<-done
 		<-returned
 		t.Fatal("collector wait was not bounded")
+	}
+	if closed {
+		t.Error("source closed while collector still holds it")
 	}
 	code, err := r.code, r.err
 	close(release)

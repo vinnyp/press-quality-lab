@@ -206,6 +206,8 @@ func TestRacingSwapperHelper(t *testing.T) {
 	os.Exit(0)
 }
 
+// TestThousandRacingWalks is a smoke test; TestDirectorySwapBeforeOpen
+// proves refusal at the exact directory type-check/open window.
 func TestThousandRacingWalks(t *testing.T) {
 	// KTD20, QE20: digest, mode and existence of every outside entry survive.
 	parent := t.TempDir()

@@ -44,10 +44,12 @@ func (e *Error) Error() string                    { return "rejected: " + e.Rule
 func failure(code int, rule, cause string) *Error { return &Error{code, rule, cause} }
 
 // Dependencies exposes effects, including identity before any store resolution.
-// Source is constructed inside the funnel, so its trace is closed on all exits.
+// Source is constructed inside the funnel. Its trace closes only after groups
+// end and the collector stops; otherwise a stuck collector may still hold it.
 type Dependencies struct {
-	EndGroups func(*throwaway.Workspace, io.Writer) error
-	Remove    func(*throwaway.Workspace) error
+	CollectorWait time.Duration // Zero uses the five-second production bound.
+	EndGroups     func(*throwaway.Workspace, io.Writer) error
+	Remove        func(*throwaway.Workspace) error
 	// Workspace is constructed after root refusal, inside the exit funnel.
 	Workspace         func() (*throwaway.Workspace, error)
 	SourceInWorkspace func(*throwaway.Workspace) (observe.Source, func() error, error)
@@ -75,6 +77,9 @@ func (ReleasedSource) Observe(observe.Key, observe.Spec) (observe.Run, error) {
 }
 
 func defaults(d Dependencies) Dependencies {
+	if d.CollectorWait <= 0 {
+		d.CollectorWait = 5 * time.Second
+	}
 	if d.EndGroups == nil {
 		d.EndGroups = (*throwaway.Workspace).EndGroups
 	}
@@ -269,7 +274,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 			return 70, err
 		}
 	}
-	checks, wait, collectErr := gatherSignals(d.Collect, p, source, signals)
+	checks, wait, collectErr := gatherSignals(d.Collect, p, source, signals, d.CollectorWait)
 	waitCollector = wait
 	interrupted = wait != nil
 	err = collectErr
@@ -391,7 +396,7 @@ func callJudge(fn func([]byte) ([]byte, int), input []byte) (strictjson.Object, 
 	return doc, code, nil
 }
 
-func gatherSignals(fn func(plan.Plan, observe.Source) ([]collect.Check, error), p plan.Plan, source observe.Source, signals <-chan os.Signal) ([]collect.Check, func() error, error) {
+func gatherSignals(fn func(plan.Plan, observe.Source) ([]collect.Check, error), p plan.Plan, source observe.Source, signals <-chan os.Signal, bound time.Duration) ([]collect.Check, func() error, error) {
 	type result struct {
 		checks []collect.Check
 		err    error
@@ -412,7 +417,7 @@ func gatherSignals(fn func(plan.Plan, observe.Source) ([]collect.Check, error), 
 		return r.checks, nil, r.err
 	case sig := <-signals:
 		return nil, func() error {
-			timer := time.NewTimer(5 * time.Second)
+			timer := time.NewTimer(bound)
 			defer timer.Stop()
 			select {
 			case r := <-done:

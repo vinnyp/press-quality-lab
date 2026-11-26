@@ -100,7 +100,6 @@ func TestGroupsGrammar(t *testing.T) {
 		{"MissingStart", `[{"pid":42,"other":"group"}]`},
 		{"EmptyStart", `[{"pid":42,"start_time":""}]`},
 		{"DuplicatePID", `[{"pid":42,"start_time":"group"},{"pid":42,"start_time":"group"}]`},
-		{"ExtraKey", `[{"pid":42,"other":"group"}]`},
 	}
 	for _, row := range rows {
 		t.Run(row.name, func(t *testing.T) {
@@ -513,7 +512,60 @@ func TestSweepReportFailureContinues(t *testing.T) {
 }
 
 func TestPublicationSwapToFIFOLink(t *testing.T) {
-	// QE20, KTD20: O_NOFOLLOW refuses replacement even when the link stays in root.
+	// QE20, KTD20: O_NOFOLLOW refuses links; O_NONBLOCK bounds a renamed FIFO.
+	t.Run("RenameFIFO", func(t *testing.T) {
+		w, err := Create(t.TempDir())
+		if err != nil {
+			t.Fatal(err)
+		}
+		target := filepath.Join(w.Path(), "process.json")
+		if err := os.WriteFile(target, []byte(`{"pid":41,"start_time":"owner"}`), 0600); err != nil {
+			t.Fatal(err)
+		}
+		fifo := filepath.Join(w.Path(), "fifo")
+		if err := syscall.Mkfifo(fifo, 0600); err != nil {
+			t.Fatal(err)
+		}
+		root, err := os.OpenRoot(w.Path())
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() {
+			if err := root.Close(); err != nil {
+				t.Error(err)
+			}
+		}()
+		want := `{"pid":41,"start_time":"owner"}`
+		data, err := readPublicationWith(root, nil)
+		if err != nil || string(data) != want {
+			t.Fatalf("regular publication control: %q %v", data, err)
+		}
+		done := make(chan error, 1)
+		go func() {
+			var swapErr error
+			_, err := readPublicationWith(root, func() { swapErr = os.Rename(fifo, target) })
+			done <- errors.Join(swapErr, err)
+		}()
+		select {
+		case err := <-done:
+			if !errors.Is(err, errNotRegular) {
+				t.Fatalf("FIFO not refused: %v", err)
+			}
+		case <-time.After(time.Second):
+			// Release a regressed blocking open before failing, leaving no goroutine.
+			fd, err := syscall.Open(target, syscall.O_WRONLY|syscall.O_NONBLOCK, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := syscall.Close(fd); err != nil {
+				t.Error(err)
+			}
+			if err := <-done; !errors.Is(err, errNotRegular) {
+				t.Errorf("unblocked FIFO not refused: %v", err)
+			}
+			t.Fatal("renamed FIFO open blocked")
+		}
+	})
 	w, err := Create(t.TempDir())
 	if err != nil {
 		t.Fatal(err)

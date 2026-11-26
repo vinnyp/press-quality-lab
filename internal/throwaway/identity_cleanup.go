@@ -75,6 +75,8 @@ func readPublicationWith(root *os.Root, beforeOpen func()) (data []byte, err err
 	if beforeOpen != nil {
 		beforeOpen()
 	}
+	// A FIFO can be renamed over process.json after Lstat; O_NONBLOCK keeps
+	// that open bounded until fstat refuses the replacement descriptor.
 	fd, err := openAt(int(parent.Fd()), "process.json", syscall.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK|syscall.O_CLOEXEC, 0)
 	if err != nil {
 		return nil, err

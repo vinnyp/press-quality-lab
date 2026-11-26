@@ -62,6 +62,9 @@ func TestRemoveHostileHome(t *testing.T) {
 	opened := make(chan error, 1)
 	go func() {
 		fd, err := syscall.Open(alias, syscall.O_RDONLY, 0)
+		for err == syscall.EINTR { // Go's preemption signal interrupts the blocked open; retry it.
+			fd, err = syscall.Open(alias, syscall.O_RDONLY, 0)
+		}
 		if err == nil {
 			err = syscall.Close(fd)
 		}
