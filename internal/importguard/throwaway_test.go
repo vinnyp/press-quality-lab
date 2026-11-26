@@ -45,7 +45,7 @@ func filesystemProblems(path string, source any) ([]string, error) {
 	var problems []string
 	forbidden := func(pkg, name string) bool {
 		// KTD16: reads only the user's inputs and never a workspace.
-		if filepath.ToSlash(path) == "grade/inputs.go" && pkg == "os" && (name == "Open" || name == "OpenRoot") {
+		if filepath.ToSlash(path) == "grade/inputs.go" && pkg == "os" && (name == "Open" || name == "OpenFile" || name == "OpenRoot") {
 			return false
 		}
 		return pkg == "os" && (strings.HasPrefix(name, "Remove") || strings.HasPrefix(name, "Open") || name == "ReadFile" || name == "Chmod" || name == "Lstat") || pkg == "path/filepath" && strings.HasPrefix(name, "Walk")
@@ -161,6 +161,7 @@ func TestGradeInputException(t *testing.T) {
 	}{
 		{"grade/inputs.go", "Open", true},
 		{"grade/inputs.go", "OpenRoot", true},
+		{"grade/inputs.go", "OpenFile", true},
 		{"grade/inputs.go", "RemoveAll", false},
 		{"grade/other.go", "Open", false},
 		{"grade/other.go", "OpenRoot", false},

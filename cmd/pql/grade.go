@@ -13,6 +13,7 @@ import (
 // commandOptions is the parsed request handed to the pipeline.
 type commandOptions struct {
 	Output      io.Writer
+	Diagnostic  io.Writer
 	SubjectFile string
 	Scope       []string
 	Baseline    string
@@ -50,6 +51,11 @@ var collectionDependencies = func(o commandOptions) grade.Dependencies {
 }
 
 func executeCollection(o commandOptions, anchor bool) error {
+	if o.Diagnostic != nil {
+		if _, err := io.WriteString(o.Diagnostic, grade.ComputationWarning+"\n"); err != nil {
+			return err
+		}
+	}
 	d := collectionDependencies(o)
 	code, err := grade.Run(grade.Options{SubjectFile: o.SubjectFile, Scope: o.Scope, Baseline: o.Baseline, Retired: o.Retired, Accept: o.Accept, Anchor: anchor, Scripted: o.Verifier == "scripted"}, d, o.Output)
 	return &collectionExit{code, err}
@@ -64,6 +70,7 @@ func newCollectionCommand(name string) *cobra.Command {
 	command := &cobra.Command{
 		Use:   name + " <subject-file>",
 		Short: "Collect evidence for " + name,
+		Long:  "Collect evidence for " + name + ".\n\n" + grade.ComputationWarning,
 		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return &usageError{errors.New("exactly one subject-file is required")}
@@ -73,6 +80,7 @@ func newCollectionCommand(name string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			options.SubjectFile = args[0]
 			options.Output = cmd.OutOrStdout()
+			options.Diagnostic = cmd.ErrOrStderr()
 			if err := validateTestEntry(cmd, options); err != nil {
 				return err
 			}
