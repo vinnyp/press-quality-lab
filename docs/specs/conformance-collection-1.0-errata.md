@@ -95,4 +95,8 @@ QS1 says the file states its version in `subject_file_version`, "which is `1.0` 
 
 ### E-17. A link in the path that names the seed
 
-QS9 names the seed by a path "inside" the subject file's directory, and a path is inside a directory "after every link in the path is resolved" (§1's definitions). QS9 also rejects a seed that "holds a link". **A link in the path that names the seed, the seed's own name included, is resolved, and the seed must then be a directory inside the subject file's directory. Only a link or a special file the seed directory contains rejects the file under QS9.** The owner ruled on 2026-11-25. No case of the corpus has a link in a seed's name, so no record changes.
+QS9 names the seed by a path "inside" the subject file's directory, and a path is inside a directory "after every link in the path is resolved" (§1's definitions). QS9 also rejects a seed that "holds a link". **A link in the path that names the seed, the seed's own name included, is resolved, as are the links in the subject file's own directory path, before "inside" is tested. The resolved seed must be a directory inside the subject file's directory. Of links on the seed's path or within the seed, only a link the seed directory contains rejects the file under QS9. QS9's other rejections are unchanged.** The owner ruled on 2026-11-25. No case of the corpus has a link in a seed's name, so no record changes.
+
+### E-18. A named file the engine cannot read
+
+QS8 rejects a named file that leaves the subject file's directory, a directory, a link left unresolved or a special file, and QE16 lists "an unreadable subject file" under exit 2. Neither names a binary, a seed file or a declared file that is a regular file inside the directory but cannot be read. **Such a file rejects the subject file under QS8, with exit 2, before collection, as an unreadable subject file does.** The owner ruled on 2026-11-25. No case of the corpus has such a file, so no record changes.
