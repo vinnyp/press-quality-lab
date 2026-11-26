@@ -32,6 +32,11 @@ func (s *watchedSource) Required(any) error { s.events = append(s.events, "requi
 func (s *watchedSource) Home(string) error  { s.events = append(s.events, "home"); return nil }
 
 func TestReleasedProcessSentinels(t *testing.T) {
+	temp := t.TempDir()
+	t.Setenv("TMPDIR", temp)
+	if os.TempDir() != temp {
+		t.Fatal("test resolved real workspace parent")
+	}
 	// KTD21, QO1, E-15: neither subject nor computation starts, on any host.
 	// Positive controls execute each sentinel and assert its written bytes and stdout.
 	dir := t.TempDir()
@@ -105,6 +110,11 @@ func TestReleasedProcessSentinels(t *testing.T) {
 }
 
 func TestPipelineErrorEscaping(t *testing.T) {
+	temp := t.TempDir()
+	t.Setenv("TMPDIR", temp)
+	if os.TempDir() != temp {
+		t.Fatal("test resolved real workspace parent")
+	}
 	// KTD16, GKD8: an error carrying subject-file bytes reaches stderr escaped.
 	dir := t.TempDir()
 	path := filepath.Join(dir, "subject.json")

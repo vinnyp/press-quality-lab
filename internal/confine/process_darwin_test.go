@@ -2,6 +2,7 @@ package confine
 
 import (
 	"fmt"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 	"golang.org/x/sys/unix"
 	"os"
 	"path/filepath"
@@ -254,7 +255,7 @@ func TestChangedCopies(t *testing.T) {
 				}
 			}
 
-			p, err := c.Start(Invocation{})
+			p, err := c.Start(Invocation{Workspace: fakeWorkspace{}})
 			if err != nil {
 				t.Fatalf("changed copy reached argument building: %v", err)
 			}
@@ -389,7 +390,7 @@ func TestNewSession(t *testing.T) {
 func TestGroupEndRepeats(t *testing.T) {
 	signals, lookups := 0, 0
 	err := endGroupWith(func() (bool, error) { signals++; return true, nil }, func() ([]groupMember, error) { lookups++; return []groupMember{{pid: 1, zombie: lookups >= 2}}, nil })
-	if err != nil || signals != 2 || lookups != 2 {
+	if err != nil || signals != 1 || lookups != 2 {
 		t.Fatalf("group kill did not repeat until zombie-only: signals=%d lookups=%d error=%v", signals, lookups, err)
 	}
 }
@@ -467,12 +468,12 @@ func TestStartEnvironment(t *testing.T) {
 		values[name] = "/"
 	}
 	called := false
-	_, err = c.startWith(Invocation{Paths: Paths{Values: values}, Env: []string{"SUBJECT=private"}}, func(_ string, _ []string, _ string, env []string, _ string) (Process, error) {
+	_, err = c.startWith(Invocation{Workspace: fakeWorkspace{}, Paths: Paths{Values: values}, Env: []string{"SUBJECT=private"}}, func(_ string, _ []string, _ string, env []string, _ string) (Process, error) {
 		called = true
 		if len(env) != 0 {
 			t.Fatalf("spawn inherited program environment: %q", env)
 		}
-		return &process{changed: true}, nil
+		return &process{changed: true, pid: os.Getpid()}, nil
 	})
 	if err != nil || !called {
 		t.Fatalf("spawn seam not reached: %v", err)
@@ -515,9 +516,9 @@ func TestStartArgumentLimit(t *testing.T) {
 		values[name] = "/"
 	}
 	called := false
-	p, err := c.startWith(Invocation{Paths: Paths{Values: values}, Words: []string{strings.Repeat("a", int(limit)+1)}}, func(string, []string, string, []string, string) (Process, error) {
+	p, err := c.startWith(Invocation{Workspace: fakeWorkspace{}, Paths: Paths{Values: values}, Words: []string{strings.Repeat("a", int(limit)+1)}}, func(string, []string, string, []string, string) (Process, error) {
 		called = true
-		return &process{changed: true}, nil
+		return &process{changed: true, pid: os.Getpid()}, nil
 	})
 	if called || p != nil || err == nil || err.Error() != "program arguments and environment exceed kern.argmax" {
 		t.Fatalf("argument limit did not fault before launch: called=%v process=%v error=%v", called, p, err)
@@ -611,9 +612,9 @@ func TestStartEncodedArgumentLimit(t *testing.T) {
 		values[name] = "/"
 	}
 	called := false
-	p, err := c.startWith(Invocation{Paths: Paths{Values: values}, Words: words}, func(string, []string, string, []string, string) (Process, error) {
+	p, err := c.startWith(Invocation{Workspace: fakeWorkspace{}, Paths: Paths{Values: values}, Words: words}, func(string, []string, string, []string, string) (Process, error) {
 		called = true
-		return &process{changed: true}, nil
+		return &process{changed: true, pid: os.Getpid()}, nil
 	})
 	if called || p != nil || err == nil || err.Error() != "program arguments and environment exceed kern.argmax" {
 		t.Fatalf("encoded launcher arguments did not fault before launch: called=%v process=%v error=%v", called, p, err)
@@ -637,3 +638,8 @@ func TestCaptureDeadlineAfterClose(t *testing.T) {
 		t.Fatalf("deadline on completed drain: %v", err)
 	}
 }
+
+type fakeWorkspace struct{}
+
+func (fakeWorkspace) RecordGroup(throwaway.Process) error { return nil }
+func (fakeWorkspace) ForgetGroup(int) error               { return nil }

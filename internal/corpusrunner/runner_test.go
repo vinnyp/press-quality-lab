@@ -495,7 +495,10 @@ func runGrade(binary string, c caseassembly.Case, l caseassembly.Layout) (result
 	if err := os.MkdirAll(filepath.Join(l.Home, "Library", "Application Support"), 0700); err != nil {
 		return result{}, err
 	}
-	cmd.Env = append(os.Environ(), "HOME="+l.Home, "XDG_CONFIG_HOME="+l.Config, scripted.TraceEnv+"="+l.Trace)
+	cmd.Env = append(os.Environ(), "TMPDIR="+l.Work, "HOME="+l.Home, "XDG_CONFIG_HOME="+l.Config, scripted.TraceEnv+"="+l.Trace)
+	if err := workspaceEnvironment(cmd.Env, l.Work); err != nil {
+		return result{}, err
+	}
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	_, runErr := cmd.Output()
@@ -760,4 +763,28 @@ func preimageKeys(p map[string]any) []map[string]any {
 		}
 	}
 	return keys
+}
+
+// workspaceEnvironment refuses to start a corpus process with ambient temp state.
+func workspaceEnvironment(env []string, want string) error {
+	for i := len(env) - 1; i >= 0; i-- {
+		if value, ok := strings.CutPrefix(env[i], "TMPDIR="); ok {
+			if value == want && value != "" {
+				return nil
+			}
+			break
+		}
+	}
+	return errors.New("test resolved real workspace parent")
+}
+
+func TestCorpusWorkspaceEnvironment(t *testing.T) {
+	// QE20, QT1: a corpus process must use its own fixture's temporary parent.
+	private := t.TempDir()
+	if err := workspaceEnvironment([]string{"TMPDIR=" + private}, private); err != nil {
+		t.Fatal(err)
+	}
+	if err := workspaceEnvironment(nil, private); err == nil {
+		t.Fatal("ambient temp parent accepted")
+	}
 }

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 	"golang.org/x/sys/unix"
 )
 
@@ -192,6 +193,7 @@ func drain(r io.ReadCloser) *capture {
 }
 
 type process struct {
+	workspace                                              GroupWorkspace
 	waitMu                                                 sync.Mutex
 	waited                                                 bool
 	result                                                 observe.Run
@@ -237,6 +239,9 @@ func (c *Copies) Start(inv Invocation) (Process, error) {
 }
 
 func (c *Copies) startWith(inv Invocation, launch func(string, []string, string, []string, string) (Process, error)) (Process, error) {
+	if inv.Workspace == nil {
+		return nil, fmt.Errorf("invocation workspace required")
+	}
 	if !c.launcher.unchanged() || !c.program.unchanged() {
 		return &process{changed: true}, nil
 	}
@@ -273,7 +278,29 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if err := argumentSize(argv, env, int(limit)); err != nil {
 		return nil, err
 	}
-	return launch(SandboxExec, argv, inv.Directory, env, marker)
+	p, err := launch(SandboxExec, argv, inv.Directory, env, marker)
+	if err != nil {
+		return nil, err
+	}
+	if inv.Workspace != nil {
+		real, ok := p.(*process)
+		if !ok {
+			killErr := p.Kill()
+			_, waitErr := p.Wait()
+			return nil, errors.Join(fmt.Errorf("unrecordable process"), killErr, waitErr)
+		}
+		start, err := throwaway.ProcessStart(real.pid)
+		if err == nil {
+			err = inv.Workspace.RecordGroup(throwaway.Process{PID: real.pid, StartTime: start})
+		}
+		if err != nil {
+			killErr := p.Kill()
+			_, waitErr := p.Wait()
+			return nil, errors.Join(err, killErr, waitErr)
+		}
+		real.workspace = inv.Workspace
+	}
+	return p, nil
 }
 
 func spawn(path string, args []string, directory string, env []string, marker string) (Process, error) {
@@ -294,6 +321,7 @@ func spawn(path string, args []string, directory string, env []string, marker st
 		return nil, errors.Join(err, null.Close(), stdout.Close(), outWrite.Close(), stderr.Close(), errWrite.Close())
 	}
 	unix.CloseOnExec(queue)
+	// Stated limit: SIGKILL between ForkExec and RecordGroup can leave an unrecorded subject.
 	pid, spawnErr := syscall.ForkExec(path, args, &syscall.ProcAttr{Dir: directory, Env: env, Files: []uintptr{null.Fd(), outWrite.Fd(), errWrite.Fd()}, Sys: &syscall.SysProcAttr{Setsid: true}})
 	p := &process{pid: pid, queue: queue, marker: marker}
 	var registerErr error
@@ -453,7 +481,11 @@ func (p *process) wait() (observe.Run, error) {
 	run.StdoutCut, run.StderrCut = p.stdout.seen > StreamCap, p.stderr.seen > StreamCap
 	run.Markers, run.Stderr = observe.ParseMarkers(p.stderr.head, MarkerPrefix+p.marker, FailurePrefix+p.marker)
 	run.StderrSeen -= int64(len(p.stderr.head) - len(run.Stderr))
-	return run, errors.Join(deadlineErr, waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
+	var forgetErr error
+	if p.workspace != nil && groupErr == nil && reapErr == nil {
+		forgetErr = p.workspace.ForgetGroup(p.pid)
+	}
+	return run, errors.Join(forgetErr, deadlineErr, waitErr, groupErr, reapErr, p.stdout.err, p.stderr.err, unix.Close(p.queue))
 }
 
 func groupMembers(pid int) ([]groupMember, error) {
@@ -475,16 +507,16 @@ func endGroup(pid int) error {
 func endGroupWith(kill func() (bool, error), lookup func() ([]groupMember, error)) error {
 	deadline := time.Now().Add(5 * time.Second)
 	for {
-		_, killErr := kill()
-		if killErr != nil && !errors.Is(killErr, unix.EPERM) {
-			return killErr
-		}
 		members, err := lookup()
 		if err != nil {
 			return err
 		}
 		if groupEnded(members) {
 			return nil
+		}
+		_, killErr := kill()
+		if killErr != nil && !errors.Is(killErr, unix.EPERM) {
+			return killErr
 		}
 		if time.Now().After(deadline) {
 			return errors.Join(fmt.Errorf("process group did not end"), killErr)

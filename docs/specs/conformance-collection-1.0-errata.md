@@ -101,6 +101,10 @@ QS9 names the seed by a path "inside" the subject file's directory, and a path i
 
 QS8 rejects a named file that leaves the subject file's directory, a directory, a link left unresolved or a special file, and QE16 lists "an unreadable subject file" under exit 2. Neither names a regular file inside the directory that cannot be read. **A binary, a computation's executable named by a relative path, or a declared file (QS8's three kinds) that is a regular file inside the directory but cannot be read rejects the subject file under QS8, with exit 2, before collection. A file or directory inside the seed that cannot be read rejects it under QS9, with exit 2.** The owner ruled on 2026-11-25. No case of the corpus has such a file, so no record changes.
 
+### E-19. A stale run directory the start sweep cannot remove
+
+QE20 removes, at start, every per-run directory a killed run left. E-11 makes a run exit 70 when its own cleanup cannot remove an entry, and says the next run's sweep retries it. Neither says what the new run does when that retry fails again. **The sweep tries every stale directory. One it cannot remove is named on standard error and left for a later sweep, and the new run goes on. The new run ends with exit 70 only when the directory that holds the run directories is unsafe, or when it cannot tell whether a recorded process still exists.** The owner ruled on 2026-11-26. No case of the corpus reaches a start sweep, so no record changes.
+
 ### E-20. A planted-secret token that overlaps itself
 
 QP10 requires the planted secret's `token` to appear exactly once in the seed's copy of its file, and does not say how an occurrence that overlaps another is counted. **Each position at which the token starts is one occurrence, so a token that overlaps itself, such as `aaaaaaaa` in nine `a`s, appears more than once and rejects the file under QP10.** The owner ruled on 2026-11-26. No case of the corpus has such a token, so no record changes.

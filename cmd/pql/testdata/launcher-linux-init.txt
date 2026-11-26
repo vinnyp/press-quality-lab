@@ -17,6 +17,7 @@ context
 internal/poll
 io/fs
 os
+os/signal
 unicode
 reflect
 crypto/internal/fips140
