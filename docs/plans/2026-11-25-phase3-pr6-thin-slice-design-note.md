@@ -213,6 +213,14 @@ On darwin it records `kern.osproductversion`, `kern.osversion` and `hw.machine`.
 
 **Where files are read.** Two packages first opened files themselves, and the KTD20 guard caught both: `internal/subject` (the subject file) and `internal/scripted` (the host, the recording and the trace). Both now take bytes, or a writer, from the caller. `internal/grade` reads the subject file, and the scripted build's wiring file in `cmd/pql` reads the host and the recording and opens the trace. That follows KTD16: a run's bytes take one path.
 
+## Stated limits of this slice
+
+- **Rules the schema cannot detect are not yet refused.** Until U9 builds them, a subject file that breaks one of those rules (QS3, QS5 to QS12, QP7, QP10, QA4 or QA9 beyond their schema parts, such as `case-107`'s QS7 clause) is graded rather than refused with exit 2:
+  - **On the released interim path,** every check is not observed with `network_unverifiable` at level 1 (KTD21, errata E-15). So the run prints an all-unobserved verdict (exit 4, never green) and stores a record.
+  - **On a scripted run,** such a file stops at an unbuilt level whenever its host passes.
+
+  The owner accepted this interim behaviour on 2026-11-25, after the code review raised it. U9 removes it.
+
 ## Limits the script carries into later slices
 
 - **Several invocations.** Discovery and planted-secret checks combine their invocations by QO7, through their own rules (U11, U37). The script treats them only as far as level 7. Slice b2 extends it before it predicts them.
