@@ -5,10 +5,19 @@ import (
 	"io"
 	"os"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
 )
+
+type budget struct {
+	// beforeDirectoryOpen is a deterministic test seam, scoped to one walk.
+	beforeDirectoryOpen func(int, string)
+	remaining           int
+	deadline            time.Time
+	now                 func() time.Time
+}
 
 // setattrAt is the one raw syscall: x/sys v0.38.0 has no setattrlistat
 // wrapper. Every pointer is passed directly in the syscall expression so it

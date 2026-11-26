@@ -6,7 +6,14 @@ import (
 	"errors"
 	"io"
 	"os"
+	"time"
 )
+
+type budget struct {
+	remaining int
+	deadline  time.Time
+	now       func() time.Time
+}
 
 func removeWalkEntry(parent *os.Root, name string, b *budget) (err error) {
 	if err = b.check(true); err != nil {

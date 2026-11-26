@@ -47,14 +47,6 @@ func (w *Workspace) Remove() error {
 	return w.remove(&budget{remaining: MaxWalkEntries, deadline: time.Now().Add(MaxWalkDuration), now: time.Now})
 }
 
-type budget struct {
-	// beforeDirectoryOpen is a deterministic test seam, scoped to one walk.
-	beforeDirectoryOpen func(int, string)
-	remaining           int
-	deadline            time.Time
-	now                 func() time.Time
-}
-
 func (b *budget) check(entry bool) error {
 	if !b.now().Before(b.deadline) {
 		return ErrTimeLimit
