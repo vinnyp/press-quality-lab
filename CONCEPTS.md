@@ -22,6 +22,10 @@ The project's rule, quoted in full: "The judge decides every verdict. Code that 
 
 ## Checks
 
+### Witness
+
+A small program the confinement evidence runs to observe the sandbox's decision on one operation. It prints an attempt line, then performs exactly the operation a clause names, and its output and end show whether the sandbox let it return or killed it. A refused-operation witness pairs with a control that shows the same call returns when nothing refuses it.
+
 ### Coverage floor
 
 The least a check must have evaluated before its result counts: below the floor the check fails, so a check that found nothing to look at never reports a pass.
