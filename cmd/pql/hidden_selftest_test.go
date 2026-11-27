@@ -18,7 +18,7 @@ func TestHiddenSelfTestArgumentCount(t *testing.T) {
 		{"SelfTestMissing", []string{"__pql_selftest"}},
 		{"SelfTestShort", []string{"__pql_selftest", "clean", "target"}},
 		{"SelfTestExtra", []string{"__pql_selftest", "clean", "target", "1", "extra"}},
-		{"PidZero", []string{"__pql_selftest", "clean", "target", "0"}},
+		{"PidZero", []string{"__pql_selftest", "signal", "target", "0"}},
 		{"PidNegative", []string{"__pql_selftest", "signal", "target", "-1"}},
 		{"PidInvalid", []string{"__pql_selftest", "signal", "target", "x"}},
 		{"DecoyExtra", []string{"__pql_decoy", "extra"}},

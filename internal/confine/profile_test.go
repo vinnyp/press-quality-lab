@@ -190,3 +190,74 @@ func TestInvalidProfileParameters(t *testing.T) {
 		})
 	}
 }
+
+func TestAbsentComputationParameters(t *testing.T) {
+	// QH11: absent final names resolve their existing parent, never a dangling link.
+	for _, name := range []string{"PLANTED", "SUBJECT", "SUBJECT_COPY"} {
+		t.Run(name, func(t *testing.T) {
+			p := testPaths(t)
+			root := p.Values["HOME"]
+			resolved, err := filepath.EvalSymlinks(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			link := filepath.Join(t.TempDir(), "parent")
+			if err := os.Symlink(root, link); err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(link, "absent")
+			p.Values[name] = path
+			args, err := Arguments(true, false, p, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Contains(args, name+"="+filepath.Join(resolved, "absent")) {
+				t.Fatalf("parameters=%v", args)
+			}
+			if err := os.Symlink(filepath.Join(root, "missing"), path); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Arguments(true, false, p, nil); err == nil {
+				t.Fatal("dangling link accepted")
+			}
+		})
+	}
+	for _, name := range append(slices.Clone(commonNames), "BIN_DIR", "USR_BIN_DIR", "TTY_DEVICE", "DECLARED", "SEED", "PLANTED_DIR") {
+		if name == "PLANTED" {
+			continue
+		}
+		t.Run(name, func(t *testing.T) {
+			p := testPaths(t)
+			computation := name != "PLANTED_DIR"
+			if !computation {
+				for _, key := range computationNames {
+					delete(p.Values, key)
+				}
+				p.PlantedDirs = []string{p.Values["HOME"]}
+			}
+			if name == "DECLARED" {
+				p.Declared = []string{p.Values["HOME"]}
+			}
+			if name == "SEED" {
+				p.Seed = []string{p.Values["HOME"]}
+			}
+			if _, err := Arguments(computation, false, p, nil); err != nil {
+				t.Fatal(err)
+			}
+			absent := filepath.Join(p.Values["HOME"], "absent")
+			switch name {
+			case "DECLARED":
+				p.Declared[0] = absent
+			case "SEED":
+				p.Seed[0] = absent
+			case "PLANTED_DIR":
+				p.PlantedDirs[0] = absent
+			default:
+				p.Values[name] = absent
+			}
+			if _, err := Arguments(computation, false, p, nil); err == nil {
+				t.Fatal("missing required path accepted")
+			}
+		})
+	}
+}

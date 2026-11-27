@@ -33,13 +33,12 @@ func selfTestOutput(line string) error {
 // rather than network libraries that first set refused socket options. Its
 // fixed arguments are operation, decoy target and decoy pid.
 func SelfTestHidden(name, target, pidText string) int {
-	pid, err := strconv.Atoi(pidText)
-	if err != nil || pid <= 0 {
-		return 64
-	}
+	var pid int
+	var err error
 	switch name {
 	case "arguments", "environment", "process", "resource", "signal", "codesign", "priority":
-		if pid <= 1 {
+		pid, err = strconv.Atoi(pidText)
+		if err != nil || pid <= 1 {
 			return 64
 		}
 	}

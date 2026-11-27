@@ -85,6 +85,7 @@ func computationInvocation(t *testing.T, launcher, program, subject string) (*co
 	inv.Directory = home
 	inv.Paths.Values["HOME"] = home
 	inv.Computation = true
+	inv.Paths.Values["PLANTED"] = filepath.Join(home, "absent_planted")
 	inv.Paths.Values["BIN_DIR"] = "/bin"
 	inv.Paths.Values["USR_BIN_DIR"] = "/usr/bin"
 	inv.Paths.Values["TTY_DEVICE"] = "/dev/tty"
@@ -341,7 +342,11 @@ func TestMacOSComputationSubjectDenial(t *testing.T) {
 	for _, key := range []string{"SUBJECT", "SUBJECT_COPY"} {
 		for _, kind := range []string{"Exec", "DeclaredRead", "HomeRead"} {
 			t.Run(key+"_"+kind, func(t *testing.T) {
-				c, inv := computationInvocation(t, launcher, program, filepath.Join(t.TempDir(), "absent_subject"))
+				subject := filepath.Join(t.TempDir(), "subject")
+				if err := os.WriteFile(subject, []byte("synthetic_subject"), 0600); err != nil {
+					t.Fatal(err)
+				}
+				c, inv := computationInvocation(t, launcher, program, subject)
 				path, op, expected := "/usr/bin/true", "exec", "attempt_exec\n"
 				if kind != "Exec" {
 					op = "read"

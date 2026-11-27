@@ -84,6 +84,7 @@ func newNecessityScenarioProgram(t *testing.T, launcher, program string, computa
 		"PLANTED":         files.Calibration,
 	}
 	if computation {
+		values["PLANTED"] = filepath.Join(files.Home, "absent_planted")
 		values["BIN_DIR"] = "/bin"
 		values["USR_BIN_DIR"] = "/usr/bin"
 		values["TTY_DEVICE"] = "/dev/tty"

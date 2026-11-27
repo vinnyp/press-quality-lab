@@ -19,7 +19,7 @@ type Paths struct {
 var commonNames = []string{"ROOT", "RUNTIME", "VOLUME", "HOME", "LAUNCHER", "BIN", "LAUNCHER_PARENT", "BIN_PARENT", "TRACE_DEVICE", "NULL_DEVICE", "RANDOM_DEVICE", "ZERO_DEVICE", "STDOUT_DEVICE", "STDERR_DEVICE", "ZONEFILE", "ZONE_RULES", "SERVICES", "PROTOCOLS", "PLANTED"}
 var computationNames = []string{"BIN_DIR", "USR_BIN_DIR", "TTY_DEVICE", "SUBJECT", "SUBJECT_COPY"}
 
-// canonical permits an absent final component only for PLANTED. Its ancestors
+// canonical permits an absent final component when the parameter allows it. Its ancestors
 // must exist, so no unresolved link can reach a profile parameter.
 func canonical(path string, absent bool) (string, error) {
 	absolute, err := filepath.Abs(path)
@@ -34,7 +34,7 @@ func canonical(path string, absent bool) (string, error) {
 		return "", err
 	}
 	if _, statErr := os.Lstat(absolute); !os.IsNotExist(statErr) {
-		return "", fmt.Errorf("unresolved planted path")
+		return "", fmt.Errorf("unresolved profile path")
 	}
 	parent, err := filepath.EvalSymlinks(filepath.Dir(absolute))
 	if err != nil {
@@ -90,7 +90,7 @@ func Arguments(computation, control bool, paths Paths, hiddenArgs []string) ([]s
 	}
 	values := make(map[string]string)
 	for _, name := range names {
-		value, err := canonical(paths.Values[name], name == "PLANTED")
+		value, err := canonical(paths.Values[name], name == "PLANTED" || name == "SUBJECT" || name == "SUBJECT_COPY")
 		if err != nil {
 			return nil, fmt.Errorf("profile parameter %s: %w", name, err)
 		}

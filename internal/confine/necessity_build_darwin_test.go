@@ -247,3 +247,37 @@ func u16Tool(path string,args []string)([]byte,error){
  return out,err
 }
 `
+
+func TestNecessityAllowanceDispatch(t *testing.T) {
+	// KTD14: the hidden dispatcher preserves the overlay's fourth path argument.
+	// This native clean probe is unconfined; it runs no macOS evidence scenario.
+	binary := necessityBuild(t, true)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "value")
+	if err := os.WriteFile(path, []byte("A"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	output := filepath.Join(dir, "output")
+	out, err := os.Create(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	child, startErr := os.StartProcess(binary, []string{binary, SelfTestMode, "u16_allowance", "read", path}, &os.ProcAttr{Env: []string{}, Files: []*os.File{nil, out, out}})
+	if startErr != nil {
+		if err := out.Close(); err != nil {
+			t.Error(err)
+		}
+		t.Fatal(startErr)
+	}
+	state, waitErr := child.Wait()
+	if err := out.Close(); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if waitErr != nil || !state.Success() || string(b) != "attempt_read\nreturned n=1 byte=65 error=<nil>\n" {
+		t.Fatalf("state=%v wait=%v output=%q", state, waitErr, b)
+	}
+}
