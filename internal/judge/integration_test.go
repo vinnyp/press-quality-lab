@@ -205,6 +205,9 @@ func TestScaling(t *testing.T) {
 			}
 			ratio := float64(largeTime) / float64(smallTime)
 			t.Logf("attempt %d: 16x input: %.2fx time (%s, %s)", attempt+1, ratio, smallTime, largeTime)
+			if ratio > 120 {
+				t.Fatalf("time ratio %.2f exceeded 120 in attempt %d; approaches quadratic growth", ratio, attempt+1)
+			}
 			if ratio <= 40 {
 				return
 			}
