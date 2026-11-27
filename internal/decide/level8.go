@@ -7,7 +7,7 @@ import (
 	"math/big"
 )
 
-func level8(ch plan.Check, _ observe.Controls, e Evidence) Result {
+func level8(ch plan.Check, c observe.Controls, e Evidence) Result {
 	rule := "QA9"
 	switch ch.Preimage["probe"] {
 	case "discovery":
@@ -19,12 +19,9 @@ func level8(ch plan.Check, _ observe.Controls, e Evidence) Result {
 	case "exit_codes":
 		return basicProbe(ch, e)
 	case "store_unchanged":
-		if len(ch.Keys) == 0 {
-			return Result{Outcome: NotObserved, Reason: "empty_target", Level: 8}
-		}
-		rule = "QP6"
+		return storeUnchanged(ch, e)
 	case "planted_secret":
-		rule = "QP10"
+		return plantedSecret(ch, c, e)
 	}
 	return sentinel(8, rule)
 }

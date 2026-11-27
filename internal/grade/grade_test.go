@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/vinnyp/press-quality-lab/internal/collect"
+	"github.com/vinnyp/press-quality-lab/internal/decide"
 	"github.com/vinnyp/press-quality-lab/internal/judge"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
@@ -394,7 +395,15 @@ func TestEngineFaultRules(t *testing.T) {
 			o, d, _ := fixture(t)
 			want := "QE10"
 			if row == "Unbuilt" {
-				want = "QP10"
+				want = "QA9"
+				d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {
+					checks, err := collect.Collect(p, s)
+					if err != nil {
+						return nil, err
+					}
+					checks[0].Result = decide.Result{Level: 8, Unbuilt: &decide.Unbuilt{Level: 8, Rule: "QA9"}}
+					return checks, nil
+				}
 				d.Source = func() (observe.Source, func() error, error) { return passingSource{}, func() error { return nil }, nil }
 			} else {
 				d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {

@@ -7,9 +7,9 @@ import (
 	"strconv"
 )
 
-// InvocationLevelBuilt leaves the planted-secret combination to U37.
+// InvocationLevelBuilt reports whether the invocation combination is built.
 func InvocationLevelBuilt(ch plan.Check) bool {
-	return ch.Preimage != nil && ch.Preimage["probe"] != "planted_secret"
+	return ch.Preimage != nil
 }
 
 func level7(ch plan.Check, c observe.Controls, e Evidence) Result {
@@ -19,7 +19,11 @@ func level7(ch plan.Check, c observe.Controls, e Evidence) Result {
 		}
 		return e.Discovery.invocationResult(ch, c)
 	}
-	if ch.Preimage["probe"] == "planted_secret" && len(ch.Keys) == 0 {
+	if ch.Preimage["probe"] == "planted_secret" {
+		r := plantedSecret(ch, c, e)
+		if r.Level == 7 {
+			return r
+		}
 		return Result{}
 	}
 	if !InvocationLevelBuilt(ch) {

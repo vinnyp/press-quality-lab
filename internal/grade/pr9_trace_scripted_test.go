@@ -123,6 +123,7 @@ func compareTrace(t *testing.T, trace, recording []byte, host map[string]any, su
 	// QT5, QD2, QE8: exact served set and help order come from recorded help and case preimages.
 	expected := map[string]bool{}
 	helpOrder := []map[string]any{}
+	plantedOrder := []map[string]any{}
 	confinement := traceObject(host["confinement"])
 	binary := traceObject(subject["binary"])
 	blocked := confinement["applied"] != true || host["self_test"] != "passed" || host["private_copy"] == "changed" || binary["placeholder"] != nil
@@ -134,13 +135,42 @@ func compareTrace(t *testing.T, trace, recording []byte, host map[string]any, su
 	}
 	for id, pred := range predictions {
 		pre := traceObject(preimages[id])
-		if pre["probe"] == "discovery" || pre["probe"] == "planted_secret" || blocked {
+		if pre["probe"] == "discovery" || blocked {
 			continue
 		}
 		if pred.Level < 7 && !(pred.Level == 1 && pred.Ending.Phase == "deciding" && allowedRule(pred.Ending, "QO1")) {
 			continue
 		}
 		if pred.Ending.Phase != "deciding" && (allowedRule(pred.Ending, "QA7") || allowedRule(pred.Ending, "QO6")) {
+			continue
+		}
+		if pre["probe"] == "planted_secret" {
+			sec := traceObject(subject["secret"])
+			words, ok := sec["commands"].([]any)
+			if !ok {
+				continue
+			}
+			params := traceObject(pre["parameters"])
+			cmds, ok := params["commands"].([]any)
+			if !ok {
+				t.Fatal("missing planted command preimages")
+			}
+			for _, w := range words {
+				for _, v := range cmds {
+					cmd := traceObject(v)
+					if !reflect.DeepEqual(cmd["words"], w) {
+						continue
+					}
+					env := []any{}
+					for name := range traceObject(cmd["env"]) {
+						env = append(env, name)
+					}
+					sortAnyStrings(env)
+					key := map[string]any{"words": w, "offline_args": cmd["offline_args"], "env": env, "home": "planted", "runbook": nil, "step": nil, "computation": nil}
+					expected[string(mustJSON(t, key))] = true
+					plantedOrder = append(plantedOrder, key)
+				}
+			}
 			continue
 		}
 		if pre["words"] == nil {
@@ -162,6 +192,7 @@ func compareTrace(t *testing.T, trace, recording []byte, host map[string]any, su
 	}
 	actual := map[string]bool{}
 	actualHelp := []map[string]any{}
+	actualPlanted := []map[string]any{}
 	decoder := json.NewDecoder(bytes.NewReader(trace))
 	for {
 		var event struct {
@@ -183,12 +214,18 @@ func compareTrace(t *testing.T, trace, recording []byte, host map[string]any, su
 			t.Fatal(err)
 		}
 		actual[string(mustJSON(t, key))] = true
+		if key["home"] == "planted" {
+			actualPlanted = append(actualPlanted, key)
+		}
 		if key["home"] == "empty" {
 			actualHelp = append(actualHelp, key)
 		}
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("served set got %v want %v", actual, expected)
+	}
+	if !reflect.DeepEqual(actualPlanted, plantedOrder) {
+		t.Errorf("planted order got %v want %v", actualPlanted, plantedOrder)
 	}
 	if !reflect.DeepEqual(actualHelp, helpOrder) {
 		t.Errorf("help order got %v want %v", actualHelp, helpOrder)

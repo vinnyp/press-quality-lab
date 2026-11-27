@@ -262,6 +262,19 @@ func (s *Source) Observe(key observe.Key, _ observe.Spec) (observe.Run, error) {
 	if err != nil {
 		return observe.Run{}, err
 	}
+	if r.Details.Home.ControlDetected != nil {
+		detected := c.StoreControlDetected
+		r.Details.Home.ControlDetected = &detected
+	}
+	if r.Details.Planted != nil && r.Details.Planted.ControlEnd != nil {
+		end := observe.End{}
+		if c.ReadControlKilled {
+			end.Signal = 9
+		}
+		planted := *r.Details.Planted
+		planted.ControlEnd = &observe.InvocationProtocol{End: end, Markers: observe.Markers{Confinement: true}}
+		r.Details.Planted = &planted
+	}
 	r.CopyChanged = !c.PrivateCopyUnchanged
 	if !c.ConfinementApplied {
 		r.Markers = observe.Markers{}
