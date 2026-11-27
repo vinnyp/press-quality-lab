@@ -229,7 +229,7 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
     - level 7: always, for any check with an invocation;
     - level 8: always.
 
-    Level 7 decides a check with one invocation directly. Discovery and the planted-secret probe have several, and QO7 orders them: their own rules in U11 and U37 call level 7's per-invocation helper (QO1 to QO4), in QO7's order; for discovery, an unconfined help request is QO1 at level 1 instead (E-29). For discovery, any other end, a crash, an unsuccessful exit and an engine kill outside the budget included, is QD5's (QO7, `collection-rules.md` line 163), never QO5's. For the planted secret, a crash or an unsuccessful exit proves no read; two readings there go to the owner before U37 is built: an engine kill outside the budget, and QO1 on one invocation against a leak found in another (QO7's first step). (Amended 2026-11-26: the plan first named an engine kill `harness_fault` for both, against QO7's text for discovery.)
+    Level 7 decides a check with one invocation directly. Discovery and the planted-secret probe have several, and QO7 orders them: their own rules in U11 and U37 call level 7's per-invocation helper (QO1 to QO4), in QO7's order; for discovery, an unconfined help request is QO1 at level 1 instead (E-29). For discovery, any other end, a crash, an unsuccessful exit and an engine kill outside the budget included, is QD5's (QO7, `collection-rules.md` line 163), never QO5's. For the planted secret, a crash or an unsuccessful exit proves no read; the owner ruled both readings there before U37: an engine kill outside the budget is `harness_fault` after QO7's step 1 (E-35), and QO1 on any invocation decides at level 1, ahead of a leak (E-36). (Amended 2026-11-26: the plan first named an engine kill `harness_fault` for both, against QO7's text for discovery.)
 
     A test at the close asserts that no unbuilt level remains.
   - These are the collection specification's evidence rules, not verdicts: the judge still decides requiredness, rollups, comparison and every verdict.
@@ -873,7 +873,7 @@ Waits on: PR7 and PR9, needed before this group can start. Its predicted ratchet
 ### U37. The planted-secret probe
 
 - **Goal:** the planted-secret probe collects as QP10 to QP13 say.
-- **Open readings, for the owner before this unit is built** (found in PR9's design review): an engine kill outside the budget on one of the probe's invocations; and QO1 on one invocation against a leak found in another (QO7's first step).
+- **Readings the owner ruled before this unit** (found in PR9's design review): an engine kill outside the budget on one of the probe's invocations is `harness_fault` after QO7's step 1 (E-35); and QO1 on any invocation decides the check at level 1, ahead of a leak in another (E-36).
 - **Requirements:** GR9, GR16.
 - **Dependencies:** U12, U38, U40.
 - **Files:** `internal/collect/`, `internal/decide/`, their tests.
@@ -899,7 +899,7 @@ Waits on: PR7 and PR9, needed before this group can start. Its predicted ratchet
   - each injected value is shown present before masking, and absent afterwards from the store, the streams and the scorecard, in each §4 encoding;
   - a declared value holding a character the escaper rewrites is masked;
   - the per-run directory holding the planted file is gone after the run.
-- **Verification:** the test finds no unmasked value, and QE18 leaves KTD22's list.
+- **Verification:** the test finds no unmasked value. QE18 stays on KTD22's list until its `macos_evidence` entry (GR15), the darwin path (PR15) and the scorecard (U18) exist. (Amended 2026-11-27: the plan first moved QE18 here, against KTD22 and GR15.)
 
 ### PR11: the macOS self-test track
 

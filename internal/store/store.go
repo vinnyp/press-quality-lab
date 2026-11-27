@@ -72,17 +72,19 @@ func ApplicationSupportRoot() (string, error) {
 // Host must contain the actual host facts supplied by the caller (KTD8).
 // SubjectFilePath must be the canonical absolute subject-file path.
 type Record struct {
-	Host              strictjson.Object
-	SubjectFilePath   string
-	SubjectFileDigest string
-	BinaryDigest      *string
-	SeedDigest        *string
-	Request           string
-	Scope             strictjson.Array
-	ExitCode          int
-	JudgeInput        any
-	JudgeOutput       any
-	JudgeRejected     bool
+	Host            strictjson.Object
+	SubjectFilePath string
+	// DisplaySubjectFilePath is masked by grade; the canonical path still keys storage.
+	DisplaySubjectFilePath *string
+	SubjectFileDigest      string
+	BinaryDigest           *string
+	SeedDigest             *string
+	Request                string
+	Scope                  strictjson.Array
+	ExitCode               int
+	JudgeInput             any
+	JudgeOutput            any
+	JudgeRejected          bool
 }
 
 func nullable(s *string) any {
@@ -95,11 +97,15 @@ func nullable(s *string) any {
 // Document builds the envelope without validating judge input. QE15 and errata
 // E-5 require even a schema-invalid input to remain available for diagnosis.
 func (r Record) Document() strictjson.Object {
+	path := r.SubjectFilePath
+	if r.DisplaySubjectFilePath != nil {
+		path = *r.DisplaySubjectFilePath
+	}
 	return strictjson.Object{
 		"record_version":       "1.0",
 		"spec_version":         "1.0",
 		"host":                 r.Host,
-		"subject_file_path":    r.SubjectFilePath,
+		"subject_file_path":    path,
 		"subject_file_digest":  r.SubjectFileDigest,
 		"binary_digest":        nullable(r.BinaryDigest),
 		"seed_digest":          nullable(r.SeedDigest),

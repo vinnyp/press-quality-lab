@@ -8,6 +8,7 @@ import (
 )
 
 func TestNoCommandPreimages(t *testing.T) {
+	// QP1, QP2: all probes stay required; an undeclared bare binary has a 10-second budget.
 	// QE2: no-command probes have null words and budget and empty parameters.
 	// QE3: every probe remains required even without a command.
 	// QE7: every required entry has the specified fields.

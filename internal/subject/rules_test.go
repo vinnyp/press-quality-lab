@@ -244,3 +244,15 @@ func TestPreconditionCaptures(t *testing.T) {
 	comp["captures"] = strictjson.Array{obj(steps[0])["name"]}
 	checkFixture(t, o, "QA9")
 }
+
+func TestRepeatedSecretCommand(t *testing.T) {
+	// QP10: E-42 rejects equal words at QP10's position in E-9's order.
+	s := parsedFixture(t)
+	checkFixture(t, s, "")
+	secret := testObject(s["secret"])
+	commands := testArray(secret["commands"])
+	secret["commands"] = append(commands, commands[0])
+	checkFixture(t, s, "QP10")
+	s["store"] = "../store"
+	checkFixture(t, s, "QS9")
+}

@@ -9,8 +9,9 @@ import (
 
 // Check pairs a planned check with its resolution, including an unbuilt value.
 type Check struct {
-	Plan   plan.Check
-	Result decide.Result
+	Plan        plan.Check
+	Result      decide.Result
+	Invocations []observe.Invocation
 }
 
 // Collect resolves every check, retaining sentinels as values for inspection.
@@ -50,10 +51,13 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 				if err != nil {
 					return nil, err
 				}
+				if err := observe.ValidateCounts(run, ch.Preimage["probe"] == "byte_bound"); err != nil {
+					return nil, err
+				}
 				facts.Invocations = append(facts.Invocations, observe.Invocation{Key: map[string]any(key), Run: run})
 			}
 		}
-		checks = append(checks, Check{Plan: ch, Result: resolve(ch, controls, facts)})
+		checks = append(checks, Check{Plan: ch, Result: resolve(ch, controls, facts), Invocations: facts.Invocations})
 	}
 	for i := range checks {
 		checks[i].Result = decide.FinalOverride(checks[i].Plan, checks[i].Result)

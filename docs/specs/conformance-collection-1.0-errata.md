@@ -164,3 +164,51 @@ QD2 says "Every listed command at every level counts", and QD3 compares "the num
 ### E-34. A listed name the engine cannot pass as an argument
 
 A command's name is the first word of its help line (§5), so a help can list a name holding a NUL byte or ill-formed UTF-8, or one whose help request's arguments pass the system's limit. Such a request cannot be made. **A help that lists such a name cannot be read: QD5 decides as for any help that cannot be read. The name is never requested. The help's other listed commands are walked, as QD2 walks below any help that ran. The limit is fixed, the same on every host and on the released and scripted paths: a help request's words, the name and the closing `--help` included, may total at most 131,072 bytes (128 KiB), counting each word's UTF-8 bytes and one byte per word. A request within it fits the argument limit of every supported macOS, so a scripted recording replays alike on any host.** The owner ruled on 2026-11-26, and on the fixed limit the same day. No case of the corpus has such a name, so no record changes.
+
+### E-35. The planted-secret probe and an engine kill outside the budget
+
+QO7 combines the planted-secret probe's invocations, first match, and says that an exit code other than a successful one, or a crash, only means that invocation proved no read. QO5 makes an engine kill outside the time budget `harness_fault` for one invocation. QO7's list does not name it. **When the engine killed one of the probe's invocations outside its time budget, that invocation was not fully observed. After step 1 (a leak found in any invocation) and before step 2, the check is not observed with `harness_fault`.** The owner ruled on 2026-11-26. No case of the corpus has such a kill, so no record changes.
+
+### E-36. QO1 against a leak in the planted-secret probe
+
+The precedence table puts QO1 first, and E-29 lifts an unconfined help request to level 1 for discovery. QO7's combination for the planted-secret probe lists a leak found in any invocation first. **When the engine could not confine one or more of the planted-secret probe's invocations, QO1 decides the check at level 1, with `network_unverifiable`, ahead of the combination and ahead of a leak found in another invocation. QO7's step 2 then orders only the invocations QO2 to QO4 decide.** The owner ruled on 2026-11-26. No case of the corpus has an unconfined planted-secret invocation, so no record changes.
+
+### E-37. How the read proof's control invocation ends
+
+QO7 says that when the read proof's control invocation "ends any way other than a kill after the marker", the planted-secret check is not observed with `harness_fault`. QP11 and QH27 prove a read only when the control "was killed". QO1 and E-36 speak of the probe's listed invocations, and QE8 says a control is never a target. **The control proves the read only when QH21 attributes its end to the confinement. Every other end of the control is QO7's "any other way", so the check is not observed with `harness_fault`. That includes a control that wrote no marker, a `SIGKILL` with a memory or code-signing exit detail, and a kill the engine sent. QO1 and E-36 apply to the probe's listed invocations, never to the control.** The owner ruled on 2026-11-26. No case of the corpus has such a control end, so no record changes.
+
+### E-38. A failed read calibration and the read proof's control
+
+QH26 says that when the volume's read calibration fails, no invocation of a planted-secret probe proves a read, and QO7's earlier steps still decide a leak, an invocation QO1 to QO4 decide, or a scan bound, "and otherwise the probe is not observed with `input_missing`". It does not mention the read proof's control. **When the read calibration failed, the read proof's control is not run, and its result cannot decide the check: QO7's leak, QO1 to QO4 and bound steps decide, E-35 and E-36 included, and otherwise the check is not observed with `input_missing`.** The owner ruled on 2026-11-26. No case of the corpus combines a failed calibration with a control that was not killed, so no record changes.
+
+### E-39. The width of a masked declared value
+
+QE18 masks each declared environment value of 8 bytes or more: "a declared value becomes as many `*` as its encoded form has characters". **The count is of Unicode code points in the encoded form. The 8-byte threshold stays a count of bytes.** The owner ruled on 2026-11-26. No subject of the corpus declares a value of 8 bytes or more, so no record changes.
+
+### E-41. A side file the seed supplies
+
+QP8 says `<store>-wal` and `<store>-journal` "are a change only when they exist with one byte or more after the command", and QP6 compares every regular file's bytes before and after. A seed copied from a database in write-ahead mode can supply a non-empty `-wal`. **QP8 adds a condition to QP6's comparison and does not replace it. A `-wal` or `-journal` is a change only when QP6 finds it changed and it holds one byte or more after the command. A side file the seed supplies and the command leaves unchanged is not a change, and neither is one the command empties.** The owner ruled on 2026-11-26. No seed of the corpus supplies a side file, so no record changes.
+
+### E-42. A command listed twice in `secret.commands`
+
+QP11 runs "each listed command once", QE8 numbers the planted secret's targets by listing position, and QT5 forbids two invocations with equal keys. The schema does not forbid listing a command twice. **A `secret.commands` that lists the same words twice rejects the subject file under QP10, with exit 2, in QP10's place in E-9's order.** The owner ruled on 2026-11-26. No case of the corpus lists a command twice, so no record changes.
+
+### E-43. Stated limit: a canary in a name
+
+QP12 finds the canary in a drained stream or in the contents of a file of the used home. **The specification states the limit that a canary written into a file's or a directory's name, or into a link's target, is not a leak QP12 finds: only stream bytes and regular files' contents are scanned. Masking (QE18) still covers names wherever a record or scorecard shows them.** The owner ruled on 2026-11-26. No record changes.
+
+### E-44. Overlapping masked values
+
+QE18 masks the canary and each declared value of 8 bytes or more, in every §4 encoding. It does not say what replaces two matches that overlap. **Masking first finds every match of every masked value's forms in the text, then replaces every byte any match covers. A byte that a canary form covers becomes the byte of the zero canary in the same form and position. A byte that a declared value's form covers becomes `*`, one for each code point, as E-39 says. Nothing of any masked value survives an overlap. A byte that both a canary form and a declared value's form cover becomes the zero canary's byte.** The owner ruled on 2026-11-27, and on a byte both cover the same day. No case of the corpus has overlapping masked values, so no record changes.
+
+### E-45. Stated limit: extended attributes and resource forks
+
+QP12 finds the canary in a drained stream or in the contents of a regular file of the used home, and E-43 states the limit for names and link targets. **The specification also states the limit that a canary written into a file's extended attribute or its resource fork is not a leak QP12 finds.** The owner ruled on 2026-11-27. No record changes.
+
+### E-46. An inspection that cannot finish
+
+QH25 inspects a used home without following a link, opening a special file or reading past a bound, and E-10 makes a file it cannot read `harness_fault`. **A directory of the used home the inspection cannot read, and an inspection or a leak scan that reaches its entry or time bound, make the check that needed it, the store-unchanged or the planted-secret check, not observed with `harness_fault`. That check never ends unchanged or held, and any leak already found still decides first (QO7, step 1). The other checks of the grade go on.** The owner ruled on 2026-11-27. No case of the corpus has such a home, so no record changes.
+
+### E-47. A change found beside a gap in the inspection
+
+E-10 and E-46 make the store-unchanged check `harness_fault`, never unchanged, when an entry cannot be read or an inspection cannot finish. They do not say what a change found elsewhere in the same home decides. **A change the comparison actually finds decides the check as not held with `predicate`, whatever else could not be read. Only an entry both snapshots inspected can show a change: when either snapshot's walk did not finish, an entry one of them never reached is neither a change nor unchanged. With no change found, an unreadable entry or an unfinished inspection gives `harness_fault`.** The owner ruled on 2026-11-27. No case of the corpus has such a home, so no record changes.

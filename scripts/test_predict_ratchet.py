@@ -25,6 +25,65 @@ class PredictorTests(unittest.TestCase):
     def case(self, number, built=None):
         return predictor.predict_case(KIT / 'cases' / f'case-{number:03d}', built or BUILT)
 
+    def test_pr10_probe_tokens(self):
+        # QP2–QP4, QP6–QP13, QO7: independent probe capabilities.
+        rows = {
+            'bare': [
+                'QP2',
+            ],
+            'byte_bound': [
+                'QP3',
+            ],
+            'exit_codes': [
+                'QP4',
+            ],
+            'store_unchanged': [
+                'QP6',
+                'QP7',
+                'QP8',
+                'QP9',
+            ],
+            'planted_secret': [
+                'QP10',
+                'QP11',
+                'QP12',
+                'QP13',
+            ],
+        }
+        subject = {'binary': 'bin/subject', 'declared_count': 0,
+                   'seed': None, 'store': None, 'secret': None, 'commands': []}
+        for probe, tokens in rows.items():
+            pre = {'probe': probe, 'words': [], 'earlier': [], 'expected': None}
+            built = {'levels': [1, 2, 3, 5, 7],
+                     'builds': tokens + ['QO7.planted_secret']}
+            with self.subTest(probe=probe):
+                self.assertEqual(predictor.check_ending(8, built, subject, pre, [])['phase'],
+                                 'deciding')
+            for token in tokens:
+                with self.subTest(probe=probe, token=token):
+                    missing = dict(built, builds=[t for t in built['builds'] if t != token])
+                    self.assertEqual(predictor.check_ending(8, missing, subject, pre, []),
+                                     {'exit_code': 70, 'rules': sorted(tokens),
+                                      'phase': 'sentinel'})
+            authored = dict(pre, probe=None)
+            self.assertEqual(predictor.check_ending(8, built, subject, authored, []),
+                             {'exit_code': 70, 'rules': ['QA9'], 'phase': 'sentinel'})
+
+    def test_pr10_prediction(self):
+        # QP2–QP4, QP6–QP13, QO7, QA9: literal slice-b2 case set.
+        directory = Path(__file__).with_name('ratchet')
+        built = predictor.load(directory / 'pr10.json')
+        self.assertNotIn(8, built['levels'])
+        result = predictor.predict(built)
+        previous = predictor.load(directory / 'pr9-prediction.json')['predicted']
+        additions = {f'case-{n:03d}' for n in (
+            12, 13, 14, 15, 88, 74, 75, 96, 99, 148, 72,
+            73, 76, 78, 89, 77, 79, 95, 98, 150, 151)}
+        self.assertEqual(set(result['predicted']), set(previous) | additions)
+        self.assertEqual(len(result['predicted']), 58)
+        actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(actual, (directory / 'pr10-prediction.json').read_bytes())
+
     def test_pr9_discovery_tokens(self):
         # QD2 bounds, QD3, QD5, QO7: all discovery capabilities are needed.
         tokens = [
@@ -134,14 +193,109 @@ class PredictorTests(unittest.TestCase):
         built['builds'].append('QO7.planted_secret')
         self.assertTrue(self.case(95, built)['predicted'])
 
+    def test_planted_secret_control_precedes_budget(self):
+        # QO7, E-37, E-38: a read control precedes QO4, unless uncalibrated.
+        key = dict(words=['read'], computation=None, runbook=None, step=None,
+                   home='planted')
+        read = dict(markers=dict(confinement=True, could_not_start=False),
+                    end=dict(kind='exit', code=0),
+                    planted=dict(atime_moved=True, same_file=True,
+                                 control_end=dict(kind='exit', code=0)))
+        budget_key = dict(key, words=['slow'])
+        budget = dict(markers=dict(confinement=True, could_not_start=False),
+                      end=dict(kind='signal', signal='SIGKILL', by='budget'),
+                      planted=None)
+        read['leak_scan'] = budget['leak_scan'] = dict(leaks=False)
+        pre = dict(probe='planted_secret', expected=None, runbook=None,
+                   parameters=dict(commands=[['read'], ['slow']]))
+        subject = dict(secret={}, commands=[dict(words=['read'], exit_codes=[0])])
+        host = dict(private_copy='unchanged', kill_attribution=[],
+                    read_control='not_killed', read_calibration='moved')
+        for name, changes, level in [
+                ('ControlBeforeBudget', {}, 8),
+                ('FailedCalibration', dict(read_calibration='not_moved'), 7),
+                ('KilledControl', dict(read_control='killed'), 7)]:
+            with self.subTest(name=name), patch.object(
+                    predictor, 'runs_for', return_value=[(key, read), (budget_key, budget)]):
+                self.assertEqual(predictor.deciding_level(
+                    dict(reason='harness_fault'), pre, subject, dict(host, **changes),
+                    dict(invocations=[]), [], {}), level)
+
+    def test_planted_secret_deciding_pairs(self):
+        # QO7, E-35–E-38: competing steps retain their declared precedence.
+        key = dict(words=['read'], computation=None, runbook=None, step=None,
+                   home='planted')
+        normal = dict(markers=dict(confinement=True, could_not_start=False),
+                      end=dict(kind='exit', code=0),
+                      planted=dict(atime_moved=True, same_file=True,
+                                   control_end=dict(kind='exit', code=0)),
+                      leak_scan=dict(leaks=False, bound_reached=False))
+        pre = dict(probe='planted_secret', expected=None, runbook=None,
+                   parameters=dict(commands=[['read'], ['other']]))
+        subject = dict(secret={}, commands=[dict(words=['read'], exit_codes=[0])])
+        host = dict(private_copy='unchanged', kill_attribution=[],
+                    confinement=dict(applied=True), self_test='passed',
+                    read_control='not_killed', read_calibration='moved')
+        rows = [
+            ('UnconfinedBeforeLeak', 'unconfined', 'leak', 'network_unverifiable', 1),
+            ('LeakBeforeEngine', 'leak', 'engine', 'predicate', 8),
+            ('LeakBeforeControl', 'leak', 'control', 'predicate', 8),
+            ('LeakBeforeBudget', 'leak', 'budget', 'predicate', 8),
+            ('EngineBeforeControl', 'control', 'engine', 'harness_fault', 7),
+            ('EngineBeforeBound', 'bound', 'engine', 'harness_fault', 7),
+            ('ControlBeforeBudget', 'control', 'budget', 'harness_fault', 8),
+            ('ControlBeforeBound', 'control', 'bound', 'harness_fault', 8),
+            ('BudgetBeforeBound', 'bound', 'budget', 'harness_fault', 7),
+            ('FailedCalibrationBeforeBudget', 'uncalibrated', 'budget', 'harness_fault', 7),
+            ('FirstInvocationBeforeBudget', 'start', 'budget', 'could_not_start', 7),
+            ('BoundBeforeRead', 'bound', 'read', 'harness_fault', 8),
+            ('Held', 'read', 'read', 'held', 8),
+            ('InputMissing', 'missing', 'missing', 'input_missing', 8),
+        ]
+        for name, first, second, reason, expected in rows:
+            with self.subTest(name=name):
+                facts = copy.deepcopy(host)
+                runs = []
+                for words, kind in zip((['read'], ['other']), (first, second)):
+                    k, run = dict(key, words=words), copy.deepcopy(normal)
+                    if kind != 'control':
+                        run['planted'] = None
+                    if kind == 'unconfined':
+                        run['markers']['confinement'] = False
+                    if kind == 'leak':
+                        run['leak_scan']['leaks'] = True
+                    if kind == 'bound':
+                        run['leak_scan']['bound_reached'] = True
+                    if kind in ('budget', 'engine'):
+                        run['end'] = dict(kind='signal', signal='SIGKILL', by=kind)
+                    if kind == 'engine':
+                        facts['kill_attribution'].append(dict(invocation=k, by='engine'))
+                    if kind == 'uncalibrated':
+                        run['planted'] = copy.deepcopy(normal['planted'])
+                        facts['read_calibration'] = 'not_moved'
+                    if kind == 'start':
+                        run['markers']['could_not_start'] = True
+                    runs.append((k, run))
+                with patch.object(predictor, 'runs_for', return_value=runs):
+                    self.assertEqual(predictor.deciding_level(
+                        dict(reason=reason), pre, subject, facts,
+                        dict(invocations=[]), [], {}), expected)
+
     def test_prediction_files_regenerate(self):
         # QS5, QO7: preserve earlier slices and PR9's independent prediction.
         directory = Path(__file__).with_name('ratchet')
-        for version in ('pr6', 'pr8', 'pr9'):
+        for version in ('pr6', 'pr8', 'pr9', 'pr10'):
             with self.subTest(version=version):
                 result = predictor.predict(predictor.load(directory / (version + '.json')))
                 actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
                 self.assertEqual(actual, (directory / (version + '-prediction.json')).read_bytes())
+                completed = subprocess.run(
+                    [sys.executable, '-I', '-B',
+                     str(Path(__file__).with_name('predict-ratchet.py')),
+                     '--built', str(directory / (version + '.json')), '--json'],
+                    check=True, capture_output=True)
+                self.assertEqual(completed.stdout, actual)
+                self.assertEqual(completed.stderr, b'')
         pr8 = predictor.load(directory / 'pr8-prediction.json')['predicted']
         pr9 = predictor.load(directory / 'pr9-prediction.json')['predicted']
         self.assertEqual(set(pr9), set(pr8) | {'case-061', 'case-062'})

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/vinnyp/press-quality-lab/internal/collect"
+	"github.com/vinnyp/press-quality-lab/internal/decide"
 	"github.com/vinnyp/press-quality-lab/internal/judge"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
@@ -347,7 +348,7 @@ func TestEscaping(t *testing.T) {
 	}
 	code, err := Run(o, d, io.Discard)
 	assertFailure(t, code, err, 70, "QE16", "bad\x1b[31m\x00\x7f\u0085\u202e\u200d\u2028\u2029\U000e0061")
-	if got := err.Error(); got != `rejected: QE16: bad\u{001b}[31m\u{0000}\u{007f}\u{0085}\u{202e}\u{200d}\u{2028}\u{2029}\u{e0061}` {
+	if got := Escape(err.Error()); got != `rejected: QE16: bad\u{001b}[31m\u{0000}\u{007f}\u{0085}\u{202e}\u{200d}\u{2028}\u{2029}\u{e0061}` {
 		t.Fatal(got)
 	}
 }
@@ -394,7 +395,15 @@ func TestEngineFaultRules(t *testing.T) {
 			o, d, _ := fixture(t)
 			want := "QE10"
 			if row == "Unbuilt" {
-				want = "QP10"
+				want = "QA9"
+				d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {
+					checks, err := collect.Collect(p, s)
+					if err != nil {
+						return nil, err
+					}
+					checks[0].Result = decide.Result{Level: 8, Unbuilt: &decide.Unbuilt{Level: 8, Rule: "QA9"}}
+					return checks, nil
+				}
 				d.Source = func() (observe.Source, func() error, error) { return passingSource{}, func() error { return nil }, nil }
 			} else {
 				d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {

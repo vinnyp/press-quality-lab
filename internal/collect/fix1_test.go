@@ -221,7 +221,7 @@ func TestCollectUnconfinedHelpLeavesOtherInvocation(t *testing.T) {
 	if err != nil || len(got) != 2 {
 		t.Fatal(got, err)
 	}
-	if got[0].Result != (decide.Result{Level: 1, Outcome: decide.NotObserved, Reason: "network_unverifiable"}) || source.own != 1 || got[1].Result.Level != 8 || got[1].Result.Unbuilt == nil {
+	if got[0].Result != (decide.Result{Level: 1, Outcome: decide.NotObserved, Reason: "network_unverifiable"}) || source.own != 1 || got[1].Result.Level != 8 || got[1].Result.Reason != "placeholder_unfilled" {
 		t.Fatal(got, source.own)
 	}
 }

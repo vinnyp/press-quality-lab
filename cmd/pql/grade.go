@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/vinnyp/press-quality-lab/internal/grade"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
+	"github.com/vinnyp/press-quality-lab/internal/record"
 	"io"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 
 // commandOptions is the parsed request handed to the pipeline.
 type commandOptions struct {
+	Masker      *record.Masker
 	Output      io.Writer
 	Diagnostic  io.Writer
 	SubjectFile string
@@ -57,6 +59,12 @@ func executeCollection(o commandOptions, anchor bool) error {
 		}
 	}
 	d := collectionDependencies(o)
+	if o.Masker != nil {
+		d.Masker = o.Masker
+	}
+	if d.Stderr == nil {
+		d.Stderr = o.Diagnostic
+	}
 	code, err := grade.Run(grade.Options{SubjectFile: o.SubjectFile, Scope: o.Scope, Baseline: o.Baseline, Retired: o.Retired, Accept: o.Accept, Anchor: anchor, Scripted: o.Verifier == "scripted"}, d, o.Output)
 	return &collectionExit{code, err}
 }
@@ -64,8 +72,11 @@ func executeCollection(o commandOptions, anchor bool) error {
 var runGrade = func(o commandOptions) error { return executeCollection(o, false) }
 var runAnchor = func(o commandOptions) error { return executeCollection(o, true) }
 
-func newCollectionCommand(name string) *cobra.Command {
+func newCollectionCommand(name string, maskers ...*record.Masker) *cobra.Command {
 	options := commandOptions{}
+	if len(maskers) > 0 {
+		options.Masker = maskers[0]
+	}
 	var scope string
 	command := &cobra.Command{
 		Use:   name + " <subject-file>",

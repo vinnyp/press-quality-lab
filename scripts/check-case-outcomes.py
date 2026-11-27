@@ -145,7 +145,8 @@ def derive_all(pre, subject, recording, host, previous, discovery_state, seed_pa
         for k, run in zip(keys, runs):
             planted = run['planted']
             success = run['end']['kind'] == 'exit' and run['end']['code'] in (command_for(subject, k['words']).get('exit_codes') or [0])
-            candidate = success and planted is not None and planted['atime_moved'] and planted['same_file']
+            candidate = (host.get('read_calibration', 'moved') == 'moved' and
+                         success and planted is not None and planted['atime_moved'] and planted['same_file'])
             control = host.get('read_control')
             killed = control == 'killed' if control is not None else planted is not None and planted['control_end'] == {'kind': 'signal', 'signal': 'SIGKILL', 'by': 'confinement'}
             if candidate and not killed:

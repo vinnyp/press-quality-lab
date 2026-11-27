@@ -7,9 +7,9 @@ import (
 	"strconv"
 )
 
-// InvocationLevelBuilt leaves the planted-secret combination to U37.
+// InvocationLevelBuilt reports whether the invocation combination is built.
 func InvocationLevelBuilt(ch plan.Check) bool {
-	return ch.Preimage != nil && ch.Preimage["probe"] != "planted_secret"
+	return ch.Preimage != nil
 }
 
 func level7(ch plan.Check, c observe.Controls, e Evidence) Result {
@@ -19,7 +19,11 @@ func level7(ch plan.Check, c observe.Controls, e Evidence) Result {
 		}
 		return e.Discovery.invocationResult(ch, c)
 	}
-	if ch.Preimage["probe"] == "planted_secret" && len(ch.Keys) == 0 {
+	if ch.Preimage["probe"] == "planted_secret" {
+		r := plantedSecret(ch, c, e)
+		if r.Level == 7 {
+			return r
+		}
 		return Result{}
 	}
 	if !InvocationLevelBuilt(ch) {
@@ -71,6 +75,19 @@ func InvocationOutcome(ch plan.Check, c observe.Controls, run observe.Run) Resul
 	default:
 		panic("QO5: unknown attribution")
 	}
+}
+
+// AcceptedInvocationCode uses the planted invocation's own listed command.
+func AcceptedInvocationCode(ch plan.Check, key observe.Key, code int) bool {
+	if ch.Preimage["probe"] == "planted_secret" {
+		pre := plan.Object{}
+		for k, v := range ch.Preimage {
+			pre[k] = v
+		}
+		pre["words"] = key["words"]
+		ch.Preimage = pre
+	}
+	return acceptedCode(ch, code)
 }
 
 func acceptedCode(ch plan.Check, code int) bool {

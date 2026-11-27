@@ -148,7 +148,12 @@ func semantic(o File, bad map[string]bool) {
 		if !HomePath(text(secret["path"])) {
 			bad["QS9"] = true
 		}
+		seenSecret := map[string]bool{}
 		for _, w := range arr(secret["commands"]) {
+			if seenSecret[key(w)] {
+				bad["QP10"] = true
+			}
+			seenSecret[key(w)] = true
 			if !declared(w) {
 				if !invocation(w) {
 					bad["QS6"] = true
