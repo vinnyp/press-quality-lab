@@ -77,7 +77,7 @@ The stored record's `next_actions` stays empty until U18 fills it and the scorec
   - the W1 to W3 set-aside reasons;
   - the anchor's refusals.
 - **Where a next action's reason comes from.** It comes from the judge's output (QE14), for checks and dimensions alike. The judge can decide a check differently from the evidence: C1 gives `no_evidence`, C3 gives `empty_target` (`case-011`) and C4 gives `precondition_unmet` (`case-093`). So U18 reads both kinds of reason from the judge's output, and that is outside this slice.
-- **A step whose class is a placeholder.** It is not a destructive step, because QA7 conditions on `destructive`, and QP1 says a missing input "shows as a reason rather than as nothing". So its runbook enters the required set in a conformance scope. The steps before it run, level 2 ends its checks `placeholder_unfilled` and it is never invoked (QS5), and the steps after it are `earlier_step_failed`. Only the placeholder step could do harm were its class really `destructive`, and it is never invoked.
+- **A step whose class is a placeholder** is ruled by E-54, which the build review raised. In a scope without `destructive`, its whole runbook depends on the placeholder: no step of it runs, and each required check is `placeholder_unfilled` at level 2. In a destructive scope it runs as any runbook does, and level 2 stops the placeholder step's own checks. Level 2, `StepRuns`, `MayServe`, the trace reader and the prediction script's `depends()` all apply it.
 
 ## Predicted ratchet set
 
@@ -133,7 +133,7 @@ Their mutations are fixed now:
    - **Conditions on the run:**
      - a destructive runbook under a grade-wide QO1 condition (E-15);
      - one whose destructive command has a placeholder `writes`, which level 2 stops;
-     - a mixed runbook of a safe step, a placeholder-class step and a safe step, in a conformance scope, which pins the order in the reading above.
+     - a mixed runbook of a safe step, a placeholder-class step and a safe step (E-54): in a conformance scope nothing is served and every check is `placeholder_unfilled`; in a destructive scope the first step runs, the placeholder step's checks are `placeholder_unfilled`, and the last is `earlier_step_failed`.
    - **The guard:**
      - a plan built without the exclusion, which gives exit 70 before any key is served;
      - a probe whose command is destructive;
