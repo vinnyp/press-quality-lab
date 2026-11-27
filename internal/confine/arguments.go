@@ -19,7 +19,7 @@ type Paths struct {
 var commonNames = []string{"ROOT", "RUNTIME", "VOLUME", "HOME", "LAUNCHER", "BIN", "LAUNCHER_PARENT", "BIN_PARENT", "TRACE_DEVICE", "NULL_DEVICE", "RANDOM_DEVICE", "ZERO_DEVICE", "STDOUT_DEVICE", "STDERR_DEVICE", "ZONEFILE", "ZONE_RULES", "SERVICES", "PROTOCOLS", "PLANTED"}
 var computationNames = []string{"BIN_DIR", "USR_BIN_DIR", "TTY_DEVICE", "SUBJECT", "SUBJECT_COPY"}
 
-// canonical permits an absent final component only for PLANTED. Its ancestors
+// canonical permits an absent final component when the parameter allows it. Its ancestors
 // must exist, so no unresolved link can reach a profile parameter.
 func canonical(path string, absent bool) (string, error) {
 	absolute, err := filepath.Abs(path)
@@ -34,7 +34,7 @@ func canonical(path string, absent bool) (string, error) {
 		return "", err
 	}
 	if _, statErr := os.Lstat(absolute); !os.IsNotExist(statErr) {
-		return "", fmt.Errorf("unresolved planted path")
+		return "", fmt.Errorf("unresolved profile path")
 	}
 	parent, err := filepath.EvalSymlinks(filepath.Dir(absolute))
 	if err != nil {
@@ -45,6 +45,9 @@ func canonical(path string, absent bool) (string, error) {
 
 func render(computation, control bool, dirs, declared, seed int) string {
 	target, process, files := "self", "", subjectFiles
+	// QH19 stated limit: a posix_spawn child that leaves the process group
+	// can outlive the grade. It retains this invocation's confinement, including
+	// its scratch paths; no later invocation grants it another sandbox.
 	if computation {
 		target, process, files = "same-sandbox", strings.TrimSuffix(computationProcess, "\n"), computationFiles
 		for _, row := range []struct {

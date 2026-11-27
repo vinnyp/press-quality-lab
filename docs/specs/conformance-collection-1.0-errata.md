@@ -185,6 +185,10 @@ QH26 says that when the volume's read calibration fails, no invocation of a plan
 
 QE18 masks each declared environment value of 8 bytes or more: "a declared value becomes as many `*` as its encoded form has characters". **The count is of Unicode code points in the encoded form. The 8-byte threshold stays a count of bytes.** The owner ruled on 2026-11-26. No subject of the corpus declares a value of 8 bytes or more, so no record changes.
 
+### E-40. Stated limit: reading another process's scheduling priority
+
+QH9 lists "its scheduling priority" among the routes to another process that the self-test shows refused with a kill. On macOS 27.2, under both profiles, changing another process's priority is refused with a kill, but reading it is permitted. **QH9's priority route is the change of another process's scheduling priority, which the self-test shows refused. The specification states the limit that a confined program can read another process's scheduling priority, and so learn its nice value and whether a process with that id exists. The profile is unchanged.** The owner ruled on 2026-11-26. No record changes.
+
 ### E-41. A side file the seed supplies
 
 QP8 says `<store>-wal` and `<store>-journal` "are a change only when they exist with one byte or more after the command", and QP6 compares every regular file's bytes before and after. A seed copied from a database in write-ahead mode can supply a non-empty `-wal`. **QP8 adds a condition to QP6's comparison and does not replace it. A `-wal` or `-journal` is a change only when QP6 finds it changed and it holds one byte or more after the command. A side file the seed supplies and the command leaves unchanged is not a change, and neither is one the command empties.** The owner ruled on 2026-11-26. No seed of the corpus supplies a side file, so no record changes.

@@ -704,6 +704,7 @@ export PATH="${GATE_TOOLS_BIN:-$HOME/.gate-tools/go/bin}:$PATH"
 }
 
 func TestGateTagSets(t *testing.T) {
+	// KTD7, QH9: pin supported architectures and execute the pure oracle variants.
 	b, err := os.ReadFile(filepath.Join(moduleRoot(t), "gate.sh"))
 	if err != nil {
 		t.Fatal(err)
@@ -715,11 +716,11 @@ func TestGateTagSets(t *testing.T) {
 		}
 	}
 	for _, line := range strings.Split(string(b), "\n") {
-		if strings.Contains(line, "GOOS=darwin") && !strings.Contains(line, "GOARCH=arm64") {
+		if !supportedDarwinArchitecture(line) {
 			t.Fatalf("darwin architecture not pinned: %s", line)
 		}
 	}
-	want := []string{"for tags in scripted; do", "for tags in '' scripted necessity_test scripted,necessity_test; do"}
+	want := []string{"for tags in scripted necessity_test scripted,necessity_test; do", "for tags in '' scripted necessity_test scripted,necessity_test; do"}
 	if !reflect.DeepEqual(lists, want) {
 		t.Fatalf("gate tag sets: got %q want %q", lists, want)
 	}
@@ -801,6 +802,29 @@ label=scripted
 				if defect && (err == nil || !strings.Contains(string(out), diagnostic)) {
 					t.Fatalf("gate execution missed defect: %v %s", err, out)
 				}
+			}
+		})
+	}
+}
+
+func supportedDarwinArchitecture(line string) bool {
+	return !strings.Contains(line, "GOOS=darwin") || strings.Contains(line, "GOARCH=arm64")
+}
+
+func TestGateDarwinArchitectureControl(t *testing.T) {
+	// KTD7, QH9: only arm64 can execute the native self-test witnesses.
+	for _, row := range []struct {
+		name, line string
+		want       bool
+	}{
+		{"Arm64", "GOOS=darwin GOARCH=arm64 go test", true},
+		{"AMD64", "GOOS=darwin GOARCH=amd64 go test", false},
+		{"Unpinned", "GOOS=darwin go test", false},
+		{"Linux", "GOOS=linux GOARCH=amd64 go test", true},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			if got := supportedDarwinArchitecture(row.line); got != row.want {
+				t.Fatalf("got %t want %t", got, row.want)
 			}
 		})
 	}

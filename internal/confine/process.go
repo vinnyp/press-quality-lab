@@ -1,6 +1,9 @@
 package confine
 
-import "syscall"
+import (
+	"syscall"
+	"time"
+)
 
 import "github.com/vinnyp/press-quality-lab/internal/throwaway"
 
@@ -15,9 +18,12 @@ type GroupWorkspace interface {
 // Invocation supplies a resolved profile and the exact program words. The loop
 // owns home creation, environment construction and invocation sequencing.
 type Invocation struct {
-	Workspace                  GroupWorkspace
-	Paths                      Paths
+	Workspace GroupWorkspace
+	Paths     Paths
+	// Env contains literal declarations. Older complete tables are checked
+	// and rebuilt; the engine's environment is never inherited.
 	Words, Env                 []string
+	Budget                     time.Duration
 	Directory                  string
 	Computation, Control, Fast bool
 }
@@ -54,4 +60,17 @@ func exitDetail(flags uint16, fflags uint32, data int64) (uint32, error) {
 		return 0, syscall.Errno(data)
 	}
 	return uint32(data) & detailMask, nil
+}
+
+// launchPlan records QH13's stream and session setup independently of spawning.
+type launchPlan struct {
+	stdin      string
+	newSession bool
+	attributes syscall.ProcAttr
+}
+
+func planLaunch(directory string, environment []string) launchPlan {
+	return launchPlan{stdin: "/dev/null", newSession: true, attributes: syscall.ProcAttr{
+		Dir: directory, Env: environment,
+	}}
 }

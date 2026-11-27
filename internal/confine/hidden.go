@@ -13,6 +13,8 @@ import (
 const HiddenPrefix = "__pql_"
 const LauncherMode = "__pql_launcher"
 const FastMode = "__pql_fast"
+const SelfTestMode = "__pql_selftest"
+const DecoyMode = "__pql_decoy"
 const MarkerPrefix = "pql-launch:"
 const FailurePrefix = "pql-could-not-start:"
 

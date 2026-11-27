@@ -643,3 +643,25 @@ type fakeWorkspace struct{}
 
 func (fakeWorkspace) RecordGroup(throwaway.Process) error { return nil }
 func (fakeWorkspace) ForgetGroup(int) error               { return nil }
+
+func TestDrainExpiredDeadlineEOF(t *testing.T) {
+	// KTD18, QH21: scheduling a drain after its deadline must still observe a closed pipe.
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write([]byte("attempt_environment\n")); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetReadDeadline(time.Now().Add(-time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	c := drain(r)
+	<-c.done
+	if c.err != nil || c.cutAfterExit || string(c.head) != "attempt_environment\n" {
+		t.Fatalf("closed pipe lost: head=%q cut=%v err=%v", c.head, c.cutAfterExit, c.err)
+	}
+}

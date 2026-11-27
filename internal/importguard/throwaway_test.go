@@ -18,7 +18,6 @@ import (
 // and harnesses, not collection code; production files of every build are read.
 var filesystemAllowed = map[string]bool{
 	"throwaway":    true, // KTD20: sole owner of unconfined workspace operations.
-	"confine":      true, // Private executable copies, launcher paths and /dev/null.
 	"caseassembly": true, // Corpus harness reads the sealed case inputs.
 	"formtest":     true, // Test support reads schema files; never a live collector.
 }
@@ -87,7 +86,7 @@ func filesystemTreeProblems(base string) ([]string, error) {
 			return err
 		}
 		pkg := strings.Split(filepath.ToSlash(rel), "/")[0]
-		if filesystemAllowed[pkg] {
+		if filesystemAllowed[pkg] || filepath.ToSlash(rel) == "confine/process_darwin.go" || filepath.ToSlash(rel) == "confine/arguments.go" {
 			return nil
 		}
 		data, err := os.ReadFile(path)
@@ -116,11 +115,11 @@ func TestThrowawayFilesystemGuard(t *testing.T) {
 func TestThrowawayFilesystemTreeControl(t *testing.T) {
 	// KTD20: a planted collection call must fail the same traversal as production.
 	base := t.TempDir()
-	dir := filepath.Join(base, "collect")
+	dir := filepath.Join(base, "confine")
 	if err := os.Mkdir(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(dir, "planted.go")
+	path := filepath.Join(dir, "launcher_darwin.go")
 	if err := os.WriteFile(path, []byte("package collect\nimport \"os\"\nfunc planted(){ os.RemoveAll(\"fixture\") }\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +127,7 @@ func TestThrowawayFilesystemTreeControl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"collect/planted.go: forbidden os.RemoveAll"}
+	want := []string{"confine/launcher_darwin.go: forbidden os.RemoveAll"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}

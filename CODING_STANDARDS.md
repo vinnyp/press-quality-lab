@@ -34,6 +34,12 @@ These apply to the verifier and any code that confines a subject's run. Each nam
 - The engine makes and checks its private copies as QH8 requires. A test harness follows the same pattern once per scenario: a changed copy fails the runs that would use it and is never silently remade. Hazard: a fresh executable per launch stalled a parallel suite. See `docs/solutions/test-failures/fresh-executable-per-run-stalls-parallel-sandbox-suite.md`.
 - A profile's lines keep the order QH11's template gives them, because the later rule decides. Diagnose a failure by adding one narrow allowance to the unchanged profile. The rule order was measured on one macOS release; measure it again on a new one. See `docs/solutions/best-practices/sandbox-profile-later-rule-decides.md`.
 - Every path reaches a sandbox profile as QH11 requires. Hazard: a path spliced into profile text granted a read of a decoy (reproduced).
+- A sandbox evidence test shows that the sandbox decided on the operation the test names (QH9). The rules:
+  - A refused-operation witness attempts the operation the clause names, does nothing the profile could refuse before its attempt line, and sits beside a control showing the same call returns unconfined.
+  - A knock-out asserts that it applied, for example by checking that the built binary differs.
+  - Every run asserts its exact result, never merely an error or a kill.
+
+  Hazards: an overlay named a linked temporary path and never applied; a `socket()` probe was not refused by the template; a `setsockopt` before the attempt line was killed first; a numeric sysctl id resolved to an entry another allowance grants. See `docs/solutions/best-practices/sandbox-evidence-must-prove-the-decided-operation.md`.
 - The files a subject file names and its seed meet QS8 and QS9, and the seed is copied by content as QS9 requires, never through a link. Hazards: a seed copy that followed a link exposed a decoy (reproduced), and named paths had no containment rule (found in review).
 
 ## Maintaining this file
