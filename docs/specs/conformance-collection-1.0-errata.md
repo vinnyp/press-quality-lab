@@ -152,3 +152,15 @@ QD4's second sentence lets the other generated checks stand on their own invocat
 ### E-31. A recorded run whose marker and attribution disagree
 
 QT5 records, for each run, whether the launcher wrote its marker, and for a `SIGKILL` what ended it, one value being `before_marker`. **A recorded run whose attribution is `before_marker` while its marker is recorded as written, or `confinement` while no marker is recorded, contradicts itself. This holds for every run of the recording, the first confined run that a scripted run reads and the others alike. The recording is invalid, and the scripted run exits 2 as QE16 says for a recording that is invalid.** The owner ruled on 2026-11-26. No run of the corpus has such a pair, so no record changes.
+
+### E-32. A help stream past the engine's bound
+
+QE10 keeps the first 1 MiB of each stream and records that a longer one was cut, and QT5 records a cut stream's first 64 KiB as `head`, with `kept` null. QD2 reads help from standard output, or from standard error when standard output is empty. **When the stream discovery would read from a help request was cut, that help cannot be read: QD5 decides as for any help that cannot be read, on the released and the scripted path alike, and nothing is read from the kept bytes or from `head`. A stream is empty for QD2's choice, and a help has output for QD5, by the bytes the program wrote, never by the bytes kept.** The owner ruled on 2026-11-26. No case of the corpus has a cut help stream, so no record changes.
+
+### E-33. A command its help lists twice
+
+QD2 says "Every listed command at every level counts", and QD3 compares "the number found" with `declared_count`. **A command is found once, however many times its parent's help lists it, by its words. The count and the walk take each command once, in the order of its first listing, so its help is requested once.** The owner ruled on 2026-11-26. No case of the corpus lists a command twice, so no record changes.
+
+### E-34. A listed name the engine cannot pass as an argument
+
+A command's name is the first word of its help line (§5), so a help can list a name holding a NUL byte or ill-formed UTF-8, or one whose help request's arguments pass the system's limit. Such a request cannot be made. **A help that lists such a name cannot be read: QD5 decides as for any help that cannot be read. The name is never requested. The help's other listed commands are walked, as QD2 walks below any help that ran.** The owner ruled on 2026-11-26. No case of the corpus has such a name, so no record changes.
