@@ -28,6 +28,11 @@ type necessityScenario struct {
 
 func newNecessityScenario(t *testing.T, binary string, computation bool) *necessityScenario {
 	t.Helper()
+	return newNecessityScenarioProgram(t, binary, binary, computation)
+}
+
+func newNecessityScenarioProgram(t *testing.T, launcher, program string, computation bool) *necessityScenario {
+	t.Helper()
 	w, err := throwaway.BeginAt(filepath.Join(t.TempDir(), "runs"))
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +42,7 @@ func newNecessityScenario(t *testing.T, binary string, computation bool) *necess
 			t.Error(err)
 		}
 	})
-	c, err := NewCopies(w.Path(), binary, binary)
+	c, err := NewCopies(w.Path(), launcher, program)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +250,11 @@ func TestMacOSAllowances(t *testing.T) {
 					continue
 				}
 				t.Run(row.name, func(t *testing.T) {
-					s := newNecessityScenario(t, binary, computation)
+					program := binary
+					if row.operation == "system_info" {
+						program = "/usr/bin/sqlite3"
+					}
+					s := newNecessityScenarioProgram(t, binary, program, computation)
 					homeFile := filepath.Join(s.files.Home, "value")
 					declared := filepath.Join(filepath.Dir(s.files.Outside), "declared")
 					seed := filepath.Join(filepath.Dir(s.files.Outside), "seed")
@@ -273,6 +282,9 @@ func TestMacOSAllowances(t *testing.T) {
 						}
 					}
 					words := []string{SelfTestMode, "u16_allowance", row.operation, argument}
+					if row.operation == "system_info" {
+						words = []string{"-batch", filepath.Join(s.files.Home, "allowance.db"), "PRAGMA journal_mode=WAL; DROP TABLE IF EXISTS witness; CREATE TABLE witness(value); INSERT INTO witness VALUES(7); SELECT value FROM witness; PRAGMA integrity_check;"}
+					}
 					if row.startup {
 						s.inv.Fast = true
 						words = nil
@@ -292,12 +304,9 @@ func TestMacOSAllowances(t *testing.T) {
 							t.Fatalf("repeat %d unmodified control not evaluated at step %s: %+v stdout=%q stderr=%q", repeat, row.operation, control, control.Stdout, control.Stderr)
 						}
 						removed := s.run(t, words, nil, line, "")
-						marker := !row.startup
-						output := "attempt_" + row.operation + "\n"
-						if row.startup {
-							output = ""
-						}
-						if !necessityEvaluated(removed, marker) || removed.End.Signal != 9 || string(removed.Stdout) != output || len(removed.Stderr) != 0 {
+						// QH16: for a pipeline the governed process is sort;
+						// the parent reaps it and reports its native wait status.
+						if !necessityAllowanceRemoval(row, removed) {
 							t.Fatalf("repeat %d removal did not kill at governed step; profile=%s parameters=%v end=%+v marker=%+v stdout=%q stderr=%q", repeat, rendered, params, removed.End, removed.Markers, removed.Stdout, removed.Stderr)
 						}
 					}

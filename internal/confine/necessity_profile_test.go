@@ -19,12 +19,13 @@ type necessityGrant struct {
 
 // These are operations, not one-program assumptions. KERN_PROCARGS2 (argv
 // and environment) and KERN_PROC_PID all use process-info-pidinfo on Darwin.
+// network-inbound joins {bind, listen}; network-bind alone permits only bind.
 var necessityGrants = []necessityGrant{
 	{name: "TCP", operation: "network-outbound TCP", rule: `(allow network-outbound (remote tcp "localhost:*"))`, programs: []string{"tcp"}},
 	{name: "Unix", operation: "network-outbound Unix", rule: `(allow network-outbound (remote unix-socket))`, programs: []string{"unix"}},
 	{name: "UDP", operation: "network-outbound UDP", rule: `(allow network-outbound (remote udp "localhost:*"))`, programs: []string{"udp"}},
 	{name: "Bind", operation: "network-bind", rule: `(allow network-bind)`, programs: []string{"bind"}},
-	{name: "Listen", operation: "network-inbound", rule: `(allow network-inbound)`, programs: []string{"listen"}},
+	{name: "Listen", operation: "network-inbound", rule: `(allow network-inbound)`, programs: []string{"bind", "listen"}},
 	{name: "Read", operation: "file-read-data outside HOME", rule: `(allow file-read-data (literal (param "U16_OUTSIDE")))`, programs: []string{"read"}},
 	{name: "Map", operation: "file-map-executable private BIN", rule: `(allow file-map-executable (literal (param "BIN")))`, programs: []string{"map"}},
 	{name: "Write", operation: "file-write-data outside HOME", rule: `(allow file-write-data (literal (param "U16_OUTSIDE")))`, programs: []string{"write"}},
@@ -176,6 +177,9 @@ func necessityAllowanceControl(row necessityAllowance, r observe.Run) bool {
 	if row.startup {
 		return len(r.Stdout) == 0
 	}
+	if row.operation == "system_info" {
+		return string(r.Stdout) == "wal\n7\nok\n"
+	}
 	if row.operation == "child" {
 		return string(r.Stdout) == "attempt_child\nchild_ok\n"
 	}
@@ -207,11 +211,15 @@ func necessityAllowanceControl(row necessityAllowance, r observe.Run) bool {
 		return result == want
 	case "write", "lock", "volume", "child_signal":
 		return result == "returned <nil>\n"
-	case "own_process", "groups", "memory", "pagesize":
+	case "pipeline":
+		return result == "returned pipeline uid_ok=true\n"
+	case "system_tools":
+		return result == "returned read=1 exec=0\n"
+	case "groups", "memory":
 		return strings.HasPrefix(result, "returned sysctl result=0 bytes=") && strings.HasSuffix(result, " errno=0\n") && strings.Count(result, "\n") == 1
 	case "service":
 		return strings.HasPrefix(result, "returned bootstrap lookup result=0 port=") && strings.HasSuffix(result, " errno=0\n") && strings.Count(result, "\n") == 1
-	case "shm", "system_info":
+	case "shm":
 		return strings.HasPrefix(result, "returned ") && strings.Count(result, "\n") == 1
 	}
 	return false
@@ -304,6 +312,8 @@ func TestNecessityCleanResults(t *testing.T) {
 		{"volume", "", "<nil>"},
 		{"stream", "", "<nil>"},
 		{"child_signal", "", "<nil>"},
+		{"pipeline", "", "pipeline uid_ok=true"},
+		{"system_tools", "", "read=1 exec=0"},
 	} {
 		t.Run(row.op+"_"+row.param, func(t *testing.T) {
 			allowance := necessityAllowance{operation: row.op, parameter: row.param}
@@ -320,7 +330,7 @@ func TestNecessityCleanResults(t *testing.T) {
 }
 
 func TestNecessityProgramCoverage(t *testing.T) {
-	// QH9: every refused program is covered by exactly one operation grant;
+	// QH9: every refused program is covered by an operation grant;
 	// shared-operation groups must remain explicit when the witness set changes.
 	for _, computation := range []bool{false, true} {
 		coverage := map[string]int{}
@@ -334,7 +344,11 @@ func TestNecessityProgramCoverage(t *testing.T) {
 		}
 		for _, program := range SelfTestPrograms(computation) {
 			if program.Killed {
-				if coverage[program.Name] != 1 {
+				want := 1
+				if program.Name == "bind" {
+					want = 2
+				}
+				if coverage[program.Name] != want {
 					t.Errorf("program %s has %d grants", program.Name, coverage[program.Name])
 				}
 				delete(coverage, program.Name)
@@ -343,5 +357,78 @@ func TestNecessityProgramCoverage(t *testing.T) {
 		if len(coverage) != 0 {
 			t.Errorf("grants without refused programs: %v", coverage)
 		}
+	}
+}
+
+func TestNecessityRevisedWitnesses(t *testing.T) {
+	// QH6, QH9, QH11: startup removals and shared network operations retain explicit classifications.
+	for _, row := range necessityAllowances {
+		if (row.name == "HomeRead" || row.name == "OwnProcess") && !row.startup {
+			t.Errorf("%s must be a startup witness", row.name)
+		}
+		if row.name == "SystemTools" && row.operation != "system_tools" {
+			t.Error("system tools must read and execute")
+		}
+		if row.name == "PageSize" && row.operation != "pipeline" {
+			t.Error("page size must exercise the pipeline")
+		}
+	}
+	for _, g := range necessityGrants {
+		if g.name == "Listen" && !slices.Equal(g.programs, []string{"bind", "listen"}) {
+			t.Error("network-inbound must name bind and listen")
+		}
+		if g.name == "Bind" && !slices.Equal(g.programs, []string{"bind"}) {
+			t.Error("network-bind must name only bind")
+		}
+	}
+}
+
+func necessityAllowanceRemoval(row necessityAllowance, r observe.Run) bool {
+	if row.operation == "pipeline" {
+		return necessityEvaluated(r, true) && r.End.Signal == 0 && r.End.Code == 1 && string(r.Stdout) == "attempt_pipeline\nreturned pipeline id_status=0 sort_status=9\n" && len(r.Stderr) == 0
+	}
+	output := "attempt_" + row.operation + "\n"
+	if row.startup || row.operation == "system_info" {
+		output = ""
+	}
+	return necessityEvaluated(r, !row.startup) && r.End.Signal == 9 && string(r.Stdout) == output && len(r.Stderr) == 0
+}
+
+func TestNecessityRevisedResults(t *testing.T) {
+	// QH6, QH11, QH15, QH16: paired literal outputs distinguish startup, SQLite writes, and a killed pipeline child.
+	for _, row := range []struct {
+		name             string
+		allowance        necessityAllowance
+		control, removed observe.Run
+	}{
+		{"Startup", necessityAllowance{startup: true}, observe.Run{Markers: observe.Markers{Confinement: true}}, observe.Run{End: observe.End{Signal: 9}}},
+		{"SQLite", necessityAllowance{operation: "system_info"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("wal\n7\nok\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}}},
+		{"Pipeline", necessityAllowance{operation: "pipeline"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_pipeline\nreturned pipeline uid_ok=true\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Code: 1}, Stdout: []byte("attempt_pipeline\nreturned pipeline id_status=0 sort_status=9\n")}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			if !necessityAllowanceControl(row.allowance, row.control) || !necessityAllowanceRemoval(row.allowance, row.removed) {
+				t.Fatal("literal pair refused")
+			}
+			bad := row.control
+			bad.Stdout = []byte("wrong\n")
+			if necessityAllowanceControl(row.allowance, bad) {
+				t.Fatal("wrong control accepted")
+			}
+			bad = row.removed
+			bad.Markers.Confinement = !bad.Markers.Confinement
+			if necessityAllowanceRemoval(row.allowance, bad) {
+				t.Fatal("wrong marker accepted")
+			}
+			bad = row.removed
+			bad.Stdout = []byte("attempt_pipeline\nreturned pipeline id_status=0 sort_status=0\n")
+			if necessityAllowanceRemoval(row.allowance, bad) {
+				t.Fatal("returned operation accepted")
+			}
+			bad = row.removed
+			bad.End.BudgetExpired = true
+			if necessityAllowanceRemoval(row.allowance, bad) {
+				t.Fatal("unevaluated removal accepted")
+			}
+		})
 	}
 }
