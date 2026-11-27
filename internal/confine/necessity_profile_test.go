@@ -178,7 +178,7 @@ func necessityAllowanceControl(row necessityAllowance, r observe.Run) bool {
 		return len(r.Stdout) == 0
 	}
 	if row.operation == "system_info" {
-		return string(r.Stdout) == "attempt_system_info\nreturned gethostuuid ok=true errno=0\n"
+		return row.expected != "" && string(r.Stdout) == "attempt_system_info\n"+row.expected
 	}
 	if row.operation == "child" {
 		return string(r.Stdout) == "attempt_child\nchild_ok\n"
@@ -190,6 +190,8 @@ func necessityAllowanceControl(row necessityAllowance, r observe.Run) bool {
 	}
 	result := strings.TrimPrefix(output, prefix)
 	switch row.operation {
+	case "sqlite":
+		return result == "wal\nreturned value=1\n"
 	case "tty":
 		return result == "returned device not configured\n" // QH13/QH16: ENXIO, no controlling tty.
 	case "zero":
@@ -395,14 +397,15 @@ func necessityAllowanceRemoval(row necessityAllowance, r observe.Run) bool {
 }
 
 func TestNecessityRevisedResults(t *testing.T) {
-	// KTD14, QH6, QH11, QH15, QH16: paired literal outputs distinguish startup, host UUID lookup, and a killed pipeline child.
+	// KTD14, QH6, QH11, QH15, QH16: paired literal outputs distinguish startup, volume information, SQLite, and a killed pipeline child.
 	for _, row := range []struct {
 		name             string
 		allowance        necessityAllowance
 		control, removed observe.Run
 	}{
 		{"Startup", necessityAllowance{startup: true}, observe.Run{Markers: observe.Markers{Confinement: true}}, observe.Run{End: observe.End{Signal: 9}}},
-		{"HostUUID", necessityAllowance{operation: "system_info"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_system_info\nreturned gethostuuid ok=true errno=0\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}, Stdout: []byte("attempt_system_info\n")}},
+		{"Statfs", necessityAllowance{operation: "system_info", expected: "returned error=<nil> bsize=4096 type=apfs\n"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_system_info\nreturned error=<nil> bsize=4096 type=apfs\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}, Stdout: []byte("attempt_system_info\n")}},
+		{"SQLite", necessityAllowance{operation: "sqlite"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_sqlite\nwal\nreturned value=1\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}, Stdout: []byte("attempt_sqlite\n")}},
 		{"Pipeline", necessityAllowance{operation: "pipeline"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_pipeline\nreturned pipeline uid_ok=true\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Code: 1}, Stdout: []byte("attempt_pipeline\nreturned pipeline id_status=0 sort_status=9\n")}},
 	} {
 		t.Run(row.name, func(t *testing.T) {

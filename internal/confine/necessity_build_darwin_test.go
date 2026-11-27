@@ -5,10 +5,8 @@ package confine
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -38,25 +36,14 @@ func necessityBuild(t *testing.T, overlayProbe bool) string {
 		if strings.Count(string(b), needle) != 1 {
 			t.Fatal("hidden entry point changed")
 		}
-		b = []byte(strings.Replace(string(b), "\"strconv\"", "\"strconv\"\n\"strings\"\n\"path/filepath\"", 1))
-		text := strings.Replace(string(b), needle, needle+"\n if name == \"u16_allowance\" { return u16Allowance(target,pidText) }\n if name == \"u16_system_probe\" { return u16SystemProbe(target,pidText) }", 1) + necessityAllowanceSource + systemInfoProbeSource
+		b = []byte(strings.Replace(string(b), "\"strconv\"", "\"strconv\"\n\"path/filepath\"", 1))
+		text := strings.Replace(string(b), needle, needle+"\n if name == \"u16_allowance\" { return u16Allowance(target,pidText) }", 1) + necessityAllowanceSource
 		replacement := filepath.Join(dir, "selftest_darwin.go")
 		if err := os.WriteFile(replacement, []byte(text), 0600); err != nil {
 			t.Fatal(err)
 		}
-		assembly := filepath.Join(root, "internal/confine/service_darwin_"+runtime.GOARCH+".s")
-		original, err := os.ReadFile(assembly)
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, symbol := range systemInfoProbeSymbols {
-			original = append(original, []byte(fmt.Sprintf("\nTEXT %sProbeTrampoline<>(SB),NOSPLIT,$0-0\n JMP pql_probe_%s(SB)\nGLOBL ·%sProbeAddr(SB),RODATA,$8\nDATA ·%sProbeAddr(SB)/8,$%sProbeTrampoline<>(SB)\n", symbol, symbol, symbol, symbol, symbol))...)
-		}
-		assemblyReplacement := filepath.Join(dir, "service.s")
-		if err := os.WriteFile(assemblyReplacement, original, 0600); err != nil {
-			t.Fatal(err)
-		}
-		data, err := json.Marshal(map[string]any{"Replace": map[string]string{source: replacement, assembly: assemblyReplacement}})
+
+		data, err := json.Marshal(map[string]any{"Replace": map[string]string{source: replacement}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -121,9 +108,7 @@ func TestNecessityProbeBuild(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Contains(b, []byte("internal/confine.u16SystemProbe")) {
-		t.Fatal("system-info overlay did not reach the built binary")
-	}
+
 	if !bytes.Contains(b, []byte("internal/confine.u16Allowance")) {
 		t.Fatal("canonical overlay did not reach the built binary")
 	}
@@ -181,12 +166,11 @@ func u16Allowance(op,path string) int {
   err=unix.Statfs(path,&stat)
  case "service":err=selfTestService(path)
  case "system_info":
-  var uuid [16]byte
-  timeout:=unix.Timespec{Sec:1}
-  _,_,errno:=syscall.Syscall(syscall.SYS_GETHOSTUUID,uintptr(unsafe.Pointer(&uuid[0])),uintptr(unsafe.Pointer(&timeout)),0)
-  // gethostuuid is the system-info operation used by SQLite's Darwin locking.
-  result=fmt.Sprintf("gethostuuid ok=%t errno=%d",uuid!=[16]byte{},errno)
-  if errno!=0{err=errno}
+  var stat unix.Statfs_t
+  err=unix.Statfs(path,&stat)
+  result=fmt.Sprintf("error=%v bsize=%d type=%s",err,stat.Bsize,unix.ByteSliceToString(stat.Fstypename[:]))
+ case "sqlite":
+  err=syscall.Exec("/usr/bin/sqlite3",[]string{"sqlite3","-batch","-bail",path,"PRAGMA journal_mode=WAL; CREATE TABLE probe(value); INSERT INTO probe VALUES(1); SELECT 'returned value=' || value FROM probe;"},[]string{"HOME="+filepath.Dir(path),"LC_ALL=C"})
  case "groups":err=selfTestSysctl([]int32{1,18})
  case "memory":err=selfTestSysctl([]int32{6,24})
  case "pipeline":

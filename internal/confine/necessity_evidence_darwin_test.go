@@ -292,16 +292,37 @@ func TestMacOSAllowances(t *testing.T) {
 						t.Fatal(err)
 					}
 					t.Logf("removed=%s startup=%t repeats=25", line, row.startup)
-					for repeat := range 25 {
-						control := s.run(t, words, nil, "", "")
-						if !necessityAllowanceControl(row, control) {
-							t.Fatalf("repeat %d unmodified control not evaluated at step %s: %+v stdout=%q stderr=%q", repeat, row.operation, control, control.Stdout, control.Stderr)
+					steps := []necessityAllowance{row}
+					if row.operation == "system_info" {
+						var stat unix.Statfs_t
+						if err := unix.Statfs(s.files.Home, &stat); err != nil {
+							t.Fatal(err)
 						}
-						removed := s.run(t, words, nil, line, "")
-						// QH16: for a pipeline the governed process is sort;
-						// the parent reaps it and reports its native wait status.
-						if !necessityAllowanceRemoval(row, removed) {
-							t.Fatalf("repeat %d removal did not kill at governed step; profile=%s parameters=%v end=%+v marker=%+v stdout=%q stderr=%q", repeat, rendered, params, removed.End, removed.Markers, removed.Stdout, removed.Stderr)
+						steps[0].expected = fmt.Sprintf("returned error=<nil> bsize=%d type=%s\n", stat.Bsize, unix.ByteSliceToString(stat.Fstypename[:]))
+						if computation {
+							steps = append(steps, necessityAllowance{operation: "sqlite"})
+						}
+					}
+					for _, row := range steps {
+						for repeat := range 25 {
+							stepWords := words
+							if row.operation == "sqlite" {
+								stepWords = []string{SelfTestMode, "u16_allowance", "sqlite", filepath.Join(s.files.Home, fmt.Sprintf("sqlite_%d_control.db", repeat))}
+							}
+
+							control := s.run(t, stepWords, nil, "", "")
+							if !necessityAllowanceControl(row, control) {
+								t.Fatalf("repeat %d unmodified control not evaluated at step %s: %+v stdout=%q stderr=%q", repeat, row.operation, control, control.Stdout, control.Stderr)
+							}
+							if row.operation == "sqlite" {
+								stepWords[3] = filepath.Join(s.files.Home, fmt.Sprintf("sqlite_%d_removed.db", repeat))
+							}
+							removed := s.run(t, stepWords, nil, line, "")
+							// QH16: for a pipeline the governed process is sort;
+							// the parent reaps it and reports its native wait status.
+							if !necessityAllowanceRemoval(row, removed) {
+								t.Fatalf("repeat %d removal did not kill at governed step; profile=%s parameters=%v end=%+v marker=%+v stdout=%q stderr=%q", repeat, rendered, params, removed.End, removed.Markers, removed.Stdout, removed.Stderr)
+							}
 						}
 					}
 				})

@@ -10,6 +10,7 @@ import (
 
 type necessityAllowance struct {
 	name, prefix, operation, parameter string
+	expected                           string
 	startup, computationOnly           bool
 }
 
@@ -48,7 +49,7 @@ var necessityAllowances = []necessityAllowance{
 	{name: "HomeRead", prefix: "(allow file-read* (subpath", startup: true},
 	{name: "HomeWrite", prefix: "(allow file-write* (subpath", operation: "write", parameter: "HOME_FILE"},
 	{name: "MembershipService", prefix: `(allow mach-lookup (global-name "com.apple.system.opendirectoryd.membership"))`, operation: "service", parameter: "com.apple.system.opendirectoryd.membership"},
-	{name: "SystemInfo", prefix: "(allow system-info)", operation: "system_info"},
+	{name: "SystemInfo", prefix: "(allow system-info)", operation: "system_info", parameter: "HOME"},
 	{name: "Fork", prefix: "(allow process-fork)", operation: "child", computationOnly: true},
 	{name: "ChildSignal", prefix: "(allow signal ", operation: "child_signal", computationOnly: true},
 	{name: "Groups", prefix: `(allow sysctl-read (sysctl-name "kern.ngroups"))`, operation: "groups", computationOnly: true},
