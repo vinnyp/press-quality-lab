@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 )
@@ -14,6 +13,7 @@ func TestFix1Overlaps(t *testing.T) {
 	// QE18, E-44: every covered position is masked, including across writes.
 	canary := "pqlcanary0123456789abcdef0123456789abcdef"
 	for _, row := range []struct{ name, a, b, text, want string }{
+		{"Both", "xx" + canary + "yy", canary, "xx" + canary + "yy", "**pqlcanary" + strings.Repeat("0", 32) + "**"},
 		{"Canary", "mysecretp", canary, "mysecret" + canary, "********pqlcanary" + strings.Repeat("0", 32)},
 		{"Tail", "abcdefgh", "ghijklmn", "abcdefghijklmn", strings.Repeat("*", 14)},
 		{"Prefix", "prefix12", "12suffixABCD", "prefix12suffixABCD", strings.Repeat("*", 18)},
@@ -96,11 +96,12 @@ func TestFix1MaskingIndex(t *testing.T) {
 		m.AddDeclared(fmt.Sprintf("declared_value_%08d", i))
 	}
 	input := strings.Repeat("!", 128<<10)
-	start := time.Now()
+	comparisons := 0
+	m.comparison = func() { comparisons++ }
 	if m.Mask(input) != input {
 		t.Fatal("unrelated input changed")
 	}
-	if time.Since(start) > 2*time.Second {
-		t.Fatal("unrelated bytes exceeded two seconds")
+	if comparisons != 0 {
+		t.Fatalf("unrelated comparisons %d", comparisons)
 	}
 }

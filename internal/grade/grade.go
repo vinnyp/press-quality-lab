@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 	"unicode"
+	"unicode/utf16"
 
 	"github.com/vinnyp/press-quality-lab/internal/collect"
 	"github.com/vinnyp/press-quality-lab/internal/judge"
@@ -417,7 +418,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	r.DisplaySubjectFilePath = &displayPath
 	storeErr := persist(d, r)
 	if !rejected {
-		if _, err := record.RawWriter(out).Write(strictjson.Write(output)); err != nil {
+		if _, err := record.RawWriter(out).Write(terminalJSON(strictjson.Write(output))); err != nil {
 			return 70, err
 		}
 	}
@@ -536,7 +537,7 @@ func classify(err error) *Error {
 func Escape(s string) string {
 	var b strings.Builder
 	for _, r := range s {
-		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) || r == '\u2028' || r == '\u2029' || r >= 0xe0000 && r <= 0xe007f {
+		if terminalUnsafe(r) {
 			fmt.Fprintf(&b, "\\u{%04x}", r)
 		} else {
 			b.WriteRune(r)
@@ -583,4 +584,26 @@ func subjectObject(v any) strictjson.Object {
 		return nil
 	}
 	return o
+}
+
+func terminalUnsafe(r rune) bool {
+	return unicode.IsControl(r) || unicode.Is(unicode.Cf, r) || r == '\u2028' || r == '\u2029' || r >= 0xe0000 && r <= 0xe007f
+}
+
+// terminalJSON preserves JSON values while spelling terminal controls as escapes.
+func terminalJSON(raw []byte) []byte {
+	var b strings.Builder
+	for _, r := range string(raw) {
+		if terminalUnsafe(r) && r >= 0x20 {
+			if r > 0xffff {
+				a, z := utf16.EncodeRune(r)
+				fmt.Fprintf(&b, "\\u%04x\\u%04x", a, z)
+			} else {
+				fmt.Fprintf(&b, "\\u%04x", r)
+			}
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return []byte(b.String())
 }

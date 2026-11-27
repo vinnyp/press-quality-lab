@@ -26,6 +26,7 @@ type HomeEntry struct {
 type HomeSnapshot struct {
 	Entries    []HomeEntry
 	Unreadable bool
+	Incomplete bool // Names or contents could not all be inspected within the walk bounds.
 }
 type homeFile interface {
 	io.Reader
@@ -34,14 +35,18 @@ type homeFile interface {
 }
 type homeOpener func(*os.Root, string) (homeFile, error)
 type homeHooks struct {
-	entryLimit int
-	open       homeOpener
-	chmod      func(*os.Root, string, os.FileMode) error
-	now        func() time.Time
+	entryLimit    int
+	open          homeOpener
+	chmod         func(*os.Root, string, os.FileMode) error
+	now           func() time.Time
+	openRoot      func(*os.Root, string) (*os.Root, error)
+	openDirectory func(*os.Root) (*os.File, error)
 }
 
 func defaultHomeHooks(open homeOpener) homeHooks {
-	return homeHooks{open: open, chmod: func(r *os.Root, n string, m os.FileMode) error { return r.Chmod(n, m) }, now: time.Now, entryLimit: MaxWalkEntries}
+	return homeHooks{openRoot: func(r *os.Root, n string) (*os.Root, error) { return r.OpenRoot(n) }, openDirectory: func(r *os.Root) (*os.File, error) {
+		return r.OpenFile(".", os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_DIRECTORY, 0)
+	}, open: open, chmod: func(r *os.Root, n string, m os.FileMode) error { return r.Chmod(n, m) }, now: time.Now, entryLimit: MaxWalkEntries}
 }
 
 const MaxHomeDepth = 256
@@ -61,18 +66,20 @@ func checkedHomeFile(root *os.Root, name string, h homeHooks) (homeFile, error) 
 	if err != nil {
 		return nil, err
 	}
-	if !before.Mode().IsRegular() || linked(before) {
+	if !before.Mode().IsRegular() {
 		return nil, errHomeUnreadable
 	}
-	if err := h.chmod(root, name, 0600); err != nil {
-		return nil, err
+	if !linked(before) {
+		if err := h.chmod(root, name, 0600); err != nil {
+			return nil, err
+		}
 	}
 	f, err := h.open(root, name)
 	if err != nil {
 		return nil, err
 	}
 	after, err := f.Stat()
-	if err != nil || !after.Mode().IsRegular() || !os.SameFile(before, after) || linked(after) {
+	if err != nil || !after.Mode().IsRegular() || !os.SameFile(before, after) {
 		return nil, errors.Join(errHomeUnreadable, err, f.Close())
 	}
 	return f, nil
@@ -123,7 +130,7 @@ func homeNamesWith(root *os.Root, reset bool, h homeHooks) (entries []HomeEntry,
 				return errHomeUnreadable
 			}
 		}
-		f, err := parent.OpenFile(".", os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_DIRECTORY, 0)
+		f, err := h.openDirectory(parent)
 		if err != nil {
 			return errHomeUnreadable
 		}
@@ -172,7 +179,7 @@ func homeNamesWith(root *os.Root, reset bool, h homeHooks) (entries []HomeEntry,
 			if kind != "directory" {
 				continue
 			}
-			child, e := parent.OpenRoot(name)
+			child, e := h.openRoot(parent, name)
 			if e != nil {
 				unreadable = errHomeUnreadable
 				continue
@@ -202,18 +209,26 @@ func snapshotHomeWith(home string, hooks homeHooks) (out HomeSnapshot, err error
 	root, err := os.OpenRoot(home)
 	if err != nil {
 		out.Unreadable = true
+		out.Incomplete = true
 		return out, nil
 	}
 	defer func() { err = errors.Join(err, root.Close()) }()
 	out.Entries, err = homeNamesWith(root, true, hooks)
 	if err != nil {
 		out.Unreadable = true
+		out.Incomplete = true
 		err = nil
 	}
 	deadline := hooks.now().Add(MaxWalkDuration)
 	for i := range out.Entries {
 		if !hooks.now().Before(deadline) {
 			out.Unreadable = true
+			out.Incomplete = true
+			for j := i; j < len(out.Entries); j++ {
+				if out.Entries[j].Kind == "file" {
+					out.Entries[j].Unreadable = true
+				}
+			}
 			break
 		}
 		e := &out.Entries[i]
@@ -241,6 +256,9 @@ func snapshotHomeWith(home string, hooks homeHooks) (out HomeSnapshot, err error
 			return readErr
 		})
 		if readErr != nil {
+			if homeBound(readErr) {
+				out.Incomplete = true
+			}
 			e.Unreadable = true
 			out.Unreadable = true
 		}
@@ -252,7 +270,7 @@ func snapshotHomeWith(home string, hooks homeHooks) (out HomeSnapshot, err error
 type HomeDelta struct{ Path, Kind, Change, Digest string }
 
 func CompareHomes(before, after HomeSnapshot) (changes []HomeDelta, unreadable bool) {
-	unreadable = before.Unreadable || after.Unreadable
+	unreadable = before.Unreadable || after.Unreadable || before.Incomplete || after.Incomplete
 	old := map[string]HomeEntry{}
 	seen := map[string]bool{}
 	for _, e := range before.Entries {
@@ -262,6 +280,9 @@ func CompareHomes(before, after HomeSnapshot) (changes []HomeDelta, unreadable b
 		seen[e.Path] = true
 		b, ok := old[e.Path]
 		change := "modified"
+		if !ok && (before.Incomplete || after.Incomplete) {
+			continue
+		}
 		if !ok {
 			change = "created"
 		}
@@ -270,7 +291,7 @@ func CompareHomes(before, after HomeSnapshot) (changes []HomeDelta, unreadable b
 		}
 	}
 	for _, e := range before.Entries {
-		if !seen[e.Path] {
+		if !seen[e.Path] && !before.Incomplete && !after.Incomplete {
 			changes = append(changes, HomeDelta{e.Path, e.Kind, "removed", ""})
 		}
 	}

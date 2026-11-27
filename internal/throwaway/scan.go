@@ -56,7 +56,7 @@ func scanHomeWith(home, planted string, forms []ScanForm, stdout, stderr []byte,
 	entries, walkErr := homeNamesWith(root, true, hooks)
 	if walkErr != nil {
 		out.BoundReached = out.BoundReached || homeBound(walkErr)
-		out.Unreadable = errors.Is(walkErr, errHomeUnreadable)
+		out.Unreadable = !homeBound(walkErr)
 	}
 	deadline := hooks.now().Add(MaxWalkDuration)
 	remaining := totalLimit

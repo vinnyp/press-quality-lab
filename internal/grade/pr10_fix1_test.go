@@ -61,7 +61,15 @@ func TestFix1DeclaredRun(t *testing.T) {
 			return judge.Judge(b)
 		}
 		judgeInput = append([]byte(nil), b...)
-		return []byte(`{"exit_code":0,"outcome":"graded","dimension":"execution","display":"******** ***********"}`), 0
+		v, ok := strictjson.Read(b, strictjson.Bounds{Bytes: 16 << 20, Depth: 64, NumberChars: 32, ExponentDigits: 4}, nil)
+		if !ok {
+			t.Fatal("judge input invalid")
+		}
+		doc := subjectObject(v)
+		ev := subjectObject(subjectArray(doc["evidence"])[0])
+		pair := subjectObject(subjectArray(ev["observed"])[0])
+		head := subjectObject(pair["stdout"])["head"]
+		return strictjson.Write(strictjson.Object{"exit_code": 0, "outcome": "graded", "dimension": "execution", "display": head}), 0
 	}
 	var out bytes.Buffer
 	if code, err := Run(o, d, &out); err != nil || code != 0 {

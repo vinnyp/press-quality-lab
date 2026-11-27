@@ -38,7 +38,17 @@ type Input struct {
 }
 
 // Build returns a fresh judge document, or a fault without a partial document.
-func Build(in Input) (Object, error) {
+func Build(in Input) (docResult Object, buildErr error) {
+	defer func() {
+		if p := recover(); p != nil {
+			if f, ok := p.(*Fault); ok {
+				docResult = nil
+				buildErr = f
+			} else {
+				panic(p)
+			}
+		}
+	}()
 	required, evidence := Array{}, Array{}
 	checks := append([]plan.Check(nil), in.Plan.Checks...)
 	sort.Slice(checks, func(i, j int) bool { return checks[i].ID < checks[j].ID })
@@ -232,16 +242,27 @@ func maskValue(v any, m *Masker) any {
 		return m.Mask(x)
 	case Object:
 		masked := Object{}
-		for k, v := range x {
-			masked[m.Mask(k)] = maskValue(v, m)
+		keys := make([]string, 0, len(x))
+		for k := range x {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			key := m.Mask(k)
+			if _, exists := masked[key]; exists {
+				panic(&Fault{"QE10"})
+			}
+			masked[key] = maskValue(x[k], m)
 		}
 		return masked
 	case streamObject:
 		return Object(x)
 	case Array:
+		masked := make(Array, len(x))
 		for i, v := range x {
-			x[i] = maskValue(v, m)
+			masked[i] = maskValue(v, m)
 		}
+		return masked
 	}
 	return v
 }

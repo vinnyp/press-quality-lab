@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"sort"
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
@@ -311,8 +312,13 @@ func standardValue(v any) any {
 		return json.Number(x)
 	case object:
 		o := map[string]any{}
-		for k, v := range x {
-			o[k] = standardValue(v)
+		keys := make([]string, 0, len(x))
+		for k := range x {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			o[k] = standardValue(x[k])
 		}
 		return o
 	case array:

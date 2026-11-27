@@ -34,13 +34,15 @@ func TestFix1DeepHome(t *testing.T) {
 	if err := root.Close(); err != nil {
 		t.Fatal(err)
 	}
-	start := time.Now()
-	r, err := ScanHome(home, "", []ScanForm{{"plain", "abcdefgh"}}, []byte("abcdefgh"), nil, false)
+	opens := 0
+	h := defaultHomeHooks(openHomeFile)
+	h.openRoot = func(r *os.Root, n string) (*os.Root, error) { opens++; return r.OpenRoot(n) }
+	r, err := scanHomeWith(home, "", []ScanForm{{"plain", "abcdefgh"}}, []byte("abcdefgh"), nil, false, h, FileScanLimit, TotalScanLimit)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if time.Since(start) > 2*time.Second {
-		t.Fatal("depth 400 exceeded two seconds")
+	if opens != MaxHomeDepth+1 {
+		t.Fatalf("OpenRoot calls %d", opens)
 	}
 	if !r.BoundReached || len(r.Leaks) != 1 {
 		t.Fatalf("result %+v", r)
@@ -54,7 +56,7 @@ func TestFix1DeepHome(t *testing.T) {
 	}
 }
 func TestFix1Hardlinks(t *testing.T) {
-	// QH25, E-10: inspection must not chmod a multiply linked file.
+	// QH25, QP12: read a multiply linked file without changing its permissions.
 	home := t.TempDir()
 	outside := filepath.Join(t.TempDir(), "data")
 	if err := os.WriteFile(outside, []byte("abcdefgh"), 0400); err != nil {
@@ -71,11 +73,12 @@ func TestFix1Hardlinks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	assertFix2LeakDecision(t, scan)
 	info, err := os.Stat(outside)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !snapshot.Unreadable || !scan.Unreadable || info.Mode().Perm() != 0400 {
+	if snapshot.Unreadable || scan.Unreadable || len(scan.Leaks) != 1 || scan.Leaks[0] != (ScanLeak{"home/data", "plain"}) || snapshot.Entries[0].Digest == "" || info.Mode().Perm() != 0400 {
 		t.Fatalf("snapshot %+v scan %+v mode %o", snapshot, scan, info.Mode().Perm())
 	}
 }
@@ -211,6 +214,9 @@ func TestFix1InspectionFaults(t *testing.T) {
 			if !snapshot.Unreadable {
 				t.Fatal("snapshot fault lost")
 			}
+			if row == "Read" && snapshot.Incomplete {
+				t.Fatal("single unreadable file mislabeled an incomplete walk")
+			}
 			// Rebuild the deadline clock for the independent scan.
 			if row == "Deadline" {
 				expired := false
@@ -242,6 +248,9 @@ func TestFix1InspectionFaults(t *testing.T) {
 			}
 			if !scan.Unreadable {
 				t.Fatal("scan fault lost")
+			}
+			if (row == "Deadline" || row == "LastDeadline") && !scan.BoundReached {
+				t.Fatal("scan deadline not recorded as bound")
 			}
 			_, unreadable := CompareHomes(snapshot, snapshot)
 			if !unreadable {
