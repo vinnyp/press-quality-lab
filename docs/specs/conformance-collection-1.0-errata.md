@@ -216,3 +216,20 @@ QH25 inspects a used home without following a link, opening a special file or re
 ### E-47. A change found beside a gap in the inspection
 
 E-10 and E-46 make the store-unchanged check `harness_fault`, never unchanged, when an entry cannot be read or an inspection cannot finish. They do not say what a change found elsewhere in the same home decides. **A change the comparison actually finds decides the check as not held with `predicate`, whatever else could not be read. Only an entry both snapshots inspected can show a change: when either snapshot's walk did not finish, an entry one of them never reached is neither a change nor unchanged. With no change found, an unreadable entry or an unfinished inspection gives `harness_fault`.** The owner ruled on 2026-11-27. No case of the corpus has such a home, so no record changes.
+
+### E-48. A computed expected value of the wrong type
+
+QA9's "Matching types" makes a literal of the wrong type reject the file, and its "Whole numbers" bullet makes a computation that supplies anything other than a whole number for `exit_code`, `stdout_bytes_at_most` or `row_count` `computation_failed`. Nothing says what a computation that supplies a non-string for a string-typed predicate decides. **A computation that supplies the expected value of `stdout_equals`, `stdout_contains`, `stdout_not_contains` or `stderr_contains` and prints anything other than a JSON string is `computation_failed`, as QA6 says.** The owner ruled on 2026-11-27. No case of the corpus has such a computation, so no record changes.
+
+### E-49. A step with no check in the required set
+
+QA7 runs a runbook's steps in the order written, in one shared home, and QA9 says a check left out of the required set is not evaluated and never stops a runbook. They do not say whether a step all of whose checks are outside the required set runs. **Such a step still runs in its place, so the shared home and any capture of it are what the author wrote. It is never held or not held, so it never stops the runbook. Each of its checks stays outside the required set and is not evaluated.** QS5 still applies: a step whose command depends on a placeholder does not run. The owner ruled on 2026-11-27. No case of the corpus has such a step, so no record changes.
+
+### E-50. An empty expected string
+
+QA9's table fixes, for each predicate, whether an empty target satisfies it. The schema lets a literal expected string be empty, and for an empty string the table's "Holds when" column contradicts its "Empty target satisfies it" column:
+- `stdout_equals` and `stdout_contains` would hold on an empty output;
+- `stdout_not_contains` would never hold;
+- `stderr_contains` would hold on an empty standard error.
+
+**For `stdout_equals`, `stdout_contains`, `stdout_not_contains` and `stderr_contains`, a literal expected value that is the empty string rejects the subject file, as QA9's "Matching types" says for a value of the wrong type. A computation that supplies the empty string for one of them is `computation_failed`, as E-48 says.** An empty output is asserted only by `stdout_empty`, with its precondition. The owner ruled on 2026-11-27. No case of the corpus has an empty expected string, so no record changes.
