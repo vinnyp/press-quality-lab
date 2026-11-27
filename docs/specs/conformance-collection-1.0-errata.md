@@ -237,3 +237,7 @@ QA9's table fixes, for each predicate, whether an empty target satisfies it. The
 ### E-51. A capture of a step that depends on a placeholder
 
 QS5 says nothing that depends on a placeholder runs, and its list names no captures. QA4 lets a computation capture an earlier step's standard output. **A check whose computation captures a step whose command depends on a placeholder depends on that placeholder, so it is not observed with `placeholder_unfilled` (QS5, level 2). This holds whether the captured step has a required check of its own, which then stops the runbook, or has none and does not run (E-49).** The owner ruled on 2026-11-27. No case of the corpus has such a capture, so no record changes.
+
+### E-52. Two computations of one step with the same arguments
+
+QT5 keys a computation's recorded run by its argument list, runbook and step, and no two invocations of one recording have equal keys. A step's checks can still name two computations with the same argument list that differ in `budget_seconds`, `declared_files` or `captures`. **Two computations of one step, a precondition and an expected value included, whose argument lists are equal and which differ in anything else reject the subject file under QA4 with exit 2, in E-9's order, as E-42 rules for a repeated secret command. Equal computations run once, and every check that names one reads its result.** The owner ruled on 2026-11-27. No case of the corpus has such a step, so no record changes.

@@ -31,3 +31,20 @@
 | 7 | QA9's move lacked rows for invalid UTF-8, normalisation, big numbers and §3's refusals | measurement (Major) | Confirmed against control 4 | Rows added, plus a "return held" mutation per predicate |
 | 8 | Unlisted inherited defects: the printed value in `encoding/json` types, captured runs judged by level 7, and `expected` unset | agy (Major) | Confirmed in `internal/scripted/reader.go` and `internal/decide/level7.go` | Added to the defects, with `Evidence.Captures` kept apart |
 | 9 | Minors: E-49 steps of a destructive runbook, a changed copy as an E-49 exception, the QA8 token breaking history, shared computation keys, the precondition's depth, E-49's judgment in `collect`, missing rows, the corpus table and the ledger notes | measurement, agy | Confirmed | Fixed in the note |
+
+## Round 2 (delta, 3f3bbef to cb9a113)
+
+**Verdicts:**
+- **measurement:** every round-1 finding closed, with one new Major and four Minors and Nits. The trace rules were hand-run on `case-005`, `case-092`, `case-152`, `case-153`, `case-022` and `case-063`, and over the corpus: 715 step keys and 176 computation keys, none outside a case's `invocations`.
+- **agy:** ready for build, with three Minors and two Nits.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 10 | The revision sent two equal-key computations with differing settings to exit 70, a rule the text does not give, against E-42's precedent | measurement (Major), agy (Nit, for captures) | Confirmed against QT5 and E-42 | Put to the owner, who ruled E-52: reject the file with exit 2 |
+| 11 | The trace reader excluded checks QO1 decides on their own run, and read "held before the override" from an ending that cannot say it | measurement, agy (Minor) | Confirmed on `case-152` against `case-153` | Read from `input.json`'s evidence; only grade-wide QO1 excludes a step |
+| 12 | Computations were served after a step run that QO1 or QH8 decides | agy (Minor) | Confirmed | Levels 1 to 5 are tried again with the step's run |
+| 13 | The guards' place inside level 6, and a missing captured run read as uncut | measurement, agy (Minor) | Confirmed | Both stated, each exit 70 |
+| 14 | The stored record nests one level deeper than the judge input | measurement (Minor) | Confirmed against `store.Document` | Stated, with a round-trip row |
+| 15 | Nits: an `earlier` id neither required nor outside, E-51 in the script, KTD13's projection test, QS5 on the ledger, list order | measurement, agy | Confirmed | Fixed in the note |
+
+No Blocker or Major remains. Row 10's Major was closed by the owner's ruling in the form the reviewer proposed, so the build proceeds without a third design round, and the build review checks the note's changes.

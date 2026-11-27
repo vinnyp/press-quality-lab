@@ -25,15 +25,16 @@ The loop runs each runbook of the required set step by step, in the order writte
 
 1. **Has the runbook stopped?** Before a step, `decide.Stopped` is given every earlier step's required-check resolutions. A step is not held when any of its required checks is not held or not observed.
    - **Pre-override.** These are resolutions *before* QS5's final override and the QD3 override, which run after every runbook, so they stop no runbook (QA7's last sentence; `case-022`, `case-063` to `case-066`).
-   - **Membership comes from the plan.** An `earlier` id the plan marks as outside the required set never stops a runbook (QA9). An `earlier` id in the required set with no resolution is an engine fault, exit 70, never a skip.
+   - **Membership comes from the plan.** An `earlier` id the plan marks as outside the required set never stops a runbook (QA9). An `earlier` id in the required set with no resolution, or one the plan neither requires nor marks as outside, is an engine fault, exit 70, never a skip.
 2. **Before serving.** Each required check of the step tries levels 1 to 5 with no invocation. Level 4 is `earlier_step_failed` once the runbook has stopped, and level 5 here is the grade-wide copy fact only.
 3. **Serving the step.** When at least one required check passed step 2, the step's invocation is served once. Every check of the step judges that one run (QA7).
 4. **Serving computations.** For each check that passed step 2, in check order:
-   - level 6's cut-capture rule is decided first, from the captured step's recorded run;
+   - levels 1 to 5 are tried again with the step's run in its evidence, so a run without the confinement marker (QO1) or with a changed copy (QH8) serves no computation;
+   - level 6's cut-capture rule is decided next, from the captured step's recorded run;
    - a check without a cut capture then has its own computation keys served, the precondition before the expected value.
 
-   Two checks of one step can name computations with equal keys. Such a key is served once and both checks read it. If the two differ in budget or declared files, a recording cannot tell them apart (QT5), and the grade stops with exit 70.
-5. **Resolving.** Each check is resolved from levels 1 to 8. Its evidence is its own step run and its own computation runs. A captured step's run is kept apart, in `Evidence.Captures`. Only level 6's cut-capture rule reads it, and no other level, level 7 above all, ever judges it.
+   Two checks of one step can name equal computations. Such a key is served once and both checks read it. Two computations of one step with equal argument lists that differ in anything else reject the subject file with exit 2 (E-52), a rule the subject checks gain in QA4's place in E-9's order.
+5. **Resolving.** Each check is resolved from levels 1 to 8. Its evidence is its own step run and its own computation runs. A captured step's run is kept apart, in `Evidence.Captures`. Only level 6's cut-capture rule reads it, and no other level, level 7 above all, ever judges it. A capture with no run in `Evidence.Captures` is an engine fault, exit 70, never read as uncut.
 6. **A step with no required check** still runs in its place (E-49), so the shared home and its captures are what the author wrote. `decide.StepRuns` says whether it runs. It does not run when:
    - the runbook has stopped;
    - a grade-wide QO1 condition holds;
@@ -63,16 +64,19 @@ QO6's second bullet is level 1's, as for every check (E-15).
 
 **The cut capture and QO1.** The cut capture is decided after the step's own run is served. So a step run without confinement is decided by QO1 at level 1, ahead of it, as §2's order says.
 
-**In the final resolve,** a check with a computation and no served run for it is an engine fault, exit 70, never a pass.
+**The guards inside level 6,** in the final resolve:
+- order 1 first looks up every step the check captures in `Evidence.Captures`; a missing run is an engine fault, exit 70, and a cut standard output gives `harness_fault`;
+- after order 1, a check with a precondition or expected-value computation and no served run for it is an engine fault, exit 70, never a pass.
 
 **The precondition (QA9):** its observed value is `true` when it printed `true` and `false` for any other value. The check's outcome is still its predicate's. `precondition_observed` is set for a held or not-held check, a `wrong_exit` included (QE8).
 
-**Recorded values in `strictjson` form.** The scripted reader keeps a recorded `printed_value` in `internal/strictjson`'s value types, as recorded, so the predicates' exact comparisons see the numbers' text. It no longer converts them to `encoding/json` types.
+**Recorded values in `strictjson` form.** The scripted reader keeps a recorded `printed_value` in `internal/strictjson`'s value types, as recorded, so the predicates' exact comparisons see the numbers' text. It no longer converts them to `encoding/json` types. KTD13's projection test, which writes the source's facts back as a recording, must keep passing.
 
 **Real-path pieces** are built here as pure, untagged functions and joined to the darwin source in PR15:
 - **QA6's parse.** It takes the drained bytes, the cut flag and the count, and gives the value or invalid. It applies the 1 MiB bound ("more than", so exactly 1 MiB is accepted), §3's reader and E-12's depth.
   - **The depth limit.** A computed expected value is written directly as the evidence item's `expected`. That puts it inside the judge input's top object, its evidence array and the evidence item, so its own depth may be at most 61.
   - **A precondition's value** is never written, but it is held to the same 61, as the value QA6 bounds "inside a record".
+  - **The stored record** nests the judge input one level deeper (`store.Document`), so a 61-deep value reaches level 65 there. The store and its readers (U18, the corpus runner) are not held to §3's 64 for that reason, and a row stores and reads back a 61-deep value.
   - **The constant.** One named constant holds the 61. A test derives it from the evidence the engine builds, so the two cannot drift apart.
 - **QA4's substitutions.** They replace `{SEED}`, `{SUBJECT_DIR}` and `{CAPTURE:<step>}` in every argument after the first, by E-25's token grammar. The first argument is never substituted.
 
@@ -130,6 +134,7 @@ These are recorded in `docs/specs/conformance-collection-1.0-errata.md`, and no 
 - **E-49:** a step with no required check still runs and never stops its runbook.
 - **E-50:** a literal empty expected string rejects the file, and a computed one is `computation_failed`.
 - **E-51:** a capture of a step whose command depends on a placeholder makes its check `placeholder_unfilled`.
+- **E-52:** two computations of one step with equal arguments that differ otherwise reject the file.
 
 ## Predicted ratchet set
 
@@ -138,6 +143,7 @@ PR12's built set is `scripts/ratchet/pr10.json` with `levels` set to `[1, 2, 3, 
 **The QA8 token.** The script gains one unbuilt token, `QA8.destructive_runbook`. A check in a destructive runbook in the required set needs it, so `case-002` and `case-059` stay pending until PR13, as the plan's U14 says. Without the token, the script credits them.
 - **Only when nothing else blocks.** The script applies the token only when no other unbuilt rule already blocks the check. So PR6's to PR10's files reproduce exactly in the script's tests, and their sentinel lists do not gain QA8.
 - **The phase-set test** (`scripts/test_predict_ratchet.py`) is widened to allow level 4.
+- **E-51 in the script.** Its `depends()` gains E-51's capture rule, so a future case with such a capture is predicted at level 2.
 
 `scripts/predict-ratchet.py --built scripts/ratchet/pr12.json` computes `scripts/ratchet/pr12-prediction.json`. `check.sh` and the Go readers switch to it.
 
@@ -186,6 +192,7 @@ The rule is unchanged: a rule moves only when its whole text is decision logic t
 | QA6 | the darwin source calling the parse on drained bytes (PR15) |
 | QA7 | its destructive-runbook clause (PR13) and the shared home on the real path (PR15). Its sequencing is proven here |
 | QA8 | destructive runbooks (PR13) |
+| QS5 | the scorecard naming each placeholder (U18). Its runbook interaction and E-51 are proven here |
 | QE8, QE10, QT5 | real-path draining and a computation's recorded value from a real run (PR15) |
 | QH16 to QH20 | a computation run by the darwin source, and GR15's `macos_evidence` entries for QH16, QH18 and QH20 (PR15) |
 
@@ -203,15 +210,17 @@ Their mutations are fixed now:
 2. **Every check, compared in full** (control 2), `target_size` and `precondition_observed` included, with the deciding level.
 3. **The trace** (control 3), extended.
 
-   **Its inputs.** The reader derives the served keys from the case alone: the subject file, the recording, the host's facts and the prediction's per-check ending. It never uses the engine. It builds each key from the check's preimage by its own code, never through `plan.go`'s builder.
+   **Its inputs.** The reader derives the served keys from the case alone: the subject file, `input.json`, `preimages.json`, the recording, the host's facts and the prediction's per-check ending. It never uses the engine. It builds each key from the check's preimage, or an E-49 step's key from the subject file, by its own code, never through `plan.go`'s builder.
+
+   **Held before the override** is read from `input.json`'s evidence: an outcome of `held`, or `placeholder_unfilled` with a deciding level of 8, which only QS5's override gives. The prediction's ending alone does not say whether a level-8 check held (`case-152` against `case-153`).
 
    **Its rules,** for each runbook of the required set:
    - **When a runbook stops.** A runbook has stopped after the first step that has a required check whose prediction, before QS5's override, is not held or not observed. A prediction that ends held at level 8 and is then overridden by QS5 counts as held.
-   - **When a step is served.** It is served once, in step order, while the runbook has not stopped, and when at least one of its required checks is not decided at levels 1 to 3 or by the grade-wide copy fact. A step with no required check is served unless one of E-49's exceptions applies. No step is served after a stop.
-   - **When a computation is served.** A check's computation keys are served after its step's key, in check order, precondition first. That happens when the check passes levels 1 to 5 and has no cut capture. A computation key shared by two checks of the step is served once.
+   - **When a step is served.** It is served once, in step order, while the runbook has not stopped, and when at least one of its required checks is decided neither at levels 2 to 4, nor by a grade-wide QO1 condition, nor by the grade-wide copy fact. A check that QO1 decides on its own run still has its step served. A step with no required check is served unless one of E-49's exceptions applies. No step is served after a stop.
+   - **When a computation is served.** A check's computation keys are served after its step's key, in check order, precondition first. That happens when the check passes step 2's levels and has no cut capture. A computation key shared by two checks of the step is served once.
    - **Destructive runbooks.** No key of one is served, judged from the subject file's classes.
 
-   The comparison is of ordered lists. A step served twice, or a key served out of order or after a stop, fails the test.
+   The comparison is of ordered lists: the probes' keys in QP1's order, then each runbook's keys in the subject file's order. A step served twice, or a key served out of order or after a stop, fails the test.
 4. **Unit rows for every branch the corpus lacks:**
    - **QA7 stopping:**
      - a runbook stopped by `predicate`, `crashed`, `over_budget`, `could_not_start` and `computation_failed`;
@@ -226,7 +235,8 @@ Their mutations are fixed now:
      - a computed non-string and a computed empty string;
      - exactly 1 MiB accepted and 1 MiB plus one byte rejected, and E-12's depth at 61 and 62;
      - a cut capture behind an unconfined step run, which QO1 decides;
-     - two checks sharing a computation key, with equal and with differing budgets.
+     - two checks sharing an equal computation, served once.
+   - **E-52's file rejection:** equal argument lists differing in budget, in declared files and in captures, each rejecting with exit 2.
    - **Level 8, by predicate:**
      - every predicate holding and not holding, `stdout_bytes_at_most` at, below and one past its bound;
      - an empty target for `stdout_not_contains` and `stdout_bytes_at_most`;
