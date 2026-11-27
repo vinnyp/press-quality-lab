@@ -71,9 +71,12 @@ type Check struct {
 
 // Step retains scheduling context even when every check is outside the scope.
 type Step struct {
-	Key      Object
-	Required []int
-	Outside  []string
+	BudgetSeconds any
+	OfflineArgs   Array
+	Env           Object
+	Key           Object
+	Required      []int
+	Outside       []string
 }
 
 // Runbook retains the authored step order.
@@ -350,7 +353,8 @@ func Build(in Input) (Plan, error) {
 		bookPlan := Runbook{}
 		required := false
 		for _, sv := range steps {
-			stepPlan := Step{Key: SubjectKey(s, arr(obj(sv)["words"]), "runbook", r["name"], obj(sv)["name"])}
+			args, env, _ := offline(s, arr(obj(sv)["words"]))
+			stepPlan := Step{BudgetSeconds: obj(sv)["budget_seconds"], OfflineArgs: args, Env: env, Key: SubjectKey(s, arr(obj(sv)["words"]), "runbook", r["name"], obj(sv)["name"])}
 			st := obj(sv)
 			ids := Array{}
 			for i, cv := range arr(st["checks"]) {

@@ -17,6 +17,10 @@ func level1(_ plan.Check, c observe.Controls, e Evidence) Result {
 			failed = true
 		}
 	}
+	// E-53: a captured invocation carries the same confinement requirement.
+	for _, invocation := range e.Captures {
+		failed = failed || !invocation.Run.Markers.Confinement
+	}
 	if failed {
 		return Result{Outcome: NotObserved, Reason: NetworkUnverifiable, Level: 1}
 	}

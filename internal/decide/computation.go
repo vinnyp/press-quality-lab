@@ -12,7 +12,8 @@ const ComputedValueDepth = 61
 const ComputedValueBytes = 1 << 20
 
 // ParseComputed applies QA6 to drained bytes, keeping valid JSON null distinct
-// from an invalid value through its boolean result.
+// from an invalid value through its boolean result. The darwin source must pass
+// cut || Run.OutputCutAfterExit as cut.
 func ParseComputed(data []byte, cut bool, count int64) (any, bool) {
 	if cut || count < 0 || count > ComputedValueBytes || int64(len(data)) != count {
 		return nil, false

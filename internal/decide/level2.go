@@ -36,7 +36,7 @@ func level2(ch plan.Check, _ observe.Controls, _ Evidence) Result {
 		} else if ch.Preimage["words"] != nil {
 			words = append(words, array(ch.Preimage["words"]))
 		}
-		for _, comp := range computations(ch) {
+		for _, comp := range Computations(ch) {
 			for _, name := range array(comp["captures"]) {
 				for _, b := range array(s["runbooks"]) {
 					book := object(b)

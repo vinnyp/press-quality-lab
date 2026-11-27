@@ -23,9 +23,12 @@ func loopStep(name string, checks ...plan.Object) plan.Object {
 	}
 	return plan.Object{"name": name, "words": plan.Array{name}, "budget_seconds": strictjson.Number("1"), "checks": a}
 }
-func loopPlan(t *testing.T, steps plan.Array) plan.Plan {
+func loopPlan(t *testing.T, steps plan.Array, offline ...plan.Object) plan.Plan {
 	t.Helper()
 	s := plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{}, "class": "safe", "writes": false, "exit_codes": plan.Array{strictjson.Number("0")}}}, "runbooks": plan.Array{plan.Object{"name": "book", "steps": steps}}, "offline": plan.Array{}}
+	for _, setting := range offline {
+		s["offline"] = append(discoveryArray(s["offline"]), setting)
+	}
 	p, err := plan.Build(plan.Input{Subject: s, Scopes: []rulebook.Scope{rulebook.ConformanceScope}})
 	if err != nil {
 		t.Fatal(err)
@@ -47,13 +50,15 @@ func loopPlan(t *testing.T, steps plan.Array) plan.Plan {
 
 type loopSource struct {
 	keys     []observe.Key
+	specs    []observe.Spec
 	controls observe.Controls
 	run      func(observe.Key) observe.Run
 }
 
 func (s *loopSource) Controls() (observe.Controls, error) { return s.controls, nil }
-func (s *loopSource) Observe(k observe.Key, _ observe.Spec) (observe.Run, error) {
+func (s *loopSource) Observe(k observe.Key, spec observe.Spec) (observe.Run, error) {
 	s.keys = append(s.keys, k)
+	s.specs = append(s.specs, spec)
 	return s.run(k), nil
 }
 func cleanLoopRun() observe.Run {
@@ -106,6 +111,10 @@ func TestRunbookStops(t *testing.T) {
 			})
 			source.controls.KnownFastWithin = true
 			got, err := Collect(p, source)
+			wantKind := map[string]string{"Predicate": "predicate", "Crashed": "crashed", "OverBudget": "over_budget", "CouldNotStart": "could_not_start", "ComputationFailed": "computation_failed", "LevelTwo": "placeholder_unfilled"}[name]
+			if err == nil && len(got) == 2 && string(got[0].Result.Reason) != wantKind && got[0].Result.FailureKind != wantKind {
+				t.Fatal(got[0].Result)
+			}
 			want := []any{"first"}
 			if name == "LevelTwo" {
 				want = nil
@@ -249,8 +258,8 @@ func TestSharedComputations(t *testing.T) {
 }
 
 func TestCaptureOwnRuns(t *testing.T) {
-	// QA4, QO1, QO5, QA7: captured exit codes are not this check's exit; own QO1 precedes a cut capture.
-	for _, name := range []string{"CapturedWrongExit", "Cut", "CutUnconfined", "OwnCopyChanged"} {
+	// E-53, QA4, QO1, QO5, QA7: captured exit codes are not this check's exit; own QO1 precedes a cut capture.
+	for _, name := range []string{"CapturedWrongExit", "CapturedUnconfined", "Cut", "CutUnconfined", "OwnCopyChanged"} {
 		t.Run(name, func(t *testing.T) {
 			first := loopCheck()
 			first["dimension"] = "destructive-guard"
@@ -263,7 +272,10 @@ func TestCaptureOwnRuns(t *testing.T) {
 				r := cleanLoopRun()
 				if k["step"] == "first" {
 					r.End.Code = 17
-					if name != "CapturedWrongExit" {
+					if name == "CapturedUnconfined" {
+						r.Markers.Confinement = false
+					}
+					if name != "CapturedWrongExit" && name != "CapturedUnconfined" {
 						r.StdoutCut = true
 						r.StdoutSeen = (1 << 20) + 1
 					}
@@ -290,11 +302,14 @@ func TestCaptureOwnRuns(t *testing.T) {
 				outcome = "held"
 				reason = ""
 				runs = 2
-			case "CutUnconfined":
+			case "CutUnconfined", "CapturedUnconfined":
 				level = 1
 				reason = "network_unverifiable"
 			case "OwnCopyChanged":
 				level = 5
+			}
+			if name == "CapturedUnconfined" {
+				runs = 0
 			}
 			if err != nil || len(got) != 1 || got[0].Result.Level != level || string(got[0].Result.Outcome) != outcome || string(got[0].Result.Reason) != reason || len(got[0].Invocations) != runs {
 				t.Fatal(got, err)
@@ -346,5 +361,41 @@ func TestSharedStepBeforeComputations(t *testing.T) {
 		if ch.Result.Level != 1 || ch.Result.Reason != "network_unverifiable" || len(ch.Invocations) != 1 {
 			t.Fatal(ch)
 		}
+	}
+}
+
+func TestServingSpecs(t *testing.T) {
+	// QA7, QA6, E-49: each invocation receives its own budget and step context.
+	outside := loopCheck()
+	outside["dimension"] = "destructive-guard"
+	last := loopCheck()
+	expected, pre := loopComp("expected"), loopComp("precondition")
+	expected["budget_seconds"] = strictjson.Number("3")
+	pre["budget_seconds"] = strictjson.Number("2")
+	last["expected"] = plan.Object{"computation": expected}
+	last["precondition"] = plan.Object{"computation": pre}
+	first := loopStep("outside", outside)
+	first["budget_seconds"] = strictjson.Number("7")
+	p := loopPlan(t, plan.Array{first, loopStep("last", last)}, plan.Object{"applies_to": plan.Array{plan.Array{}}, "args": plan.Array{"--offline"}, "env": plan.Object{"SYNTHETIC_OFFLINE": "1"}})
+	source := loopSourceWith(func(k observe.Key) observe.Run {
+		r := cleanLoopRun()
+		if k["computation"] != nil {
+			r.Details.Printed = &observe.PrintedValue{Value: "value"}
+		}
+		return r
+	})
+	got, err := Collect(p, source)
+	if err != nil || len(got) != 1 || len(source.specs) != 4 {
+		t.Fatal(got, err, source.specs)
+	}
+	for i, budget := range []int{7, 1, 2, 3} {
+		spec := source.specs[i]
+		if spec.CheckID == "" || spec.BudgetSeconds != budget {
+			t.Fatal(i, spec)
+		}
+	}
+	spec := source.specs[0]
+	if spec.CheckID != "runbook:book:step:outside" || !reflect.DeepEqual(spec.Preimage["offline_args"], plan.Array{"--offline"}) || !reflect.DeepEqual(spec.Preimage["env"], plan.Object{"SYNTHETIC_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"}) || spec.Preimage["budget_seconds"] != strictjson.Number("7") {
+		t.Fatal(spec)
 	}
 }

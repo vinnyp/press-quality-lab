@@ -7,7 +7,8 @@ type Key = map[string]any
 
 // Spec supplies the immutable planned context for one invocation.
 type Spec struct {
-	// BudgetSeconds supplies discovery's fixed QD2 budget; zero uses planned context.
+	// BudgetSeconds supplies this invocation's budget, including QD2's fixed
+	// discovery budget and QA6's computation budget; zero uses planned context.
 	BudgetSeconds int
 	CheckID       string
 	Preimage      map[string]any

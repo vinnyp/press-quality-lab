@@ -305,7 +305,7 @@ func independentTrace(t *testing.T, recording []byte, host, subject, input, prei
 				captures[st["name"]] = run
 				shared := map[string]bool{}
 				for _, id := range ids {
-					if !before(id) || traceObject(run["markers"])["confinement"] != true {
+					if !before(id) || traceObject(run["markers"])["confinement"] != true || run["copy_changed"] == true {
 						continue
 					}
 					ex := traceObject(traceObject(preimages[id])["expected"])
@@ -413,4 +413,30 @@ func traceObject(v any) map[string]any {
 		return o
 	}
 	return nil
+}
+
+func TestTraceComputationCopyChanged(t *testing.T) {
+	// QA7, QH8: the independent trace refuses computations after a changed step copy.
+	help := map[string]any{"words": []any{"--help"}, "offline_args": []any{}, "env": []any{}, "home": "empty", "runbook": nil, "step": nil, "computation": nil}
+	step := map[string]any{"words": []any{"read"}, "offline_args": []any{}, "env": []any{}, "home": "runbook", "runbook": "book", "step": "read", "computation": nil}
+	comp := map[string]any{"words": nil, "offline_args": []any{}, "env": []any{}, "home": "scratch", "runbook": "book", "step": "read", "computation": []any{"/bin/echo"}}
+	host := map[string]any{"confinement": map[string]any{"applied": true}, "self_test": "passed"}
+	subject := map[string]any{"runbooks": []any{map[string]any{"name": "book", "steps": []any{map[string]any{"name": "read", "words": []any{"read"}}}}}}
+	preimages := map[string]any{"check": map[string]any{"runbook": "book", "step": "read", "index": float64(0), "words": []any{"read"}, "offline_args": []any{}, "env": map[string]any{}, "expected": map[string]any{"computation": map[string]any{"argv": []any{"/bin/echo"}}}}}
+	input := map[string]any{"evidence": []any{map[string]any{"check_id": "check", "outcome": "held"}}}
+	predictions := map[string]tracePrediction{"check": {Level: 8}}
+	for _, changed := range []bool{false, true} {
+		recording := mustJSON(t, map[string]any{"invocations": []any{
+			map[string]any{"key": help, "confined": []any{map[string]any{"markers": map[string]any{"confinement": false}}}},
+			map[string]any{"key": step, "confined": []any{map[string]any{"markers": map[string]any{"confinement": true}, "copy_changed": changed}}},
+		}})
+		want := []map[string]any{help, step}
+		if !changed {
+			want = append(want, comp)
+		}
+		got := independentTrace(t, recording, host, subject, input, preimages, predictions)
+		if !reflect.DeepEqual(got, want) {
+			t.Fatal(changed, got, want)
+		}
+	}
 }

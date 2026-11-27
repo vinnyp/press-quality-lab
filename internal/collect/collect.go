@@ -3,10 +3,12 @@ package collect
 
 import (
 	"reflect"
+	"strconv"
 
 	"github.com/vinnyp/press-quality-lab/internal/decide"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
+	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 )
 
 // Check pairs a planned check with its resolution, including an unbuilt value.
@@ -57,7 +59,24 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 		}
 	}
 	serve := func(key plan.Object, ch plan.Check) (observe.Invocation, error) {
-		run, err := source.Observe(map[string]any(key), observe.Spec{CheckID: ch.ID, Preimage: map[string]any(ch.Preimage)})
+		budget := ch.Preimage["budget_seconds"]
+		if key["computation"] != nil {
+			for _, comp := range decide.Computations(ch) {
+				if reflect.DeepEqual(comp["argv"], key["computation"]) {
+					budget = comp["budget_seconds"]
+					break
+				}
+			}
+		}
+		seconds := 0
+		if n, ok := budget.(strictjson.Number); ok {
+			var err error
+			seconds, err = strconv.Atoi(string(n))
+			if err != nil {
+				panic("QA7: invalid planned budget")
+			}
+		}
+		run, err := source.Observe(map[string]any(key), observe.Spec{BudgetSeconds: seconds, CheckID: ch.ID, Preimage: map[string]any(ch.Preimage)})
 		if err != nil {
 			return observe.Invocation{}, err
 		}
@@ -111,7 +130,12 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 			}
 			var stepRun *observe.Invocation
 			if len(step.Required) == 0 {
-				ch := plan.Check{Subject: context.Subject, Keys: []plan.Object{step.Key}, Preimage: plan.Object{"probe": nil, "runbook": step.Key["runbook"], "step": step.Key["step"], "words": step.Key["words"], "earlier": plan.Array{}, "expected": nil}}
+				bookName, bookOK := step.Key["runbook"].(string)
+				stepName, stepOK := step.Key["step"].(string)
+				if !bookOK || !stepOK {
+					panic("QA7: invalid step key")
+				}
+				ch := plan.Check{ID: "runbook:" + bookName + ":step:" + stepName, Subject: context.Subject, Keys: []plan.Object{step.Key}, Preimage: plan.Object{"probe": nil, "runbook": step.Key["runbook"], "step": step.Key["step"], "words": step.Key["words"], "earlier": plan.Array{}, "expected": nil, "budget_seconds": step.BudgetSeconds, "offline_args": step.OfflineArgs, "env": step.Env}}
 				if decide.StepRuns(decide.StepFacts{Stopped: stopped, Controls: controls, Check: &ch}) {
 					inv, err := serve(step.Key, ch)
 					if err != nil {
@@ -138,13 +162,7 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 				if stepRun != nil {
 					own.Invocations = []observe.Invocation{*stepRun}
 					if eligible[i] && decide.BeforeComputations(ch, controls, own).Level == 0 {
-						ex := discoveryObject(ch.Preimage["expected"])
-						pre := discoveryObject(ex["precondition"])
-						for _, value := range []any{pre["computation"], ex["computation"]} {
-							comp, ok := value.(plan.Object)
-							if !ok {
-								continue
-							}
+						for _, comp := range decide.Computations(ch) {
 							var key plan.Object
 							for _, k := range ch.Keys {
 								if reflect.DeepEqual(k["computation"], comp["argv"]) {

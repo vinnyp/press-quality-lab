@@ -8,7 +8,8 @@ import (
 	"strconv"
 )
 
-func computations(ch plan.Check) []plan.Object {
+// Computations returns precondition then expected-value computations.
+func Computations(ch plan.Check) []plan.Object {
 	ex := object(ch.Preimage["expected"])
 	var result []plan.Object
 	for _, v := range []any{object(ex["precondition"])["computation"], ex["computation"]} {
@@ -38,7 +39,7 @@ func level6(ch plan.Check, _ observe.Controls, e Evidence) Result {
 	if _, known := ch.Preimage["expected"]; !known {
 		panic("QA2: missing expected context")
 	}
-	comps := computations(ch)
+	comps := Computations(ch)
 	if r := cutCaptures(ch, e); r.Level != 0 {
 		return r
 	}
@@ -132,7 +133,7 @@ func BeforeComputations(ch plan.Check, c observe.Controls, e Evidence) Result {
 }
 func cutCaptures(ch plan.Check, e Evidence) Result {
 	cut := false
-	for _, comp := range computations(ch) {
+	for _, comp := range Computations(ch) {
 		for _, name := range array(comp["captures"]) {
 			run := capturedRun(ch, name, e)
 			cut = cut || run.StdoutCut

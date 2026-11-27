@@ -310,11 +310,6 @@
         "kind": "test",
         "file": "internal/decide/pr12_test.go",
         "function": "TestExitExpected"
-      },
-      {
-        "kind": "test",
-        "file": "internal/decide/pr12_test.go",
-        "function": "TestSharedComputedValue"
       }
     ],
     "QA9": [

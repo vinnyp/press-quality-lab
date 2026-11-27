@@ -30,16 +30,19 @@ func Stopped(earlier []string, resolutions map[string]Result, membership map[str
 
 // StepFacts contains facts used to decide E-49's steps without required checks.
 type StepFacts struct {
-	Stopped, Placeholder bool
-	Controls             observe.Controls
-	Check                *plan.Check
+	Stopped  bool
+	Controls observe.Controls
+	Check    *plan.Check
 }
 
 func StepRuns(f StepFacts) bool {
-	if f.Check != nil && BeforeInvocationsWithEvidence(*f.Check, f.Controls, Evidence{}).Level != 0 {
+	if f.Check == nil {
+		panic("E-49: missing step context")
+	}
+	if BeforeInvocationsWithEvidence(*f.Check, f.Controls, Evidence{}).Level != 0 {
 		return false
 	}
-	return !f.Stopped && !f.Placeholder && f.Controls.ConfinementApplied && f.Controls.SelfTestPassed && f.Controls.SystemNamed && f.Controls.PrivateCopyUnchanged
+	return !f.Stopped
 }
 
 func level4(ch plan.Check, _ observe.Controls, e Evidence) Result {

@@ -39,6 +39,10 @@ func TestAuthoredPredicateRows(t *testing.T) {
 				run.StdoutSeen = 2
 			case "stdout_empty":
 				run.StdoutSeen = 1
+			case "json_path_equals":
+				run.Stdout = []byte(`{"a":2}`)
+			case "row_count":
+				run.Stdout = []byte(`{"a":[1,2]}`)
 			default:
 				run.Stdout = []byte("z")
 				run.Stderr = []byte("z")
@@ -151,7 +155,7 @@ func TestComputationGuards(t *testing.T) {
 	c := object(object(ch.Preimage["expected"])["computation"])
 	c["captures"] = plan.Array{"earlier"}
 	mustFault(t, func() { level6(ch, passing(), e) })
-	e.Captures = []observe.Invocation{{Key: observe.Key{"step": "earlier"}, Run: observe.Run{StdoutCut: true, End: observe.End{Code: 7}}}}
+	e.Captures = []observe.Invocation{{Key: observe.Key{"step": "earlier"}, Run: observe.Run{Markers: observe.Markers{Confinement: true}, StdoutCut: true, End: observe.End{Code: 7}}}}
 	e.Invocations = nil
 	if r := BeforeComputations(ch, passing(), e); r.Reason != "harness_fault" {
 		t.Fatal(r)
@@ -200,12 +204,15 @@ func TestRunbookStopping(t *testing.T) {
 	mustFault(t, func() { Stopped([]string{"a"}, nil, nil) })
 	for _, name := range []string{"Runs", "Stopped", "Placeholder", "Confinement", "SelfTest", "System", "Copy"} {
 		t.Run(name, func(t *testing.T) {
-			f := StepFacts{Controls: passing()}
+			ch := plan.Check{Subject: plan.Object{}, Preimage: plan.Object{"probe": nil, "earlier": plan.Array{}}}
+			ch.Keys = []plan.Object{{}}
+			f := StepFacts{Controls: passing(), Check: &ch}
 			switch name {
 			case "Stopped":
 				f.Stopped = true
 			case "Placeholder":
-				f.Placeholder = true
+				ch.Preimage["words"] = plan.Array{"read"}
+				ch.Subject["commands"] = plan.Array{plan.Object{"words": plan.Array{"read"}, "class": plan.Object{"placeholder": "supply class"}}}
 			case "Confinement":
 				f.Controls.ConfinementApplied = false
 			case "SelfTest":
@@ -231,7 +238,7 @@ func TestExitExpected(t *testing.T) {
 			e.Invocations = nil
 		}
 		e.Invocations = append(e.Invocations, observe.Invocation{Run: observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Code: 7}}})
-		e.Captures = []observe.Invocation{{Run: observe.Run{End: observe.End{Code: 99}}}}
+		e.Captures = []observe.Invocation{{Run: observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Code: 99}}}}
 		if r := Resolve(ch, passing(), e); r.Outcome != "held" {
 			t.Fatal(r)
 		}
@@ -296,9 +303,12 @@ func TestAuthoredJSONRules(t *testing.T) {
 		{"ObjectOrder", `{"b":2,"a":1}`, plan.Object{"a": strictjson.Number("1"), "b": strictjson.Number("2")}, true},
 		{"ArrayOrder", `[2,1]`, plan.Array{strictjson.Number("1"), strictjson.Number("2")}, false},
 		{"RepeatedKey", `{"a":1,"a":1}`, plan.Object{"a": strictjson.Number("1")}, false},
-		{"Surrogate", `"\ud800"`, "x", false},
+		{"Surrogate", `"\ud800"`, "�", false},
 		{"LongNumber", "100000000000000000000000000000000", strictjson.Number("1e32"), false},
-		{"Depth65", strings.Repeat("[", 65) + "0" + strings.Repeat("]", 65), nil, false},
+		{"Depth65", strings.Repeat("[", 65) + "0" + strings.Repeat("]", 65), nestedJSON(65), false},
+		{"Depth64", strings.Repeat("[", 64) + "0" + strings.Repeat("]", 64), nestedJSON(64), true},
+		{"DistinctHuge", "1e9999", strictjson.Number("2e9999"), false},
+		{"ExponentBound", "1e10000", strictjson.Number("1e10000"), false},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			ch := plan.Check{Preimage: plan.Object{"predicate": "stdout_json_equals", "expected": plan.Object{"literal": row.expected}}}
@@ -316,13 +326,13 @@ func TestAuthoredJSONRules(t *testing.T) {
 }
 func TestPointerRows(t *testing.T) {
 	// QA9: literal RFC 6901 §5 example table, plus array grammar and missing paths.
-	v := plan.Object{"foo": plan.Array{"bar", "baz"}, "": strictjson.Number("0"), "a/b": strictjson.Number("1"), "c%d": strictjson.Number("2"), "e^f": strictjson.Number("3"), "g|h": strictjson.Number("4"), "i\\j": strictjson.Number("5"), "k\"l": strictjson.Number("6"), " ": strictjson.Number("7"), "m~n": strictjson.Number("8")}
+	v := plan.Object{"~1": "escaped", "foo": plan.Array{"bar", "baz"}, "": strictjson.Number("0"), "a/b": strictjson.Number("1"), "c%d": strictjson.Number("2"), "e^f": strictjson.Number("3"), "g|h": strictjson.Number("4"), "i\\j": strictjson.Number("5"), "k\"l": strictjson.Number("6"), " ": strictjson.Number("7"), "m~n": strictjson.Number("8")}
 	for _, row := range []struct {
 		name, path string
 		want       any
 		ok         bool
 	}{
-		{"Root", "", v, true}, {"Foo", "/foo", plan.Array{"bar", "baz"}, true}, {"Index", "/foo/0", "bar", true}, {"EmptyKey", "/", strictjson.Number("0"), true},
+		{"DecodeOrder", "/~01", "escaped", true}, {"Root", "", v, true}, {"Foo", "/foo", plan.Array{"bar", "baz"}, true}, {"Index", "/foo/0", "bar", true}, {"EmptyKey", "/", strictjson.Number("0"), true},
 		{"Slash", "/a~1b", strictjson.Number("1"), true}, {"Percent", "/c%d", strictjson.Number("2"), true}, {"Caret", "/e^f", strictjson.Number("3"), true},
 		{"Pipe", "/g|h", strictjson.Number("4"), true}, {"Backslash", "/i\\j", strictjson.Number("5"), true}, {"Quote", "/k\"l", strictjson.Number("6"), true},
 		{"Space", "/ ", strictjson.Number("7"), true}, {"Tilde", "/m~0n", strictjson.Number("8"), true}, {"LeadingZero", "/foo/00", nil, false}, {"Dash", "/foo/-", nil, false},
@@ -506,9 +516,9 @@ func TestByteBoundSizes(t *testing.T) {
 		name  string
 		count int64
 		held  bool
-	}{{"Below", 0, true}, {"At", 1, true}, {"Past", 2, false}} {
+	}{{"Below", (1 << 20) + 1, true}, {"At", (1 << 20) + 2, true}, {"Past", (1 << 20) + 3, false}} {
 		t.Run(row.name, func(t *testing.T) {
-			ch := plan.Check{Preimage: plan.Object{"predicate": "stdout_bytes_at_most", "expected": plan.Object{"literal": strictjson.Number("1")}}}
+			ch := plan.Check{Preimage: plan.Object{"predicate": "stdout_bytes_at_most", "expected": plan.Object{"literal": strictjson.Number("1048578")}}}
 			r := level8(ch, passing(), Evidence{Invocations: []observe.Invocation{{Run: observe.Run{StdoutCut: true, StdoutSeen: row.count}}}})
 			if (r.Outcome == "held") != row.held || r.TargetSize == nil || *r.TargetSize != row.count {
 				t.Fatal(r)
@@ -576,4 +586,34 @@ func TestNotContainsTargetSize(t *testing.T) {
 			t.Fatal(r)
 		}
 	}
+}
+
+func nestedJSON(depth int) any {
+	var v any = strictjson.Number("0")
+	for i := 0; i < depth; i++ {
+		v = plan.Array{v}
+	}
+	return v
+}
+func TestPathExactNumbers(t *testing.T) {
+	// QA9: path comparisons preserve integers beyond float64 precision.
+	ch := plan.Check{Preimage: plan.Object{"predicate": "json_path_equals", "path": "/a", "expected": plan.Object{"literal": strictjson.Number("9007199254740992")}}}
+	for _, row := range []struct {
+		name, output string
+		held         bool
+	}{
+		{"Equal", `{"a":9007199254740992}`, true},
+		{"Distinct", `{"a":9007199254740993}`, false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			r := level8(ch, passing(), Evidence{Invocations: []observe.Invocation{{Run: observe.Run{Stdout: []byte(row.output)}}}})
+			if (r.Outcome == "held") != row.held {
+				t.Fatal(r)
+			}
+		})
+	}
+}
+func TestStepContextRequired(t *testing.T) {
+	// E-49, QS5: a missing context must never let a placeholder step run.
+	mustFault(t, func() { StepRuns(StepFacts{Controls: passing()}) })
 }
