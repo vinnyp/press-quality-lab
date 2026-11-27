@@ -241,3 +241,7 @@ QS5 says nothing that depends on a placeholder runs, and its list names no captu
 ### E-52. Two computations of one step with the same arguments
 
 QT5 keys a computation's recorded run by its argument list, runbook and step, and no two invocations of one recording have equal keys. A step's checks can still name two computations with the same argument list that differ in `budget_seconds`, `declared_files` or `captures`. **Two computations of one step, a precondition and an expected value included, whose argument lists are equal and which differ in anything else reject the subject file under QA4 with exit 2, in E-9's order, as E-42 rules for a repeated secret command. Equal computations run once, and every check that names one reads its result.** The owner ruled on 2026-11-27. No case of the corpus has such a step, so no record changes.
+
+### E-53. A capture of a step that ran without confinement
+
+QO1 makes a check not observed with `network_unverifiable` when the engine could not apply confinement to the invocation, and QA4 decides only a cut capture. Under E-49, a step with no required check still runs, and a later check can capture its output. **A check whose computation captures a step whose run was not confined is not observed with `network_unverifiable` at level 1, as if that run were its own: it depends on an invocation QO1 voids.** The owner ruled on 2026-11-27. No case of the corpus has such a capture, so no record changes.

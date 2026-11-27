@@ -135,6 +135,7 @@ These are recorded in `docs/specs/conformance-collection-1.0-errata.md`, and no 
 - **E-50:** a literal empty expected string rejects the file, and a computed one is `computation_failed`.
 - **E-51:** a capture of a step whose command depends on a placeholder makes its check `placeholder_unfilled`.
 - **E-52:** two computations of one step with equal arguments that differ otherwise reject the file.
+- **E-53:** a capture of a step whose run was not confined makes its check `network_unverifiable` at level 1. The build review found this reading.
 
 ## Predicted ratchet set
 
