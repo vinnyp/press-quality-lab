@@ -231,14 +231,13 @@ func maskValue(v any, m *Masker) any {
 	case string:
 		return m.Mask(x)
 	case Object:
-		// Stream heads have already been masked before cutting; digest summaries
-		// and streams must not be masked a second time.
-		if x["bytes"] != nil && x["sha256"] != nil && (len(x) == 2 || len(x) == 4 && x["cut"] != nil && x["head"] != nil) {
-			return x
-		}
+		masked := Object{}
 		for k, v := range x {
-			x[k] = maskValue(v, m)
+			masked[m.Mask(k)] = maskValue(v, m)
 		}
+		return masked
+	case streamObject:
+		return Object(x)
 	case Array:
 		for i, v := range x {
 			x[i] = maskValue(v, m)

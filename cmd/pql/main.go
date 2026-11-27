@@ -81,7 +81,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
 			if defect != nil {
 				return defect
 			}
-			n, err := stdout.Write(output)
+			n, err := record.RawWriter(stdout).Write(output)
 			if err != nil {
 				return err
 			}

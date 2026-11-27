@@ -42,7 +42,7 @@ type Error struct {
 }
 
 func (e *Error) RuleID() string                   { return e.Rule }
-func (e *Error) Error() string                    { return "rejected: " + e.Rule + ": " + Escape(e.Cause) }
+func (e *Error) Error() string                    { return "rejected: " + e.Rule + ": " + e.Cause }
 func failure(code int, rule, cause string) *Error { return &Error{code, rule, cause} }
 
 // Dependencies exposes effects, including identity before any store resolution.
@@ -417,7 +417,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	r.DisplaySubjectFilePath = &displayPath
 	storeErr := persist(d, r)
 	if !rejected {
-		if _, err := io.WriteString(out, Escape(strings.TrimSuffix(string(strictjson.Write(output)), "\n"))+"\n"); err != nil {
+		if _, err := record.RawWriter(out).Write(strictjson.Write(output)); err != nil {
 			return 70, err
 		}
 	}

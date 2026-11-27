@@ -61,13 +61,12 @@ func Read(host, recording []byte, trace io.Writer) (source *Source, err error) {
 	}
 	// Validate every integer consumed by intValue, including repeated and
 	// unconfined recordings, before selecting the first confined run.
-	_ = intValue(obj(obj(h)["confinement"])["sandbox_exec_exit"])
-	validateRecordingIntegers(obj(b))
+	rawRuns := map[string]object{}
 	s := &Source{host: obj(h), runs: map[string]observe.Run{}, overrides: map[string]string{}, trace: NewTrace(trace)}
 	for _, value := range arr(obj(b)["invocations"]) {
 		invocation := obj(value)
 		key := keyID(invocation["key"])
-		if _, exists := s.runs[key]; exists {
+		if _, exists := rawRuns[key]; exists {
 			return nil, reject("QT5", "duplicate invocation key")
 		}
 		violating := obj(b)["violating"] == true
@@ -93,7 +92,7 @@ func Read(host, recording []byte, trace io.Writer) (source *Source, err error) {
 				return nil, reject("QT5", "confined runs disagree")
 			}
 		}
-		s.runs[key] = readRun(first)
+		rawRuns[key] = first
 	}
 	for _, value := range arr(s.host["kill_attribution"]) {
 		entry := obj(value)
@@ -101,11 +100,17 @@ func Read(host, recording []byte, trace io.Writer) (source *Source, err error) {
 		if _, exists := s.overrides[key]; exists {
 			return nil, reject("QT4", "duplicate kill override")
 		}
-		r, exists := s.runs[key]
-		if !exists || r.End.SignalName != "SIGKILL" || r.End.EngineKilled || r.End.MemoryKilled || r.End.CodeSigningKilled || !r.Markers.Confinement {
+		r, exists := rawRuns[key]
+		end := obj(r["end"])
+		if !exists || end["signal"] != "SIGKILL" || end["by"] != "confinement" || obj(r["markers"])["confinement"] != true {
 			return nil, reject("QT4", "override does not name confinement SIGKILL")
 		}
 		s.overrides[key] = textValue(entry["by"])
+	}
+	validateRecordingIntegers(obj(b))
+	_ = sandboxExit(obj(obj(h)["confinement"])["sandbox_exec_exit"])
+	for key, r := range rawRuns {
+		s.runs[key] = readRun(r)
 	}
 	return s, nil
 }
@@ -136,6 +141,20 @@ func intValue(v any) int64 {
 	r, valid := new(big.Rat).SetString(string(n))
 	if !valid || !r.IsInt() || r.Cmp(new(big.Rat).SetInt64(observe.MaxCount)) > 0 || r.Cmp(new(big.Rat).SetInt64(-observe.MaxCount)) < 0 {
 		panic(&Error{Code: 70, Rule: "QE10", Detail: "integer outside judge range"})
+	}
+	return r.Num().Int64()
+}
+func sandboxExit(v any) int64 {
+	if v == nil {
+		return 0
+	}
+	n, ok := v.(number)
+	if !ok {
+		panic(&Error{Code: 70, Rule: "QE10", Detail: "invalid sandbox exit"})
+	}
+	r, valid := new(big.Rat).SetString(string(n))
+	if !valid || !r.IsInt() || !r.Num().IsInt64() {
+		panic(&Error{Code: 70, Rule: "QE10", Detail: "sandbox exit outside int64"})
 	}
 	return r.Num().Int64()
 }
@@ -233,7 +252,7 @@ func (s *Source) Controls() (observe.Controls, error) {
 	}
 	if confinement["sandbox_exec_exit"] != nil {
 		c.SandboxExecExitExact = json.Number(numberValue(confinement["sandbox_exec_exit"]))
-		n := int(intValue(confinement["sandbox_exec_exit"]))
+		n := int(sandboxExit(confinement["sandbox_exec_exit"]))
 		c.SandboxExecExit = &n
 	}
 	return c, nil
@@ -266,7 +285,7 @@ func (s *Source) Observe(key observe.Key, _ observe.Spec) (observe.Run, error) {
 		detected := c.StoreControlDetected
 		r.Details.Home.ControlDetected = &detected
 	}
-	if r.Details.Planted != nil && r.Details.Planted.ControlEnd != nil {
+	if r.Details.Planted != nil && (r.Details.Planted.ControlEnd != nil || c.ReadCalibrationMoved && r.Details.Planted.AtimeMoved && r.Details.Planted.SameFile && r.End.Signal == 0 && r.Markers.Confinement && !r.Markers.CouldNotStart) {
 		end := observe.End{}
 		if c.ReadControlKilled {
 			end.Signal = 9

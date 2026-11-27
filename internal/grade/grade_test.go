@@ -348,7 +348,7 @@ func TestEscaping(t *testing.T) {
 	}
 	code, err := Run(o, d, io.Discard)
 	assertFailure(t, code, err, 70, "QE16", "bad\x1b[31m\x00\x7f\u0085\u202e\u200d\u2028\u2029\U000e0061")
-	if got := err.Error(); got != `rejected: QE16: bad\u{001b}[31m\u{0000}\u{007f}\u{0085}\u{202e}\u{200d}\u{2028}\u{2029}\u{e0061}` {
+	if got := Escape(err.Error()); got != `rejected: QE16: bad\u{001b}[31m\u{0000}\u{007f}\u{0085}\u{202e}\u{200d}\u{2028}\u{2029}\u{e0061}` {
 		t.Fatal(got)
 	}
 }

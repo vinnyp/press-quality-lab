@@ -58,6 +58,9 @@ func TestStoreProbeRules(t *testing.T) {
 		{"EmptyWal", "data-wal", "file", "created", &empty, &yes, false, "held", ""},
 		{"EmptyJournal", "data-journal", "file", "modified", &empty, &yes, false, "held", ""},
 		{"RemovedWal", "data-wal", "file", "removed", nil, &yes, false, "held", ""},
+		{"WalModified", "data-wal", "file", "modified", &nonempty, &yes, false, "not_held", ""},
+		{"JournalModified", "data-journal", "file", "modified", &nonempty, &yes, false, "not_held", ""},
+		{"AncestorRemoved", "cache", "directory", "removed", nil, &yes, false, "not_held", ""},
 		{"WalBytes", "data-wal", "file", "created", &nonempty, &yes, false, "not_held", ""},
 		{"Unreadable", "", "", "", nil, &yes, true, NotObserved, "harness_fault"},
 		{"ChangeAndUnreadable", "data", "file", "modified", &nonempty, &yes, true, "not_held", ""},
@@ -115,6 +118,8 @@ func TestPlantedReadConditions(t *testing.T) {
 		{"ControlMemory", func(r *observe.Run, _ *observe.Controls) { r.Details.Planted.ControlEnd.End.MemoryKilled = true }, "harness_fault"},
 		{"ControlSigning", func(r *observe.Run, _ *observe.Controls) { r.Details.Planted.ControlEnd.End.CodeSigningKilled = true }, "harness_fault"},
 		{"ControlEngine", func(r *observe.Run, _ *observe.Controls) { r.Details.Planted.ControlEnd.End.EngineKilled = true }, "harness_fault"},
+		{"MissingControl", func(r *observe.Run, _ *observe.Controls) { r.Details.Planted.ControlEnd = nil }, "harness_fault"},
+		{"UnreadableRead", func(r *observe.Run, _ *observe.Controls) { r.Details.LeakScan.Unreadable = true }, "harness_fault"},
 		{"Calibration", func(r *observe.Run, c *observe.Controls) {
 			c.ReadCalibrationMoved = false
 			r.Details.Planted.ControlEnd.End = observe.End{}
@@ -166,6 +171,8 @@ func TestPlantedPrecedence(t *testing.T) {
 	start.Markers.CouldNotStart = true
 	bound := normal()
 	bound.Details.LeakScan.BoundReached = true
+	unreadable := normal()
+	unreadable.Details.LeakScan.Unreadable = true
 	read := normal()
 	read.Details.Planted = &observe.Planted{AtimeMoved: true, SameFile: true, ControlEnd: &observe.InvocationProtocol{End: observe.End{Signal: 9}, Markers: observe.Markers{Confinement: true}}}
 	steps := []step{
@@ -175,6 +182,7 @@ func TestPlantedPrecedence(t *testing.T) {
 		{"Control", control, Result{Level: 8, Outcome: NotObserved, Reason: "harness_fault"}},
 		{"Start", start, Result{Level: 7, Outcome: NotObserved, Reason: "could_not_start"}},
 		{"Bound", bound, Result{Level: 8, Outcome: NotObserved, Reason: "harness_fault"}},
+		{"Unreadable", unreadable, Result{Level: 8, Outcome: NotObserved, Reason: "harness_fault"}},
 		{"Read", read, Result{Level: 8, Outcome: "held"}},
 		{"Missing", normal(), Result{Level: 8, Outcome: NotObserved, Reason: "input_missing"}},
 	}

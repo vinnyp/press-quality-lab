@@ -25,6 +25,9 @@ func ScanHome(home, planted string, forms []ScanForm, stdout, stderr []byte, cut
 	return scanHome(home, planted, forms, stdout, stderr, cut, openHomeFile, FileScanLimit, TotalScanLimit)
 }
 func scanHome(home, planted string, forms []ScanForm, stdout, stderr []byte, cut bool, open homeOpener, fileLimit, totalLimit int64) (out ScanResult, err error) {
+	return scanHomeWith(home, planted, forms, stdout, stderr, cut, defaultHomeHooks(open), fileLimit, totalLimit)
+}
+func scanHomeWith(home, planted string, forms []ScanForm, stdout, stderr []byte, cut bool, hooks homeHooks, fileLimit, totalLimit int64) (out ScanResult, err error) {
 	scan := func(place string, b []byte) {
 		for _, f := range forms {
 			if f.Text != "" && bytes.Contains(b, []byte(f.Text)) {
@@ -46,15 +49,22 @@ func scanHome(home, planted string, forms []ScanForm, stdout, stderr []byte, cut
 	out.BoundReached = cut || len(stdout) > streamLimit || len(stderr) > streamLimit
 	root, err := os.OpenRoot(home)
 	if err != nil {
-		return out, err
+		out.Unreadable = true
+		return out, nil
 	}
 	defer func() { err = errors.Join(err, root.Close()) }()
-	entries, err := homeNames(root, true)
-	if err != nil {
-		return out, err
+	entries, walkErr := homeNamesWith(root, true, hooks)
+	if walkErr != nil {
+		out.BoundReached = out.BoundReached || homeBound(walkErr)
+		out.Unreadable = errors.Is(walkErr, errHomeUnreadable)
 	}
+	deadline := hooks.now().Add(MaxWalkDuration)
 	remaining := totalLimit
 	for _, e := range entries {
+		if !hooks.now().Before(deadline) {
+			out.BoundReached = true
+			break
+		}
 		if e.Kind != "file" || e.Path == planted {
 			continue
 		}
@@ -65,21 +75,29 @@ func scanHome(home, planted string, forms []ScanForm, stdout, stderr []byte, cut
 		if limit == 0 && e.Size > 0 {
 			continue
 		}
-		if root.Chmod(e.Path, 0600) != nil {
-			out.Unreadable = true
-			continue
-		}
-		f, err := open(root, e.Path)
-		if err != nil {
-			out.Unreadable = true
-			continue
-		}
-		b, readErr := io.ReadAll(io.LimitReader(f, limit))
-		readErr = errors.Join(readErr, f.Close())
-		remaining -= int64(len(b))
-		scan("home/"+e.Path, b)
+		readErr := withParent(root, e.Path, func(parent *os.Root, name string) error {
+			f, err := checkedHomeFile(parent, name, hooks)
+			if err != nil {
+				return err
+			}
+			info, statErr := f.Stat()
+			if statErr != nil || !os.SameFile(e.info, info) {
+				return errors.Join(errHomeUnreadable, statErr, f.Close())
+			}
+			b, readErr := io.ReadAll(io.LimitReader(deadlineReader{r: f, deadline: deadline, now: hooks.now}, limit))
+			readErr = errors.Join(readErr, f.Close())
+			remaining -= int64(len(b))
+			scan("home/"+e.Path, b)
+			if readErr == nil && !hooks.now().Before(deadline) {
+				readErr = ErrTimeLimit
+			}
+			return readErr
+		})
 		if readErr != nil {
 			out.Unreadable = true
+			if errors.Is(readErr, ErrTimeLimit) {
+				out.BoundReached = true
+			}
 		}
 	}
 	return out, nil

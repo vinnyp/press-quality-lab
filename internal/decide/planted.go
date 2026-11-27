@@ -17,7 +17,7 @@ func plantedSecret(ch plan.Check, c observe.Controls, e Evidence) Result {
 	for _, inv := range e.Invocations {
 		a, err := observe.Attribute(inv.Run)
 		if err != nil {
-			panic(err)
+			return fault
 		}
 		if a == observe.EngineKill {
 			fault.Level = 7
@@ -31,17 +31,17 @@ func plantedSecret(ch plan.Check, c observe.Controls, e Evidence) Result {
 			p := r.Details.Planted
 			a, err := observe.Attribute(r)
 			if err != nil {
-				panic(err)
+				return fault
 			}
 			if a != observe.Exited || !AcceptedInvocationCode(ch, inv.Key, r.End.Code) || p == nil || !p.AtimeMoved || !p.SameFile {
 				continue
 			}
 			if p.ControlEnd == nil {
-				panic("QP11: missing read control")
+				return fault
 			}
 			control, err := observe.Attribute(observe.Run{End: p.ControlEnd.End, Markers: p.ControlEnd.Markers})
 			if err != nil {
-				panic(err)
+				return fault
 			}
 			if control != observe.ConfinementKill {
 				return fault
@@ -56,7 +56,7 @@ func plantedSecret(ch plan.Check, c observe.Controls, e Evidence) Result {
 	}
 	for _, inv := range e.Invocations {
 		r := inv.Run
-		if r.Details.LeakScan.BoundReached || r.Details.LeakScan.Unreadable || r.StdoutCut || r.StderrCut {
+		if r.Details.LeakScan.BoundReached || r.Details.LeakScan.Unreadable {
 			return fault
 		}
 	}

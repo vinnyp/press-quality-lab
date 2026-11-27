@@ -37,7 +37,7 @@ func TestPR10StreamObjects(t *testing.T) {
 			}
 			want := Object{"bytes": int64(len(raw)), "sha256": fmt.Sprintf("%x", sha256.Sum256(kept)), "cut": len(raw) > 1<<20, "head": decoded.String()}
 			got := Stream(raw, int64(len(raw)), len(raw) > 1<<20, observe.StreamDetails{}, m)
-			if !reflect.DeepEqual(got, want) {
+			if !reflect.DeepEqual(Object(got), want) {
 				t.Fatalf("stream differs: got keys %d bytes %v head length %d", len(got), got["bytes"], len(fmt.Sprint(got["head"])))
 			}
 			if !bytes.Equal(raw, row.raw) {
@@ -53,7 +53,18 @@ func TestPR10RecordedHead(t *testing.T) {
 	d := observe.StreamDetails{Count: "17825792", Digest: strings.Repeat("a", 64), Head: head}
 	got := Stream(nil, 17<<20, true, d, nil)
 	want := Object{"bytes": int64(17 << 20), "sha256": strings.Repeat("a", 64), "cut": true, "head": head}
-	if !reflect.DeepEqual(got, want) {
+	if !reflect.DeepEqual(Object(got), want) {
 		t.Fatal("decoded recording head was changed")
+	}
+	for _, row := range []struct{ name, head, want string }{
+		{"Masked", "abcdefgh abcde", "******** "},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			d.Head = row.head
+			got := Stream(nil, 17<<20, true, d, NewMasker(nil, []string{"abcdefgh"}))
+			if got["head"] != row.want {
+				t.Fatalf("head %q", got["head"])
+			}
+		})
 	}
 }

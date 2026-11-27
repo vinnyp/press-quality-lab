@@ -1,3 +1,5 @@
+//go:build darwin || linux
+
 package throwaway
 
 import (
@@ -99,7 +101,7 @@ func TestHomeUnreadable(t *testing.T) {
 		t.Fatal(err)
 	}
 	calls := 0
-	after, err := snapshotHome(home, func(root *os.Root, name string) (*os.File, error) {
+	after, err := snapshotHome(home, func(root *os.Root, name string) (homeFile, error) {
 		calls++
 		info, e := root.Lstat(name)
 		if e != nil {
@@ -133,7 +135,7 @@ func TestHomeKinds(t *testing.T) {
 	if err := syscall.Mkfifo(filepath.Join(home, "fifo"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	after, err := snapshotHome(home, func(*os.Root, string) (*os.File, error) {
+	after, err := snapshotHome(home, func(*os.Root, string) (homeFile, error) {
 		t.Fatal("opened nonregular entry")
 		return nil, syscall.EACCES
 	})
@@ -257,7 +259,7 @@ func TestLeakScan(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	r, err = scanHome(bounds, "", homeScanForms(value), nil, nil, false, func(root *os.Root, name string) (*os.File, error) {
+	r, err = scanHome(bounds, "", homeScanForms(value), nil, nil, false, func(root *os.Root, name string) (homeFile, error) {
 		calls = append(calls, name)
 		info, e := root.Lstat(name)
 		if e != nil {

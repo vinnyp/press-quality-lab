@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -20,126 +21,229 @@ type HomeEntry struct {
 	Path, Kind, Digest string
 	Size               int64
 	Unreadable         bool
+	info               os.FileInfo
 }
 type HomeSnapshot struct {
 	Entries    []HomeEntry
 	Unreadable bool
 }
-type homeOpener func(*os.Root, string) (*os.File, error)
+type homeFile interface {
+	io.Reader
+	Stat() (os.FileInfo, error)
+	Close() error
+}
+type homeOpener func(*os.Root, string) (homeFile, error)
+type homeHooks struct {
+	entryLimit int
+	open       homeOpener
+	chmod      func(*os.Root, string, os.FileMode) error
+	now        func() time.Time
+}
 
-func openHomeFile(root *os.Root, name string) (*os.File, error) {
+func defaultHomeHooks(open homeOpener) homeHooks {
+	return homeHooks{open: open, chmod: func(r *os.Root, n string, m os.FileMode) error { return r.Chmod(n, m) }, now: time.Now, entryLimit: MaxWalkEntries}
+}
+
+const MaxHomeDepth = 256
+
+var errHomeUnreadable = errors.New("home entry unreadable")
+var errHomeDepth = errors.New("home depth bound reached")
+
+func homeBound(err error) bool {
+	return errors.Is(err, ErrEntryLimit) || errors.Is(err, ErrTimeLimit) || errors.Is(err, errHomeDepth)
+}
+func linked(info os.FileInfo) bool {
+	st, ok := info.Sys().(*syscall.Stat_t)
+	return !ok || st.Nlink > 1
+}
+func checkedHomeFile(root *os.Root, name string, h homeHooks) (homeFile, error) {
+	before, err := root.Lstat(name)
+	if err != nil {
+		return nil, err
+	}
+	if !before.Mode().IsRegular() || linked(before) {
+		return nil, errHomeUnreadable
+	}
+	if err := h.chmod(root, name, 0600); err != nil {
+		return nil, err
+	}
+	f, err := h.open(root, name)
+	if err != nil {
+		return nil, err
+	}
+	after, err := f.Stat()
+	if err != nil || !after.Mode().IsRegular() || !os.SameFile(before, after) || linked(after) {
+		return nil, errors.Join(errHomeUnreadable, err, f.Close())
+	}
+	return f, nil
+}
+
+// withParent resolves one component at a time, never re-resolving a full path.
+func withParent(root *os.Root, name string, fn func(*os.Root, string) error) (err error) {
+	parts := strings.Split(name, "/")
+	parent := root
+	for _, part := range parts[:len(parts)-1] {
+		next, e := parent.OpenRoot(part)
+		if parent != root {
+			e = errors.Join(e, parent.Close())
+		}
+		if e != nil {
+			if next != nil {
+				e = errors.Join(e, next.Close())
+			}
+			return e
+		}
+		parent = next
+	}
+	if parent != root {
+		defer func() { err = errors.Join(err, parent.Close()) }()
+	}
+	return fn(parent, parts[len(parts)-1])
+}
+
+func openHomeFile(root *os.Root, name string) (homeFile, error) {
 	return root.OpenFile(name, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
 }
 
-func homeNames(root *os.Root, reset bool) (entries []HomeEntry, err error) {
-	b := budget{remaining: MaxWalkEntries, deadline: time.Now().Add(MaxWalkDuration), now: time.Now}
-	var walk func(string) error
-	walk = func(name string) error {
-		if err := b.check(true); err != nil {
+func homeNames(root *os.Root, reset bool) ([]HomeEntry, error) {
+	return homeNamesWith(root, reset, defaultHomeHooks(openHomeFile))
+}
+func homeNamesWith(root *os.Root, reset bool, h homeHooks) (entries []HomeEntry, err error) {
+	b := budget{remaining: h.entryLimit, deadline: h.now().Add(MaxWalkDuration), now: h.now}
+	var walk func(*os.Root, string, int) error
+	walk = func(parent *os.Root, prefix string, depth int) (err error) {
+		if depth > MaxHomeDepth {
+			return errHomeDepth
+		}
+		if err := b.check(false); err != nil {
 			return err
-		}
-		info, err := root.Lstat(name)
-		if err != nil {
-			return err
-		}
-		kind := "special"
-		switch {
-		case info.Mode().IsRegular():
-			kind = "file"
-		case info.IsDir():
-			kind = "directory"
-		case info.Mode()&os.ModeSymlink != 0:
-			kind = "link"
-		}
-		if name != "." {
-			entries = append(entries, HomeEntry{Path: name, Kind: kind, Size: info.Size()})
-		}
-		if kind != "directory" {
-			return nil
 		}
 		if reset {
-			if err := root.Chmod(name, 0700); err != nil {
-				return err
+			if err := h.chmod(parent, ".", 0700); err != nil {
+				return errHomeUnreadable
 			}
 		}
-		f, err := root.OpenFile(name, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_DIRECTORY, 0)
+		f, err := parent.OpenFile(".", os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_DIRECTORY, 0)
 		if err != nil {
-			return err
+			return errHomeUnreadable
 		}
 		names := []string{}
 		for {
-			if err = b.check(false); err != nil {
-				return errors.Join(err, f.Close())
+			if e := b.check(false); e != nil {
+				return errors.Join(e, f.Close())
 			}
-			batch, readErr := f.Readdirnames(1)
+			batch, e := f.Readdirnames(1)
 			names = append(names, batch...)
 			if len(names) > b.remaining {
 				return errors.Join(ErrEntryLimit, f.Close())
 			}
-			if readErr == io.EOF {
+			if e == io.EOF {
 				break
 			}
-			if readErr != nil {
-				return errors.Join(readErr, f.Close())
+			if e != nil {
+				return errors.Join(errHomeUnreadable, f.Close())
 			}
 		}
-		if err = f.Close(); err != nil {
-			return err
+		if err := f.Close(); err != nil {
+			return errors.Join(errHomeUnreadable, err)
 		}
 		sort.Strings(names)
-		for _, child := range names {
-			if err := walk(path.Join(name, child)); err != nil {
-				return err
+		var unreadable error
+		for _, name := range names {
+			if err := b.check(true); err != nil {
+				return errors.Join(unreadable, err)
+			}
+			info, e := parent.Lstat(name)
+			if e != nil {
+				unreadable = errHomeUnreadable
+				continue
+			}
+			kind := "special"
+			switch {
+			case info.Mode().IsRegular():
+				kind = "file"
+			case info.IsDir():
+				kind = "directory"
+			case info.Mode()&os.ModeSymlink != 0:
+				kind = "link"
+			}
+			full := path.Join(prefix, name)
+			entries = append(entries, HomeEntry{Path: full, Kind: kind, Size: info.Size(), info: info})
+			if kind != "directory" {
+				continue
+			}
+			child, e := parent.OpenRoot(name)
+			if e != nil {
+				unreadable = errHomeUnreadable
+				continue
+			}
+			e = walk(child, full, depth+1)
+			e = errors.Join(e, child.Close())
+			if homeBound(e) {
+				return errors.Join(unreadable, e)
+			}
+			if e != nil {
+				unreadable = errHomeUnreadable
 			}
 		}
-		return nil
+		return unreadable
 	}
-	err = walk(".")
+	err = walk(root, "", 0)
 	sort.Slice(entries, func(i, j int) bool { return entries[i].Path < entries[j].Path })
 	return entries, err
 }
 
 // SnapshotHome reads names, kinds and regular-file contents, never link targets.
 func SnapshotHome(home string) (HomeSnapshot, error) { return snapshotHome(home, openHomeFile) }
-func snapshotHome(home string, open homeOpener) (out HomeSnapshot, err error) {
+func snapshotHome(home string, open homeOpener) (HomeSnapshot, error) {
+	return snapshotHomeWith(home, defaultHomeHooks(open))
+}
+func snapshotHomeWith(home string, hooks homeHooks) (out HomeSnapshot, err error) {
 	root, err := os.OpenRoot(home)
 	if err != nil {
-		return out, err
+		out.Unreadable = true
+		return out, nil
 	}
 	defer func() { err = errors.Join(err, root.Close()) }()
-	out.Entries, err = homeNames(root, true)
+	out.Entries, err = homeNamesWith(root, true, hooks)
 	if err != nil {
-		return out, err
+		out.Unreadable = true
+		err = nil
 	}
-	deadline := time.Now().Add(MaxWalkDuration)
+	deadline := hooks.now().Add(MaxWalkDuration)
 	for i := range out.Entries {
-		if time.Now().After(deadline) {
-			return out, ErrTimeLimit
+		if !hooks.now().Before(deadline) {
+			out.Unreadable = true
+			break
 		}
 		e := &out.Entries[i]
 		if e.Kind != "file" {
 			continue
 		}
-		if root.Chmod(e.Path, 0600) != nil {
-			e.Unreadable = true
-			out.Unreadable = true
-			continue
-		}
-		f, err := open(root, e.Path)
-		if err != nil {
-			e.Unreadable = true
-			out.Unreadable = true
-			continue
-		}
-		h := sha256.New()
-		_, readErr := io.Copy(h, deadlineReader{r: io.LimitReader(f, e.Size), deadline: deadline})
-		readErr = errors.Join(readErr, f.Close())
+		readErr := withParent(root, e.Path, func(parent *os.Root, name string) error {
+			f, err := checkedHomeFile(parent, name, hooks)
+			if err != nil {
+				return err
+			}
+			info, statErr := f.Stat()
+			if statErr != nil || !os.SameFile(e.info, info) {
+				return errors.Join(errHomeUnreadable, statErr, f.Close())
+			}
+			h := sha256.New()
+			_, readErr := io.Copy(h, io.LimitReader(deadlineReader{r: f, deadline: deadline, now: hooks.now}, e.Size))
+			readErr = errors.Join(readErr, f.Close())
+			if readErr == nil && !hooks.now().Before(deadline) {
+				readErr = ErrTimeLimit
+			}
+			if readErr == nil {
+				e.Digest = hex.EncodeToString(h.Sum(nil))
+			}
+			return readErr
+		})
 		if readErr != nil {
 			e.Unreadable = true
 			out.Unreadable = true
-			continue
 		}
-		e.Digest = hex.EncodeToString(h.Sum(nil))
 	}
 	return out, nil
 }
@@ -252,7 +356,13 @@ func plantBytes(root *os.Root, name, token string, data []byte) (string, error) 
 	return replaceCanary(root, name, token, data, rand.Reader)
 }
 func replaceCanary(root *os.Root, name, token string, data []byte, random io.Reader) (string, error) {
-	if bytes.Count(data, []byte(token)) != 1 {
+	count := 0
+	for start := 0; start <= len(data)-len(token); start++ {
+		if bytes.HasPrefix(data[start:], []byte(token)) {
+			count++
+		}
+	}
+	if count != 1 {
 		return "", errors.New("token must occur once")
 	}
 	var raw [16]byte
@@ -280,10 +390,15 @@ func replaceCanary(root *os.Root, name, token string, data []byte, random io.Rea
 type deadlineReader struct {
 	r        io.Reader
 	deadline time.Time
+	now      func() time.Time
 }
 
 func (r deadlineReader) Read(p []byte) (int, error) {
-	if !time.Now().Before(r.deadline) {
+	now := r.now
+	if now == nil {
+		now = time.Now
+	}
+	if !now().Before(r.deadline) {
 		return 0, ErrTimeLimit
 	}
 	return r.r.Read(p[:min(len(p), 64<<10)])

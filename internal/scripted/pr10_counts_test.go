@@ -33,7 +33,7 @@ func TestPR10RecordingCounts(t *testing.T) {
 			}
 		})
 	}
-	h["confinement"] = object{"applied": false, "sandbox_exec_exit": number("9007199254740992")}
+	h["confinement"] = object{"applied": false, "sandbox_exec_exit": number("9223372036854775808")}
 	if _, err := Read(strictjson.Write(h), strictjson.Write(b), nil); err == nil {
 		t.Fatal("accepted sandbox exit overflow")
 	}

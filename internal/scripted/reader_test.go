@@ -705,7 +705,7 @@ func expectedHostControls(t *testing.T, raw, host object) object {
 		home["control_detected"] = host["store_control"] == "detected"
 	}
 	planted := obj(expected["planted"])
-	if planted != nil && planted["control_end"] != nil {
+	if planted != nil && (planted["control_end"] != nil || host["read_calibration"] == "moved" && planted["atime_moved"] == true && planted["same_file"] == true && obj(expected["end"])["kind"] == "exit" && obj(expected["markers"])["confinement"] == true && obj(expected["markers"])["could_not_start"] == false) {
 		end := object{"kind": "exit", "code": number("0")}
 		if host["read_control"] == "killed" {
 			end = object{"kind": "signal", "signal": "SIGKILL", "by": "confinement"}

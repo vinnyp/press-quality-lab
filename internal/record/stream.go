@@ -10,7 +10,9 @@ import (
 
 // Stream builds QE10's four fields from raw capture facts. Masking precedes
 // both display cuts; the digest and byte count always describe unmasked bytes.
-func Stream(raw []byte, seen int64, cut bool, details observe.StreamDetails, masker *Masker) Object {
+type streamObject Object
+
+func Stream(raw []byte, seen int64, cut bool, details observe.StreamDetails, masker *Masker) streamObject {
 	kept := raw
 	if len(kept) > 1<<20 {
 		kept = kept[:1<<20]
@@ -20,7 +22,8 @@ func Stream(raw []byte, seen int64, cut bool, details observe.StreamDetails, mas
 	if details.Count != "" && !details.Kept {
 		// A sealed cut recording supplies its digest and decoded display head,
 		// rather than kept bytes. Real captures always supply raw bytes here.
-		return Object{"bytes": seen, "sha256": details.Digest, "cut": cut, "head": masker.Mask(details.Head)}
+		head, _ := masker.transform(details.Head, false)
+		return streamObject{"bytes": seen, "sha256": details.Digest, "cut": cut, "head": head}
 	}
 	display = masker.Mask(display)
 	if len(display) > 64<<10 {
@@ -32,5 +35,5 @@ func Stream(raw []byte, seen int64, cut bool, details observe.StreamDetails, mas
 		head.WriteRune(r)
 		display = display[n:]
 	}
-	return Object{"bytes": seen, "sha256": digest, "cut": cut, "head": head.String()}
+	return streamObject{"bytes": seen, "sha256": digest, "cut": cut, "head": head.String()}
 }
