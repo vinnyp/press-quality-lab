@@ -46,8 +46,8 @@ for case, expected in [
     if any(not allowed.fullmatch(m.group()) for m in email.finditer(case)) != expected:
         sys.exit(f'self-test failed: {case}')
 def scan_paths(index, working, names):
-    paths = [index / name for name in names]
-    paths.extend(working / name for name in names
+    paths = [(index / name, f'index:{name}') for name in names]
+    paths.extend((working / name, f'working:{name}') for name in names
                  if (working / name).exists() or (working / name).is_symlink())
     return paths
 
@@ -56,8 +56,7 @@ def blob(path):
 
 def problems(paths):
     found = []
-    for path in paths:
-        label = 'commit-messages' if path == scratch / 'messages' else str(path)
+    for path, label in paths:
         for number, line in enumerate(blob(path).decode('utf-8', errors='replace').splitlines(), 1):
             if home.search(line):
                 found.append(f'{label}:{number}: home path')
@@ -79,6 +78,8 @@ for name in ('MissingHome', 'MissingEmail', 'StagedHome', 'WorkingHome',
     disk.write_text('clean')
     def check(expected):
         actual = problems(scan_paths(index, working, ['file']))
+        if any(str(base) in finding for base in (pathlib.Path.cwd(), scratch) for finding in actual):
+            sys.exit('self-test failed: absolute finding label')
         if actual != expected:
             sys.exit(f'self-test failed: {name}: expected {expected}, got {actual}')
     check([])
@@ -97,23 +98,26 @@ for name in ('MissingHome', 'MissingEmail', 'StagedHome', 'WorkingHome',
     if name == 'MissingClean':
         check([])
     elif name == 'WorkingHome':
-        check([f'{disk}:1: home path'])
+        check(['working:file:1: home path'])
     elif name == 'SymlinkHome':
-        check([f'{staged}:1: home path', f'{disk}:1: home path'])
+        check(['index:file:1: home path', 'working:file:1: home path'])
     else:
         kind = 'email' if name == 'MissingEmail' else 'home path'
-        check([f'{staged}:1: {kind}'])
+        check([f'index:file:1: {kind}'])
 
 names = [os.fsdecode(p) for p in (scratch / 'tracked').read_bytes().split(b'\0') if p]
 paths = scan_paths(scratch / 'index', pathlib.Path.cwd(), names)
 # Copy blob bytes, including link text, for gitleaks; never follow a symlink.
-for path in paths:
+for path, label in paths:
     source = scratch / 'index' if path.is_relative_to(scratch / 'index') else pathlib.Path.cwd()
     tree = 'index' if source == scratch / 'index' else 'working'
     target = scratch / 'files' / tree / path.relative_to(source)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(blob(path))
-found = problems(paths + ([scratch / 'messages'] if (scratch / 'messages').exists() else []))
+copied = [path for path in (scratch / 'files').rglob('*') if path.is_file()]
+if not copied or len(copied) != len(paths):
+    sys.exit('gitleaks input coverage failed: copied file count differs from scanned paths or is empty')
+found = problems(paths + ([(scratch / 'messages', 'commit-messages')] if (scratch / 'messages').exists() else []))
 for problem in found:
     print(problem)
 sys.exit(bool(found))
@@ -121,7 +125,7 @@ PY
 leaks() {
  local rc=0
  rm -f "$tmp/leaks.json"
- gitleaks "$@" --report-format json --report-path "$tmp/leaks.json" || rc=$?
+ gitleaks "$@" --report-format json --report-path "$tmp/leaks.json" >"$tmp/gitleaks.log" 2>&1 || rc=$?
  if [[ "$rc" != 0 ]]; then
   if [[ -f "$tmp/leaks.json" ]]; then
    python3 - "$tmp/leaks.json" "$tmp/files/" <<'PYREPORT'
@@ -132,12 +136,30 @@ for hit in json.load(open(sys.argv[1])):
     base = os.path.abspath(sys.argv[2])
     if os.path.commonpath([normalized, base]) == base:
         path = os.path.relpath(normalized, base)
+    elif os.path.isabs(path):
+        path = os.path.relpath(normalized, os.getcwd())
+    if os.path.isabs(path) or path == '..' or path.startswith('../'):
+        sys.exit('gitleaks report contained a path outside the scan roots')
     print(f"{path}:{hit['StartLine']}: secret")
 PYREPORT
   fi
   fail "gitleaks scan failed (exit $rc)"
  fi
 }
+# A known secret must reach the detector before trusting its clean result.
+mkdir "$tmp/secret-control"
+python3 - "$tmp/secret-control/token" <<'PYCONTROL'
+import pathlib, sys
+pathlib.Path(sys.argv[1]).write_text('gh' + 'p_' + '7rQ9vLm2Nf8sKp4Wx6Yt3Za5Bc0De1Fg2Hi3')
+PYCONTROL
+control_rc=0
+gitleaks dir --no-banner --redact --exit-code 1 --report-format json --report-path "$tmp/control.json" "$tmp/secret-control" >"$tmp/control.log" 2>&1 || control_rc=$?
+[[ "$control_rc" == 1 ]] || fail 'gitleaks control did not flag the synthetic token'
+python3 - "$tmp/control.json" <<'PYCONTROLREPORT' || fail 'gitleaks control report did not identify the synthetic token'
+import json, pathlib, sys
+hits = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert any(pathlib.Path(hit['File']).name == 'token' and hit['RuleID'] == 'github-pat' for hit in hits)
+PYCONTROLREPORT
 leaks dir --no-banner --redact --exit-code 1 "$tmp/files"
 if [[ -n "${SCAN_COMMITS:-}" ]]; then
  leaks git --no-banner --redact --exit-code 1 --log-opts="$SCAN_COMMITS" .
