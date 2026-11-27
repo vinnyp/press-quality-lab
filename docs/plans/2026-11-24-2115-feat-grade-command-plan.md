@@ -899,7 +899,7 @@ Waits on: PR7 and PR9, needed before this group can start. Its predicted ratchet
   - each injected value is shown present before masking, and absent afterwards from the store, the streams and the scorecard, in each §4 encoding;
   - a declared value holding a character the escaper rewrites is masked;
   - the per-run directory holding the planted file is gone after the run.
-- **Verification:** the test finds no unmasked value, and QE18 leaves KTD22's list.
+- **Verification:** the test finds no unmasked value. QE18 stays on KTD22's list until its `macos_evidence` entry (GR15), the darwin path (PR15) and the scorecard (U18) exist. (Amended 2026-11-27: the plan first moved QE18 here, against KTD22 and GR15.)
 
 ### PR11: the macOS self-test track
 
