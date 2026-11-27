@@ -251,9 +251,6 @@ func TestMacOSAllowances(t *testing.T) {
 				}
 				t.Run(row.name, func(t *testing.T) {
 					program := binary
-					if row.operation == "system_info" {
-						program = "/usr/bin/sqlite3"
-					}
 					s := newNecessityScenarioProgram(t, binary, program, computation)
 					homeFile := filepath.Join(s.files.Home, "value")
 					declared := filepath.Join(filepath.Dir(s.files.Outside), "declared")
@@ -282,9 +279,6 @@ func TestMacOSAllowances(t *testing.T) {
 						}
 					}
 					words := []string{SelfTestMode, "u16_allowance", row.operation, argument}
-					if row.operation == "system_info" {
-						words = []string{"-batch", filepath.Join(s.files.Home, "allowance.db"), "PRAGMA journal_mode=WAL; DROP TABLE IF EXISTS witness; CREATE TABLE witness(value); INSERT INTO witness VALUES(7); SELECT value FROM witness; PRAGMA integrity_check;"}
-					}
 					if row.startup {
 						s.inv.Fast = true
 						words = nil

@@ -162,6 +162,13 @@ func u16Allowance(op,path string) int {
   var stat unix.Statfs_t
   err=unix.Statfs(path,&stat)
  case "service":err=selfTestService(path)
+ case "system_info":
+  var uuid [16]byte
+  timeout:=unix.Timespec{Sec:1}
+  _,_,errno:=syscall.Syscall(syscall.SYS_GETHOSTUUID,uintptr(unsafe.Pointer(&uuid[0])),uintptr(unsafe.Pointer(&timeout)),0)
+  // gethostuuid is the system-info operation used by SQLite's Darwin locking.
+  result=fmt.Sprintf("gethostuuid ok=%t errno=%d",uuid!=[16]byte{},errno)
+  if errno!=0{err=errno}
  case "groups":err=selfTestSysctl([]int32{1,18})
  case "memory":err=selfTestSysctl([]int32{6,24})
  case "pipeline":

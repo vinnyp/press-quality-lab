@@ -178,7 +178,7 @@ func necessityAllowanceControl(row necessityAllowance, r observe.Run) bool {
 		return len(r.Stdout) == 0
 	}
 	if row.operation == "system_info" {
-		return string(r.Stdout) == "wal\n7\nok\n"
+		return string(r.Stdout) == "attempt_system_info\nreturned gethostuuid ok=true errno=0\n"
 	}
 	if row.operation == "child" {
 		return string(r.Stdout) == "attempt_child\nchild_ok\n"
@@ -388,21 +388,21 @@ func necessityAllowanceRemoval(row necessityAllowance, r observe.Run) bool {
 		return necessityEvaluated(r, true) && r.End.Signal == 0 && r.End.Code == 1 && string(r.Stdout) == "attempt_pipeline\nreturned pipeline id_status=0 sort_status=9\n" && len(r.Stderr) == 0
 	}
 	output := "attempt_" + row.operation + "\n"
-	if row.startup || row.operation == "system_info" {
+	if row.startup {
 		output = ""
 	}
 	return necessityEvaluated(r, !row.startup) && r.End.Signal == 9 && string(r.Stdout) == output && len(r.Stderr) == 0
 }
 
 func TestNecessityRevisedResults(t *testing.T) {
-	// QH6, QH11, QH15, QH16: paired literal outputs distinguish startup, SQLite writes, and a killed pipeline child.
+	// KTD14, QH6, QH11, QH15, QH16: paired literal outputs distinguish startup, host UUID lookup, and a killed pipeline child.
 	for _, row := range []struct {
 		name             string
 		allowance        necessityAllowance
 		control, removed observe.Run
 	}{
 		{"Startup", necessityAllowance{startup: true}, observe.Run{Markers: observe.Markers{Confinement: true}}, observe.Run{End: observe.End{Signal: 9}}},
-		{"SQLite", necessityAllowance{operation: "system_info"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("wal\n7\nok\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}}},
+		{"HostUUID", necessityAllowance{operation: "system_info"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_system_info\nreturned gethostuuid ok=true errno=0\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}, Stdout: []byte("attempt_system_info\n")}},
 		{"Pipeline", necessityAllowance{operation: "pipeline"}, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_pipeline\nreturned pipeline uid_ok=true\n")}, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Code: 1}, Stdout: []byte("attempt_pipeline\nreturned pipeline id_status=0 sort_status=9\n")}},
 	} {
 		t.Run(row.name, func(t *testing.T) {

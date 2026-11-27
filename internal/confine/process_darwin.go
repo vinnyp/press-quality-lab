@@ -177,6 +177,44 @@ func drainLimit(r io.ReadCloser, limit int) *capture {
 		buf := make([]byte, 32*1024)
 		for {
 			n, err := r.Read(buf)
+			if errors.Is(err, os.ErrDeadlineExceeded) && c.reader != nil {
+				// The poll deadline may expire before this goroutine runs,
+				// even when all writers have closed. Inspect the nonblocking
+				// pipe once: queued bytes and EOF are still observable.
+				raw, rawErr := c.reader.SyscallConn()
+				if rawErr == nil {
+					rawErr = raw.Control(func(fd uintptr) {
+						fds := []unix.PollFd{{Fd: int32(fd), Events: unix.POLLIN}}
+						_, pollErr := unix.Poll(fds, 0)
+						if pollErr != nil {
+							err = pollErr
+							return
+						}
+						// Only drain after HUP: a live inherited writer must
+						// still be bounded by the original deadline.
+						if fds[0].Revents&unix.POLLHUP != 0 {
+							for {
+								n, err = unix.Read(int(fd), buf)
+								if err != unix.EINTR {
+									break
+								}
+							}
+							if n < 0 {
+								n = 0
+							}
+						}
+					})
+					if err == nil && n == 0 {
+						err = io.EOF
+					}
+					if err == unix.EAGAIN {
+						err = os.ErrDeadlineExceeded
+					}
+				}
+				if rawErr != nil {
+					err = rawErr
+				}
+			}
 			c.seen += int64(n)
 			keep := min(n, limit-len(c.head))
 			c.head = append(c.head, buf[:keep]...)
