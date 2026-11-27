@@ -233,3 +233,7 @@ QA9's table fixes, for each predicate, whether an empty target satisfies it. The
 - `stderr_contains` would hold on an empty standard error.
 
 **For `stdout_equals`, `stdout_contains`, `stdout_not_contains` and `stderr_contains`, a literal expected value that is the empty string rejects the subject file, as QA9's "Matching types" says for a value of the wrong type. A computation that supplies the empty string for one of them is `computation_failed`, as E-48 says.** An empty output is asserted only by `stdout_empty`, with its precondition. The owner ruled on 2026-11-27. No case of the corpus has an empty expected string, so no record changes.
+
+### E-51. A capture of a step that depends on a placeholder
+
+QS5 says nothing that depends on a placeholder runs, and its list names no captures. QA4 lets a computation capture an earlier step's standard output. **A check whose computation captures a step whose command depends on a placeholder depends on that placeholder, so it is not observed with `placeholder_unfilled` (QS5, level 2). This holds whether the captured step has a required check of its own, which then stops the runbook, or has none and does not run (E-49).** The owner ruled on 2026-11-27. No case of the corpus has such a capture, so no record changes.
