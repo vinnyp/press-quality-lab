@@ -1,6 +1,9 @@
 package observe
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestDroppedRunProjection(t *testing.T) {
 	// QT5, QE10: an intentionally discarded capture cannot masquerade as empty bytes.
@@ -34,5 +37,19 @@ func TestUnrepresentableKillProjection(t *testing.T) {
 				t.Fatal(got, err)
 			}
 		})
+	}
+}
+
+func TestConfinementKillBeforeBudget(t *testing.T) {
+	// QH21, QO4, QT5: completed confinement kills retain attribution and projection.
+	r := Run{End: End{EngineKilled: false, BudgetExpired: false, RunningAtBudget: false, Signal: 9}, Markers: Markers{Confinement: true}}
+	a, err := Attribute(r)
+	if err != nil || a != ConfinementKill {
+		t.Fatalf("attribution=%v err=%v", a, err)
+	}
+	got, err := ProjectEnd(r.End, r.Markers)
+	want := map[string]any{"kind": "signal", "signal": "SIGKILL", "by": "confinement"}
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Fatalf("projection=%v err=%v", got, err)
 	}
 }

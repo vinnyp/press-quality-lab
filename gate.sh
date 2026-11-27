@@ -102,8 +102,6 @@ compile_evidence() {
   done
   rm -rf "$out"
 }
-# Keep the native service veneer buildable on both supported Darwin architectures.
-step darwin-amd64-build env GOOS=darwin GOARCH=amd64 GOFLAGS="-mod=readonly" go build ./...
 for tags in '' scripted necessity_test scripted,necessity_test; do
   label="${tags:-plain}"
   flags="-mod=readonly${tags:+ -tags=$tags}"

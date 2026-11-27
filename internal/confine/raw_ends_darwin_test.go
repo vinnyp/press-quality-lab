@@ -3,7 +3,6 @@ package confine
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"os"
 	"path/filepath"
 	"slices"
@@ -103,11 +102,7 @@ func TestRawConfinementKillBeforeBudget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	a, err := observe.Attribute(r)
-	if err != nil || a != observe.ConfinementKill {
-		t.Fatalf("attribution=%v err=%v run=%+v", a, err, r)
-	}
-	if _, err := observe.ProjectEnd(r.End, r.Markers); err != nil {
-		t.Fatal(err)
+	if r.End.EngineKilled || r.End.BudgetExpired || r.End.RunningAtBudget || r.End.Signal != 9 || !r.Markers.Confinement {
+		t.Fatalf("completed kill facts=%+v markers=%+v", r.End, r.Markers)
 	}
 }

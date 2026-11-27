@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -16,6 +17,9 @@ import (
 // program in the grade's subject or computation profile; real subject data is
 // never used as an attempted target. The caller owns workspace removal.
 func RunControlSuite(workspace *throwaway.Workspace, copies *Copies, subject, computation Invocation) (facts ControlFacts, err error) {
+	if runtime.GOARCH != "arm64" {
+		return facts, fmt.Errorf("confinement self-test requires darwin/arm64")
+	}
 	if workspace == nil || copies == nil {
 		return facts, fmt.Errorf("control workspace and copies required")
 	}
