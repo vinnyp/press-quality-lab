@@ -34,7 +34,7 @@ The loop runs each runbook of the required set step by step, in the order writte
    - a check without a cut capture then has its own computation keys served, the precondition before the expected value.
 
    Two checks of one step can name equal computations. Such a key is served once and both checks read it. Two computations of one step with equal argument lists that differ in anything else reject the subject file with exit 2 (E-52), a rule the subject checks gain in QA4's place in E-9's order.
-5. **Resolving.** Each check is resolved from levels 1 to 8. Its evidence is its own step run and its own computation runs. A captured step's run is kept apart, in `Evidence.Captures`. Only two rules read it: level 1, which makes the check `network_unverifiable` when the captured run was not confined (E-53), and level 6's cut-capture rule. No other level, level 7 above all, ever judges it. A capture with no run in `Evidence.Captures` is an engine fault, exit 70, never read as uncut.
+5. **Resolving.** Each check is resolved from levels 1 to 8. Its evidence is its own step run and its own computation runs. A captured step's run is kept apart, in `Evidence.Captures`. Only two rules read it, and each reads only the runs of steps the check's own computations name in `captures`: level 1, which makes the check `network_unverifiable` when such a run was not confined (E-53), and level 6's cut-capture rule. At level 1 a named capture with no run is skipped, since level 2, 4 or 6 decides it. No other level, level 7 above all, ever judges it. A capture with no run in `Evidence.Captures` is an engine fault, exit 70, never read as uncut.
 6. **A step with no required check** still runs in its place (E-49), so the shared home and its captures are what the author wrote. `decide.StepRuns` says whether it runs. It does not run when:
    - the runbook has stopped;
    - a grade-wide QO1 condition holds;
@@ -218,6 +218,7 @@ Their mutations are fixed now:
    **Its rules,** for each runbook of the required set:
    - **When a runbook stops.** A runbook has stopped after the first step that has a required check whose prediction, before QS5's override, is not held or not observed. A prediction that ends held at level 8 and is then overridden by QS5 counts as held.
    - **When a step is served.** It is served once, in step order, while the runbook has not stopped, and when at least one of its required checks is decided neither at levels 2 to 4, nor by a grade-wide QO1 condition, nor by the grade-wide copy fact. A check that QO1 decides on its own run still has its step served. A step with no required check is served unless one of E-49's exceptions applies. No step is served after a stop.
+   - **E-53 before serving.** A check that captures a step whose run was not confined is decided at level 1 before its step is served, so a step all of whose required checks are decided that way is not served.
    - **When a computation is served.** A check's computation keys are served after its step's key, in check order, precondition first. That happens when the check passes step 2's levels and has no cut capture. A computation key shared by two checks of the step is served once.
    - **Destructive runbooks.** No key of one is served, judged from the subject file's classes.
 
