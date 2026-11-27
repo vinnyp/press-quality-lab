@@ -44,18 +44,37 @@ for case, expected in [
 ]:
     if any(not allowed.fullmatch(m.group()) for m in email.finditer(case)) != expected:
         sys.exit(f'self-test failed: {case}')
-hits = False
-paths = [pathlib.Path(p.decode()) for p in (scratch / 'tracked').read_bytes().split(b'\0') if p]
-for path in paths + ([scratch / 'messages'] if (scratch / 'messages').exists() else []):
-    label = 'commit-messages' if path == scratch / 'messages' else str(path)
-    for number, line in enumerate(path.read_bytes().decode('utf-8', errors='replace').splitlines(), 1):
-        if home.search(line):
-            print(f'{label}:{number}: home path')
-            hits = True
-        if any(not allowed.fullmatch(m.group()) for m in email.finditer(line)):
-            print(f'{label}:{number}: email')
-            hits = True
-sys.exit(hits)
+def existing_paths(paths):
+    return [path for path in paths if path.exists()]
+
+def problems(paths):
+    found = []
+    for path in paths:
+        label = 'commit-messages' if path == scratch / 'messages' else str(path)
+        for number, line in enumerate(path.read_bytes().decode('utf-8', errors='replace').splitlines(), 1):
+            if home.search(line):
+                found.append(f'{label}:{number}: home path')
+            if any(not allowed.fullmatch(m.group()) for m in email.finditer(line)):
+                found.append(f'{label}:{number}: email')
+    return found
+
+# Public-by-default controls: skip a deleted index entry without hiding a
+# home path in an existing file. Both controls use the production functions.
+control = scratch / 'existing'
+control.write_text('/ho' + 'me/synthetic/file')
+missing = scratch / 'deleted'
+if existing_paths([missing, control]) != [control]:
+    sys.exit('self-test failed: deleted tracked path filtering')
+if problems(existing_paths([missing, control])) != [f'{control}:1: home path']:
+    sys.exit('self-test failed: existing tracked home path')
+
+paths = existing_paths([pathlib.Path(p.decode()) for p in (scratch / 'tracked').read_bytes().split(b'\0') if p])
+# Python, tar and gitleaks all consume this same filtered list.
+(scratch / 'tracked').write_bytes(b''.join(bytes(path) + b'\0' for path in paths))
+found = problems(paths + ([scratch / 'messages'] if (scratch / 'messages').exists() else []))
+for problem in found:
+    print(problem)
+sys.exit(bool(found))
 PY
 tar --null -T "$tmp/tracked" -cf "$tmp/tracked.tar"
 tar -xf "$tmp/tracked.tar" -C "$tmp/files"

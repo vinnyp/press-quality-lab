@@ -178,27 +178,38 @@ func TestScaling(t *testing.T) {
 		}
 		large := scaleInput(16000)
 		measureTime := func(input []byte) time.Duration {
-			best := time.Duration(1<<63 - 1)
-			for i := 0; i < 5; i++ {
-				runtime.GC()
-				start := time.Now()
-				out, code, defect := Safe(Judge, input)
-				elapsed := time.Since(start)
-				if defect != nil || code != 4 || len(out) == 0 {
-					t.Fatalf("timing fixture: code=%d defect=%v", code, defect)
-				}
-				best = min(best, elapsed)
+			runtime.GC()
+			start := time.Now()
+			out, code, defect := Safe(Judge, input)
+			elapsed := time.Since(start)
+			if defect != nil || code != 4 || len(out) == 0 {
+				t.Fatalf("timing fixture: code=%d defect=%v", code, defect)
 			}
-			return best
+			return elapsed
 		}
-		// Minima reduce scheduler noise; a 16x size change separates near-linear
-		// work from quadratic CPU work even with a generous 40x allowance.
-		smallTime, largeTime := measureTime(small), measureTime(large)
-		ratio := float64(largeTime) / float64(smallTime)
-		t.Logf("16x input: %.2fx time (%s, %s)", ratio, smallTime, largeTime)
-		if ratio > 40 {
-			t.Fatalf("time ratio %.2f approaches quadratic growth", ratio)
+		// The scaling guard catches quadratic CPU work. Interleave inputs so
+		// both see similar load, and alternate order to avoid a first-run bias.
+		// Minima suppress pauses; require all independent attempts to exceed
+		// the bound before failing on a shared, potentially busy machine.
+		const attempts, rounds = 3, 10
+		for attempt := 0; attempt < attempts; attempt++ {
+			smallTime, largeTime := time.Duration(1<<63-1), time.Duration(1<<63-1)
+			for round := 0; round < rounds; round++ {
+				if round%2 == 0 {
+					smallTime = min(smallTime, measureTime(small))
+					largeTime = min(largeTime, measureTime(large))
+				} else {
+					largeTime = min(largeTime, measureTime(large))
+					smallTime = min(smallTime, measureTime(small))
+				}
+			}
+			ratio := float64(largeTime) / float64(smallTime)
+			t.Logf("attempt %d: 16x input: %.2fx time (%s, %s)", attempt+1, ratio, smallTime, largeTime)
+			if ratio <= 40 {
+				return
+			}
 		}
+		t.Fatalf("time ratio exceeded 40 in all %d attempts; approaches quadratic growth", attempts)
 	})
 
 	// A shared id must not cause each check to scan all matching trials.
