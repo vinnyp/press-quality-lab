@@ -43,16 +43,28 @@ func SelfTestDecoyHidden() int {
 	}
 	// A fixed signature and the ports certify that all three endpoints exist.
 	// A loader diagnostic or panic cannot be mistaken for a readiness message.
-	// The process stays alive as the foreign-process decoy until the parent reaps it.
+	// Only the parent holds the lifetime pipe writer; engine death closes it.
 	var ready [12]byte
 	copy(ready[:8], "pql-dec:")
 	copy(ready[8:], ports[:])
 	if n, err := unix.Write(1, ready[:]); err != nil || n != len(ready) {
 		return 70
 	}
+	return selfTestDecoyParent()
+}
+
+func selfTestDecoyParent() int {
+	var b [1]byte
 	for {
-		if _, err := unix.Select(0, nil, nil, nil, nil); err != nil && err != unix.EINTR {
+		n, err := unix.Read(3, b[:])
+		if err == unix.EINTR {
+			continue
+		}
+		if err != nil {
 			return 70
+		}
+		if n == 0 {
+			return 0
 		}
 	}
 }

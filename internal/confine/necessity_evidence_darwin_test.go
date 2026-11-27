@@ -87,8 +87,8 @@ func newNecessityScenarioProgram(t *testing.T, launcher, program string, computa
 		values["BIN_DIR"] = "/bin"
 		values["USR_BIN_DIR"] = "/usr/bin"
 		values["TTY_DEVICE"] = "/dev/tty"
-		values["SUBJECT"] = files.Outside
-		values["SUBJECT_COPY"] = files.Outside
+		values["SUBJECT"] = filepath.Join(files.Home, "absent_subject")
+		values["SUBJECT_COPY"] = filepath.Join(files.Home, "absent_subject_copy")
 	}
 	inv := Invocation{Workspace: w, Paths: Paths{Values: values}, Directory: files.Home, Computation: computation, Budget: 10 * time.Second}
 	decoy, err := startSelfTestDecoy(l, files.Home, w)
@@ -146,13 +146,14 @@ func (s *necessityScenario) run(t *testing.T, words []string, grant *necessityGr
 
 func (s *necessityScenario) witnesses(t *testing.T, g *necessityGrant, repeat int) ([]string, []observe.Run) {
 	t.Helper()
-	names := []string{"tcp", "unix", "udp", "bind", "listen", "read", "map", "write", "create", "service", "sysctl", "arguments", "environment", "process", "signal", "codesign", "priority", "resource"}
-	if s.inv.Computation {
-		names = append(names, "setsid", "setpgid", "allowed_child")
-	} else {
-		names = append(names, "child")
+	var names []string
+	for _, program := range SelfTestPrograms(s.inv.Computation) {
+		name := program.Name
+		if name == "child" && s.inv.Computation {
+			name = "allowed_child"
+		}
+		names = append(names, name)
 	}
-	names = append(names, "clean")
 	runs := make([]observe.Run, 0, len(names))
 	for _, name := range names {
 		target := ""
@@ -214,11 +215,17 @@ func TestMacOSNecessity(t *testing.T) {
 						}
 						// Control and changed profile share their private executable pair.
 						names, control := s.witnesses(t, nil, 2*repeat)
+						if !necessityProductionPassed(computation, control) {
+							t.Fatal("production oracle refused control")
+						}
 						problems, err := necessityProblems(names, control)
 						if err != nil || len(problems) != 0 {
 							t.Fatalf("repeat %d control: %v %v runs=%+v", repeat, problems, err, control)
 						}
 						names, runs := s.witnesses(t, &grant, 2*repeat+1)
+						if necessityProductionPassed(computation, runs) {
+							t.Fatal("production oracle accepted grant")
+						}
 						problems, err = necessityProblems(names, runs)
 						if err != nil || !slices.Equal(problems, grant.programs) {
 							t.Fatalf("repeat %d problems=%v want=%v error=%v runs=%+v", repeat, problems, grant.programs, err, runs)
@@ -293,6 +300,10 @@ func TestMacOSAllowances(t *testing.T) {
 					}
 					t.Logf("removed=%s startup=%t repeats=25", line, row.startup)
 					steps := []necessityAllowance{row}
+					// QH16: retain the pipeline smoke after the isolated QH11 page-size witness.
+					if row.name == "PageSize" {
+						steps = append(steps, necessityAllowance{operation: "pipeline"})
+					}
 					if row.operation == "system_info" {
 						var stat unix.Statfs_t
 						if err := unix.Statfs(s.files.Home, &stat); err != nil {
@@ -306,6 +317,9 @@ func TestMacOSAllowances(t *testing.T) {
 					for _, row := range steps {
 						for repeat := range 25 {
 							stepWords := words
+							if row.operation == "pipeline" {
+								stepWords = []string{SelfTestMode, "u16_allowance", "pipeline", ""}
+							}
 							if row.operation == "sqlite" {
 								stepWords = []string{SelfTestMode, "u16_allowance", "sqlite", filepath.Join(s.files.Home, fmt.Sprintf("sqlite_%d_control.db", repeat))}
 							}
@@ -411,5 +425,54 @@ func (s *necessityScenario) refreshDecoy(t *testing.T) {
 	s.decoy, err = startSelfTestDecoy(l, files.Home, s.w)
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func necessityProductionPassed(computation bool, runs []observe.Run) bool {
+	// Pair with a literal, known passing opposite profile; production evaluates both.
+	names := []string{"tcp", "unix", "udp", "bind", "listen", "read", "map", "write", "create", "service", "sysctl", "arguments", "environment", "process", "signal", "codesign", "priority", "resource"}
+	if !computation {
+		names = append(names, "setsid", "setpgid")
+	}
+	var other []observe.Run
+	for _, name := range names {
+		other = append(other, observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}, Stdout: []byte("attempt_" + name + "\n")})
+	}
+	child := observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}, Stdout: []byte("attempt_child\n")}
+	if !computation {
+		child.End.Signal = 0
+		child.Stdout = []byte("attempt_child\nchild_ok\n")
+	}
+	other = append(other, child, observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("clean_value\n")})
+	if computation {
+		return SelfTestPassed(other, runs)
+	}
+	return SelfTestPassed(runs, other)
+}
+
+func TestMacOSSelfTestDecoyIntegrity(t *testing.T) {
+	// QH9: even a suite with the expected kills fails if a decoy changed.
+	binary := necessityBuild(t, false)
+	for _, name := range []string{"Outside", "Create"} {
+		t.Run(name, func(t *testing.T) {
+			s := newNecessityScenario(t, binary, false)
+			// runProfileSelfTest owns its own decoy, so close the scenario's first.
+			if err := s.decoy.close(); err != nil {
+				t.Fatal(err)
+			}
+			s.decoy = nil
+			path := s.files.Outside
+			if name == "Create" {
+				path = s.files.Create
+			}
+			if err := os.WriteFile(path, []byte("changed"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			launcher, program := s.c.CopyPaths()
+			_, err := runProfileSelfTest(s.c, selfTestInvocation(s.inv, s.files, s.w), launcher, program, s.files)
+			if err == nil {
+				t.Fatal("changed decoy passed suite")
+			}
+		})
 	}
 }

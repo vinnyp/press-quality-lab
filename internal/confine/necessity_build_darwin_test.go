@@ -173,6 +173,7 @@ func u16Allowance(op,path string) int {
   err=syscall.Exec("/usr/bin/sqlite3",[]string{"sqlite3","-batch","-bail",path,"PRAGMA journal_mode=WAL; CREATE TABLE probe(value); INSERT INTO probe VALUES(1); SELECT 'returned value=' || value FROM probe;"},[]string{"HOME="+filepath.Dir(path),"LC_ALL=C"})
  case "groups":err=selfTestSysctl([]int32{1,18})
  case "memory":err=selfTestSysctl([]int32{6,24})
+ case "pagesize":err=selfTestSysctl([]int32{6,7})
  case "pipeline":
   out,e:=u16Pipeline();err=e
   if e!=nil{if writeErr:=selfTestOutput("returned "+e.Error()+"\n");writeErr!=nil{return LauncherFailed};return 1}

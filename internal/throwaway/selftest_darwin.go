@@ -17,6 +17,7 @@ type SelfTestFiles struct {
 	workspace                                 *Workspace
 	calibrationName                           string
 	identity                                  syscall.Stat_t
+	outsideIdentity                           syscall.Stat_t
 }
 
 func (w *Workspace) PrepareSelfTest() (_ *SelfTestFiles, err error) {
@@ -65,6 +66,14 @@ func (w *Workspace) PrepareSelfTest() (_ *SelfTestFiles, err error) {
 	if !ok || !info.Mode().IsRegular() {
 		return nil, fmt.Errorf("invalid calibration file")
 	}
+	outside, err := root.Lstat("outside")
+	if err != nil {
+		return nil, err
+	}
+	outsideStat, ok := outside.Sys().(*syscall.Stat_t)
+	if !ok {
+		return nil, fmt.Errorf("invalid outside decoy")
+	}
 	workspacePath, err := filepath.Abs(w.path)
 	if err != nil {
 		return nil, err
@@ -77,7 +86,7 @@ func (w *Workspace) PrepareSelfTest() (_ *SelfTestFiles, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &SelfTestFiles{Home: filepath.Join(dir, "home"), Outside: filepath.Join(dir, "outside"), Create: filepath.Join(dir, "create"), Clean: filepath.Join(dir, "home/clean"), Calibration: filepath.Join(dir, "home/calibration"), Before: time.Unix(stat.Atimespec.Sec, stat.Atimespec.Nsec), workspace: w, calibrationName: name, identity: *stat}, nil
+	return &SelfTestFiles{Home: filepath.Join(dir, "home"), Outside: filepath.Join(dir, "outside"), Create: filepath.Join(dir, "create"), Clean: filepath.Join(dir, "home/clean"), Calibration: filepath.Join(dir, "home/calibration"), Before: time.Unix(stat.Atimespec.Sec, stat.Atimespec.Nsec), workspace: w, calibrationName: name, identity: *stat, outsideIdentity: *outsideStat}, nil
 }
 
 // CalibrationAfter inspects metadata without reading the decoy or following
@@ -97,4 +106,27 @@ func (f *SelfTestFiles) CalibrationAfter() (_ time.Time, err error) {
 		return time.Time{}, fmt.Errorf("calibration decoy changed")
 	}
 	return time.Unix(s.Atimespec.Sec, s.Atimespec.Nsec), nil
+}
+
+// CheckDecoys enforces QH9's violator rule after the witness suite.
+func (f *SelfTestFiles) CheckDecoys() error {
+	info, err := os.Lstat(f.Outside)
+	if err != nil {
+		return err
+	}
+	s, ok := info.Sys().(*syscall.Stat_t)
+	if !ok || !info.Mode().IsRegular() || s.Dev != f.outsideIdentity.Dev || s.Ino != f.outsideIdentity.Ino || s.Mode != f.outsideIdentity.Mode || s.Size != f.outsideIdentity.Size || s.Mtimespec != f.outsideIdentity.Mtimespec || s.Ctimespec != f.outsideIdentity.Ctimespec {
+		return fmt.Errorf("outside decoy changed")
+	}
+	b, err := os.ReadFile(f.Outside)
+	if err != nil {
+		return err
+	}
+	if string(b) != "outside_value\n" {
+		return fmt.Errorf("outside decoy changed")
+	}
+	if _, err := os.Lstat(f.Create); !os.IsNotExist(err) {
+		return errors.Join(fmt.Errorf("create decoy changed"), err)
+	}
+	return nil
 }

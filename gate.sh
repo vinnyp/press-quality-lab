@@ -80,7 +80,7 @@ step test go test -count=1 ./...
 # KTD7's one-grant renderer is available only with necessity_test.
 # Keep readonly in every variant; never inherit a caller's tags or cgo setting.
 export CGO_ENABLED=0
-for tags in scripted; do
+for tags in scripted necessity_test scripted,necessity_test; do
   step "vet-$tags" env GOFLAGS="-mod=readonly -tags=$tags" go vet ./...
   step "staticcheck-$tags" env GOFLAGS="-mod=readonly -tags=$tags" staticcheck ./...
   step "errcheck-$tags" env GOFLAGS="-mod=readonly" errcheck -tags "$tags" -blank -asserts ./...
@@ -102,6 +102,8 @@ compile_evidence() {
   done
   rm -rf "$out"
 }
+# Keep the native service veneer buildable on both supported Darwin architectures.
+step darwin-amd64-build env GOOS=darwin GOARCH=amd64 GOFLAGS="-mod=readonly" go build ./...
 for tags in '' scripted necessity_test scripted,necessity_test; do
   label="${tags:-plain}"
   flags="-mod=readonly${tags:+ -tags=$tags}"

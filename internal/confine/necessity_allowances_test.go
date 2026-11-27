@@ -54,7 +54,8 @@ var necessityAllowances = []necessityAllowance{
 	{name: "ChildSignal", prefix: "(allow signal ", operation: "child_signal", computationOnly: true},
 	{name: "Groups", prefix: `(allow sysctl-read (sysctl-name "kern.ngroups"))`, operation: "groups", computationOnly: true},
 	{name: "Memory", prefix: `(allow sysctl-read (sysctl-name "hw.memsize")`, operation: "memory", computationOnly: true},
-	{name: "PageSize", prefix: `(allow sysctl-read (sysctl-name "hw.memsize")`, operation: "pipeline", computationOnly: true},
+	{name: "PageSize", prefix: `(allow sysctl-read (sysctl-name "hw.memsize")`, operation: "pagesize", computationOnly: true},
+	// SystemTools witnesses only the combined /bin and /usr/bin read/exec allowance line.
 	{name: "SystemTools", prefix: "(allow process-exec* file-read-data ", operation: "system_tools", computationOnly: true},
 	{name: "TTY", prefix: `(allow file-read-data file-write-data (literal (param "TTY_DEVICE")))`, operation: "tty", parameter: "TTY_DEVICE", computationOnly: true},
 	{name: "Declared", prefix: `(allow file-read-data (literal (param "DECLARED_1")))`, operation: "read", parameter: "DECLARED", computationOnly: true},

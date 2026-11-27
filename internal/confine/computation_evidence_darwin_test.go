@@ -333,3 +333,39 @@ func TestMacOSComputationGroupEnd(t *testing.T) {
 		}
 	}
 }
+
+func TestMacOSComputationSubjectDenial(t *testing.T) {
+	// QH17: subject denials override otherwise valid system, declared and HOME grants.
+	_, launcher := evidenceLauncher(t)
+	program := evidenceProgram(t, computationProbe)
+	for _, key := range []string{"SUBJECT", "SUBJECT_COPY"} {
+		for _, kind := range []string{"Exec", "DeclaredRead", "HomeRead"} {
+			t.Run(key+"_"+kind, func(t *testing.T) {
+				c, inv := computationInvocation(t, launcher, program, filepath.Join(t.TempDir(), "absent_subject"))
+				path, op, expected := "/usr/bin/true", "exec", "attempt_exec\n"
+				if kind != "Exec" {
+					op = "read"
+					path = filepath.Join(inv.Directory, "value")
+					if kind == "DeclaredRead" {
+						path = filepath.Join(t.TempDir(), "value")
+						inv.Paths.Declared = []string{path}
+					}
+					if err := os.WriteFile(path, []byte("allowed_value"), 0600); err != nil {
+						t.Fatal(err)
+					}
+					expected = "attempt_read\nreturned allowed_value <nil>\n"
+				}
+				inv.Words = []string{op, path}
+				control := computationRun(t, c, inv)
+				if control.End.Signal != 0 || control.End.Code != 0 || string(control.Stdout) != expected || len(control.Stderr) != 0 {
+					t.Fatalf("control=%+v", control)
+				}
+				inv.Paths.Values[key] = path
+				denied := computationRun(t, c, inv)
+				if denied.End.Signal != 9 || string(denied.Stdout) != "attempt_"+op+"\n" || len(denied.Stderr) != 0 {
+					t.Fatalf("denied=%+v", denied)
+				}
+			})
+		}
+	}
+}

@@ -35,6 +35,12 @@ func SelfTestHidden(name, target, pidText string) int {
 	if err != nil || pid <= 0 {
 		return 64
 	}
+	switch name {
+	case "arguments", "environment", "process", "resource", "signal", "codesign", "priority":
+		if pid <= 1 {
+			return 64
+		}
+	}
 	if name == "clean" || name == "calibrate" {
 		return selfTestRead(name, target)
 	}
@@ -95,13 +101,17 @@ func SelfTestHidden(name, target, pidText string) int {
 	case "resource":
 		var buf [1024]byte
 		_, _, e := serviceSyscall(resourceUsageAddr, uintptr(pid), 0, uintptr(unsafe.Pointer(&buf[0])))
-		err = e
+		if e != 0 {
+			err = e
+		}
 	case "signal":
 		err = unix.Kill(pid, unix.SIGCONT)
 	case "codesign":
 		var status uint32
 		_, _, e := serviceSyscall6(codeSignatureAddr, uintptr(pid), 0, uintptr(unsafe.Pointer(&status)), 4, 0, 0)
-		err = e
+		if e != 0 {
+			err = e
+		}
 	case "priority":
 		err = unix.Setpriority(unix.PRIO_PROCESS, pid, priority)
 	case "setsid":
@@ -203,6 +213,7 @@ func selfTestNetwork(name, target string) int {
 		err = unix.Sendto(fd, []byte("decoy"), 0, addr)
 	case "bind":
 		err = unix.Bind(fd, addr)
+	// QH9 stated limit: binding first would test bind rather than listen.
 	case "listen":
 		err = unix.Listen(fd, 1)
 	}

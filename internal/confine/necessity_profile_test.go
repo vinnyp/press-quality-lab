@@ -217,6 +217,8 @@ func necessityAllowanceControl(row necessityAllowance, r observe.Run) bool {
 		return result == "returned pipeline uid_ok=true\n"
 	case "system_tools":
 		return result == "returned read=1 exec=0\n"
+	case "pagesize":
+		return result == "returned sysctl result=0 bytes=4 errno=0\n"
 	case "groups", "memory":
 		return strings.HasPrefix(result, "returned sysctl result=0 bytes=") && strings.HasSuffix(result, " errno=0\n") && strings.Count(result, "\n") == 1
 	case "service":
@@ -315,6 +317,7 @@ func TestNecessityCleanResults(t *testing.T) {
 		{"stream", "", "<nil>"},
 		{"child_signal", "", "<nil>"},
 		{"pipeline", "", "pipeline uid_ok=true"},
+		{"pagesize", "", "sysctl result=0 bytes=4 errno=0"},
 		{"system_tools", "", "read=1 exec=0"},
 	} {
 		t.Run(row.op+"_"+row.param, func(t *testing.T) {
@@ -371,8 +374,8 @@ func TestNecessityRevisedWitnesses(t *testing.T) {
 		if row.name == "SystemTools" && row.operation != "system_tools" {
 			t.Error("system tools must read and execute")
 		}
-		if row.name == "PageSize" && row.operation != "pipeline" {
-			t.Error("page size must exercise the pipeline")
+		if row.name == "PageSize" && row.operation != "pagesize" {
+			t.Error("page size must isolate hw.pagesize")
 		}
 	}
 	for _, g := range necessityGrants {
@@ -433,5 +436,18 @@ func TestNecessityRevisedResults(t *testing.T) {
 				t.Fatal("unevaluated removal accepted")
 			}
 		})
+	}
+}
+
+func TestNecessityPageSizeWidth(t *testing.T) {
+	// QH11: hw.pagesize is a four-byte integer; hw.memsize cannot stand in for it.
+	row := necessityAllowance{operation: "pagesize"}
+	r := observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_pagesize\nreturned sysctl result=0 bytes=4 errno=0\n")}
+	if !necessityAllowanceControl(row, r) {
+		t.Fatal("page size control refused")
+	}
+	r.Stdout = []byte("attempt_pagesize\nreturned sysctl result=0 bytes=8 errno=0\n")
+	if necessityAllowanceControl(row, r) {
+		t.Fatal("memory size passed for page size")
 	}
 }

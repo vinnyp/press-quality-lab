@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"os"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -16,6 +17,10 @@ func hidden(args []string) (int, bool) {
 	}
 	if args[0] == confine.SelfTestMode {
 		if len(args) != 4 {
+			return exitUsage, true
+		}
+		pid, err := strconv.Atoi(args[3])
+		if err != nil || pid <= 0 {
 			return exitUsage, true
 		}
 		return confine.SelfTestHidden(args[1], args[2], args[3]), true

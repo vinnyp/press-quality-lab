@@ -192,6 +192,21 @@ func TestMacOSReadCalibration(t *testing.T) {
 	if got := info.ModTime().Sub(files.Before); got != 24*time.Hour {
 		t.Fatalf("atime precedes mtime by %s want 24h", got)
 	}
+	// QH26: a confined marker-only run does not read the calibration decoy.
+	noRead := s
+	noRead.Fast = true
+	process, err := c.Start(noRead)
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := process.Wait()
+	if err != nil || !run.Markers.Confinement || run.End.Code != 0 || run.End.Signal != 0 || len(run.Stdout) != 0 || len(run.Stderr) != 0 {
+		t.Fatalf("no-read run=%+v err=%v", run, err)
+	}
+	unchanged, err := files.CalibrationAfter()
+	if err != nil || !unchanged.Equal(files.Before) {
+		t.Fatalf("no-read atime=%v before=%v err=%v", unchanged, files.Before, err)
+	}
 	before, after, read, err := confine.RunCalibration(c, s, files)
 	if err != nil {
 		t.Fatal(err)
@@ -205,5 +220,29 @@ func TestMacOSReadCalibration(t *testing.T) {
 	facts := confine.ControlFacts{Before: before, After: after, CalibrationRead: read}
 	if !facts.Apply(observe.Controls{}).ReadCalibrationMoved {
 		t.Fatal("calibration result was not moved")
+	}
+}
+
+func TestMacOSCalibrationErrorClearsRead(t *testing.T) {
+	// QH26: a successful read cannot survive a metadata identity error.
+	_, launcher := evidenceLauncher(t)
+	w, c, s, _ := controlFixture(t, launcher)
+	files, err := w.PrepareSelfTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Directory = files.Home
+	s.Paths.Values["HOME"] = files.Home
+	s.Paths.Values["PLANTED"] = files.Calibration
+	replacement := filepath.Join(files.Home, "replacement")
+	if err := os.WriteFile(replacement, []byte("calibration_value\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(replacement, files.Calibration); err != nil {
+		t.Fatal(err)
+	}
+	_, _, read, err := confine.RunCalibration(c, s, files)
+	if err == nil || confine.CalibrationReadPassed(read) {
+		t.Fatalf("read=%+v err=%v", read, err)
 	}
 }

@@ -704,6 +704,7 @@ export PATH="${GATE_TOOLS_BIN:-$HOME/.gate-tools/go/bin}:$PATH"
 }
 
 func TestGateTagSets(t *testing.T) {
+	// KTD7, QH9: pin supported architectures and execute the pure oracle variants.
 	b, err := os.ReadFile(filepath.Join(moduleRoot(t), "gate.sh"))
 	if err != nil {
 		t.Fatal(err)
@@ -715,11 +716,11 @@ func TestGateTagSets(t *testing.T) {
 		}
 	}
 	for _, line := range strings.Split(string(b), "\n") {
-		if strings.Contains(line, "GOOS=darwin") && !strings.Contains(line, "GOARCH=arm64") {
+		if strings.Contains(line, "GOOS=darwin") && !strings.Contains(line, "GOARCH=arm64") && !strings.Contains(line, "GOARCH=amd64") {
 			t.Fatalf("darwin architecture not pinned: %s", line)
 		}
 	}
-	want := []string{"for tags in scripted; do", "for tags in '' scripted necessity_test scripted,necessity_test; do"}
+	want := []string{"for tags in scripted necessity_test scripted,necessity_test; do", "for tags in '' scripted necessity_test scripted,necessity_test; do"}
 	if !reflect.DeepEqual(lists, want) {
 		t.Fatalf("gate tag sets: got %q want %q", lists, want)
 	}

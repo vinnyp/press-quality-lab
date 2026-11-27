@@ -1,4 +1,4 @@
-//go:build darwin
+//go:build darwin && macos_evidence
 
 package confine_test
 
@@ -17,7 +17,8 @@ import (
 )
 
 // Keep the exact operation bodies shared by the controls and confined probes.
-// Listen deliberately has no preceding bind: BSD assigns the ephemeral port.
+// The unconfined listen control binds loopback to keep its endpoint local.
+// The confined witness cannot bind first: it must isolate listen (QH9 stated limit).
 const computationNetworkFunctions = `
 func network(op, target string) {
  kind:=syscall.SOCK_STREAM;domain:=syscall.AF_INET
@@ -32,8 +33,10 @@ func network(op, target string) {
  case "udp":
   port,e:=strconv.Atoi(target);check(e);check(syscall.Sendto(fd,[]byte("network_control"),0,&syscall.SockaddrInet4{Port:port,Addr:[4]byte{127,0,0,1}}))
  case "bind","listen":
-  if op=="bind" {check(syscall.Bind(fd,&syscall.SockaddrInet4{Addr:[4]byte{127,0,0,1}}))} else {check(syscall.Listen(fd,1))}
-  addr,e:=syscall.Getsockname(fd);check(e);fmt.Printf("ready %d\n",addr.(*syscall.SockaddrInet4).Port)
+  if op=="bind" {check(syscall.Bind(fd,&syscall.SockaddrInet4{Addr:[4]byte{127,0,0,1}}))} else {if target=="control"{check(syscall.Bind(fd,&syscall.SockaddrInet4{Addr:[4]byte{127,0,0,1}}))};check(syscall.Listen(fd,1))}
+  addr,e:=syscall.Getsockname(fd);check(e)
+  if target=="control" {a:=addr.(*syscall.SockaddrInet4).Addr;fmt.Printf("address %d.%d.%d.%d\n",a[0],a[1],a[2],a[3])}
+  fmt.Printf("ready %d\n",addr.(*syscall.SockaddrInet4).Port)
   readFD:=fd
   if op=="listen" {readFD,_,e=syscall.Accept(fd);check(e);defer func(){check(syscall.Close(readFD))}()}
   b:=make([]byte,32);n,_,e:=syscall.Recvfrom(readFD,b,0);check(e);if string(b[:n])!="network_control"{panic("wrong payload")}
@@ -158,6 +161,9 @@ func main(){network(os.Args[1],os.Args[2])}
 	for _, op := range []string{"tcp", "unix", "udp", "bind", "listen"} {
 		t.Run(op, func(t *testing.T) {
 			target, received := networkDecoy(t, op)
+			if op == "listen" {
+				target = "control"
+			}
 			r, w, e := os.Pipe()
 			if e != nil {
 				t.Fatal(e)
@@ -187,6 +193,11 @@ func main(){network(os.Args[1],os.Args[2])}
 			s := bufio.NewScanner(r)
 			if !s.Scan() || s.Text() != "attempt_"+op {
 				t.Fatalf("attempt=%q err=%v", s.Text(), s.Err())
+			}
+			if op == "listen" {
+				if !s.Scan() || s.Text() != "address 127.0.0.1" {
+					t.Fatalf("listen address=%q err=%v", s.Text(), s.Err())
+				}
 			}
 			if op == "bind" || op == "listen" {
 				if !s.Scan() {

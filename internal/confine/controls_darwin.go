@@ -3,6 +3,7 @@ package confine
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -48,12 +49,18 @@ func RunControlSuite(workspace *throwaway.Workspace, copies *Copies, subject, co
 		return facts, err
 	}
 	facts.Before, facts.After, facts.CalibrationRead, err = RunCalibration(copies, inv, subjectFiles)
+	if err != nil {
+		facts.CalibrationRead = observe.Run{}
+	}
 	return facts, err
 }
 
 func selfTestInvocation(base Invocation, files *throwaway.SelfTestFiles, workspace GroupWorkspace) Invocation {
 	base.Paths.Values = clonePathValues(base.Paths.Values)
 	base.Paths.Values["HOME"], base.Paths.Values["PLANTED"] = files.Home, files.Calibration
+	if base.Computation {
+		base.Paths.Values["PLANTED"] = filepath.Join(files.Home, "absent_planted")
+	}
 	base.Paths.PlantedDirs = nil
 	base.Workspace = workspace
 	base.Directory = files.Home
@@ -81,7 +88,7 @@ func runProfileSelfTest(c *Copies, inv Invocation, launcher, program string, fil
 	if err != nil {
 		return nil, err
 	}
-	defer func() { err = errors.Join(err, decoy.close()) }()
+	defer func() { err = errors.Join(err, files.CheckDecoys(), decoy.close()) }()
 	for _, p := range SelfTestPrograms(inv.Computation) {
 		target := ""
 		switch p.Name {
@@ -148,6 +155,9 @@ func RunCalibration(c *Copies, inv Invocation, files *throwaway.SelfTestFiles) (
 		return files.Before, after, read, err
 	}
 	after, err = files.CalibrationAfter()
+	if err != nil {
+		read = observe.Run{}
+	}
 	return files.Before, after, read, err
 }
 

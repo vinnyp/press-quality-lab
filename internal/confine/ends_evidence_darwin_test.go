@@ -191,8 +191,8 @@ func TestMacOSEnvironmentDescriptorProbe(t *testing.T) {
 	}
 	root, launcher := evidenceLauncher(t)
 	program := evidenceProgram(t, `package main
-import("fmt";"os";"syscall")
-func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.Printf("sentinels_clear=%t fd_closed=%t\n",os.Getenv("PQL_SENTINEL")==""&&os.Getenv("DYLD_X")==""&&os.Getenv("XDG_CONFIG_HOME")=="",e==syscall.EBADF)}`)
+import("fmt";"os";"strings";"syscall")
+func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.Printf("fd_closed=%t\n%s",e==syscall.EBADF,strings.Join(os.Environ(),"\x00"))}`)
 	original := filepath.Join(root, "internal/confine/launcher_darwin.go")
 	source, err := os.ReadFile(original)
 	if err != nil {
@@ -229,8 +229,8 @@ func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.
 		t.Fatal("close-loop knock-out produced an unchanged launcher")
 	}
 	for _, row := range []struct{ name, launcher, want string }{
-		{"Closing", launcher, "sentinels_clear=true fd_closed=true\n"},
-		{"Knockout", broken, "sentinels_clear=true fd_closed=false\n"},
+		{"Closing", launcher, "fd_closed=true\n"},
+		{"Knockout", broken, "fd_closed=false\n"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			c, inv := evidenceInvocation(t, row.launcher, program)
@@ -289,8 +289,8 @@ func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.
 					t.Error(err)
 				}
 			}()
-			// Clear close-on-exec on a parent descriptor as well as deliberately passing
-			// it at a high index, beyond descriptors the Go runtime normally uses.
+			// Only fd 200 tests the close loop; ForkExec closes an unlisted parent fd.
+			// Pass the descriptor beyond those the Go runtime normally uses.
 			_, _, errno := syscall.Syscall(syscall.SYS_FCNTL, null.Fd(), syscall.F_SETFD, 0)
 			if errno != 0 {
 				t.Fatal(errno)
@@ -325,7 +325,7 @@ func main(){_,_,e:=syscall.Syscall(syscall.SYS_FCNTL,200,syscall.F_GETFD,0);fmt.
 			if err != nil {
 				t.Fatal(err)
 			}
-			if status.ExitStatus() != 0 || string(stdout) != row.want || string(diagnostics) != confine.MarkerPrefix+marker+"\n" {
+			if status.ExitStatus() != 0 || string(stdout) != row.want+strings.Join(environment, "\x00") || string(diagnostics) != confine.MarkerPrefix+marker+"\n" {
 				t.Fatalf("probe end=%v stdout=%q stderr=%q", status, stdout, diagnostics)
 			}
 		})

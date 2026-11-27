@@ -61,6 +61,7 @@ func TestKnownFastWithin(t *testing.T) {
 		{"Copy", func(r *observe.Run) { r.CopyChanged = true }},
 		{"Output", func(r *observe.Run) { r.Stdout = []byte("unexpected") }},
 		{"Stderr", func(r *observe.Run) { r.Stderr = []byte("unexpected") }},
+		{"StderrCut", func(r *observe.Run) { r.StderrCut = true }},
 		{"Cut", func(r *observe.Run) { r.StdoutCut = true }},
 		{"Drain", func(r *observe.Run) { r.OutputCutAfterExit = true }},
 	} {
@@ -78,7 +79,10 @@ func TestKnownFastWithin(t *testing.T) {
 }
 
 func TestCalibrationMoved(t *testing.T) {
-	// QH26: a read must succeed and change access time, including nanos.
+	// QH26: a read must succeed and advance valid access times, including nanos.
+	if confine.CalibrationMoved(time.Time{}, time.Unix(100, 0), true) {
+		t.Fatal("zero before accepted")
+	}
 	before := time.Unix(100, 123)
 	for _, row := range []struct {
 		name         string
@@ -87,7 +91,8 @@ func TestCalibrationMoved(t *testing.T) {
 	}{
 		{"Moved", before.Add(time.Nanosecond), true, true},
 		{"Unchanged", before, true, false},
-		{"Backwards", before.Add(-time.Nanosecond), true, true},
+		{"Backwards", before.Add(-time.Nanosecond), true, false},
+		{"ZeroAfter", time.Time{}, true, false},
 		{"NoRead", before.Add(time.Hour), false, false},
 	} {
 		t.Run(row.name, func(t *testing.T) {
@@ -185,6 +190,12 @@ func TestSelfTestResults(t *testing.T) {
 		name   string
 		change func(*observe.Run)
 	}{
+		{"Stderr", func(r *observe.Run) { r.Stderr = []byte("error") }},
+		{"CouldNotStart", func(r *observe.Run) { r.Markers.CouldNotStart = true }},
+		{"CopyChanged", func(r *observe.Run) { r.CopyChanged = true }},
+		{"OutputCutAfterExit", func(r *observe.Run) { r.OutputCutAfterExit = true }},
+		{"StdoutCut", func(r *observe.Run) { r.StdoutCut = true }},
+		{"StderrCut", func(r *observe.Run) { r.StderrCut = true }},
 		{"NoAttempt", func(r *observe.Run) { r.Stdout = nil }},
 		{"Survived", func(r *observe.Run) { r.End.Signal = 0 }},
 		{"Budget", func(r *observe.Run) { r.End.BudgetExpired = true }},
@@ -199,6 +210,21 @@ func TestSelfTestResults(t *testing.T) {
 			row.change(&changed[0])
 			if confine.SelfTestPassed(changed, computation) {
 				t.Fatal("invalid kill passed")
+			}
+		})
+	}
+	for _, row := range []struct {
+		name   string
+		change func(*observe.Run)
+	}{
+		{"CleanStderr", func(r *observe.Run) { r.Stderr = []byte("error") }},
+		{"CleanStderrCut", func(r *observe.Run) { r.StderrCut = true }},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			changed := append([]observe.Run(nil), subject...)
+			row.change(&changed[len(changed)-1])
+			if confine.SelfTestPassed(changed, computation) {
+				t.Fatal("invalid clean run passed")
 			}
 		})
 	}

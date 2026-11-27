@@ -50,7 +50,7 @@ func cleanEnd(r observe.Run) bool {
 // CalibrationMoved compares the observed access times, at native precision.
 // A successful read is also required; metadata alone does not prove a read.
 func CalibrationMoved(before, after time.Time, readOK bool) bool {
-	return readOK && !after.Equal(before)
+	return readOK && !before.IsZero() && !after.IsZero() && after.After(before)
 }
 
 // SelfTestProgram describes one QH9 witness. Target arguments are supplied by

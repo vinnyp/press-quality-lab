@@ -3,6 +3,7 @@ package confine
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"os"
 	"path/filepath"
 	"slices"
@@ -34,7 +35,7 @@ func TestRawBudgetAlreadyEnded(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !run.End.BudgetExpired || run.End.RunningAtBudget || run.End.EngineKilled || run.End.Code != 0 {
+	if run.End.BudgetExpired || run.End.RunningAtBudget || run.End.EngineKilled || run.End.Code != 0 {
 		t.Fatalf("late budget facts=%+v", run.End)
 	}
 }
@@ -90,5 +91,23 @@ func TestStartBuildsEnvironment(t *testing.T) {
 	})
 	if err != nil || !called {
 		t.Fatalf("start reached=%t err=%v", called, err)
+	}
+}
+
+func TestRawConfinementKillBeforeBudget(t *testing.T) {
+	// QH21, QO4, QT5: a late timer cannot reclassify the completed kill.
+	p := shellProcess(t, "printf 'pql-launch:test\\n' >&2; kill -9 $$")
+	waitZombie(t, p.pid)
+	p.expireBudget()
+	r, err := p.Wait()
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, err := observe.Attribute(r)
+	if err != nil || a != observe.ConfinementKill {
+		t.Fatalf("attribution=%v err=%v run=%+v", a, err, r)
+	}
+	if _, err := observe.ProjectEnd(r.End, r.Markers); err != nil {
+		t.Fatal(err)
 	}
 }

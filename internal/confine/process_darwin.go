@@ -157,6 +157,10 @@ func (c *capture) setDeadline(deadline time.Time) error {
 func drain(r io.ReadCloser) *capture { return drainLimit(r, StreamCap) }
 
 func drainLimit(r io.ReadCloser, limit int) *capture {
+	return drainLimitWithPoll(r, limit, unix.Poll)
+}
+
+func drainLimitWithPoll(r io.ReadCloser, limit int, poll func([]unix.PollFd, int) (int, error)) *capture {
 	c := &capture{done: make(chan struct{})}
 	if reader, ok := r.(*os.File); ok {
 		c.reader = reader
@@ -185,7 +189,7 @@ func drainLimit(r io.ReadCloser, limit int) *capture {
 				if rawErr == nil {
 					rawErr = raw.Control(func(fd uintptr) {
 						fds := []unix.PollFd{{Fd: int32(fd), Events: unix.POLLIN}}
-						_, pollErr := unix.Poll(fds, 0)
+						pollErr := retryPoll(func() error { _, e := poll(fds, 0); return e })
 						if pollErr != nil {
 							err = pollErr
 							return
@@ -231,7 +235,18 @@ func drainLimit(r io.ReadCloser, limit int) *capture {
 	return c
 }
 
+func retryPoll(poll func() error) error {
+	for {
+		if err := poll(); err != unix.EINTR {
+			return err
+		}
+	}
+}
+
 type process struct {
+	sampleLeader func(int) (*unix.KinfoProc, error)
+	signalGroup  func(int) (bool, error)
+
 	workspace                                              GroupWorkspace
 	waitMu                                                 sync.Mutex
 	waited                                                 bool
@@ -441,16 +456,19 @@ func (p *process) killLocked() error {
 	// the running state the engine saw for a budget kill; other engine kills
 	// come from the exit funnel (exit 70). Either leaves the check not observed,
 	// so this window cannot change a held or not-held outcome (QH21).
-	proc, lookupErr := unix.SysctlKinfoProc("kern.proc.pid", p.pid)
+	proc, lookupErr := p.leader()
 	if lookupErr != nil {
-		return lookupErr
+		// The unreaped leader pins the pid, even when sampling fails.
+		sent, killErr := p.sendGroupKill()
+		p.killed = p.killed || sent
+		return errors.Join(lookupErr, killErr, endGroup(p.pid))
 	}
 	if proc.Proc.P_stat == zombieState {
 		p.observed = true
 	}
 	sent := false
 	err := endGroupWith(func() (bool, error) {
-		signaled, killErr := killGroup(p.pid)
+		signaled, killErr := p.sendGroupKill()
 		sent = sent || signaled
 		return signaled, killErr
 	}, func() ([]groupMember, error) { return groupMembers(p.pid) })
@@ -458,6 +476,20 @@ func (p *process) killLocked() error {
 		p.killed = true
 	}
 	return err
+}
+
+func (p *process) sendGroupKill() (bool, error) {
+	if p.signalGroup != nil {
+		return p.signalGroup(p.pid)
+	}
+	return killGroup(p.pid)
+}
+
+func (p *process) leader() (*unix.KinfoProc, error) {
+	if p.sampleLeader != nil {
+		return p.sampleLeader(p.pid)
+	}
+	return unix.SysctlKinfoProc("kern.proc.pid", p.pid)
 }
 
 func (p *process) armBudget(budget time.Duration) {
@@ -471,14 +503,16 @@ func (p *process) expireBudget() {
 	if p.reaped || p.observed {
 		return
 	}
-	p.budgetExpired = true
-	proc, err := unix.SysctlKinfoProc("kern.proc.pid", p.pid)
-	if err != nil {
-		p.budgetError = err
+	proc, sampleErr := p.leader()
+	if sampleErr == nil && proc.Proc.P_stat == zombieState {
 		return
 	}
-	p.runningAtBudget = proc.Proc.P_stat != zombieState
-	p.budgetError = p.killLocked()
+	killErr := p.killLocked()
+	if p.killed {
+		p.budgetExpired = true
+		p.runningAtBudget = sampleErr == nil && proc.Proc.P_stat != zombieState
+	}
+	p.budgetError = errors.Join(sampleErr, killErr)
 }
 
 func (p *process) Wait() (observe.Run, error) {

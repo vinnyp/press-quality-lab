@@ -17,6 +17,7 @@ import (
 func DecoyHidden() int { return throwaway.SelfTestDecoyHidden() }
 
 type selfTestDecoy struct {
+	lifetime  *os.File
 	pid       int
 	tcp, udp  int
 	workspace GroupWorkspace
@@ -28,14 +29,19 @@ func startSelfTestDecoy(executable, home string, workspace GroupWorkspace) (_ *s
 		return nil, err
 	}
 	defer func() { err = errors.Join(err, r.Close()) }()
+	lifeRead, lifeWrite, err := os.Pipe()
+	if err != nil {
+		return nil, errors.Join(err, w.Close())
+	}
+	defer func() { err = errors.Join(err, lifeRead.Close()) }()
 	// Use the same launcher stream/session setup, but never sandbox this owned
 	// decoy: it must actually own the endpoints the confined witnesses attempt.
-	pid, spawnErr := syscall.ForkExec(executable, []string{executable, DecoyMode}, &syscall.ProcAttr{Dir: home, Env: EngineEnvironment(), Files: []uintptr{w.Fd(), w.Fd(), w.Fd()}, Sys: &syscall.SysProcAttr{Setsid: true}})
+	pid, spawnErr := syscall.ForkExec(executable, []string{executable, DecoyMode}, &syscall.ProcAttr{Dir: home, Env: EngineEnvironment(), Files: []uintptr{w.Fd(), w.Fd(), w.Fd(), lifeRead.Fd()}, Sys: &syscall.SysProcAttr{Setsid: true}})
 	closeErr := w.Close()
 	if spawnErr != nil {
-		return nil, errors.Join(spawnErr, closeErr)
+		return nil, errors.Join(spawnErr, closeErr, lifeWrite.Close())
 	}
-	d := &selfTestDecoy{pid: pid, workspace: workspace}
+	d := &selfTestDecoy{pid: pid, workspace: workspace, lifetime: lifeWrite}
 	defer func() {
 		if err != nil {
 			err = errors.Join(err, d.close())
@@ -88,5 +94,5 @@ func (d *selfTestDecoy) close() error {
 			waitErr = fmt.Errorf("decoy exited unexpectedly: %d", status)
 		}
 	}
-	return errors.Join(killErr, waitErr, forgetErr)
+	return errors.Join(killErr, waitErr, forgetErr, d.lifetime.Close())
 }

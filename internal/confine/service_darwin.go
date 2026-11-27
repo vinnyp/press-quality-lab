@@ -24,7 +24,7 @@ func selfTestService(name string) error {
 	result, _, callErr := serviceSyscall(bootstrapLookupAddr, uintptr(bootstrapPort()), uintptr(unsafe.Pointer(p)), uintptr(unsafe.Pointer(&port)))
 	runtime.KeepAlive(p)
 	runtime.KeepAlive(&port)
-	return fmt.Errorf("bootstrap lookup result=%d port=%d errno=%d", result, port, callErr)
+	return fmt.Errorf("bootstrap lookup result=%d port=%d errno=%d", int32(result), port, callErr)
 }
 
 // selfTestSysctl uses a numeric MIB from Darwin sys/sysctl.h. A named x/sys
@@ -34,7 +34,7 @@ func selfTestSysctl(mib []int32) error {
 	size := uintptr(len(data))
 	result, _, err := serviceSyscall6(sysctlAddr, uintptr(unsafe.Pointer(&mib[0])), uintptr(len(mib)), uintptr(unsafe.Pointer(&data[0])), uintptr(unsafe.Pointer(&size)), 0, 0)
 	runtime.KeepAlive(mib)
-	return fmt.Errorf("sysctl result=%d bytes=%d errno=%d", result, size, err)
+	return fmt.Errorf("sysctl result=%d bytes=%d errno=%d", int32(result), size, err)
 }
 
 //go:uintptrescapes
@@ -54,6 +54,6 @@ var sysctlAddr uintptr
 
 //go:cgo_import_dynamic pql_bootstrap_lookup bootstrap_look_up "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic pql_bootstrap_port bootstrap_port "/usr/lib/libSystem.B.dylib"
-//go:cgo_import_dynamic pql_resource_usage proc_pid_rusage "/usr/lib/libproc.dylib"
+//go:cgo_import_dynamic pql_resource_usage proc_pid_rusage "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic pql_code_signature csops "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic pql_sysctl sysctl "/usr/lib/libSystem.B.dylib"
