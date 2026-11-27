@@ -4,7 +4,7 @@ PINNED_GITLEAKS=8.30.1
 fail() { echo "SCAN FAILED: $1" >&2; exit 1; }
 trap 'fail "command failed (exit $?)"' ERR
 [[ $# -eq 0 ]] || fail 'scan.sh takes no arguments; set SCAN_COMMITS=base..head to scan a commit range'
-for tool in git gitleaks python3 mktemp tar; do
+for tool in git gitleaks python3 mktemp; do
  command -v "$tool" >/dev/null || fail "$tool not found on PATH"
 done
 git rev-parse --is-inside-work-tree >/dev/null || fail 'not inside a git work tree'
@@ -13,7 +13,8 @@ cd "$(git rev-parse --show-toplevel)"
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/pql-scan.XXXXXX")"
 [[ -n "$tmp" ]] || fail 'empty temporary directory'
 trap 'rm -rf "$tmp"' EXIT
-mkdir "$tmp/files"
+mkdir "$tmp/files" "$tmp/index"
+git checkout-index -a --prefix="$tmp/index/"
 git ls-files -z > "$tmp/tracked"
 [[ -s "$tmp/tracked" ]] || fail 'git ls-files listed no files'
 if [[ -n "${SCAN_COMMITS:-}" ]]; then
@@ -22,8 +23,8 @@ if [[ -n "${SCAN_COMMITS:-}" ]]; then
  [[ -s "$tmp/commits" ]] || fail 'SCAN_COMMITS matched no commits'
  git log --format=%B "$SCAN_COMMITS" -- > "$tmp/messages" || fail 'invalid commit range'
 fi
-python3 - "$tmp" <<'PY' || fail 'home path or email address found (see lines above)'
-import pathlib, re, sys
+python3 - "$tmp" <<'PY' || fail 'home/email scan or its self-test failed (see above)'
+import os, pathlib, re, sys
 scratch = pathlib.Path(sys.argv[1])
 home = re.compile(r'/Use[r]s/[^/\s]+|/ho[m]e/[^/\s]+|/roo[t](?:/|\b)|(?i:[A-Za-z]:(?:\\+|/)Use[r]s(?:\\+|/)[^\\/\s"]+)')
 email = re.compile(r'[A-Za-z0-9.!#$%&\x27*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,}')
@@ -44,25 +45,87 @@ for case, expected in [
 ]:
     if any(not allowed.fullmatch(m.group()) for m in email.finditer(case)) != expected:
         sys.exit(f'self-test failed: {case}')
-hits = False
-paths = [pathlib.Path(p.decode()) for p in (scratch / 'tracked').read_bytes().split(b'\0') if p]
-for path in paths + ([scratch / 'messages'] if (scratch / 'messages').exists() else []):
-    label = 'commit-messages' if path == scratch / 'messages' else str(path)
-    for number, line in enumerate(path.read_bytes().decode('utf-8', errors='replace').splitlines(), 1):
-        if home.search(line):
-            print(f'{label}:{number}: home path')
-            hits = True
-        if any(not allowed.fullmatch(m.group()) for m in email.finditer(line)):
-            print(f'{label}:{number}: email')
-            hits = True
-sys.exit(hits)
+def scan_paths(index, working, names):
+    paths = [(index / name, f'index:{name}') for name in names]
+    paths.extend((working / name, f'working:{name}') for name in names
+                 if (working / name).exists() or (working / name).is_symlink())
+    return paths
+
+def blob(path):
+    return os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
+
+def problems(paths):
+    found = []
+    for path, label in paths:
+        for number, line in enumerate(blob(path).decode('utf-8', errors='replace').splitlines(), 1):
+            if home.search(line):
+                found.append(f'{label}:{number}: home path')
+            if any(not allowed.fullmatch(m.group()) for m in email.finditer(line)):
+                found.append(f'{label}:{number}: email')
+    return found
+
+# Public-by-default: each control compares the whole problem list, and starts
+# with clean index content that succeeds before changing only the named input.
+control = scratch / 'controls'
+for name in ('MissingHome', 'MissingEmail', 'StagedHome', 'WorkingHome',
+             'MissingClean', 'SymlinkHome'):
+    root = control / name
+    index, working = root / 'index', root / 'working'
+    index.mkdir(parents=True)
+    working.mkdir()
+    staged, disk = index / 'file', working / 'file'
+    staged.write_text('clean')
+    disk.write_text('clean')
+    def check(expected):
+        actual = problems(scan_paths(index, working, ['file']))
+        if any(str(base) in finding for base in (pathlib.Path.cwd(), scratch) for finding in actual):
+            sys.exit('self-test failed: absolute finding label')
+        if actual != expected:
+            sys.exit(f'self-test failed: {name}: expected {expected}, got {actual}')
+    check([])
+    home_text = '/ho' + 'me/synthetic/file'
+    if name in ('MissingHome', 'MissingEmail', 'StagedHome'):
+        staged.write_text(('a' + '@' + 'example.invalid') if name == 'MissingEmail' else home_text)
+    if name in ('MissingHome', 'MissingEmail', 'MissingClean'):
+        disk.unlink()
+    if name == 'WorkingHome':
+        disk.write_text(home_text)
+    if name == 'SymlinkHome':
+        staged.unlink()
+        staged.symlink_to(home_text)
+        disk.unlink()
+        disk.symlink_to(home_text)
+    if name == 'MissingClean':
+        check([])
+    elif name == 'WorkingHome':
+        check(['working:file:1: home path'])
+    elif name == 'SymlinkHome':
+        check(['index:file:1: home path', 'working:file:1: home path'])
+    else:
+        kind = 'email' if name == 'MissingEmail' else 'home path'
+        check([f'index:file:1: {kind}'])
+
+names = [os.fsdecode(p) for p in (scratch / 'tracked').read_bytes().split(b'\0') if p]
+paths = scan_paths(scratch / 'index', pathlib.Path.cwd(), names)
+# Copy blob bytes, including link text, for gitleaks; never follow a symlink.
+for path, label in paths:
+    source = scratch / 'index' if path.is_relative_to(scratch / 'index') else pathlib.Path.cwd()
+    tree = 'index' if source == scratch / 'index' else 'working'
+    target = scratch / 'files' / tree / path.relative_to(source)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(blob(path))
+copied = [path for path in (scratch / 'files').rglob('*') if path.is_file()]
+if not copied or len(copied) != len(paths):
+    sys.exit('gitleaks input coverage failed: copied file count differs from scanned paths or is empty')
+found = problems(paths + ([(scratch / 'messages', 'commit-messages')] if (scratch / 'messages').exists() else []))
+for problem in found:
+    print(problem)
+sys.exit(bool(found))
 PY
-tar --null -T "$tmp/tracked" -cf "$tmp/tracked.tar"
-tar -xf "$tmp/tracked.tar" -C "$tmp/files"
 leaks() {
  local rc=0
  rm -f "$tmp/leaks.json"
- gitleaks "$@" --report-format json --report-path "$tmp/leaks.json" || rc=$?
+ gitleaks "$@" --report-format json --report-path "$tmp/leaks.json" >"$tmp/gitleaks.log" 2>&1 || rc=$?
  if [[ "$rc" != 0 ]]; then
   if [[ -f "$tmp/leaks.json" ]]; then
    python3 - "$tmp/leaks.json" "$tmp/files/" <<'PYREPORT'
@@ -73,12 +136,30 @@ for hit in json.load(open(sys.argv[1])):
     base = os.path.abspath(sys.argv[2])
     if os.path.commonpath([normalized, base]) == base:
         path = os.path.relpath(normalized, base)
+    elif os.path.isabs(path):
+        path = os.path.relpath(normalized, os.getcwd())
+    if os.path.isabs(path) or path == '..' or path.startswith('../'):
+        sys.exit('gitleaks report contained a path outside the scan roots')
     print(f"{path}:{hit['StartLine']}: secret")
 PYREPORT
   fi
   fail "gitleaks scan failed (exit $rc)"
  fi
 }
+# A known secret must reach the detector before trusting its clean result.
+mkdir "$tmp/secret-control"
+python3 - "$tmp/secret-control/token" <<'PYCONTROL'
+import pathlib, sys
+pathlib.Path(sys.argv[1]).write_text('gh' + 'p_' + '7rQ9vLm2Nf8sKp4Wx6Yt3Za5Bc0De1Fg2Hi3')
+PYCONTROL
+control_rc=0
+gitleaks dir --no-banner --redact --exit-code 1 --report-format json --report-path "$tmp/control.json" "$tmp/secret-control" >"$tmp/control.log" 2>&1 || control_rc=$?
+[[ "$control_rc" == 1 ]] || fail 'gitleaks control did not flag the synthetic token'
+python3 - "$tmp/control.json" <<'PYCONTROLREPORT' || fail 'gitleaks control report did not identify the synthetic token'
+import json, pathlib, sys
+hits = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert any(pathlib.Path(hit['File']).name == 'token' and hit['RuleID'] == 'github-pat' for hit in hits)
+PYCONTROLREPORT
 leaks dir --no-banner --redact --exit-code 1 "$tmp/files"
 if [[ -n "${SCAN_COMMITS:-}" ]]; then
  leaks git --no-banner --redact --exit-code 1 --log-opts="$SCAN_COMMITS" .
