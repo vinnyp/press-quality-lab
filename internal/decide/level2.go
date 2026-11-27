@@ -36,6 +36,22 @@ func level2(ch plan.Check, _ observe.Controls, _ Evidence) Result {
 		} else if ch.Preimage["words"] != nil {
 			words = append(words, array(ch.Preimage["words"]))
 		}
+		for _, comp := range Computations(ch) {
+			for _, name := range array(comp["captures"]) {
+				for _, b := range array(s["runbooks"]) {
+					book := object(b)
+					if book["name"] != ch.Preimage["runbook"] {
+						continue
+					}
+					for _, step := range array(book["steps"]) {
+						st := object(step)
+						if st["name"] == name {
+							words = append(words, array(st["words"]))
+						}
+					}
+				}
+			}
+		}
 		for _, w := range words {
 			longest := -1
 			var selected strictjson.Object

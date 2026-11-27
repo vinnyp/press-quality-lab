@@ -68,7 +68,23 @@ type Check struct {
 	Required Object
 	Keys     []Object
 }
-type Plan struct{ Checks []Check }
+
+// Step retains scheduling context even when every check is outside the scope.
+type Step struct {
+	BudgetSeconds any
+	OfflineArgs   Array
+	Env           Object
+	Key           Object
+	Required      []int
+	Outside       []string
+}
+
+// Runbook retains the authored step order.
+type Runbook struct{ Steps []Step }
+type Plan struct {
+	Checks   []Check
+	Runbooks []Runbook
+}
 
 func hash(b []byte) string { return fmt.Sprintf("%x", sha256.Sum256(b)) }
 
@@ -334,7 +350,11 @@ func Build(in Input) (Plan, error) {
 			continue
 		}
 		earlier := Array{}
+		bookPlan := Runbook{}
+		required := false
 		for _, sv := range steps {
+			args, env, _ := offline(s, arr(obj(sv)["words"]))
+			stepPlan := Step{BudgetSeconds: obj(sv)["budget_seconds"], OfflineArgs: args, Env: env, Key: SubjectKey(s, arr(obj(sv)["words"]), "runbook", r["name"], obj(sv)["name"])}
 			st := obj(sv)
 			ids := Array{}
 			for i, cv := range arr(st["checks"]) {
@@ -387,8 +407,11 @@ func Build(in Input) (Plan, error) {
 						return Plan{}, err
 					}
 					ids = append(ids, id)
+					stepPlan.Outside = append(stepPlan.Outside, id)
 					continue
 				}
+				stepPlan.Required = append(stepPlan.Required, len(p.Checks))
+				required = true
 				credit := credits(s, r, st, ch)
 				id, err := add(pre, credit, empty, keys)
 				if err != nil {
@@ -401,6 +424,10 @@ func Build(in Input) (Plan, error) {
 				ids = append(ids, id)
 			}
 			earlier = append(earlier, ids...)
+			bookPlan.Steps = append(bookPlan.Steps, stepPlan)
+		}
+		if required {
+			p.Runbooks = append(p.Runbooks, bookPlan)
 		}
 	}
 	return p, nil

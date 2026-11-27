@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	"sort"
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
@@ -237,7 +236,7 @@ func readRun(o object) observe.Run {
 		r.Details.Decoys = append(r.Details.Decoys, observe.Decoy{Name: textValue(d["name"]), Touched: d["touched"] == true})
 	}
 	if p := obj(o["printed_value"]); p != nil {
-		r.Details.Printed = &observe.PrintedValue{Value: standardValue(p["value"])}
+		r.Details.Printed = &observe.PrintedValue{Value: p["value"]}
 	}
 	return r
 }
@@ -304,32 +303,6 @@ func (s *Source) Observe(key observe.Key, _ observe.Spec) (observe.Run, error) {
 		return observe.Run{}, err
 	}
 	return r, nil
-}
-
-func standardValue(v any) any {
-	switch x := v.(type) {
-	case number:
-		return json.Number(x)
-	case object:
-		o := map[string]any{}
-		keys := make([]string, 0, len(x))
-		for k := range x {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, k := range keys {
-			o[k] = standardValue(x[k])
-		}
-		return o
-	case array:
-		a := []any{}
-		for _, v := range x {
-			a = append(a, standardValue(v))
-		}
-		return a
-	default:
-		return v
-	}
 }
 
 func endShape(v any) bool {

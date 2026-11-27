@@ -265,6 +265,24 @@ func levelTwoPlaceholder(subject, pre map[string]any) bool {
 		}
 		return false
 	}
+
+	ex := object(pre["expected"])
+	for _, holder := range []map[string]any{ex, object(ex["precondition"])} {
+		for _, name := range list(object(holder["computation"])["captures"]) {
+			for _, b := range list(subject["runbooks"]) {
+				book := object(b)
+				if book["name"] != pre["runbook"] {
+					continue
+				}
+				for _, step := range list(book["steps"]) {
+					st := object(step)
+					if st["name"] == name && blockedCommand(list(st["words"])) {
+						return true
+					}
+				}
+			}
+		}
+	}
 	return blockedCommand(list(pre["words"]))
 }
 

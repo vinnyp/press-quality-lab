@@ -185,6 +185,7 @@ func semantic(o File, bad map[string]bool) {
 			if !invocation(step["words"]) {
 				bad["QS6"] = true
 			}
+			computationsByArgs := map[string]strictjson.Object{}
 			for _, v := range arr(step["checks"]) {
 				count++
 				check := obj(v)
@@ -198,6 +199,11 @@ func semantic(o File, bad map[string]bool) {
 				for _, holder := range []strictjson.Object{expected, obj(check["precondition"])} {
 					if c := obj(holder["computation"]); c != nil {
 						computationRules(c, steps, bad)
+						k := key(c["argv"])
+						if prior, ok := computationsByArgs[k]; ok && !strictjson.EqualJSON(prior, c) {
+							bad["QA4"] = true
+						}
+						computationsByArgs[k] = c
 					}
 				}
 				predicateRules(check, bad)
@@ -354,7 +360,7 @@ func predicateRules(c strictjson.Object, bad map[string]bool) {
 		"stdout_contains",
 		"stdout_not_contains",
 		"stderr_contains":
-		if _, ok := value.(string); !ok {
+		if s, ok := value.(string); !ok || s == "" {
 			bad["QA9"] = true
 		}
 	}

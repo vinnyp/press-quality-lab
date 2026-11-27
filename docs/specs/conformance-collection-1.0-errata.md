@@ -216,3 +216,32 @@ QH25 inspects a used home without following a link, opening a special file or re
 ### E-47. A change found beside a gap in the inspection
 
 E-10 and E-46 make the store-unchanged check `harness_fault`, never unchanged, when an entry cannot be read or an inspection cannot finish. They do not say what a change found elsewhere in the same home decides. **A change the comparison actually finds decides the check as not held with `predicate`, whatever else could not be read. Only an entry both snapshots inspected can show a change: when either snapshot's walk did not finish, an entry one of them never reached is neither a change nor unchanged. With no change found, an unreadable entry or an unfinished inspection gives `harness_fault`.** The owner ruled on 2026-11-27. No case of the corpus has such a home, so no record changes.
+
+### E-48. A computed expected value of the wrong type
+
+QA9's "Matching types" makes a literal of the wrong type reject the file, and its "Whole numbers" bullet makes a computation that supplies anything other than a whole number for `exit_code`, `stdout_bytes_at_most` or `row_count` `computation_failed`. Nothing says what a computation that supplies a non-string for a string-typed predicate decides. **A computation that supplies the expected value of `stdout_equals`, `stdout_contains`, `stdout_not_contains` or `stderr_contains` and prints anything other than a JSON string is `computation_failed`, as QA6 says.** The owner ruled on 2026-11-27. No case of the corpus has such a computation, so no record changes.
+
+### E-49. A step with no check in the required set
+
+QA7 runs a runbook's steps in the order written, in one shared home, and QA9 says a check left out of the required set is not evaluated and never stops a runbook. They do not say whether a step all of whose checks are outside the required set runs. **Such a step still runs in its place, so the shared home and any capture of it are what the author wrote. It is never held or not held, so it never stops the runbook. Each of its checks stays outside the required set and is not evaluated.** QS5 still applies: a step whose command depends on a placeholder does not run. The owner ruled on 2026-11-27. No case of the corpus has such a step, so no record changes.
+
+### E-50. An empty expected string
+
+QA9's table fixes, for each predicate, whether an empty target satisfies it. The schema lets a literal expected string be empty, and for an empty string the table's "Holds when" column contradicts its "Empty target satisfies it" column:
+- `stdout_equals` and `stdout_contains` would hold on an empty output;
+- `stdout_not_contains` would never hold;
+- `stderr_contains` would hold on an empty standard error.
+
+**For `stdout_equals`, `stdout_contains`, `stdout_not_contains` and `stderr_contains`, a literal expected value that is the empty string rejects the subject file, as QA9's "Matching types" says for a value of the wrong type. A computation that supplies the empty string for one of them is `computation_failed`, as E-48 says.** An empty output is asserted only by `stdout_empty`, with its precondition. The owner ruled on 2026-11-27. No case of the corpus has an empty expected string, so no record changes.
+
+### E-51. A capture of a step that depends on a placeholder
+
+QS5 says nothing that depends on a placeholder runs, and its list names no captures. QA4 lets a computation capture an earlier step's standard output. **A check whose computation captures a step whose command depends on a placeholder depends on that placeholder, so it is not observed with `placeholder_unfilled` (QS5, level 2). This holds whether the captured step has a required check of its own, which then stops the runbook, or has none and does not run (E-49).** The owner ruled on 2026-11-27. No case of the corpus has such a capture, so no record changes.
+
+### E-52. Two computations of one step with the same arguments
+
+QT5 keys a computation's recorded run by its argument list, runbook and step, and no two invocations of one recording have equal keys. A step's checks can still name two computations with the same argument list that differ in `budget_seconds`, `declared_files` or `captures`. **Two computations of one step, a precondition and an expected value included, whose argument lists are equal and which differ in anything else reject the subject file under QA4 with exit 2, in E-9's order, as E-42 rules for a repeated secret command. Equal computations run once, and every check that names one reads its result.** The owner ruled on 2026-11-27. No case of the corpus has such a step, so no record changes.
+
+### E-53. A capture of a step that ran without confinement
+
+QO1 makes a check not observed with `network_unverifiable` when the engine could not apply confinement to the invocation, and QA4 decides only a cut capture. Under E-49, a step with no required check still runs, and a later check can capture its output. **A check whose computation captures a step whose run was not confined is not observed with `network_unverifiable` at level 1, as if that run were its own: it depends on an invocation QO1 voids.** The owner ruled on 2026-11-27. No case of the corpus has such a capture, so no record changes.

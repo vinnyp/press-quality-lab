@@ -52,7 +52,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 			} `json:"checks"`
 		} `json:"cases"`
 	}
-	if err := caseassembly.Read("../../scripts/ratchet/pr10-prediction.json", &predictions); err != nil {
+	if err := caseassembly.Read("../../scripts/ratchet/pr12-prediction.json", &predictions); err != nil {
 		t.Fatal(err)
 	}
 	counts := map[string]int{}
@@ -184,7 +184,11 @@ func TestPredictedCheckEndings(t *testing.T) {
 			if err := json.Unmarshal(data, &subjectJSON); err != nil {
 				t.Fatal(err)
 			}
-			compareTrace(t, trace.Bytes(), recording, c.Input.Host, subjectJSON, pres, predByID)
+			var inputJSON map[string]any
+			if err := caseassembly.Read(filepath.Join(source, "input.json"), &inputJSON); err != nil {
+				t.Fatal(err)
+			}
+			compareTrace(t, trace.Bytes(), recording, c.Input.Host, subjectJSON, inputJSON, pres, predByID)
 			gotIDs, wantIDs := []string{}, []string{}
 			for _, check := range checks {
 				gotIDs = append(gotIDs, check.Plan.ID)

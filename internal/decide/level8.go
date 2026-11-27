@@ -8,7 +8,6 @@ import (
 )
 
 func level8(ch plan.Check, c observe.Controls, e Evidence) Result {
-	rule := "QA9"
 	switch ch.Preimage["probe"] {
 	case "discovery":
 		return discoveryLevel8(ch, e.Discovery)
@@ -23,7 +22,7 @@ func level8(ch plan.Check, c observe.Controls, e Evidence) Result {
 	case "planted_secret":
 		return plantedSecret(ch, c, e)
 	}
-	return sentinel(8, rule)
+	return authoredPredicate(ch, e)
 }
 
 func basicProbe(ch plan.Check, e Evidence) Result {

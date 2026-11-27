@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"strconv"
 )
 
@@ -148,7 +149,7 @@ func ProjectRun(r Run) map[string]any {
 	}
 	var printed any
 	if d.Printed != nil {
-		printed = map[string]any{"value": d.Printed.Value}
+		printed = map[string]any{"value": projectedValue(d.Printed.Value)}
 	}
 	end, err := ProjectEnd(r.End, r.Markers)
 	if err != nil {
@@ -193,4 +194,27 @@ func ProjectHost(c Controls) map[string]any {
 	}
 	o["kill_attribution"] = kills
 	return o
+}
+
+// projectedValue adapts exact recorded values only at the JSON projection boundary.
+// Decision evidence retains strictjson's number spellings and container types.
+func projectedValue(v any) any {
+	switch x := v.(type) {
+	case strictjson.Number:
+		return json.Number(x)
+	case strictjson.Object:
+		out := map[string]any{}
+		for k, v := range x {
+			out[k] = projectedValue(v)
+		}
+		return out
+	case strictjson.Array:
+		out := make([]any, len(x))
+		for i, v := range x {
+			out[i] = projectedValue(v)
+		}
+		return out
+	default:
+		return v
+	}
 }

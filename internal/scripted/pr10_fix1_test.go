@@ -114,11 +114,11 @@ func TestFix1NullReadControl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	key, ok := standardValue(inv["key"]).(map[string]any)
+	key, ok := inv["key"].(object)
 	if !ok {
 		t.Fatal("missing key")
 	}
-	r, err := s.Observe(key, observe.Spec{})
+	r, err := s.Observe(map[string]any(key), observe.Spec{})
 	if err != nil {
 		t.Fatal(err)
 	}

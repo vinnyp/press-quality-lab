@@ -299,6 +299,71 @@
         "file": "internal/decide/pr10_b2_test.go",
         "function": "TestPlantedReadConditions"
       }
+    ],
+    "QA2": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestExpectedSourcesForPredicates"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestExitExpected"
+      }
+    ],
+    "QA9": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestAuthoredPredicateRows"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestAuthoredJSONRules"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestPointerRows"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestAuthoredCutStreams"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestPreconditionsAndSizes"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestComputationTypes"
+      }
+    ],
+    "QO5": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestExitExpected"
+      }
+    ],
+    "QO6": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr12_test.go",
+        "function": "TestComputationEnds"
+      }
+    ],
+    "QE11": [
+      {
+        "kind": "test",
+        "file": "internal/grade/pr12_evidence_test.go",
+        "function": "TestRunbookMarkers"
+      }
     ]
   }
 }
