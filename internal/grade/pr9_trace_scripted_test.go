@@ -139,8 +139,48 @@ func independentTrace(t *testing.T, recording []byte, host, subject, input, prei
 		sortAnyStrings(env)
 		return map[string]any{"words": pre["words"], "offline_args": pre["offline_args"], "env": env, "home": home, "runbook": pre["runbook"], "step": pre["step"], "computation": nil}
 	}
+	var recorded struct {
+		Invocations []struct {
+			Key      map[string]any
+			Confined []map[string]any
+		}
+	}
+	if err := json.Unmarshal(recording, &recorded); err != nil {
+		t.Fatal(err)
+	}
 	// A per-invocation QO1 ending still requires serving the subject run.
 	before := func(id string) bool {
+		pre := traceObject(preimages[id])
+		for _, bv := range traceArray(subject["runbooks"]) {
+			book := traceObject(bv)
+			if book["name"] != pre["runbook"] {
+				continue
+			}
+			for _, sv := range traceArray(book["steps"]) {
+				step := traceObject(sv)
+				if step["name"] != pre["step"] {
+					continue
+				}
+				index, err := traceIndex(t, pre["index"])
+				if err != nil {
+					t.Fatal(err)
+				}
+				checks := traceArray(step["checks"])
+				if index < 0 || index >= int64(len(checks)) {
+					continue
+				}
+				check := traceObject(checks[index])
+				for _, v := range []any{traceObject(check["precondition"])["computation"], traceObject(check["expected"])["computation"]} {
+					for _, name := range traceArray(traceObject(v)["captures"]) {
+						for _, inv := range recorded.Invocations {
+							if inv.Key["runbook"] == book["name"] && inv.Key["step"] == name && inv.Key["computation"] == nil && len(inv.Confined) > 0 && traceObject(inv.Confined[0]["markers"])["confinement"] != true {
+								return false
+							}
+						}
+					}
+				}
+			}
+		}
 		pred := predictions[id]
 		return !blocked && !copyChanged && binary["placeholder"] == nil && (pred.Level >= 6 || pred.Level == 1 && allowedRule(pred.Ending, "QO1"))
 	}
@@ -198,15 +238,6 @@ func independentTrace(t *testing.T, recording []byte, host, subject, input, prei
 	held := func(id string) bool {
 		e := evidence[id]
 		return e["outcome"] == "held" || e["reason"] == "placeholder_unfilled" && predictions[id].Level == 8
-	}
-	var recorded struct {
-		Invocations []struct {
-			Key      map[string]any
-			Confined []map[string]any
-		}
-	}
-	if err := json.Unmarshal(recording, &recorded); err != nil {
-		t.Fatal(err)
 	}
 	runFor := func(key map[string]any) map[string]any {
 		for _, inv := range recorded.Invocations {
@@ -422,7 +453,7 @@ func TestTraceComputationCopyChanged(t *testing.T) {
 	comp := map[string]any{"words": nil, "offline_args": []any{}, "env": []any{}, "home": "scratch", "runbook": "book", "step": "read", "computation": []any{"/bin/echo"}}
 	host := map[string]any{"confinement": map[string]any{"applied": true}, "self_test": "passed"}
 	subject := map[string]any{"runbooks": []any{map[string]any{"name": "book", "steps": []any{map[string]any{"name": "read", "words": []any{"read"}}}}}}
-	preimages := map[string]any{"check": map[string]any{"runbook": "book", "step": "read", "index": float64(0), "words": []any{"read"}, "offline_args": []any{}, "env": map[string]any{}, "expected": map[string]any{"computation": map[string]any{"argv": []any{"/bin/echo"}}}}}
+	preimages := map[string]any{"check": map[string]any{"runbook": "book", "step": "read", "index": json.Number("0"), "words": []any{"read"}, "offline_args": []any{}, "env": map[string]any{}, "expected": map[string]any{"computation": map[string]any{"argv": []any{"/bin/echo"}}}}}
 	input := map[string]any{"evidence": []any{map[string]any{"check_id": "check", "outcome": "held"}}}
 	predictions := map[string]tracePrediction{"check": {Level: 8}}
 	for _, changed := range []bool{false, true} {
@@ -437,6 +468,43 @@ func TestTraceComputationCopyChanged(t *testing.T) {
 		got := independentTrace(t, recording, host, subject, input, preimages, predictions)
 		if !reflect.DeepEqual(got, want) {
 			t.Fatal(changed, got, want)
+		}
+	}
+}
+
+func TestTraceCapturedUnconfined(t *testing.T) {
+	// E-53, E-49, QA7: a named unconfined recording prevents serving the capturing step.
+	help := map[string]any{"words": []any{"--help"}, "offline_args": []any{}, "env": []any{}, "home": "empty", "runbook": nil, "step": nil, "computation": nil}
+	first := map[string]any{"words": []any{"first"}, "offline_args": []any{}, "env": []any{}, "home": "runbook", "runbook": "book", "step": "first", "computation": nil}
+	last := map[string]any{"words": []any{"last"}, "offline_args": []any{}, "env": []any{}, "home": "runbook", "runbook": "book", "step": "last", "computation": nil}
+	comp := map[string]any{"words": nil, "offline_args": []any{}, "env": []any{}, "home": "scratch", "runbook": "book", "step": "last", "computation": []any{"/bin/echo"}}
+	host := map[string]any{"confinement": map[string]any{"applied": true}, "self_test": "passed"}
+	for _, named := range []bool{false, true} {
+		for _, confined := range []bool{false, true} {
+			computation := map[string]any{"argv": []any{"/bin/echo"}, "captures": []any{}}
+			if named {
+				computation["captures"] = []any{"first"}
+			}
+			subject := map[string]any{"runbooks": []any{map[string]any{"name": "book", "steps": []any{
+				map[string]any{"name": "first", "words": []any{"first"}},
+				map[string]any{"name": "last", "words": []any{"last"}, "checks": []any{map[string]any{"expected": map[string]any{"computation": computation}}}},
+			}}}}
+			preimages := map[string]any{"check": map[string]any{"runbook": "book", "step": "last", "index": json.Number("0"), "words": []any{"last"}, "offline_args": []any{}, "env": map[string]any{}, "expected": map[string]any{"computation": computation}}}
+			input := map[string]any{"evidence": []any{map[string]any{"check_id": "check", "outcome": "held"}}}
+			predictions := map[string]tracePrediction{"check": {Level: 8}}
+			want := []map[string]any{help, first, last, comp}
+			if named && !confined {
+				predictions["check"] = tracePrediction{Level: 1, Ending: predictedEnding{Rules: []string{"QO1"}}}
+				want = want[:2]
+			}
+			recording := mustJSON(t, map[string]any{"invocations": []any{
+				map[string]any{"key": help, "confined": []any{map[string]any{"markers": map[string]any{"confinement": false}}}},
+				map[string]any{"key": first, "confined": []any{map[string]any{"markers": map[string]any{"confinement": confined}}}},
+				map[string]any{"key": last, "confined": []any{map[string]any{"markers": map[string]any{"confinement": true}}}},
+			}})
+			if got := independentTrace(t, recording, host, subject, input, preimages, predictions); !reflect.DeepEqual(got, want) {
+				t.Fatal(named, confined, got, want)
+			}
 		}
 	}
 }

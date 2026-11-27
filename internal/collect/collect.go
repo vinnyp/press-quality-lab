@@ -61,11 +61,16 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 	serve := func(key plan.Object, ch plan.Check) (observe.Invocation, error) {
 		budget := ch.Preimage["budget_seconds"]
 		if key["computation"] != nil {
+			found := false
 			for _, comp := range decide.Computations(ch) {
 				if reflect.DeepEqual(comp["argv"], key["computation"]) {
 					budget = comp["budget_seconds"]
+					found = true
 					break
 				}
+			}
+			if !found {
+				panic("QA6: unmatched computation key")
 			}
 		}
 		seconds := 0

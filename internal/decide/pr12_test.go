@@ -617,3 +617,26 @@ func TestStepContextRequired(t *testing.T) {
 	// E-49, QS5: a missing context must never let a placeholder step run.
 	mustFault(t, func() { StepRuns(StepFacts{Controls: passing()}) })
 }
+
+func TestNamedCaptureScope(t *testing.T) {
+	// E-53, QA4: only named runs in the same runbook affect confinement and cut captures.
+	ch, e := computedCheck("stdout_json_equals", nil)
+	ch.Preimage["runbook"] = "book"
+	object(object(ch.Preimage["expected"])["computation"])["captures"] = plan.Array{"first"}
+	e.Captures = []observe.Invocation{
+		{Key: observe.Key{"runbook": "book", "step": "first"}, Run: observe.Run{Markers: observe.Markers{Confinement: true}}},
+		{Key: observe.Key{"runbook": "book", "step": "other"}, Run: observe.Run{StdoutCut: true}},
+		{Key: observe.Key{"runbook": "other", "step": "first"}, Run: observe.Run{StdoutCut: true}},
+	}
+	if r := level1(ch, passing(), e); r.Level != 0 {
+		t.Fatal(r)
+	}
+	if r := cutCaptures(ch, e); r.Level != 0 {
+		t.Fatal(r)
+	}
+	e.Captures = e.Captures[1:]
+	if r := level1(ch, passing(), e); r.Level != 0 {
+		t.Fatal(r)
+	}
+	mustFault(t, func() { cutCaptures(ch, e) })
+}

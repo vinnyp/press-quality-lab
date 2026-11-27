@@ -321,6 +321,63 @@ func TestCaptureOwnRuns(t *testing.T) {
 	}
 }
 
+func TestNamedCaptureScopeLoop(t *testing.T) {
+	// E-53, E-49, QA7, QA4: unrelated unconfined or cut steps do not decide a later check.
+	for _, name := range []string{"B", "C", "D"} {
+		t.Run(name, func(t *testing.T) {
+			first := loopCheck()
+			if name != "C" {
+				first["dimension"] = "destructive-guard"
+			}
+			last := loopCheck()
+			steps := plan.Array{loopStep("first", first)}
+			if name == "D" {
+				mid := loopCheck()
+				mid["dimension"] = "destructive-guard"
+				steps = append(steps, loopStep("mid", mid))
+				comp := loopComp("compute")
+				comp["captures"] = plan.Array{"mid"}
+				last["expected"] = plan.Object{"computation": comp}
+			}
+			p := loopPlan(t, append(steps, loopStep("last", last)))
+			source := loopSourceWith(func(k observe.Key) observe.Run {
+				r := cleanLoopRun()
+				if k["step"] == "first" {
+					r.Markers.Confinement = false
+					r.StdoutCut = true
+					r.StdoutSeen = (1 << 20) + 1
+				}
+				if k["computation"] != nil {
+					r.Details.Printed = &observe.PrintedValue{Value: "value"}
+				}
+				return r
+			})
+			got, err := Collect(p, source)
+			if err != nil || len(got) == 0 {
+				t.Fatal(got, err)
+			}
+			lastResult := got[len(got)-1].Result
+			wantSteps := []any{"first", "last"}
+			if name == "C" {
+				wantSteps = []any{"first"}
+				if len(got) != 2 || got[0].Result.Level != 1 || got[0].Result.Reason != "network_unverifiable" || lastResult.Level != 4 || lastResult.Reason != "earlier_step_failed" {
+					t.Fatal(got)
+				}
+			} else {
+				if name == "D" {
+					wantSteps = []any{"first", "mid", "last"}
+				}
+				if lastResult.Level != 8 || lastResult.Outcome != "held" {
+					t.Fatal(lastResult)
+				}
+			}
+			if !reflect.DeepEqual(stepsServed(source), wantSteps) {
+				t.Fatal(source.keys, wantSteps)
+			}
+		})
+	}
+}
+
 func TestOverridesDoNotStopRunbook(t *testing.T) {
 	// QS5, QA7: a grade-wide placeholder applies only after all runbooks have run.
 	p := loopPlan(t, plan.Array{loopStep("first", loopCheck()), loopStep("last", loopCheck())})
@@ -397,5 +454,24 @@ func TestServingSpecs(t *testing.T) {
 	spec := source.specs[0]
 	if spec.CheckID != "runbook:book:step:outside" || !reflect.DeepEqual(spec.Preimage["offline_args"], plan.Array{"--offline"}) || !reflect.DeepEqual(spec.Preimage["env"], plan.Object{"SYNTHETIC_OFFLINE": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"}) || spec.Preimage["budget_seconds"] != strictjson.Number("7") {
 		t.Fatal(spec)
+	}
+}
+
+func TestUnmatchedComputationKeyFault(t *testing.T) {
+	// QA6: an unmatched planned computation key is an engine fault before serving.
+	p := loopPlan(t, plan.Array{loopStep("first", loopCheck())})
+	p.Runbooks = nil
+	p.Checks[0].Keys[0]["computation"] = plan.Array{"/bin/unknown"}
+	source := loopSourceWith(func(observe.Key) observe.Run {
+		t.Error("unmatched key served")
+		return cleanLoopRun()
+	})
+	defer func() {
+		if recover() == nil {
+			t.Error("missing engine fault")
+		}
+	}()
+	if got, err := Collect(p, source); err != nil {
+		t.Fatal(got, err)
 	}
 }
