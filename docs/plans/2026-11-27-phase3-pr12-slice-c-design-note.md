@@ -34,7 +34,7 @@ The loop runs each runbook of the required set step by step, in the order writte
    - a check without a cut capture then has its own computation keys served, the precondition before the expected value.
 
    Two checks of one step can name equal computations. Such a key is served once and both checks read it. Two computations of one step with equal argument lists that differ in anything else reject the subject file with exit 2 (E-52), a rule the subject checks gain in QA4's place in E-9's order.
-5. **Resolving.** Each check is resolved from levels 1 to 8. Its evidence is its own step run and its own computation runs. A captured step's run is kept apart, in `Evidence.Captures`. Only level 6's cut-capture rule reads it, and no other level, level 7 above all, ever judges it. A capture with no run in `Evidence.Captures` is an engine fault, exit 70, never read as uncut.
+5. **Resolving.** Each check is resolved from levels 1 to 8. Its evidence is its own step run and its own computation runs. A captured step's run is kept apart, in `Evidence.Captures`. Only two rules read it: level 1, which makes the check `network_unverifiable` when the captured run was not confined (E-53), and level 6's cut-capture rule. No other level, level 7 above all, ever judges it. A capture with no run in `Evidence.Captures` is an engine fault, exit 70, never read as uncut.
 6. **A step with no required check** still runs in its place (E-49), so the shared home and its captures are what the author wrote. `decide.StepRuns` says whether it runs. It does not run when:
    - the runbook has stopped;
    - a grade-wide QO1 condition holds;
