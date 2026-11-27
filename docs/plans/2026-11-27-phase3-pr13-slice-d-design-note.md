@@ -14,22 +14,28 @@ A destructive runbook runs in a scope that includes `destructive` (QS6, QA7, QA8
 
 ### The guard
 
-Today the sentinel is the only check that works out a step's class from the subject on its own. A replacement that read the plan's own results would fail together with the plan builder it backs up. So `decide.MayServe(check, key)` works its answer out again from the source data, by its own code:
-1. It resolves the key's words against the subject's declared commands by longest prefix (`collection-rules.md`, the command rule).
+Today the sentinel is the only check that works out a step's class from the subject on its own. A replacement that read the plan's own results would fail together with the plan builder it backs up. So `decide.MayServe(check, key, scopes)` works its answer out again from the source data, by its own code. `scopes` is the requested tokens verbatim: the plan carries them as `Plan.Scopes`, copied from the input, never as a flag the plan computed.
+1. It resolves the key's words against the subject's declared commands by longest prefix (`collection-rules.md`, the command rule). For a runbook key it also resolves every step of that runbook in the subject's `runbooks`, as the sentinel did, so a safe first step of a destructive runbook is refused outside a destructive scope too (QA7: a step makes the whole runbook destructive).
 2. When that command's class is `destructive`:
    - a probe key is refused in every scope, since no probe takes a destructive command (QS6, QP3, QP4, QP6);
    - a runbook step key is refused unless the requested scope's raw tokens include the literal `destructive`.
 
    The plan's exclusion tests whether the scope includes the dimension `destructive-guard`, a different test. Only the `destructive` token includes that dimension (`internal/rulebook/scope.go`), and an unknown token includes nothing (E-7), so the two agree on every input, and each catches a defect in the other.
-3. A refusal is an engine fault, exit 70. Nothing has been served by then.
+3. At each serve only, a key whose command's class or `writes` is a placeholder is refused too, so a placeholder has two brakes, level 2 and this one, as a destructive command does (QS5).
+4. Two kinds of key pass without resolution:
+   - **the discovery check's own keys:** its help requests, home `empty`, identified by the check (`probe` is `discovery`), never by `--help` in the words, since a runbook step can ask for help too;
+   - **a computation's keys** (`words` `null`, home `scratch`), which do not run the subject.
 
-**Where it runs.** `collect` applies `MayServe` to every key of every check and to every runbook step key, an E-49 step included. It does so at its start, before the discovery walk or any other key (QE3), and again at each serve. `collect` also refuses with exit 70 an authored check that no runbook step schedules, so the probe loop can never serve an authored check. The rule lives in `decide`, and `collect` only acts on the fault, as it does for `StepRuns` (KTD11).
+   Discovery's requests go through `MayServe` like every other key.
+5. A refusal is an engine fault, exit 70. Nothing has been served by then.
 
-**The tests that replace the sentinel's.** `TestDestructiveSentinel`, `TestInvocationServing/Destructive` and `TestOutsideStepRuns/Destructive` build a plan while a command is `safe`, then make it `destructive`. Each keeps that construction and now expects exit 70 with nothing served. A plan whose flags are set by hand would test only that a boolean is read.
+**Where it runs.** `collect` applies `MayServe`'s destructive rule to every key of every check and to every runbook step key, an E-49 step included. It does so at its start, before the discovery walk or any other key (QE3), and again at each serve. The placeholder rule applies at each serve only, because a placeholder-class probe check is planned with keys that level 2 keeps unserved. `collect` also refuses with exit 70 an authored check that no runbook step schedules, so the probe loop can never serve an authored check. The rule lives in `decide`, and `collect` only acts on the fault, as it does for `StepRuns` (KTD11).
+
+**The tests that replace the sentinel's.** `TestInvocationServing/Destructive` and `TestOutsideStepRuns/Destructive` build a plan while a command is `safe`, then make it `destructive`. Each keeps that construction and now expects exit 70 with nothing served. A plan whose flags are set by hand would test only that a boolean is read. `TestDestructiveSentinel` becomes a `MayServe` unit row. The non-discovery subtests of `TestInvocationServing`, and `TestUnmatchedComputationKeyFault`, plan an authored check with no runbook; they now schedule it in a runbook, and one new subtest keeps the unscheduled check and expects exit 70.
 
 ### Commands that are never invoked
 
-**A help request is allowed in every scope.** QD2 asks every counted command for help. Its only exceptions are `help`, `completion` and hidden commands, and no class is among them. QD6 and `credit-and-routes.md` §3 keep the risk inside the confinement: a help request runs in an empty home under full confinement. QS6's gate therefore applies to a command's invocation as a probe or a runbook step, never to its help. The corpus records `remove --help` in 110 of the 121 cases that run discovery to `remove`, `case-001` included.
+**A help request is allowed in every scope.** QD2 asks every counted command for help. Its only exceptions are `help`, `completion` and hidden commands, and no class is among them. QD6 and `credit-and-routes.md` §3 keep the risk inside the confinement: a help request runs in an empty home under full confinement. QS6's gate therefore applies to a command's invocation as a probe or a runbook step, never to its help. The corpus records `remove --help` in 110 of the 121 non-derivation cases, `case-001` included; the other 11 never reach `remove`.
 
 **An unclassified command is never invoked** (AE24). That covers a command whose class is a placeholder (QS5) and a command discovery found that the file does not declare (QD3). Both are already true. U14 adds the named tests the plan asks for, each on the ordered list of served keys (KTD2.6) and each with a mutation:
 - **`case-022`** serves only `export --help`. Mutation: let a probe take each discovered command.
@@ -58,7 +64,7 @@ It is also the judge's not-observed list (`docs/specs/judge-1.0/rulebook.md`) le
 
 ### QE12's table, as data
 
-The sealed table of next actions is written into `internal/record` as data, one row per reason. Its test parses the table from `collection-contract.md` and requires exact equality of the reasons and their text with the Go data. A second assertion pins the closed set from both sealed sources above, so dropping or renaming a row, or a typo in an action, turns it red.
+The sealed table of next actions is written into `internal/record` as data, one row per reason. The data is written out literally in Go, backticks kept as the table has them, and is never loaded or embedded from the contract. Its test parses the table from `collection-contract.md` and requires exact equality of the reasons and their text with the Go data. A second assertion pins the closed set from both sealed sources above, so dropping or renaming a row, or a typo in an action, turns it red.
 
 The stored record's `next_actions` stays empty until U18 fills it and the scorecard shows it (KTD16's interim rule), so QE12 stays listed.
 
@@ -71,7 +77,7 @@ The stored record's `next_actions` stays empty until U18 fills it and the scorec
   - the W1 to W3 set-aside reasons;
   - the anchor's refusals.
 - **Where a next action's reason comes from.** It comes from the judge's output (QE14), for checks and dimensions alike. The judge can decide a check differently from the evidence: C1 gives `no_evidence`, C3 gives `empty_target` (`case-011`) and C4 gives `precondition_unmet` (`case-093`). So U18 reads both kinds of reason from the judge's output, and that is outside this slice.
-- **A step whose class is a placeholder.** It is not a destructive step, because QA7 conditions on `destructive`. So its runbook enters the required set in a conformance scope, and level 2 ends its checks `placeholder_unfilled`, which runs nothing (QS5). That is the plain reading, and either reading fails closed on running anything.
+- **A step whose class is a placeholder.** It is not a destructive step, because QA7 conditions on `destructive`, and QP1 says a missing input "shows as a reason rather than as nothing". So its runbook enters the required set in a conformance scope. The steps before it run, level 2 ends its checks `placeholder_unfilled` and it is never invoked (QS5), and the steps after it are `earlier_step_failed`. Only the placeholder step could do harm were its class really `destructive`, and it is never invoked.
 
 ## Predicted ratchet set
 
@@ -92,8 +98,8 @@ PR13's built set is `scripts/ratchet/pr12.json` with `QA8.destructive_runbook` a
 
 | Rule | Proof | Its mutations, each with what fails |
 |---|---|---|
-| QA8 | `case-001`, `case-002`, `case-059`, and the guard's rows | run a destructive runbook in a scope without `destructive`: `case-001`'s required set and trace, and the guard's rows. Keep it excluded in every scope: `case-002` and `case-059` |
-| QE13 | The closed set and `record.Build`'s checks, plus `case-080` to `case-087` | add `network_attempted` to the set: the QE12 set assertion and the `network_attempted` row |
+| QA8 | `case-001`, `case-002`, `case-059`, the mixed-runbook rows and the guard's rows | Drop the plan's destructive-runbook exclusion: the mixed-runbook rows and the guard's rows (in `case-001` the runbook's one check is out of scope anyway). Let the scope include `destructive-guard` without the `destructive` token: `case-001`'s required set, and `MayServe`. Keep destructive runbooks excluded in every scope: `case-002` and `case-059` |
+| QE13 | The closed set and `record.Build`'s checks, plus `case-080` to `case-087` | add `network_attempted` to the set: the QE12 set assertion and the `network_attempted` row. Emit it for a QO3 kill: `record.Build`'s refusal, and `case-080` to `case-087` |
 
 **Stay listed:**
 
@@ -127,11 +133,12 @@ Their mutations are fixed now:
    - **Conditions on the run:**
      - a destructive runbook under a grade-wide QO1 condition (E-15);
      - one whose destructive command has a placeholder `writes`, which level 2 stops;
-     - a step whose class is a placeholder, in a conformance scope.
+     - a mixed runbook of a safe step, a placeholder-class step and a safe step, in a conformance scope, which pins the order in the reading above.
    - **The guard:**
      - a plan built without the exclusion, which gives exit 70 before any key is served;
      - a probe whose command is destructive;
-     - an authored check that no step schedules.
+     - an authored check that no step schedules;
+     - discovery's `remove --help` served, a runbook step `remove --help` in a conformance scope refused, a computation key served, and a placeholder-class key refused at serve.
    - **Scope at the command line:** `--scope destructive` alone, an unknown token and a repeated token each give exit 2 with nothing served (E-7, X1).
    - **The fact:** class `destructive` with `has_destructive_ops` false, in a destructive scope.
    - **The reason checks:** `network_attempted`, `no_evidence` and `scope_not_requested` refused; an empty reason on `not_observed`, and a reason on `held`, each refused.
@@ -141,5 +148,5 @@ Their mutations are fixed now:
 
 ## Stated limits of this slice
 
-- **What a `destructive-guard` check proves.** The engine does not test that an author's check really omits the confirmation (`credit-and-routes.md` §2, the author-routing row), and it never inspects the store after the step. A step that deletes, then prints the message with the refusal's exit code, holds. Only the throwaway home is at risk, and the confinement still holds.
+- **What a `destructive-guard` check proves.** The engine does not test that an author's check really omits the confirmation (`credit-and-routes.md` §3, the row where an author routes a check), and it never inspects the store after the step. A step that deletes, then prints the message with the refusal's exit code, holds. Only the throwaway home is at risk, and the confinement still holds.
 - The real path's runs of a destructive step wait for PR15.

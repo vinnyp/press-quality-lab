@@ -28,3 +28,18 @@
 | 6 | Minors: the help claim cited QD6 for the wrong point; QA8's proof cases did not fail on its mutation; the trace rule could not change a result; AE24's tests lacked mutations; missing rows for nested commands, an E-49 destructive step and a placeholder-class step; the placeholder row's field; the stated limit's citation; PR12 missing from the script's history loops | measurement, agy | Confirmed | Fixed in the note |
 
 No finding was a two-way reading of the sealed text.
+
+## Round 2 (delta, 9957a3c to 8d5f5a4)
+
+**Verdicts:** both reviewers found no Blocker or Major, and every round-1 finding is closed.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 7 | `MayServe` as written would refuse discovery's `remove --help`; an exemption keyed on `--help` would let a destructive step through | measurement, agy (Minor) | Confirmed against `collect.go` | The discovery check's own keys pass, identified by the check; computation keys pass |
+| 8 | `MayServe` had no input for the raw scope tokens | measurement, agy (Minor) | Confirmed | `Plan.Scopes` carries them verbatim |
+| 9 | The placeholder-class reading said "runs nothing", wrong for a mixed runbook | measurement (Minor) | Confirmed | Reworded with the step order; a mixed-runbook row; a placeholder brake at serve |
+| 10 | Refusing unscheduled authored checks breaks existing serving tests' fixtures | agy (Minor) | Confirmed in `u44_test.go` | Their checks are scheduled; one subtest keeps the unscheduled check, expecting exit 70 |
+| 11 | QA8's first mutation does not fail `case-001`, whose runbook check is out of scope anyway | agy (Minor) | Confirmed against `case-001` | Split into two mutations, each with what fails |
+| 12 | Nits: `MayServe` on a runbook key checks the whole runbook from the subject; the corpus count; the stated limit's section; `TestDestructiveSentinel`'s construction; QE13's second mutation; literal QE12 data | measurement, agy | Confirmed | Fixed in the note |
+
+No Blocker or Major remains, so the build proceeds.
