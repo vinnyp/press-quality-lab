@@ -427,7 +427,12 @@ func TestSchemaBoundaries(t *testing.T) {
 			}
 		}
 		s, err := Read([]byte(passing), strictjson.Write(b), nil)
-		valid := count == "0" || count == "1e32"
+		// QE10: schema-valid oversized integers are engine faults.
+		if count == "1e32" {
+			errorCode(t, err, 70, "QE10")
+			continue
+		}
+		valid := count == "0"
 		if (err == nil) != valid {
 			t.Fatalf("bytes %s: %v", count, err)
 		}
@@ -443,15 +448,8 @@ func TestSchemaBoundaries(t *testing.T) {
 	h := decode(t, []byte(passing))
 	obj(h["confinement"])["applied"] = false
 	obj(h["confinement"])["sandbox_exec_exit"] = number("1e32")
-	s, err := Read(strictjson.Write(h), base, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	c, err := s.Controls()
-	if err != nil {
-		t.Fatal(err)
-	}
-	same(t, observe.ProjectHost(c), h)
+	_, err := Read(strictjson.Write(h), base, nil)
+	errorCode(t, err, 70, "QE10")
 }
 
 func TestRawValuesProjection(t *testing.T) {

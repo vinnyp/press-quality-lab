@@ -73,6 +73,19 @@ func InvocationOutcome(ch plan.Check, c observe.Controls, run observe.Run) Resul
 	}
 }
 
+// AcceptedInvocationCode uses the planted invocation's own listed command.
+func AcceptedInvocationCode(ch plan.Check, key observe.Key, code int) bool {
+	if ch.Preimage["probe"] == "planted_secret" {
+		pre := plan.Object{}
+		for k, v := range ch.Preimage {
+			pre[k] = v
+		}
+		pre["words"] = key["words"]
+		ch.Preimage = pre
+	}
+	return acceptedCode(ch, code)
+}
+
 func acceptedCode(ch plan.Check, code int) bool {
 	p := ch.Preimage
 	var codes strictjson.Array

@@ -12,6 +12,7 @@ import (
 
 	"github.com/vinnyp/press-quality-lab/internal/grade"
 	"github.com/vinnyp/press-quality-lab/internal/judge"
+	"github.com/vinnyp/press-quality-lab/internal/record"
 
 	"github.com/spf13/cobra"
 )
@@ -31,7 +32,21 @@ var judging = judge.Judge
 func main() { os.Exit(entry()) }
 
 // stdout carries help, except under pql judge, whose stdout is reserved for the judge's document.
-func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func run(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
+	masker := record.NewMasker(nil, nil)
+	maskedOut, maskedErr := masker.Writer(stdout), masker.Writer(stderr)
+	stdout, stderr = maskedOut, maskedErr
+	defer func() {
+		if err := errors.Join(maskedOut.Flush(), maskedErr.Flush()); err != nil {
+			code = exitSoftware
+		}
+	}()
+	errorText := func(err error) string {
+		if masked, ok := err.(interface{ MaskedText() string }); ok {
+			return masked.MaskedText()
+		}
+		return masker.Mask(err.Error())
+	}
 	resultCode := 0
 	root := &cobra.Command{
 		Use: "pql", Short: "Measure agent-facing command-line tools",
@@ -95,7 +110,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return encoder.Encode(subject.Create(args[0]))
 		},
 	}
-	root.AddCommand(createCmd, judgeCmd, newCollectionCommand("grade"), newCollectionCommand("anchor"))
+	root.AddCommand(createCmd, judgeCmd, newCollectionCommand("grade", masker), newCollectionCommand("anchor", masker))
 	root.SetHelpCommand(&cobra.Command{
 		Use: "help [command]", Short: "Help about any command",
 		Args: func(_ *cobra.Command, args []string) error {
@@ -134,12 +149,12 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		if collection.err == nil {
 			return collection.code
 		}
-		if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", grade.Escape(collection.err.Error())); writeErr != nil {
+		if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", grade.Escape(errorText(collection.err))); writeErr != nil {
 			return exitSoftware
 		}
 		return collection.code
 	}
-	code := exitSoftware
+	code = exitSoftware
 	var rejection *rejectionError
 	if errors.As(err, &rejection) {
 		code = rejection.code
@@ -148,7 +163,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if errors.As(err, &usage) {
 		code = exitUsage
 	}
-	if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", grade.Escape(err.Error())); writeErr != nil {
+	if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", grade.Escape(errorText(err))); writeErr != nil {
 		return exitSoftware
 	}
 	if code == exitUsage {

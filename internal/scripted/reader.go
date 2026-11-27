@@ -33,7 +33,17 @@ type Source struct {
 }
 
 // Read validates shape and QT4/QT5 relations before serving any facts.
-func Read(host, recording []byte, trace io.Writer) (*Source, error) {
+func Read(host, recording []byte, trace io.Writer) (source *Source, err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			if fault, ok := p.(*Error); ok && fault.Code == 70 {
+				source = nil
+				err = fault
+			} else {
+				panic(p)
+			}
+		}
+	}()
 	bounds := strictjson.Bounds{Bytes: 16 << 20, Depth: 64, NumberChars: 32, ExponentDigits: 4}
 	h, ok := strictjson.Read(host, bounds, nil)
 	if !ok {
@@ -49,6 +59,10 @@ func Read(host, recording []byte, trace io.Writer) (*Source, error) {
 	if !recordingShape(b) {
 		return nil, reject("QT5", "recording shape refused")
 	}
+	// Validate every integer consumed by intValue, including repeated and
+	// unconfined recordings, before selecting the first confined run.
+	_ = intValue(obj(obj(h)["confinement"])["sandbox_exec_exit"])
+	validateRecordingIntegers(obj(b))
 	s := &Source{host: obj(h), runs: map[string]observe.Run{}, overrides: map[string]string{}, trace: NewTrace(trace)}
 	for _, value := range arr(obj(b)["invocations"]) {
 		invocation := obj(value)
@@ -119,11 +133,11 @@ func intValue(v any) int64 {
 	if !ok {
 		return 0
 	}
-	r, _ := new(big.Rat).SetString(string(n))
-	if r.Num().IsInt64() {
-		return r.Num().Int64()
+	r, valid := new(big.Rat).SetString(string(n))
+	if !valid || !r.IsInt() || r.Cmp(new(big.Rat).SetInt64(observe.MaxCount)) > 0 || r.Cmp(new(big.Rat).SetInt64(-observe.MaxCount)) < 0 {
+		panic(&Error{Code: 70, Rule: "QE10", Detail: "integer outside judge range"})
 	}
-	return 0
+	return r.Num().Int64()
 }
 func readEnd(v any) observe.End {
 	o := obj(v)
@@ -292,4 +306,21 @@ func endShape(v any) bool {
 		return enum("confinement", "budget", "memory", "code_signing", "before_marker")(o["by"])
 	}
 	return o["by"] == nil
+}
+
+func validateRecordingIntegers(recording object) {
+	for _, v := range arr(recording["invocations"]) {
+		invocation := obj(v)
+		runs := append(array{}, arr(invocation["confined"])...)
+		if invocation["unconfined"] != nil {
+			runs = append(runs, invocation["unconfined"])
+		}
+		for _, v := range runs {
+			run := obj(v)
+			_ = intValue(obj(run["end"])["code"])
+			_ = intValue(obj(run["stdout"])["bytes"])
+			_ = intValue(obj(run["stderr"])["bytes"])
+			_ = intValue(obj(obj(run["planted"])["control_end"])["code"])
+		}
+	}
 }

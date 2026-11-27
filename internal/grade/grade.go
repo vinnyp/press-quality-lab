@@ -56,6 +56,7 @@ type Dependencies struct {
 	Workspace         func() (*throwaway.Workspace, error)
 	SourceInWorkspace func(*throwaway.Workspace) (observe.Source, func() error, error)
 	Stderr            io.Writer
+	Masker            *record.Masker
 	// Signals permits deterministic tests; nil subscribes to the four signals.
 	Signals           <-chan os.Signal
 	OpenSystemFile    func(string) (*os.File, error) // Nil opens absolute computation executables nonblocking.
@@ -132,6 +133,20 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	groupsEnded := true
 	var workspace *throwaway.Workspace
 	d = defaults(d)
+	if d.Masker == nil {
+		d.Masker = record.NewMasker(nil, nil)
+	}
+	maskedOut, maskedErr := d.Masker.Writer(out), d.Masker.Writer(d.Stderr)
+	out, d.Stderr = maskedOut, maskedErr
+	defer func() {
+		if flushErr := errors.Join(maskedOut.Flush(), maskedErr.Flush()); flushErr != nil {
+			code = 70
+			err = errors.Join(err, flushErr)
+		}
+		if err != nil {
+			err = maskedError{err, d.Masker}
+		}
+	}()
 	signals := d.Signals
 	if signals == nil {
 		ch := make(chan os.Signal, 4)
@@ -265,6 +280,13 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if inputErr != nil {
 		return 70, inputErr
 	}
+	for _, setting := range subjectArray(s["offline"]) {
+		for _, v := range subjectObject(subjectObject(setting)["env"]) {
+			if value, ok := v.(string); ok {
+				d.Masker.AddDeclared(value)
+			}
+		}
+	}
 	fixed := in.Input
 	fixed.Baseline, fixed.Anchor = false, false
 	p, err := plan.Build(fixed)
@@ -353,17 +375,17 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		if ch.Result.Unbuilt != nil {
 			return 70, failure(70, ch.Result.Unbuilt.Rule, "collection level not built")
 		}
-		var failure any
-		if ch.Result.FailureKind != "" {
-			failure = ch.Result.FailureKind
+		resolution, resolutionErr := checkResolution(ch, d.Masker)
+		if resolutionErr != nil {
+			return 70, resolutionErr
 		}
-		results[ch.Plan.ID] = record.Resolution{Result: ch.Result, FailureKind: failure, Keys: ch.Plan.Keys}
+		results[ch.Plan.ID] = resolution
 	}
 	markers, markersOK := s["markers"].(strictjson.Array)
 	if !markersOK {
 		return 70, failure(70, "QE16", "parsed subject shape lost")
 	}
-	input, err := record.Build(record.Input{Plan: p, Results: results, Request: request, Scope: scopes, SubjectFacts: facts, Markers: markers, Scripted: o.Scripted})
+	input, err := record.Build(record.Input{Plan: p, Results: results, Request: request, Scope: scopes, SubjectFacts: facts, Markers: markers, Scripted: o.Scripted, Masker: d.Masker})
 	if err != nil {
 		return 70, err
 	}
@@ -391,6 +413,8 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	}
 	r.BinaryDigest = in.BinaryDigest
 
+	displayPath := d.Masker.Mask(canonical)
+	r.DisplaySubjectFilePath = &displayPath
 	storeErr := persist(d, r)
 	if !rejected {
 		if _, err := io.WriteString(out, Escape(strings.TrimSuffix(string(strictjson.Write(output)), "\n"))+"\n"); err != nil {
@@ -536,4 +560,27 @@ func stringValue(v any) string {
 		return ""
 	}
 	return s
+}
+
+type maskedError struct {
+	err    error
+	masker *record.Masker
+}
+
+func (e maskedError) Error() string      { return e.masker.Mask(e.err.Error()) }
+func (e maskedError) MaskedText() string { return e.Error() }
+func (e maskedError) Unwrap() error      { return e.err }
+func subjectArray(v any) strictjson.Array {
+	a, ok := v.(strictjson.Array)
+	if !ok {
+		return nil
+	}
+	return a
+}
+func subjectObject(v any) strictjson.Object {
+	o, ok := v.(strictjson.Object)
+	if !ok {
+		return nil
+	}
+	return o
 }

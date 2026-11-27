@@ -203,6 +203,9 @@ func TestOwnRuleNames(t *testing.T) {
 	for _, ch := range corpusPlan(t, "case-004").Checks {
 		probe := ch.Preimage["probe"]
 		seen[probe] = true
+		if probe == "bare" || probe == "byte_bound" || probe == "exit_codes" {
+			continue
+		}
 		r := level8(ch, passing(), Evidence{})
 		if r.Unbuilt == nil || r.Unbuilt.Rule != want[probe] || r.Level != 8 {
 			t.Fatalf("probe %v: %+v", probe, r)

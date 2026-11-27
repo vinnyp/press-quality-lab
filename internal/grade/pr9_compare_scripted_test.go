@@ -23,7 +23,11 @@ func compareDecided(t *testing.T, source string, check collect.Check) {
 	if err := caseassembly.Read(filepath.Join(source, "input.json"), &expected); err != nil {
 		t.Fatal(err)
 	}
-	doc, err := record.Build(record.Input{Plan: plan.Plan{Checks: []plan.Check{check.Plan}}, Results: map[string]record.Resolution{check.Plan.ID: {Result: check.Result, FailureKind: nullableFailure(check.Result.FailureKind), Keys: check.Plan.Keys}}, Scripted: true})
+	resolution, err := checkResolution(check, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := record.Build(record.Input{Plan: plan.Plan{Checks: []plan.Check{check.Plan}}, Results: map[string]record.Resolution{check.Plan.ID: resolution}, Scripted: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,11 +62,4 @@ func normalizedJSON(t *testing.T, v any) any {
 		t.Fatal(err)
 	}
 	return out
-}
-
-func nullableFailure(s string) any {
-	if s == "" {
-		return nil
-	}
-	return s
 }

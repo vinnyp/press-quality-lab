@@ -34,6 +34,7 @@ type Input struct {
 	SubjectFacts Object
 	Markers      Array
 	Scripted     bool
+	Masker       *Masker
 }
 
 // Build returns a fresh judge document, or a fault without a partial document.
@@ -119,6 +120,7 @@ func Build(in Input) (Object, error) {
 		markers = Array{}
 	}
 	doc := Object{"request": in.Request, "scope": in.Scope, "claimed_tier": tier, "subject_facts": in.SubjectFacts, "markers": markers, "required": required, "evidence": evidence, "baseline": nil, "retired": Array{}, "accepted_regressions": Array{}, "trials": Array{}}
+	maskText(doc, in.Masker)
 	if err := bound(doc, evidence); err != nil {
 		return nil, err
 	}
@@ -204,4 +206,43 @@ func array(v any) Array {
 		return nil
 	}
 	return a
+}
+
+// maskText masks only values displayed as evidence and artifact paths. Required
+// entries, outcomes, reasons, tiers and digests remain measurement facts.
+func maskText(doc Object, m *Masker) {
+	for _, v := range array(doc["evidence"]) {
+		e := object(v)
+		for _, k := range []string{"expected", "observed"} {
+			e[k] = maskValue(e[k], m)
+		}
+		for _, v := range array(e["targets"]) {
+			target := object(v)
+			if target["kind"] == "artifact" {
+				if path, ok := target["id"].(string); ok {
+					target["id"] = m.Mask(path)
+				}
+			}
+		}
+	}
+}
+func maskValue(v any, m *Masker) any {
+	switch x := v.(type) {
+	case string:
+		return m.Mask(x)
+	case Object:
+		// Stream heads have already been masked before cutting; digest summaries
+		// and streams must not be masked a second time.
+		if x["bytes"] != nil && x["sha256"] != nil && (len(x) == 2 || len(x) == 4 && x["cut"] != nil && x["head"] != nil) {
+			return x
+		}
+		for k, v := range x {
+			x[k] = maskValue(v, m)
+		}
+	case Array:
+		for i, v := range x {
+			x[i] = maskValue(v, m)
+		}
+	}
+	return v
 }
