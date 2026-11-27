@@ -25,6 +25,87 @@ class PredictorTests(unittest.TestCase):
     def case(self, number, built=None):
         return predictor.predict_case(KIT / 'cases' / f'case-{number:03d}', built or BUILT)
 
+    def test_pr12_prediction(self):
+        # QA7, QA8, QA9, QO6: slice-c count and every pending ending.
+        directory = Path(__file__).with_name('ratchet')
+        built = predictor.load(directory / 'pr12.json')
+        previous_built = predictor.load(directory / 'pr10.json')
+        self.assertEqual(built, dict(previous_built, levels=list(range(1, 9))))
+        result = predictor.predict(built)
+        previous = predictor.load(directory / 'pr10-prediction.json')['predicted']
+        self.assertEqual(len(previous), 58)
+        self.assertEqual(len(result['predicted']), 140)
+        self.assertTrue(set(previous) <= set(result['predicted']))
+        self.assertEqual(len(set(result['predicted']) - set(previous)), 82)
+        expected = {}
+        for n in (69, 70, 143):
+            expected[f'case-{n:03d}'] = {'exit_code': None, 'rules': [], 'phase': 'excluded'}
+        for n, rule in [(71, 'QE4.anchor'), (2, 'QA8'), (59, 'QA8')] + [
+                (n, 'QE4') for n in (130, 131, 132, 133, 134, 137)]:
+            expected[f'case-{n:03d}'] = {
+                'exit_code': 70, 'rules': [rule],
+                'phase': 'sentinel' if rule == 'QA8' else 'planning'}
+        self.assertEqual({r['case']: r['ending'] for r in result['cases']
+                          if not r['predicted']}, expected)
+        actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(actual, (directory / 'pr12-prediction.json').read_bytes())
+
+    def test_previous_predictions_unchanged(self):
+        # QA8: the new token never alters an already blocked check.
+        directory = Path(__file__).with_name('ratchet')
+        for phase in (6, 8, 9, 10):
+            with self.subTest(phase=phase):
+                result = predictor.predict(predictor.load(directory / f'pr{phase}.json'))
+                actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
+                self.assertEqual(actual, (directory / f'pr{phase}-prediction.json').read_bytes())
+
+    def test_destructive_token_fallback(self):
+        # QA8: required destructive runbooks need the token only after other blockers.
+        directory = Path(__file__).with_name('ratchet')
+        built = predictor.load(directory / 'pr10.json')
+        built['levels'] = list(range(1, 9))
+        pending = self.case(2, built)
+        self.assertEqual(pending['ending'], {
+            'exit_code': 70, 'rules': ['QA8'], 'phase': 'sentinel'})
+        built['builds'].append('QA8.destructive_runbook')
+        self.assertTrue(self.case(2, built)['predicted'])
+        built['builds'].pop()
+        built['levels'].remove(8)
+        self.assertEqual(self.case(2, built)['ending'], {
+            'exit_code': 70, 'rules': ['QA9'], 'phase': 'sentinel'})
+        built['levels'].append(8)
+        record_gap = copy.deepcopy(built)
+        record_gap['builds'] = [r for r in record_gap['builds'] if r['rule'] != 'QE8']
+        self.assertEqual(self.case(2, record_gap)['ending'], {
+            'exit_code': 70, 'rules': ['QE8'], 'phase': 'record'})
+        built['builds'] = [r for r in built['builds'] if r['rule'] != 'QE2.slice']
+        self.assertEqual(self.case(2, built)['ending'], {
+            'exit_code': 70, 'rules': ['QE2.slice'], 'phase': 'planning'})
+
+    def test_capture_placeholder_dependency(self):
+        # QS5, QA4, E-51: captured commands propagate dependency with or without checks.
+        subject = {'binary': 'bin/subject', 'seed': None, 'store': None,
+                   'commands': [{'words': ['read'], 'class': 'safe', 'writes': False},
+                                {'words': ['read', 'item'], 'class': 'safe', 'writes': False}],
+                   'runbooks': [{'name': 'book', 'steps': [
+                       {'name': 'first', 'words': ['read', 'item'], 'checks': []}]}]}
+        pre = {'probe': None, 'words': ['other'], 'runbook': 'book',
+               'expected': {'computation': {'captures': ['first']}}}
+        for checks in ([], [{'id': 'check'}]):
+            subject['runbooks'][0]['steps'][0]['checks'] = checks
+            for field in ('class', 'writes'):
+                with self.subTest(field=field, required=bool(checks)):
+                    self.assertFalse(predictor.depends(subject, pre))
+                    changed = copy.deepcopy(subject)
+                    changed['commands'][1][field] = {'placeholder': 'Supply value'}
+                    self.assertTrue(predictor.depends(changed, pre))
+                    unrelated = copy.deepcopy(pre)
+                    unrelated['expected']['computation']['captures'] = []
+                    self.assertFalse(predictor.depends(changed, unrelated))
+                    changed['commands'][1][field] = subject['commands'][1][field]
+                    changed['commands'][0][field] = {'placeholder': 'Supply value'}
+                    self.assertFalse(predictor.depends(changed, pre))
+
     def test_pr10_probe_tokens(self):
         # QP2–QP4, QP6–QP13, QO7: independent probe capabilities.
         rows = {
@@ -727,7 +808,7 @@ class PredictorTests(unittest.TestCase):
             self.assertEqual(self.case(3, built)['ending'],
                              {'exit_code': 70, 'rules': [rule], 'phase': 'record'})
             self.assertEqual(self.case(59, built)['ending']['phase'], 'sentinel')
-        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 6, 7, 8, 'record', 'safe_read', 'override'})
+        self.assertEqual(set(predictor.BUILD_PHASE.values()), {None, 4, 6, 7, 8, 'record', 'safe_read', 'override'})
         for rule in predictor.names(BUILT['builds']):
             self.assertEqual(sum(rule in {r for r, phase in predictor.BUILD_PHASE.items()
                                          if phase == candidate}

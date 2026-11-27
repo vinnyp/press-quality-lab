@@ -125,6 +125,7 @@ RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
 # An integer means observation support, needed only at that invocation's serving level.
 # override means the QS5 step after level 8, independent of its level-2 step.
 BUILD_PHASE = {
+    'QA8.destructive_runbook': 4,
     'QP2': 8,
     'QP3': 8,
     'QP4': 8,
@@ -209,6 +210,13 @@ def depends(subject, preimage):
         words = secret.get('commands', []) if isinstance(secret, dict) else []
     else:
         words = [preimage['words']] if preimage['words'] is not None else []
+    # E-51: a captured step's command is also a dependency of the check.
+    captures = (preimage.get('expected') or {}).get('computation', {}).get('captures', [])
+    words = list(words)
+    for runbook in subject.get('runbooks', []):
+        if runbook['name'] == preimage.get('runbook'):
+            words.extend(step['words'] for step in runbook['steps']
+                         if step['name'] in captures)
     for invocation in words:
         candidates = [c for c in subject['commands']
                       if invocation[:len(c['words'])] == c['words']]
@@ -494,6 +502,20 @@ def check_ending(level, built, subject, preimage, gaps):
     return ending(None, level_rules(level))
 
 
+def destructive_runbook(subject, preimage):
+    """QA7/QA8: one destructive step makes the entire included runbook destructive."""
+    for runbook in subject.get('runbooks', []):
+        if runbook['name'] != preimage.get('runbook'):
+            continue
+        for step in runbook['steps']:
+            candidates = [c for c in subject['commands']
+                          if step['words'][:len(c['words'])] == c['words']]
+            command = max(candidates, key=lambda c: len(c['words']), default={})
+            if command.get('class') == 'destructive':
+                return True
+    return False
+
+
 def required_dependencies(subject, document, preimages):
     # Required-set construction and pre-check, before collection or recording.
     return {r for r in dependencies(subject, document, preimages)
@@ -598,6 +620,12 @@ def predict_case(directory, built):
                     check_end = ending(70, [token], 'observation')
                 else:
                     check_end = ending(None, ['QS5'])
+            # QA8 is a fallback: preserve all earlier slices' existing blockers.
+            if (check_end['phase'] == 'deciding' and
+                    not any(BUILD_PHASE[r] == 'record' for r in common_gaps) and
+                    destructive_runbook(subject, preimage) and
+                    not supports(names(built['builds']), 'QA8.destructive_runbook')):
+                check_end = ending(70, ['QA8'], 'sentinel')
             checks.append({'id': check, 'deciding_level': level, 'ending': check_end})
         planning = {r for c in checks if c['ending']['phase'] == 'planning'
                     for r in c['ending']['rules']}
