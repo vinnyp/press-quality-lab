@@ -128,3 +128,39 @@ QS8 names files relative to "the directory that holds the subject file", E-17 re
 ### E-25. Text that cannot be a capture token
 
 QA4 replaces `{CAPTURE:<step>}`, and a capture that names a step other than a listed earlier one rejects the subject file. The schema's step names exclude `{`, `}` and `:`. **A capture token is `{CAPTURE:`, then text that matches the schema's step-name pattern, then `}`. Any other text, an unterminated `{CAPTURE:` included, is literal and left as written. A token whose name is not a listed earlier step of its runbook rejects the file under QA4.** The owner ruled on 2026-11-26. No case of the corpus has such text, so no record changes.
+
+### E-26. A help with no recognised heading below the bare binary
+
+`credit-and-routes.md` §5 says "A help with no section heading belongs to a leaf command (QD2). Every other form, a man-page style help included, is not read", and QD5 makes discovery not observed when a help cannot be read. A man-page style help without a recognised heading also has no section heading. At the bare binary both readings give QD5. Below it they differ. **Below the bare binary, a help request that exits 0 with output and has no section heading belongs to a leaf command. A declared command below it is therefore not found, and QD4 decides. At the bare binary, QD5's second case decides as it says. §5's heading test is applied to the output the engine kept, and it classifies every such help: one with a section heading is read, and one without belongs to a leaf. No such help is left unread for want of a heading.** The owner ruled on 2026-11-26. No case of the corpus has a headingless help below the bare binary with a declared command beneath it, so no record changes.
+
+### E-27. Where a help line's description starts
+
+§5 makes a command line hidden when its "description begins `(hidden)`, `[hidden]` or `HIDDEN`", and takes the command from the line's first word, with a trailing comma removed. It does not say where the description starts. Some generators print aliases after the name, as in `  account, a   Show the account`. **A command line's description is the text after the first run of blanks that follows its first word and is either two or more blank characters long or holds a tab. A blank is a space (U+0020) or a tab (U+0009). A line with no such run has no description, and is not hidden.** The owner ruled on 2026-11-26. No case of the corpus has an aliased hidden command, so no record changes.
+
+### E-28. A signal before the launcher's marker
+
+QH6 says confinement was not applied when no marker was written and either `sandbox-exec` itself exited or the launcher was ended by `SIGKILL` before writing its marker. QO5 decides an invocation that "ran to its end under confinement". Neither says what an invocation ended by another signal before the marker is. **An invocation of the subject that ends by any signal before the launcher's marker was written is QH6's case: the confinement was not applied, and QO1 decides, with `network_unverifiable`. QO5 decides only invocations whose marker was written. A computation's run is QO6's, which this entry does not change.** The owner ruled on 2026-11-26. No case of the corpus has such a run, so no record changes.
+
+### E-29. QO1 against QO7's order for discovery
+
+The precedence table puts QO1 first, for any check an invocation of which the engine could not confine. QO7 says that for each of discovery's help requests "QO1 to QO4 decide as for any invocation", and the first such request in QD2's order decides discovery. **When the engine could not confine one or more of discovery's help requests, QO1 decides discovery at level 1, ahead of a placeholder (level 2) and ahead of an earlier request that QO2 to QO4 decide. QO7's "first such request" then orders only the requests QO2 to QO4 decide.** The owner ruled on 2026-11-26. No case of the corpus has an unconfined help request, so no record changes.
+
+### E-30. QD4's second sentence when a bound or QD5 holds
+
+QD4's second sentence lets the other generated checks stand on their own invocations "when QD5 or a bound of QD2 decides discovery", even when the walk also missed a declared command. Discovery's own check can be decided earlier, at level 2 when `declared_count` is a placeholder. **QD4's second sentence applies whenever a bound of QD2 stopped the walk or either case of QD5 holds for any help request, whatever level decides discovery's own check. A help that QD5 makes unreadable still lists the commands it names, and the walk still descends below it (QD2). QD4's first sentence applies only when neither holds.** The owner ruled on 2026-11-26. The owner confirmed this wording on 2026-11-26, after a design review showed that an unreadable help does not stop the walk. No case of the corpus has a placeholder `declared_count` with a bound or a case of QD5, so no record changes.
+
+### E-31. A recorded run whose marker and attribution disagree
+
+QT5 records, for each run, whether the launcher wrote its marker, and for a `SIGKILL` what ended it, one value being `before_marker`. **A recorded run whose attribution is `before_marker` while its marker is recorded as written, or `confinement` while no marker is recorded, contradicts itself. This holds for every run of the recording, the first confined run that a scripted run reads and the others alike. The recording is invalid, and the scripted run exits 2 as QE16 says for a recording that is invalid.** The owner ruled on 2026-11-26. No run of the corpus has such a pair, so no record changes.
+
+### E-32. A help stream past the engine's bound
+
+QE10 keeps the first 1 MiB of each stream and records that a longer one was cut, and QT5 records a cut stream's first 64 KiB as `head`, with `kept` null. QD2 reads help from standard output, or from standard error when standard output is empty. **When the stream discovery would read from a help request was cut, that help cannot be read: QD5 decides as for any help that cannot be read, on the released and the scripted path alike, and nothing is read from the kept bytes or from `head`. A stream is empty for QD2's choice, and a help has output for QD5, by the bytes the program wrote, never by the bytes kept.** The owner ruled on 2026-11-26. No case of the corpus has a cut help stream, so no record changes.
+
+### E-33. A command its help lists twice
+
+QD2 says "Every listed command at every level counts", and QD3 compares "the number found" with `declared_count`. **A command is found once, however many times its parent's help lists it, by its words. The count and the walk take each command once, in the order of its first listing, so its help is requested once.** The owner ruled on 2026-11-26. No case of the corpus lists a command twice, so no record changes.
+
+### E-34. A listed name the engine cannot pass as an argument
+
+A command's name is the first word of its help line (§5), so a help can list a name holding a NUL byte or ill-formed UTF-8, or one whose help request's arguments pass the system's limit. Such a request cannot be made. **A help that lists such a name cannot be read: QD5 decides as for any help that cannot be read. The name is never requested. The help's other listed commands are walked, as QD2 walks below any help that ran. The limit is fixed, the same on every host and on the released and scripted paths: a help request's words, the name and the closing `--help` included, may total at most 131,072 bytes (128 KiB), counting each word's UTF-8 bytes and one byte per word. A request within it fits the argument limit of every supported macOS, so a scripted recording replays alike on any host.** The owner ruled on 2026-11-26, and on the fixed limit the same day. No case of the corpus has such a name, so no record changes.

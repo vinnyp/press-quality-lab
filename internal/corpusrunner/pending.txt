@@ -50,8 +50,6 @@ case-056
 case-057
 case-058
 case-059
-case-061
-case-062
 case-063
 case-064
 case-065

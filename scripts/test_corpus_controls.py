@@ -1,4 +1,5 @@
 """Fixture controls for pending growth and the independent export count."""
+import base64
 import importlib.util
 import contextlib
 import io
@@ -19,9 +20,40 @@ def load(name, filename):
 
 growth = load('growth', 'check-rule-growth.py')
 validation = load('validation', 'validate-corpus-records.py')
+case_ids = load('case_ids_control', 'check-case-ids.py')
+outcomes = load('outcomes_control', 'check-case-outcomes.py')
 
 
 class CorpusControls(unittest.TestCase):
+    def testFixedHelpLimit(self):
+        # E-34, QD5: Control 3 independently enforces the same fixed request-word limit.
+        for label, ancestor, child, allowed in [
+            ('Exact', '', 'a' * 131064, True),
+            ('PlusOne', '', 'a' * 131065, False),
+            ('Ancestor', 'a' * 131060, 'tiny', False),
+            ('UTF8', '', 'é' * 65532, True),
+            ('UTF8PlusOne', '', 'é' * 65532 + 'a', False),
+            ('NUL', '', 'bad\0name', False),
+            ('InvalidUTF8', '', 'bad\udcffname', False),
+        ]:
+            with self.subTest(label):
+                def entry(words, text):
+                    stream = dict(bytes=len(text.encode('utf-8', errors='surrogateescape')), kept=base64.b64encode(text.encode('utf-8', errors='surrogateescape')).decode(), head='', cut=False)
+                    return dict(key=dict(words=words + ['--help'], offline_args=[], env=[], runbook=None, step=None, computation=None, home='empty'),
+                                confined=[dict(end=dict(kind='exit', code=0), markers=dict(confinement=True, could_not_start=False), stdout=stream, stderr=dict(bytes=0))])
+                entries = [entry([], 'Commands:\n  ' + (ancestor or child) + '  desc')]
+                if ancestor:
+                    entries.append(entry([ancestor], 'Commands:\n  ' + child + '  desc'))
+                if allowed:
+                    entries.append(entry(([ancestor] if ancestor else []) + [child], 'leaf'))
+                status = {}
+                keys = case_ids.discovery_keys(dict(invocations=entries), status=status)
+                self.assertEqual(len(keys), 1 + bool(ancestor) + allowed)
+                self.assertEqual(status.get('unreadable', False), not allowed)
+                result, missing, extra = outcomes.discovery(dict(commands=[], declared_count=len(keys)-1), dict(invocations=entries), {})
+                self.assertEqual(result, ('held', None, None) if allowed else ('not_observed', 'precondition_unmet', None))
+                self.assertFalse(missing)
+
     def test_growth(self):
         for base, current, runner, expected in [
             ('case-001\ncase-002\n', 'case-002\ncase-001\n', True, []),

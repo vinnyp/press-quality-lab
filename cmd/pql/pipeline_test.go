@@ -14,6 +14,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/store"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 )
 
 const pipelineSubject = `{"subject_file_version":"1.0","binary":"bin/subject","facts":{"read_only":false,"has_destructive_ops":false,"store_backed":false,"has_cli":true,"bounding":"declared"},"commands":[{"words":[],"class":"safe","writes":false,"exit_codes":[0],"byte_bound":4096,"budget_seconds":10}],"declared_count":0,"seed":null,"store":null,"offline":[],"bookkeeping":[],"secret":null,"runbooks":[],"markers":[],"prompts":{"version":"none"}}`
@@ -142,6 +143,25 @@ func TestPipelineErrorEscaping(t *testing.T) {
 	diagnostic.Reset()
 	code = run([]string{"grade", path}, bytes.NewReader(nil), &out, &diagnostic)
 	if code != 70 || diagnostic.String() != grade.ComputationWarning+"\n"+`pql: rejected: QE16: engine panic: subject\u{001b}[31m`+"\n" {
+		t.Fatalf("%d %q", code, diagnostic.String())
+	}
+}
+
+func TestPipelineJoinedCleanupErrorEscaping(t *testing.T) {
+	// QE16, QE20, KTD16: the cleanup funnel's joined errors are escaped at stderr.
+	t.Setenv("TMPDIR", t.TempDir())
+	old := collectionDependencies
+	t.Cleanup(func() { collectionDependencies = old })
+	collectionDependencies = func(commandOptions) grade.Dependencies {
+		return grade.Dependencies{
+			IDs:    func() (int, int) { return 1000, 1000 },
+			Open:   func(string) (io.ReadCloser, error) { return nil, errors.New("read\x1b[31m") },
+			Remove: func(*throwaway.Workspace) error { return errors.New("cleanup\x1b[32m") },
+		}
+	}
+	var out, diagnostic bytes.Buffer
+	code := run([]string{"grade", filepath.Join(t.TempDir(), "subject.json")}, bytes.NewReader(nil), &out, &diagnostic)
+	if code != 70 || !strings.Contains(diagnostic.String(), `cleanup\u{001b}[32m`) || strings.ContainsRune(diagnostic.String(), '\x1b') || strings.Contains(diagnostic.String(), "\nrejected:") || !strings.Contains(diagnostic.String(), `\u{000a}`) {
 		t.Fatalf("%d %q", code, diagnostic.String())
 	}
 }

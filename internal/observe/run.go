@@ -5,7 +5,6 @@ import "bytes"
 
 // End records the system's end and the engine's own actions, before attribution.
 type End struct {
-	AfterMarker                     bool
 	SignalName                      string
 	MemoryKilled, CodeSigningKilled bool
 	Code                            int
@@ -19,6 +18,8 @@ type End struct {
 // Run holds invocation facts after protocol removal. Seen counts exclude
 // protocol bytes; Cut records whether the interim capture discarded bytes.
 type Run struct {
+	// BytesDropped marks deliberately discarded capture bytes; this run cannot be projected.
+	BytesDropped   bool
 	Details        RunDetails
 	End            End
 	Stdout, Stderr []byte

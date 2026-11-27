@@ -37,6 +37,7 @@ func allowedRule(e predictedEnding, rule string) bool {
 	return false
 }
 func TestPredictedCheckEndings(t *testing.T) {
+	// QD5, QO2, QO4, QE19, QT5: compare pending case evidence and served keys.
 	// QO1, QT6: independent predictions check every resolution, including pending checks.
 	const kit = "../../docs/specs/conformance-collection-1.0"
 	var predictions struct {
@@ -51,7 +52,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 			} `json:"checks"`
 		} `json:"cases"`
 	}
-	if err := caseassembly.Read("../../scripts/ratchet/pr8-prediction.json", &predictions); err != nil {
+	if err := caseassembly.Read("../../scripts/ratchet/pr9-prediction.json", &predictions); err != nil {
 		t.Fatal(err)
 	}
 	counts := map[string]int{}
@@ -71,7 +72,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 				t.Fatal(err)
 			}
 			// U9 moves all subject-file derivation refusals ahead of planning.
-			// Judge-checked endings follow the PR8 prediction.
+			// Judge-checked endings follow the PR9 prediction.
 			expectedRule := stringValue(c.Expect["rule"])
 			if prediction.Kind == "derivation-only" && (strings.HasPrefix(expectedRule, "QS") || expectedRule == "QP7" || expectedRule == "QP10" || expectedRule == "QA4" || expectedRule == "QA9") {
 				options := Options{SubjectFile: filepath.Join(layout.Subject, c.Input.SubjectFile), Scope: c.Input.Scope, Scripted: true}
@@ -129,7 +130,8 @@ func TestPredictedCheckEndings(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			raw, err := scripted.Read(host, recording, nil)
+			var trace bytes.Buffer
+			raw, err := scripted.Read(host, recording, &trace)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -157,10 +159,32 @@ func TestPredictedCheckEndings(t *testing.T) {
 				counts["derivation"]++
 				return
 			}
+			if err := raw.Required(plan.Array{}); err != nil {
+				t.Fatal(err)
+			}
 			checks, _, err := gatherSignals(collect.Collect, p, raw, nil, 0)
 			if err != nil {
 				t.Fatal(err)
 			}
+			var pres map[string]any
+			if err := caseassembly.Read(filepath.Join(source, "preimages.json"), &pres); err != nil {
+				t.Fatal(err)
+			}
+			predByID := map[string]struct {
+				Level  int
+				Ending predictedEnding
+			}{}
+			for _, pred := range prediction.Checks {
+				predByID[pred.ID] = struct {
+					Level  int
+					Ending predictedEnding
+				}{pred.Level, pred.Ending}
+			}
+			var subjectJSON map[string]any
+			if err := json.Unmarshal(data, &subjectJSON); err != nil {
+				t.Fatal(err)
+			}
+			compareTrace(t, trace.Bytes(), recording, c.Input.Host, subjectJSON, pres, predByID)
 			gotIDs, wantIDs := []string{}, []string{}
 			for _, check := range checks {
 				gotIDs = append(gotIDs, check.Plan.ID)
@@ -178,10 +202,13 @@ func TestPredictedCheckEndings(t *testing.T) {
 					if check.Plan.ID != want.ID {
 						continue
 					}
+
 					if want.Ending.Phase == "deciding" {
-						if check.Result.Unbuilt != nil || check.Result.Level != want.Level || check.Result.Outcome != "not_observed" || (want.Level == 1 && check.Result.Reason != "network_unverifiable") || (want.Level == 2 && check.Result.Reason != "placeholder_unfilled") {
+						if check.Result.Unbuilt != nil || check.Result.Level != want.Level {
 							t.Errorf("check %s: %+v; want level %d", want.ID, check.Result, want.Level)
 						}
+						compareDecided(t, source, check)
+
 					} else if check.Result.Unbuilt == nil || !allowedRule(want.Ending, check.Result.Unbuilt.Rule) {
 						t.Errorf("check %s: %+v; want %+v", want.ID, check.Result, want.Ending)
 					}
@@ -193,4 +220,13 @@ func TestPredictedCheckEndings(t *testing.T) {
 	if !reflect.DeepEqual(counts, map[string]int{"decide": 111, "planning": 7, "derivation": 31}) {
 		t.Fatalf("phase counts %v", counts)
 	}
+}
+
+func mustJSON(t *testing.T, v any) []byte {
+	t.Helper()
+	b, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }

@@ -7,8 +7,10 @@ type Key = map[string]any
 
 // Spec supplies the immutable planned context for one invocation.
 type Spec struct {
-	CheckID  string
-	Preimage map[string]any
+	// BudgetSeconds supplies discovery's fixed QD2 budget; zero uses planned context.
+	BudgetSeconds int
+	CheckID       string
+	Preimage      map[string]any
 }
 
 // Controls are grade-wide facts. False SystemNamed includes an unverified

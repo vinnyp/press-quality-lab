@@ -17,7 +17,7 @@ func TestPlaceholderClassifiers(t *testing.T) {
 	var document struct {
 		Dependencies map[string]map[string]bool `json:"placeholder_dependencies"`
 	}
-	read(t, "../../scripts/ratchet/pr8-prediction.json", &document)
+	read(t, "../../scripts/ratchet/pr9-prediction.json", &document)
 	predicted := document.Dependencies
 	cases, checks := 0, 0
 	for name, predictions := range predicted {
@@ -50,7 +50,7 @@ func TestPlaceholderClassifiers(t *testing.T) {
 
 func TestCreateThenGrade(t *testing.T) {
 	// QS5, QT6, QE16: create's placeholders decide every check at level 2;
-	// KTD2.6: no invocation or home may be served for these dependent checks.
+	// QD2, QO7: discovery still walks; no other invocation or home is served.
 	binary := filepath.Join(t.TempDir(), "pql")
 	if output, err := exec.Command("go", "build", "-tags", "scripted", "-o", binary, "../../cmd/pql").CombinedOutput(); err != nil {
 		t.Fatalf("build %s %v", output, err)
@@ -90,8 +90,13 @@ func TestCreateThenGrade(t *testing.T) {
 			t.Fatalf("fact not unstated: %v", v)
 		}
 	}
-	if r.Exit != 4 || len(r.Trace.Served) != 0 || len(r.Trace.Homes) != 0 {
+	if r.Exit != 4 || len(r.Trace.Served) != 6 || len(r.Trace.Homes) != 0 {
 		t.Fatalf("exit=%d trace=%+v", r.Exit, r.Trace)
+	}
+	for _, key := range r.Trace.Served {
+		if !discovery(object(key)) {
+			t.Fatal("unexpected non-discovery key", key)
+		}
 	}
 	if err := checkRequired(r.Trace, input); err != nil {
 		t.Fatal(err)

@@ -73,6 +73,33 @@ LEVEL_RULE = {
 }
 
 
+# credit-and-routes §1; collection-rules QP2–QP13 and QA9.
+# QO7 combines invocation results at level 7, before the probe rules.
+PROBE_LEVEL_EIGHT_RULES = {
+    'discovery': (
+        'QD2',
+        'QD3',
+        'QD5',
+    ),
+    'bare': ('QP2',),
+    'byte_bound': ('QP3',),
+    'exit_codes': ('QP4',),
+    'store_unchanged': (
+        'QP6',
+        'QP7',
+        'QP8',
+        'QP9',
+    ),
+    'planted_secret': (
+        'QP10',
+        'QP11',
+        'QP12',
+        'QP13',
+    ),
+    None: ('QA9',),
+}
+
+
 def level_rules(level):
     rules = LEVEL_RULE[level]
     return (rules,) if isinstance(rules, str) else rules
@@ -85,6 +112,11 @@ RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
 # An integer means observation support, needed only at that invocation's serving level.
 # override means the QS5 step after level 8, independent of its level-2 step.
 BUILD_PHASE = {
+    'QD2.bounds': 8,
+    'QD3': 8,
+    'QD5': 8,
+    'QO7.discovery': 8,
+    'QO7.planted_secret': 7,
     'QS5.final_override': 'override',
     'QS5.qd3_trigger': 'override',
     'QS8.safe_read': 'safe_read',
@@ -381,8 +413,27 @@ def check_ending(level, built, subject, preimage, gaps):
         if keys:
             return ending(70, keys, 'observation')
         applies = current == 1 or trigger(current, subject, preimage)
-        if current not in built['levels'] and applies:
-            return ending(70, level_rules(current), 'sentinel')
+        capabilities = names(built.get('builds', []))
+        # QO7 combines planted-secret runs before their level-7 result is known.
+        if (current == 7 and preimage['probe'] == 'planted_secret' and applies and
+                current in built['levels'] and
+                not supports(capabilities, 'QO7.planted_secret')):
+            return ending(70, ['QO7'], 'sentinel')
+        # QO7 also combines discovery requests decided at level 7.
+        if (current == 7 and preimage['probe'] == 'discovery' and applies and
+                current in built['levels'] and
+                not supports(capabilities, 'QO7.discovery')):
+            return ending(70, ['QO7'], 'sentinel')
+        discovery_built = (current == 8 and preimage['probe'] == 'discovery' and
+                           all(supports(capabilities, token) for token in (
+                               'QD2.bounds',
+                               'QD3',
+                               'QD5',
+                               'QO7.discovery',
+                           )))
+        if current not in built['levels'] and applies and not discovery_built:
+            return ending(70, PROBE_LEVEL_EIGHT_RULES[preimage['probe']]
+                          if current == 8 else level_rules(current), 'sentinel')
     return ending(None, level_rules(level))
 
 
