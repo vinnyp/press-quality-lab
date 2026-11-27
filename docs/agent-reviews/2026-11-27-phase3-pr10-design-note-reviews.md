@@ -39,3 +39,16 @@
 | 14 | `check-case-outcomes.py` contradicted E-38; PR10 was not in the regeneration test; QP1's mutation repeated PR8's; QP2's budget and QP3's "within" | agy, measurement (Minor) | Confirmed | Fixed |
 | 15 | E-39's unit should be code points | measurement (Minor) | Confirmed | The note says code points |
 | 16 | The pending cases, not the ratchet, discriminate | measurement (Minor) | Confirmed | A rule-to-case table in the note |
+
+## Round 2 (delta, measurement lens; 94eeddb to f286329)
+
+**Verdict:** no Blocker. One Major, six Minors and five Nits. Every round-1 disposition was checked and found done, and the prediction reproduced byte for byte.
+
+| # | finding | verify | disposition |
+|---|---|---|---|
+| 17 | Control 6's unreadable rows could not fail on Linux: the walk's `chmod` resets a mode-0000 file and root reads it anyway | Confirmed against KTD20 | The rows inject `EACCES` through an opener seam after the reset, in the comparison and the scan |
+| 18 | Control 5 could not tell E-39's unit; control 7's 64 KiB head limit would fail a correct collector on invalid UTF-8; E-41's consequence for an emptied seed WAL | Confirmed | A non-ASCII and a 7-byte value; the head is the decoding of the first 64 KiB; the limit stated |
+| 19 | The mutations of rules that stay listed were dropped; QO7's proof should cite discovery's rows; the script's ordering rows are mostly decided by the reason table | Confirmed | Mutations restored in a table; QO7 cites PR9's rows; the ordering proof is the Go rows |
+| 20 | Nits: the control runs only where QT4 calls for it; E-10 with a change elsewhere; byte-wise order and the total's scope; E-39's wording; E-35 against the control is a choice | Confirmed | Each stated. E-39 now says code points, the owner's ruling made precise |
+
+**Design gate:** passed at the commit that adds this round. No Blocker or Major is open.

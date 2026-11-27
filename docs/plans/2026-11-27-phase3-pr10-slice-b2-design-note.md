@@ -15,7 +15,7 @@ This note follows the slice b1 note, `docs/plans/2026-11-26-phase3-pr9-slice-b1-
   - It compares the home's names, kinds and regular-file bytes before and after, after QP7's exclusions, `.pql-tmp`, and QP8's side-file rule. E-41 makes QP8 a condition added to QP6.
   - A link or special file the subject created is always a change, and is never followed or opened (QH25).
   - QP9's `empty_target` and its control-copy `harness_fault` come before the comparison.
-  - An entry the inspection cannot read is `harness_fault`, never unchanged (E-10).
+  - An entry the inspection cannot read is `harness_fault` and never ends as unchanged (E-10). A change found elsewhere in the home still decides the check as not held.
 - **The planted-secret probe (U37).** QO7's combination is decided by one function, applied in QO7's order. Each step reports the level the table below gives, and level 7 decides a planted-secret check only when the combination's deciding step is one of its own. A leak and the read proof's control come ahead of step 2, so level 7 defers to level 8 when either applies.
 
   | Order | Step | Outcome | Level |
@@ -23,13 +23,13 @@ This note follows the slice b1 note, `docs/plans/2026-11-26-phase3-pr9-slice-b1-
   | — | any listed invocation unconfined (E-36) | `network_unverifiable` | 1 |
   | 1 | a leak in any invocation | `not_held`, `predicate` | 8 |
   | 2 | an engine kill outside the budget on any invocation (E-35) | `harness_fault` | 7 |
-  | 3 | the read proof's control ran and ended any way other than the confinement's kill (QO7, E-37); not run when the calibration failed (E-38) | `harness_fault` | 8 |
+  | 3 | the read proof's control, run only for an invocation whose control QO7 calls for and never when the calibration failed (E-38), ran and ended any way other than the confinement's kill (QO7, E-37); not run when the calibration failed (E-38) | `harness_fault` | 8 |
   | 4 | the first invocation, in listing order, that QO2 to QO4 decide | its result | 7 |
   | 5 | a scan stopped by a bound, or an entry it could not read (QP13, E-10) | `harness_fault` | 8 |
   | 6 | at least one invocation proved a read (QP11, QH26 to QH28) | held | 8 |
   | 7 | otherwise, or `secret` is `null` | `input_missing` | 8 |
 
-  A non-success exit or a crash on a planted invocation only means it proved no read (QO7, last line). So the combination uses a QO1-to-QO4-only helper, as discovery does, never level 7's generic `InvocationOutcome`.
+  QO7 places E-35 and the read proof's control in the same gap between steps 1 and 2 without ordering them. Both give `harness_fault`, so the order chosen here, E-35 first, changes only the deciding level. A non-success exit or a crash on a planted invocation only means it proved no read (QO7, last line). So the combination uses a QO1-to-QO4-only helper, as discovery does, never level 7's generic `InvocationOutcome`.
 - **The control facts' seam.** In a scripted run, the host's results replace the recording's for the same control (QT4, line 270). The scripted source writes the host's `read_control` and `store_control` into the run's control facts before any decision reads them:
   - `killed` becomes a confinement kill after the marker;
   - `not_killed` becomes an end that is not one;
@@ -39,7 +39,7 @@ This note follows the slice b1 note, `docs/plans/2026-11-26-phase3-pr9-slice-b1-
 - **The leak scan and its encoder (U38).**
   - **The encoder** produces the nine forms of `credit-and-routes.md` §4, written from the table.
   - **What the scan reads:** each drained stream up to QE10's kept bytes, and each regular file of the used home other than the planted one, bookkeeping paths and `.pql-tmp` included.
-  - **The order:** files are walked in lexical order of their paths relative to the home. Each is read up to the smaller of 16 MiB and the room left in the 256 MiB total.
+  - **The order:** files are walked in byte-wise order of their paths relative to the home. Each is read up to the smaller of 16 MiB and the room left in the 256 MiB total, which counts files only; streams have QE10's bound.
   - **Bounds and leaks:** a leak in the bytes read is reported even when a bound was also reached, so step 1 wins over step 5.
   - **Unread files:** a file the scan cannot read is E-10's `harness_fault`, at step 5.
   - **Names are not scanned (E-43).**
@@ -142,7 +142,7 @@ Only rules whose whole text is decision logic this slice builds and proves move.
 | QP3 | Unit rows below, at and past the bound ("within" is at most); one where each stream is within the bound but the sum is not; `target_size`; plus `case-023` | compare only standard output with the bound |
 | QP4 | Unit rows for a declared and an undeclared code | accept the codes of a successful run instead of the declared ones |
 | QP11 | Unit rows for each of the four conditions failing alone, with E-37 and E-38 | ignore the device and inode |
-| QO7 | The table above, tested step against step in both orders, with the level each reports; E-35 to E-38; a non-success exit and a crash that prove no read; plus `case-095`, `case-150` and `case-151` | let a crash on a planted invocation decide the check as `crashed` |
+| QO7 | The table above, tested step against step in both orders by Go unit rows, with the level each reports; E-35 to E-38; a non-success exit and a crash that prove no read; plus `case-095`, `case-150` and `case-151`, and PR9's discovery rows (`TestDiscoveryOutcomeOrder`) for QO7's discovery bullet | let a crash on a planted invocation decide the check as `crashed` |
 
 **Stay listed**, each with what it still lacks:
 
@@ -157,6 +157,18 @@ Only rules whose whole text is decision logic this slice builds and proves move.
 | QE18 | a `macos_evidence` entry (GR15), masking of a real canary on the darwin path (PR15), and the scorecard (U18) |
 | QO5 | the predicates' accepted codes and `predicate` (slice c) |
 
+The tests for the rules that stay listed are written in this slice, and their mutations are fixed now too, so their later move is not chosen after the fact:
+
+| Rule | Its mutation |
+|---|---|
+| QP6 | compare a file's mode |
+| QP7 | leave out the directories on the way to a bookkeeping path too broadly, hiding a sibling's change |
+| QP8 | count an empty `-wal` as a change |
+| QP9 | let the comparison decide when the control was not detected |
+| QP12 | skip `.pql-tmp` in the scan |
+| QP13 | treat a file of exactly 16 MiB as past the bound |
+| QE18 | mask after cutting the head |
+
 The plan's U24 says "QE18 leaves KTD22's list". That contradicts KTD22 and GR15, so the plan is amended to match.
 
 ## Controls
@@ -167,8 +179,8 @@ The plan's U24 says "QE18 leaves KTD22's list". That contradicts KTD22 and GR15,
    - **Planted keys:** the planted-secret probe's `planted` keys are served in listing order for a check that reaches level 7, and are not served for a check decided earlier.
    - **The read-proof control:** it is never a served key, since a scripted run takes its result from the host.
 4. **The encoder from the table.** One row per §4 form, with its expected text written from the table by an independent reference, never by the encoder. It runs on the canary, and on a declared value whose base64 holds `+` and `/` and whose length is not a multiple of 3. That second value is what tells the url-safe forms from the standard ones, which the canary's alphabet cannot do.
-5. **Masking from the seam** (U24's scenarios). Each injected value, the canary and that declared value, is shown present before masking. Afterwards its exact replacement text, of the right length, stands in its place in each form, and nothing is left of the original. A masker that deleted text, or left a padding character, fails.
-6. **Unit rows for every branch the corpus lacks:**
+5. **Masking from the seam** (U24's scenarios). The values are the canary, that declared value, a non-ASCII declared value of at least 8 bytes but fewer than 8 code points (masked with one `*` per code point, E-39), and a 7-byte value, which stays unmasked. Each injected value is shown present before masking. Afterwards its exact replacement text, of the right length, stands in its place in each form, and nothing is left of the original. A masker that deleted text, or left a padding character, fails.
+6. **Unit rows for every branch the corpus lacks.** On Linux a mode-0000 file is reset by the walk's `chmod` and then read, and under root it is read anyway, so the unreadable rows inject the failure: an opener seam in `internal/throwaway` returns `EACCES` after the reset, in the store comparison and in the scan alike, and the rows assert `harness_fault`. The darwin flag and ACL half is QH25's, for PR15. The rows:
    - the special-file kind and a removed change;
    - `.pql-tmp`;
    - a seed side file (E-41);
@@ -180,7 +192,7 @@ The plan's U24 says "QE18 leaves KTD22's list". That contradicts KTD22 and GR15,
    - each single scan bound, at and one past;
    - a repeated secret command (E-42);
    - E-10's unreadable entry, in the comparison and in the scan. The plan's U36 and U37 scenarios hold: a mode-0000 file is read, or never ends as unchanged or held, and a scan mutated to skip unreadable files turns a test red.
-7. **The stream objects.** Each `expected` and `observed` stream object has exactly QE10's keys, its head within 64 KiB, and its digest over the kept bytes. QE19 does not compare them, so this control does.
+7. **The stream objects.** Each `expected` and `observed` stream object has exactly QE10's keys. Its head is the UTF-8 decoding of the first 64 KiB of the masked bytes, so it can exceed 64 KiB once each ill-formed byte becomes U+FFFD (the `invalid-utf8` form is a row), and its digest is over the unmasked kept bytes. QE19 does not compare them, so this control does.
 8. **The reference script.** `scripts/check-case-outcomes.py` follows E-38: the read proof's control is a candidate only when the calibration moved.
 
 ## Stated limits of this slice
@@ -188,3 +200,4 @@ The plan's U24 says "QE18 leaves KTD22's list". That contradicts KTD22 and GR15,
 - The real path's homes, planting, inspection, scan and controls are unit-tested but not joined to a darwin run until PR15, and QP9's control copy is built there.
 - No corpus subject declares an environment value of 8 bytes or more, and recordings hold no canary. So QE18's masking is proven by unit tests only, as `CASES.md` says.
 - Base64 alignment in the scan is E-14's stated limit, and a canary in a name is E-43's.
+- Under E-41, a command that empties or removes a seed's `-wal` without a checkpoint loses committed data, yet reads as unchanged. An author should checkpoint a write-ahead database before using it as a seed.

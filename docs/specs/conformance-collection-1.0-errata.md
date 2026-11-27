@@ -183,7 +183,7 @@ QH26 says that when the volume's read calibration fails, no invocation of a plan
 
 ### E-39. The width of a masked declared value
 
-QE18 masks each declared environment value of 8 bytes or more: "a declared value becomes as many `*` as its encoded form has characters". **The count is of Unicode characters in the encoded form, so the masked text has the visible width of what it hides. The 8-byte threshold stays a count of bytes.** The owner ruled on 2026-11-26. No subject of the corpus declares a value of 8 bytes or more, so no record changes.
+QE18 masks each declared environment value of 8 bytes or more: "a declared value becomes as many `*` as its encoded form has characters". **The count is of Unicode code points in the encoded form. The 8-byte threshold stays a count of bytes.** The owner ruled on 2026-11-26. No subject of the corpus declares a value of 8 bytes or more, so no record changes.
 
 ### E-41. A side file the seed supplies
 
