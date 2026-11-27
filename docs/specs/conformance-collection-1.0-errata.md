@@ -184,3 +184,15 @@ QH26 says that when the volume's read calibration fails, no invocation of a plan
 ### E-39. The width of a masked declared value
 
 QE18 masks each declared environment value of 8 bytes or more: "a declared value becomes as many `*` as its encoded form has characters". **The count is of Unicode characters in the encoded form, so the masked text has the visible width of what it hides. The 8-byte threshold stays a count of bytes.** The owner ruled on 2026-11-26. No subject of the corpus declares a value of 8 bytes or more, so no record changes.
+
+### E-41. A side file the seed supplies
+
+QP8 says `<store>-wal` and `<store>-journal` "are a change only when they exist with one byte or more after the command", and QP6 compares every regular file's bytes before and after. A seed copied from a database in write-ahead mode can supply a non-empty `-wal`. **QP8 adds a condition to QP6's comparison and does not replace it. A `-wal` or `-journal` is a change only when QP6 finds it changed and it holds one byte or more after the command. A side file the seed supplies and the command leaves unchanged is not a change, and neither is one the command empties.** The owner ruled on 2026-11-26. No seed of the corpus supplies a side file, so no record changes.
+
+### E-42. A command listed twice in `secret.commands`
+
+QP11 runs "each listed command once", QE8 numbers the planted secret's targets by listing position, and QT5 forbids two invocations with equal keys. The schema does not forbid listing a command twice. **A `secret.commands` that lists the same words twice rejects the subject file under QP10, with exit 2, in QP10's place in E-9's order.** The owner ruled on 2026-11-26. No case of the corpus lists a command twice, so no record changes.
+
+### E-43. Stated limit: a canary in a name
+
+QP12 finds the canary in a drained stream or in the contents of a file of the used home. **The specification states the limit that a canary written into a file's or a directory's name, or into a link's target, is not a leak QP12 finds: only stream bytes and regular files' contents are scanned. Masking (QE18) still covers names wherever a record or scorecard shows them.** The owner ruled on 2026-11-26. No record changes.
