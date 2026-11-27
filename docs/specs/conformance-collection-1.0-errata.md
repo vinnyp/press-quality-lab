@@ -172,3 +172,15 @@ QO7 combines the planted-secret probe's invocations, first match, and says that 
 ### E-36. QO1 against a leak in the planted-secret probe
 
 The precedence table puts QO1 first, and E-29 lifts an unconfined help request to level 1 for discovery. QO7's combination for the planted-secret probe lists a leak found in any invocation first. **When the engine could not confine one or more of the planted-secret probe's invocations, QO1 decides the check at level 1, with `network_unverifiable`, ahead of the combination and ahead of a leak found in another invocation. QO7's step 2 then orders only the invocations QO2 to QO4 decide.** The owner ruled on 2026-11-26. No case of the corpus has an unconfined planted-secret invocation, so no record changes.
+
+### E-37. How the read proof's control invocation ends
+
+QO7 says that when the read proof's control invocation "ends any way other than a kill after the marker", the planted-secret check is not observed with `harness_fault`. QP11 and QH27 prove a read only when the control "was killed". QO1 and E-36 speak of the probe's listed invocations, and QE8 says a control is never a target. **The control proves the read only when QH21 attributes its end to the confinement. Every other end of the control is QO7's "any other way", so the check is not observed with `harness_fault`. That includes a control that wrote no marker, a `SIGKILL` with a memory or code-signing exit detail, and a kill the engine sent. QO1 and E-36 apply to the probe's listed invocations, never to the control.** The owner ruled on 2026-11-26. No case of the corpus has such a control end, so no record changes.
+
+### E-38. A failed read calibration and the read proof's control
+
+QH26 says that when the volume's read calibration fails, no invocation of a planted-secret probe proves a read, and QO7's earlier steps still decide a leak, an invocation QO1 to QO4 decide, or a scan bound, "and otherwise the probe is not observed with `input_missing`". It does not mention the read proof's control. **When the read calibration failed, the read proof's control is not run, and its result cannot decide the check: QO7's leak, QO1 to QO4 and bound steps decide, E-35 and E-36 included, and otherwise the check is not observed with `input_missing`.** The owner ruled on 2026-11-26. No case of the corpus combines a failed calibration with a control that was not killed, so no record changes.
+
+### E-39. The width of a masked declared value
+
+QE18 masks each declared environment value of 8 bytes or more: "a declared value becomes as many `*` as its encoded form has characters". **The count is of Unicode characters in the encoded form, so the masked text has the visible width of what it hides. The 8-byte threshold stays a count of bytes.** The owner ruled on 2026-11-26. No subject of the corpus declares a value of 8 bytes or more, so no record changes.
