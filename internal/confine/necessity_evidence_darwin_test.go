@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -464,7 +463,7 @@ func necessityProductionPassed(computation bool, runs []observe.Run) bool {
 func TestMacOSSelfTestDecoyIntegrity(t *testing.T) {
 	// QH9: even a suite with the expected kills fails if a decoy changed.
 	binary := necessityBuild(t, false)
-	for _, name := range []string{"Outside", "Create"} {
+	for _, name := range []string{"Unchanged", "Outside", "Create"} {
 		t.Run(name, func(t *testing.T) {
 			s := newNecessityScenario(t, binary, false)
 			// runProfileSelfTest owns its own decoy, so close the scenario's first.
@@ -472,20 +471,36 @@ func TestMacOSSelfTestDecoyIntegrity(t *testing.T) {
 				t.Fatal(err)
 			}
 			s.decoy = nil
+			// Killing the first decoy leaves Home/socket bound in the filesystem.
+			// Match production's fresh home per suite so the next decoy can bind
+			// and report readiness before the integrity check is exercised.
+			files, err := s.w.PrepareSelfTest()
+			if err != nil {
+				t.Fatal(err)
+			}
+			s.files = files
 			path := s.files.Outside
 			if name == "Create" {
 				path = s.files.Create
 			}
-			if err := os.WriteFile(path, []byte("changed"), 0600); err != nil {
-				t.Fatal(err)
+			if name != "Unchanged" {
+				if err := os.WriteFile(path, []byte("changed"), 0600); err != nil {
+					t.Fatal(err)
+				}
 			}
 			launcher, program := s.c.CopyPaths()
-			_, err := runProfileSelfTest(s.c, selfTestInvocation(s.inv, s.files, s.w), launcher, program, s.files)
+			_, err = runProfileSelfTest(s.c, selfTestInvocation(s.inv, s.files, s.w), launcher, program, s.files)
+			if name == "Unchanged" {
+				if err != nil {
+					t.Fatalf("unchanged decoys: suite error=%v", err)
+				}
+				return
+			}
 			want := "outside decoy changed"
 			if name == "Create" {
 				want = "create decoy changed"
 			}
-			if err == nil || !strings.Contains(err.Error(), want) {
+			if err == nil || err.Error() != want {
 				t.Fatalf("suite error=%v want %q", err, want)
 			}
 		})
