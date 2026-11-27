@@ -19,7 +19,7 @@ func TestAttributionRawTable(t *testing.T) {
 								switch {
 								case !marker:
 									want, clause = Unconfined, "QH6_E28"
-								case running && !budget, signal == 0 && detail != 0, signal == 11 && (engine || detail&0x60000 != 0):
+								case running && !budget, signal == 0 && detail != 0, signal == 11 && detail&0x60000 != 0:
 									fault, clause = true, "QH21"
 								case start:
 									want, clause = CouldNotStart, "QH7_QO2"

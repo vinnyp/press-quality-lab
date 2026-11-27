@@ -7,7 +7,6 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/decide"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
-	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 )
 
 func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Discovery, []plan.Object, error) {
@@ -20,18 +19,20 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Dis
 	d.Ran = true
 	keys = nil
 
-	// E-34: use kern.argmax on the running Darwin host (256 KiB on older
-	// releases, 1 MiB on newer ones). Include argv pointers and terminating NULs.
-	argumentLimit, err := observe.HelpArgumentLimit()
-	if err != nil {
-		return nil, nil, err
+	// E-34 counts request words, independently of the host's argv backstop.
+	type declaration struct {
+		next    map[string]*declaration
+		indexes []int
 	}
+	root := &declaration{}
 	type node struct {
-		parent int
-		refs   int
-		name   string
+		parent   int
+		refs     int
+		name     string
+		declared *declaration
+		bytes    int
 	}
-	nodes := []node{{parent: -1, refs: 1}}
+	nodes := []node{{parent: -1, refs: 1, declared: root, bytes: len("--help") + 1}}
 	free := []int{}
 	// Pending entries and children own references. Recycle abandoned branches,
 	// including their names, instead of accumulating every truncated frontier.
@@ -48,7 +49,11 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Dis
 		}
 	}
 	addNode := func(parent int, name string) int {
-		n := node{parent: parent, refs: 1, name: name}
+		var declared *declaration
+		if nodes[parent].declared != nil {
+			declared = nodes[parent].declared.next[name]
+		}
+		n := node{parent: parent, refs: 1, name: name, declared: declared, bytes: nodes[parent].bytes + len(name) + 1}
 		nodes[parent].refs++
 		if len(free) > 0 {
 			index := free[len(free)-1]
@@ -61,7 +66,6 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Dis
 	}
 	pending := []int{0}
 	declared := discoveryArray(ch.Subject["commands"])
-	declaredByKey := make(map[string][]int, len(declared))
 	d.DeclaredFound = make([]bool, len(declared))
 	for i, v := range declared {
 		words := discoveryArray(discoveryObject(v)["words"])
@@ -69,8 +73,21 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Dis
 			d.DeclaredFound[i] = true
 			continue
 		}
-		k := string(strictjson.Write(words))
-		declaredByKey[k] = append(declaredByKey[k], i)
+		prefix := root
+		for _, word := range words {
+			name, ok := word.(string)
+			if !ok {
+				panic("QD2: declared word is not a string")
+			}
+			if prefix.next == nil {
+				prefix.next = map[string]*declaration{}
+			}
+			if prefix.next[name] == nil {
+				prefix.next[name] = &declaration{}
+			}
+			prefix = prefix.next[name]
+		}
+		prefix.indexes = append(prefix.indexes, i)
 	}
 	namesBytes := 0
 
@@ -96,6 +113,8 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Dis
 		}
 		keys = append(keys, key)
 		retained := run
+		// PR11's Darwin capture must hash while streaming if the record needs a help's sha256.
+		retained.BytesDropped = true
 		retained.Stdout = nil
 		retained.Stderr = nil
 		retained.Details.Stdout.KeptBase64 = nil
@@ -128,32 +147,26 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Dis
 
 		next := make([]int, 0, min(len(children), 4096-len(keys)))
 		for _, name := range children {
-			size := 8 + len("--help") + 1
-			for _, word := range words {
-				text, ok := word.(string)
-				if !ok {
-					panic("QD2: discovery word is not a string")
-				}
-				size += 8 + len(text) + 1
-			}
-			size += 8 + len(name) + 1
+			size := nodes[current].bytes + len(name) + 1
 			var child plan.Array
-			if len(declaredByKey) > 0 || len(d.Names) < 512 && namesBytes+size <= 64<<10 {
+			if len(d.Names) < 512 && namesBytes+size <= 64<<10 {
 				child = append(append(plan.Array{}, words...), name)
 			}
 			d.FoundCount++
 			var indexes []int
-			ok := false
-			if len(declaredByKey) > 0 && utf8.ValidString(name) {
-				indexes, ok = declaredByKey[string(strictjson.Write(child))]
+			if prefix := nodes[current].declared; prefix != nil {
+				if child := prefix.next[name]; child != nil {
+					indexes = child.indexes
+				}
 			}
+			ok := len(indexes) > 0
 			if !ok {
 				d.Undeclared = true
 			}
 			for _, i := range indexes {
 				d.DeclaredFound[i] = true
 			}
-			if strings.ContainsRune(name, 0) || !utf8.ValidString(name) || size > argumentLimit {
+			if strings.ContainsRune(name, 0) || !utf8.ValidString(name) || size > observe.HelpArgumentBytes {
 				d.Unreadable = true
 				continue
 			}
@@ -172,14 +185,6 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Dis
 			} else {
 				d.Bound = true
 			}
-		}
-		remaining := 4096 - len(keys) - len(next)
-		if len(pending) > remaining {
-			d.Bound = true
-			for _, index := range pending[remaining:] {
-				release(index)
-			}
-			pending = pending[:remaining]
 		}
 		pending = append(next, pending...)
 		release(current)

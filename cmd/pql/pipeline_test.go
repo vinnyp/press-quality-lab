@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 	"io"
 	"os"
 	"os/exec"
@@ -15,6 +14,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/store"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
+	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 )
 
 const pipelineSubject = `{"subject_file_version":"1.0","binary":"bin/subject","facts":{"read_only":false,"has_destructive_ops":false,"store_backed":false,"has_cli":true,"bounding":"declared"},"commands":[{"words":[],"class":"safe","writes":false,"exit_codes":[0],"byte_bound":4096,"budget_seconds":10}],"declared_count":0,"seed":null,"store":null,"offline":[],"bookkeeping":[],"secret":null,"runbooks":[],"markers":[],"prompts":{"version":"none"}}`

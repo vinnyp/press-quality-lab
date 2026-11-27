@@ -31,7 +31,7 @@ func TestProjectionAttributionOrder(t *testing.T) {
 	for _, memory := range []bool{false, true} {
 		e := End{Signal: 9, EngineKilled: true, BudgetExpired: true, RunningAtBudget: true, MemoryKilled: memory}
 		want := map[string]any{"kind": "signal", "signal": "SIGKILL", "by": "budget"}
-		if got := ProjectEnd(e, Markers{Confinement: true}); !reflect.DeepEqual(got, want) {
+		if got, err := ProjectEnd(e, Markers{Confinement: true}); err != nil || !reflect.DeepEqual(got, want) {
 			t.Fatal(got)
 		}
 	}

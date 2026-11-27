@@ -43,8 +43,8 @@ def discovery_keys(recording, first_only=False, status=None):
         stream = run["stdout"] if run["stdout"]["bytes"] else run["stderr"]
         if stream["cut"]:
             raise ValueError("cannot decide discovery order from truncated help")
-        text = base64.b64decode(stream["kept"], validate=True).decode("utf-8", errors="replace") if stream.get("kept") is not None else stream["head"]
-        if stream["bytes"] > len(text.encode("utf-8")):
+        text = base64.b64decode(stream["kept"], validate=True).decode("utf-8", errors="surrogateescape") if stream.get("kept") is not None else stream["head"]
+        if stream["bytes"] > len(text.encode("utf-8", errors="surrogateescape")):
             raise ValueError("cannot decide discovery order from truncated help")
         section = False
         for line in text.splitlines():
@@ -57,6 +57,16 @@ def discovery_keys(recording, first_only=False, status=None):
                 command = pieces[0].removesuffix(",")
                 description = pieces[1] if len(pieces) == 2 else ""
                 if command not in ("help", "completion") and not description.startswith(("(hidden)", "[hidden]", "HIDDEN")):
+                    # E-34 is fixed across hosts and paths; include --help and every ancestor.
+                    try:
+                        size = sum(len(word.encode("utf-8")) + 1 for word in words + [command, "--help"])
+                        valid = "\0" not in command and size <= 131072
+                    except UnicodeEncodeError:
+                        valid = False
+                    if not valid:
+                        if status is not None:
+                            status["unreadable"] = True
+                        continue
                     walk(words + [command])
                     if stopped:
                         return

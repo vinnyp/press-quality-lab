@@ -27,8 +27,9 @@ func TestDiscoveryWideMemory(t *testing.T) {
 	var before, peak runtime.MemStats
 	runtime.ReadMemStats(&before)
 	_, d, s := resolveWalk(t, discoveryCheck(), func(plan.Array) observe.Run {
+		runtime.GC()
 		runtime.ReadMemStats(&peak)
-		if peak.HeapAlloc > before.HeapAlloc+128<<20 {
+		if peak.HeapInuse > before.HeapInuse+128<<20 {
 			t.Fatal("walk exceeded 128 MiB live heap ceiling")
 		}
 		run := help(text)
@@ -42,7 +43,7 @@ func TestDiscoveryWideMemory(t *testing.T) {
 		t.Fatal(d.Bound, len(s.keys))
 	}
 	for _, inv := range d.Invocations {
-		if len(inv.Run.Stdout)+len(inv.Run.Stderr) != 0 {
+		if !inv.Run.BytesDropped || len(inv.Run.Stdout)+len(inv.Run.Stderr) != 0 {
 			t.Fatal("help bytes retained")
 		}
 		if inv.Run.StdoutSeen != 1<<20 || inv.Run.StderrSeen != 1<<20 || inv.Run.Details.Stdout.Digest != digest || inv.Run.Details.Stderr.Digest != digest {
