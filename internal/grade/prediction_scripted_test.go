@@ -52,7 +52,7 @@ func TestPredictedCheckEndings(t *testing.T) {
 			} `json:"checks"`
 		} `json:"cases"`
 	}
-	if err := caseassembly.Read("../../scripts/ratchet/pr12-prediction.json", &predictions); err != nil {
+	if err := caseassembly.Read("../../scripts/ratchet/pr13-prediction.json", &predictions); err != nil {
 		t.Fatal(err)
 	}
 	counts := map[string]int{}

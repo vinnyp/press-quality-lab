@@ -4,7 +4,6 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
-	"reflect"
 )
 
 // Stopped judges only pre-override resolutions. Membership maps every known id
@@ -46,30 +45,6 @@ func StepRuns(f StepFacts) bool {
 }
 
 func level4(ch plan.Check, _ observe.Controls, e Evidence) Result {
-	if ch.Preimage["runbook"] != nil {
-		for _, b := range array(ch.Subject["runbooks"]) {
-			book := object(b)
-			if book["name"] != ch.Preimage["runbook"] {
-				continue
-			}
-			for _, s := range array(book["steps"]) {
-				words := array(object(s)["words"])
-				best := -1
-				var selected plan.Object
-				for _, c := range array(ch.Subject["commands"]) {
-					cmd := object(c)
-					prefix := array(cmd["words"])
-					if len(prefix) <= len(words) && len(prefix) > best && reflect.DeepEqual(prefix, words[:len(prefix)]) {
-						best = len(prefix)
-						selected = cmd
-					}
-				}
-				if selected["class"] == "destructive" {
-					return sentinel(4, "QA8")
-				}
-			}
-		}
-	}
 	earlier, ok := ch.Preimage["earlier"].(strictjson.Array)
 	if !ok {
 		panic("QE2: preimage lacks earlier array")

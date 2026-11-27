@@ -17,7 +17,7 @@ func TestPlaceholderClassifiers(t *testing.T) {
 	var document struct {
 		Dependencies map[string]map[string]bool `json:"placeholder_dependencies"`
 	}
-	read(t, "../../scripts/ratchet/pr12-prediction.json", &document)
+	read(t, "../../scripts/ratchet/pr13-prediction.json", &document)
 	predicted := document.Dependencies
 	cases, checks := 0, 0
 	for name, predictions := range predicted {

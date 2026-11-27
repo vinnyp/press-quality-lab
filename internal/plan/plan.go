@@ -82,6 +82,7 @@ type Step struct {
 // Runbook retains the authored step order.
 type Runbook struct{ Steps []Step }
 type Plan struct {
+	Scopes   []rulebook.Scope
 	Checks   []Check
 	Runbooks []Runbook
 }
@@ -220,7 +221,7 @@ func Build(in Input) (Plan, error) {
 	}
 	book := append(Array{}, arr(s["bookkeeping"])...)
 	sort.Slice(book, func(i, j int) bool { return text(book[i]) < text(book[j]) })
-	p := Plan{Checks: []Check{}}
+	p := Plan{Checks: []Check{}, Scopes: append([]rulebook.Scope(nil), in.Scopes...)}
 	base := func(probe any, dimension string, words any, budget any, parameters Object) Object {
 		args := Array{}
 		env := Object{}

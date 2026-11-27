@@ -7,9 +7,10 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/decide"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 )
 
-func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Discovery, []plan.Object, error) {
+func walk(ch plan.Check, c observe.Controls, source observe.Source, scopes []rulebook.Scope) (*decide.Discovery, []plan.Object, error) {
 	d := &decide.Discovery{}
 	keys := []plan.Object{plan.DiscoveryKey(plan.Array{})}
 	binary := discoveryObject(ch.Subject["binary"])
@@ -107,6 +108,9 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source) (*decide.Dis
 			break
 		}
 		key := plan.DiscoveryKey(words)
+		if err := decide.MayServe(ch, key, scopes); err != nil {
+			return nil, nil, err
+		}
 		run, err := source.Observe(map[string]any(key), observe.Spec{BudgetSeconds: 10, CheckID: ch.ID, Preimage: map[string]any(ch.Preimage)})
 		if err != nil {
 			return nil, nil, err

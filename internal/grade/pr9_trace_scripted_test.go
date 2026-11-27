@@ -276,7 +276,11 @@ func independentTrace(t *testing.T, recording []byte, host, subject, input, prei
 				included = included || pre["runbook"] == book["name"]
 			}
 		}
-		if destructive || !included {
+		destructiveScope := false
+		for _, token := range traceArray(input["scope"]) {
+			destructiveScope = destructiveScope || token == "destructive"
+		}
+		if destructive && !destructiveScope || !included {
 			continue
 		}
 		stopped := false

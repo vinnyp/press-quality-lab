@@ -1,0 +1,186 @@
+package collect
+
+import (
+	"reflect"
+	"testing"
+
+	"github.com/vinnyp/press-quality-lab/internal/observe"
+	"github.com/vinnyp/press-quality-lab/internal/plan"
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
+)
+
+func authoredPlan(t *testing.T, sub plan.Object, scopes []rulebook.Scope) plan.Plan {
+	t.Helper()
+	p, err := plan.Build(plan.Input{Subject: sub, Scopes: scopes})
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := 0
+	for n < len(p.Checks) && p.Checks[n].Preimage["probe"] != nil {
+		n++
+	}
+	p.Checks = p.Checks[n:]
+	for _, b := range p.Runbooks {
+		for _, st := range b.Steps {
+			for i := range st.Required {
+				st.Required[i] -= n
+			}
+		}
+	}
+	return p
+}
+
+func TestDestructiveRunbooks(t *testing.T) {
+	// QA7, QA8, QS5, QS6, QO1, E-15: scope gates the whole book; precedence still decides each check.
+	for _, name := range []string{"Inside", "Outside", "Stopped", "GradeWide", "WritesPlaceholder", "FactFalse", "FactPlaceholder", "ClassPlaceholder"} {
+		t.Run(name, func(t *testing.T) {
+			base := loopPlan(t, plan.Array{loopStep("first", loopCheck()), loopStep("remove", loopCheck()), loopStep("last", loopCheck())})
+			sub := base.Checks[0].Subject
+			class := any("destructive")
+			if name == "ClassPlaceholder" {
+				class = plan.Object{"placeholder": "supply class"}
+			}
+			command := plan.Object{"words": plan.Array{"remove"}, "class": class, "writes": true}
+			sub["commands"] = append(discoveryArray(sub["commands"]), command)
+			sub["facts"] = plan.Object{"has_destructive_ops": false}
+			if name == "FactPlaceholder" {
+				discoveryObject(sub["facts"])["has_destructive_ops"] = plan.Object{"placeholder": "supply fact"}
+			}
+			if name == "WritesPlaceholder" {
+				command["writes"] = plan.Object{"placeholder": "supply writes"}
+			}
+			scopes := []rulebook.Scope{"conformance", "destructive"}
+			if name == "Outside" || name == "ClassPlaceholder" {
+				scopes = scopes[:1]
+			}
+			p := authoredPlan(t, sub, scopes)
+			source := loopSourceWith(func(k observe.Key) observe.Run {
+				r := cleanLoopRun()
+				if name == "Stopped" && k["step"] == "first" {
+					r.Stdout = []byte("other")
+				}
+				return r
+			})
+			if name == "GradeWide" {
+				source.controls.SelfTestPassed = false
+			}
+			got, err := Collect(p, source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := []any{"first", "remove", "last"}
+			switch name {
+			case "Outside", "GradeWide":
+				want = nil
+			case "Stopped", "WritesPlaceholder", "ClassPlaceholder":
+				want = want[:1]
+			}
+			if !reflect.DeepEqual(stepsServed(source), want) {
+				t.Fatal(stepsServed(source), want)
+			}
+			if name == "Outside" {
+				if len(got) != 0 || len(p.Runbooks) != 0 {
+					t.Fatal(got, p.Runbooks)
+				}
+				return
+			}
+			if len(got) != 3 {
+				t.Fatal(got)
+			}
+			if name == "Stopped" && got[1].Result.Reason != "earlier_step_failed" {
+				t.Fatal(got)
+			}
+			if name == "GradeWide" {
+				for _, ch := range got {
+					if ch.Result.Level != 1 || ch.Result.Reason != "network_unverifiable" {
+						t.Fatal(ch)
+					}
+				}
+			}
+			if name == "WritesPlaceholder" || name == "ClassPlaceholder" {
+				if got[1].Result.Level != 2 || got[1].Result.Reason != "placeholder_unfilled" || got[2].Result.Reason != "earlier_step_failed" {
+					t.Fatal(got)
+				}
+			}
+			if name == "Inside" || name == "FactFalse" {
+				for _, ch := range got {
+					if ch.Result.Outcome != "held" {
+						t.Fatal(ch)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestDestructivePreflight(t *testing.T) {
+	// QE3, QA8, E-49: a corrupt plan is refused before discovery, including unchecked steps.
+	for _, outside := range []bool{false, true} {
+		check := loopCheck()
+		if outside {
+			check["dimension"] = "destructive-guard"
+		}
+		p := loopPlan(t, plan.Array{loopStep("first", loopCheck()), loopStep("remove", check)})
+		p.Checks = append(p.Checks, discoveryCheck())
+		source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
+		positive, err := Collect(p, source)
+		if err != nil || len(source.keys) != 3 {
+			t.Fatal(positive, err, source.keys)
+		}
+		for _, ch := range positive {
+			if ch.Result.Outcome != "held" {
+				t.Fatal(ch)
+			}
+		}
+		source.keys = nil
+		p.Checks[0].Subject["commands"] = append(discoveryArray(p.Checks[0].Subject["commands"]), plan.Object{"words": plan.Array{"remove"}, "class": "destructive"})
+		got, err := Collect(p, source)
+		if err == nil || got != nil || len(source.keys) != 0 {
+			t.Fatal(got, err, source.keys)
+		}
+	}
+}
+
+type changingControls struct {
+	*loopSource
+	change func()
+}
+
+func (s changingControls) Controls() (observe.Controls, error) { s.change(); return s.controls, nil }
+
+func TestServeSafetyBrakes(t *testing.T) {
+	// QS5, QS6, QA8: each serve checks source safety again after startup preflight.
+	for _, name := range []string{"Destructive", "ClassPlaceholder", "WritesPlaceholder"} {
+		t.Run(name, func(t *testing.T) {
+			p := loopPlan(t, plan.Array{loopStep("first", loopCheck())})
+			source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
+			positive, err := Collect(p, source)
+			if err != nil || len(positive) != 1 || positive[0].Result.Outcome != "held" || len(source.keys) != 1 {
+				t.Fatal(positive, err, source.keys)
+			}
+			source.keys = nil
+			sub := p.Checks[0].Subject
+			cmd := plan.Object{"words": plan.Array{"different"}, "class": "safe", "writes": false}
+			sub["commands"] = append(discoveryArray(sub["commands"]), cmd)
+			if name != "Destructive" {
+				// Preimage dependencies remain safe; a corrupt schedule must still never
+				// serve a placeholder key even when level 2 cannot see that corruption.
+				p.Runbooks[0].Steps[0].Key["words"] = plan.Array{"different"}
+			}
+			changed := changingControls{loopSource: source, change: func() {
+				switch name {
+				case "Destructive":
+					discoveryObject(discoveryArray(sub["commands"])[0])["class"] = "destructive"
+				case "ClassPlaceholder":
+					cmd["class"] = plan.Object{"placeholder": "class"}
+				case "WritesPlaceholder":
+					cmd["writes"] = plan.Object{"placeholder": "writes"}
+				}
+			}}
+			got, err := Collect(p, changed)
+			if err == nil || got != nil || len(source.keys) != 0 {
+				t.Fatal(got, err, source.keys)
+			}
+		})
+	}
+}

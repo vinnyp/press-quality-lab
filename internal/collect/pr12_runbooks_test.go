@@ -127,7 +127,7 @@ func TestRunbookStops(t *testing.T) {
 }
 
 func TestOutsideStepRuns(t *testing.T) {
-	// QA9, QA7, E-49: an outside check is not evaluated and its step never stops the book.
+	// QA9, QA7, QA8, E-49: an outside check is not evaluated and its step never stops the book.
 	for _, name := range []string{"Run", "Stopped", "Confinement", "SelfTest", "System", "Copy", "Placeholder", "Destructive"} {
 		t.Run(name, func(t *testing.T) {
 			outside := loopCheck()
@@ -167,6 +167,12 @@ func TestOutsideStepRuns(t *testing.T) {
 				want = nil
 			}
 			got, err := Collect(p, source)
+			if name == "Destructive" {
+				if err == nil || got != nil || len(source.keys) != 0 {
+					t.Fatal(got, err, source.keys)
+				}
+				return
+			}
 			if err != nil || len(got) != 2 || !reflect.DeepEqual(stepsServed(source), want) {
 				t.Fatal(got, err, stepsServed(source), want)
 			}
@@ -460,8 +466,8 @@ func TestServingSpecs(t *testing.T) {
 func TestUnmatchedComputationKeyFault(t *testing.T) {
 	// QA6: an unmatched planned computation key is an engine fault before serving.
 	p := loopPlan(t, plan.Array{loopStep("first", loopCheck())})
-	p.Runbooks = nil
 	p.Checks[0].Keys[0]["computation"] = plan.Array{"/bin/unknown"}
+	p.Runbooks[0].Steps[0].Key["computation"] = plan.Array{"/bin/unknown"}
 	source := loopSourceWith(func(observe.Key) observe.Run {
 		t.Error("unmatched key served")
 		return cleanLoopRun()

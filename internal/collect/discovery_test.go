@@ -47,7 +47,7 @@ func discoveryCheck(commands ...string) plan.Check {
 func resolveWalk(t *testing.T, ch plan.Check, serve func(plan.Array) observe.Run) (decide.Result, *decide.Discovery, *helpSource) {
 	t.Helper()
 	s := &helpSource{controls: goodControls(), serve: serve}
-	d, _, err := walk(ch, s.controls, s)
+	d, _, err := walk(ch, s.controls, s, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -373,7 +373,7 @@ func TestDiscoveryWalkSuppression(t *testing.T) {
 				ch.Subject["binary"] = plan.Object{"placeholder": "binary"}
 			}
 			s := &helpSource{controls: c, serve: func(plan.Array) observe.Run { t.Fatal("suppressed walk served help"); return observe.Run{} }}
-			d, keys, err := walk(ch, c, s)
+			d, keys, err := walk(ch, c, s, nil)
 			if err != nil || d.Ran || len(keys) != 1 || len(s.keys) != 0 || !reflect.DeepEqual(keys[0], plan.DiscoveryKey(plan.Array{})) {
 				t.Fatal(d, keys, err)
 			}
@@ -385,7 +385,7 @@ func TestDiscoveryOverrideAfterAllChecks(t *testing.T) {
 	// QS5, QD3: the final discovery trigger runs only after every runbook resolves.
 	ch := discoveryCheck("a")
 	authored := ch
-	authored.Preimage = plan.Object{"probe": nil, "dimension": "availability", "expected": nil, "earlier": plan.Array{}}
+	authored.Preimage = plan.Object{"probe": nil, "dimension": "availability", "expected": nil, "earlier": plan.Array{}, "budget_seconds": strictjson.Number("10")}
 	authored.Keys = nil
 	s := &helpSource{controls: goodControls(), serve: func(w plan.Array) observe.Run {
 		if len(w) == 0 {
@@ -395,8 +395,8 @@ func TestDiscoveryOverrideAfterAllChecks(t *testing.T) {
 	}}
 	calls := 0
 	conditional := authored
-	conditional.Preimage = plan.Object{"probe": nil, "dimension": "idempotency", "expected": nil, "earlier": plan.Array{}}
-	got, err := collect(plan.Plan{Checks: []plan.Check{ch, authored, conditional}}, s, func(plan.Check, observe.Controls, decide.Evidence) decide.Result {
+	conditional.Preimage = plan.Object{"probe": nil, "dimension": "idempotency", "expected": nil, "earlier": plan.Array{}, "budget_seconds": strictjson.Number("10")}
+	got, err := collect(plan.Plan{Checks: []plan.Check{ch, authored, conditional}, Runbooks: []plan.Runbook{{Steps: []plan.Step{{Required: []int{1, 2}, Key: plan.DiscoveryKey(plan.Array{}), BudgetSeconds: strictjson.Number("10")}}}}}, s, func(plan.Check, observe.Controls, decide.Evidence) decide.Result {
 		calls++
 		return decide.Result{Level: 8, Outcome: "held"}
 	})

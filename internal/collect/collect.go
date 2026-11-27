@@ -27,6 +27,33 @@ func Collect(p plan.Plan, source observe.Source) ([]Check, error) {
 
 func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) ([]Check, error) {
 	p.Checks = append([]plan.Check(nil), p.Checks...)
+	// QE3, QA7: validate the entire schedule before discovery can serve a key.
+	scheduledAtStart := map[int]bool{}
+	for _, book := range p.Runbooks {
+		var context plan.Check
+		for _, step := range book.Steps {
+			for _, i := range step.Required {
+				scheduledAtStart[i] = true
+				context = p.Checks[i]
+			}
+		}
+		for _, step := range book.Steps {
+			if err := decide.MayPlanServe(context, step.Key, p.Scopes); err != nil {
+				return nil, err
+			}
+		}
+	}
+	for i, ch := range p.Checks {
+		if ch.Preimage["probe"] == nil && !scheduledAtStart[i] {
+			return nil, &plan.Fault{Rule: "QA7", Cause: "unscheduled authored check"}
+		}
+		for _, key := range ch.Keys {
+			if err := decide.MayPlanServe(ch, key, p.Scopes); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	controls, err := source.Controls()
 	if err != nil {
 		return nil, err
@@ -35,7 +62,7 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 	for i := range p.Checks {
 		if p.Checks[i].Preimage["probe"] == "discovery" {
 			var keys []plan.Object
-			discovery, keys, err = walk(p.Checks[i], controls, source)
+			discovery, keys, err = walk(p.Checks[i], controls, source, p.Scopes)
 			if err != nil {
 				return nil, err
 			}
@@ -59,6 +86,9 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 		}
 	}
 	serve := func(key plan.Object, ch plan.Check) (observe.Invocation, error) {
+		if err := decide.MayServe(ch, key, p.Scopes); err != nil {
+			return observe.Invocation{}, err
+		}
 		budget := ch.Preimage["budget_seconds"]
 		if key["computation"] != nil {
 			found := false

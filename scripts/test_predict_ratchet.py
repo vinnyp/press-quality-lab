@@ -55,16 +55,16 @@ class PredictorTests(unittest.TestCase):
         directory = Path(__file__).with_name('ratchet')
         completed = subprocess.run(
             [sys.executable, '-I', '-B', str(Path(__file__).with_name('predict-ratchet.py')),
-             '--built', str(directory / 'pr12.json'), '--json'],
+             '--built', str(directory / 'pr13.json'), '--json'],
             check=True, capture_output=True, text=True)
         self.assertEqual(json.loads(completed.stdout),
-                         predictor.load(directory / 'pr12-prediction.json'))
+                         predictor.load(directory / 'pr13-prediction.json'))
         self.assertEqual(completed.stderr, '')
 
     def test_previous_predictions_unchanged(self):
         # QA8: the new token never alters an already blocked check.
         directory = Path(__file__).with_name('ratchet')
-        for phase in (6, 8, 9, 10):
+        for phase in (6, 8, 9, 10, 12):
             with self.subTest(phase=phase):
                 result = predictor.predict(predictor.load(directory / f'pr{phase}.json'))
                 actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
@@ -376,7 +376,7 @@ class PredictorTests(unittest.TestCase):
     def test_prediction_files_regenerate(self):
         # QS5, QO7: preserve earlier slices and PR9's independent prediction.
         directory = Path(__file__).with_name('ratchet')
-        for version in ('pr6', 'pr8', 'pr9', 'pr10'):
+        for version in ('pr6', 'pr8', 'pr9', 'pr10', 'pr12'):
             with self.subTest(version=version):
                 result = predictor.predict(predictor.load(directory / (version + '.json')))
                 actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
