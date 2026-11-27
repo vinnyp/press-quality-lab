@@ -24,6 +24,7 @@ func independentHelpOrder(t *testing.T, data []byte) []map[string]any {
 				Markers        map[string]bool `json:"markers"`
 				Stdout, Stderr struct {
 					Bytes int     `json:"bytes"`
+					Cut   bool    `json:"cut"`
 					Kept  *string `json:"kept"`
 					Head  string  `json:"head"`
 				}
@@ -35,7 +36,7 @@ func independentHelpOrder(t *testing.T, data []byte) []map[string]any {
 	}
 	headings := regexp.MustCompile(`^(.* Commands:|COMMANDS:|Commands:|SUBCOMMANDS:)$`)
 	entry := regexp.MustCompile(`^ +([^ \t]+)(.*)$`)
-	description := regexp.MustCompile(`(?: {2,}| *\t[ \t]*)(.*)$`)
+	description := regexp.MustCompile(`[ \t]*(?: {2}|\t)[ \t]*(.*)$`)
 	var out []map[string]any
 	stopped := false
 	var visit func([]any)
@@ -64,6 +65,9 @@ func independentHelpOrder(t *testing.T, data []byte) []map[string]any {
 			if stream.Bytes == 0 {
 				stream = run.Stderr
 			}
+			if stream.Cut {
+				return
+			}
 			text := stream.Head
 			if stream.Kept != nil {
 				b, err := base64.StdEncoding.DecodeString(*stream.Kept)
@@ -72,6 +76,7 @@ func independentHelpOrder(t *testing.T, data []byte) []map[string]any {
 				}
 				text = string(b)
 			}
+			seen := map[string]bool{}
 			section := false
 			for _, line := range strings.Split(text, "\n") {
 				if !strings.HasPrefix(line, " ") {
@@ -93,6 +98,10 @@ func independentHelpOrder(t *testing.T, data []byte) []map[string]any {
 				if len(desc) > 0 && (strings.HasPrefix(desc[1], "(hidden)") || strings.HasPrefix(desc[1], "[hidden]") || strings.HasPrefix(desc[1], "HIDDEN")) {
 					continue
 				}
+				if seen[name] {
+					continue
+				}
+				seen[name] = true
 				visit(append(append([]any{}, words...), name))
 				if stopped {
 					return
@@ -128,7 +137,7 @@ func compareTrace(t *testing.T, trace, recording []byte, host map[string]any, su
 		if pre["probe"] == "discovery" || pre["probe"] == "planted_secret" || blocked {
 			continue
 		}
-		if pred.Level < 7 {
+		if pred.Level < 7 && !(pred.Level == 1 && pred.Ending.Phase == "deciding" && allowedRule(pred.Ending, "QO1")) {
 			continue
 		}
 		if pred.Ending.Phase != "deciding" && (allowedRule(pred.Ending, "QA7") || allowedRule(pred.Ending, "QO6")) {

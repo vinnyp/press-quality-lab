@@ -49,7 +49,7 @@ func InvocationOutcome(ch plan.Check, c observe.Controls, run observe.Run) Resul
 	}
 	switch a {
 	case observe.Unconfined:
-		return Result{Outcome: NotObserved, Reason: NetworkUnverifiable, Level: 1}
+		panic("QO1: unconfined invocation reached level 7")
 	case observe.CouldNotStart:
 		return Result{Outcome: NotObserved, Reason: "could_not_start", Level: 7}
 	case observe.ConfinementKill:

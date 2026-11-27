@@ -213,6 +213,7 @@ func TestOutcomeBoundaryControls(t *testing.T) {
 		{"Linux", "internal/fake/source_linux.go", "package fake\nimport d \"" + module + "/internal/decide\"\nvar _ d.Reason\n", true},
 		{"Untagged", "internal/fake/source.go", "package fake\nimport d \"" + module + "/internal/decide\"\nvar _ = d.NotObserved\n", false},
 		{"Reader", "internal/scripted/reader.go", "//go:build scripted\npackage scripted\nimport d \"" + module + "/internal/decide\"\nvar _ = d.NotObserved\n", false},
+		{"AttributionDarwin", "internal/fake/source_darwin.go", "package fake\nimport o \"" + module + "/internal/observe\"\nvar _ = o.Unconfined\n", true},
 		{"RawFacts", "internal/fake/source_darwin.go", "package fake\nimport o \"" + module + "/internal/observe\"\nvar _ o.Run\n", false},
 	} {
 		t.Run(row.name, func(t *testing.T) {

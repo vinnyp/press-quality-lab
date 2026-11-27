@@ -14,12 +14,12 @@ func TestAttributionRawTable(t *testing.T) {
 				for _, engine := range []bool{false, true} {
 					for _, budget := range []bool{false, true} {
 						for _, running := range []bool{false, true} {
-							for _, detail := range []uint32{0, 0x20000, 0x40000, 0x60000} {
+							for _, detail := range []uint32{0, 0x10000, 0x20000, 0x40000, 0x60000} {
 								want, clause, fault := Exited, "QO5", false
 								switch {
 								case !marker:
 									want, clause = Unconfined, "QH6_E28"
-								case running && !budget, signal != 9 && (engine || detail != 0):
+								case running && !budget, signal == 0 && detail != 0, signal == 11 && (engine || detail&0x60000 != 0):
 									fault, clause = true, "QH21"
 								case start:
 									want, clause = CouldNotStart, "QH7_QO2"
@@ -31,7 +31,7 @@ func TestAttributionRawTable(t *testing.T) {
 									want, clause = BudgetKill, "QO4"
 								case engine:
 									want, clause = EngineKill, "QO5"
-								case detail != 0:
+								case detail&0x60000 != 0:
 									want, clause = Crashed, "QO5"
 								case !budget:
 									want, clause = ConfinementKill, "QH21_QO3"

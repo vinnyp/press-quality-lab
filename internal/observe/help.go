@@ -6,10 +6,14 @@ import "strings"
 // The boolean records a recognized section, including an empty one.
 func HelpCommands(run Run) ([]string, bool) {
 	output := run.Stdout
-	if len(output) == 0 {
+	if run.StdoutSeen == 0 {
 		output = run.Stderr
 	}
+	if HelpCut(run) {
+		return nil, false
+	}
 	var commands []string
+	seen := map[string]bool{}
 	section, heading := false, false
 	for _, line := range strings.Split(string(output), "\n") {
 		if line == "" || line[0] != ' ' {
@@ -44,9 +48,18 @@ func HelpCommands(run Run) ([]string, bool) {
 			}
 		}
 		hidden := strings.HasPrefix(description, "(hidden)") || strings.HasPrefix(description, "[hidden]") || strings.HasPrefix(description, "HIDDEN")
-		if name != "" && name != "help" && name != "completion" && !hidden {
-			commands = append(commands, name)
+		if name != "" && name != "help" && name != "completion" && !hidden && !seen[name] {
+			seen[name] = true
+			commands = append(commands, strings.Clone(name))
 		}
 	}
 	return commands, heading
+}
+
+// HelpCut reports E-32's unreadable selected stream, chosen by written bytes.
+func HelpCut(run Run) bool {
+	if run.StdoutSeen == 0 {
+		return run.StderrCut
+	}
+	return run.StdoutCut
 }

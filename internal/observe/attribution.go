@@ -36,12 +36,14 @@ func Attribute(r Run) (Attribution, error) {
 	signing = signing || e.CodeSigningKilled
 	signal := e.Signal != 0 || e.SignalName != ""
 	kill := e.Signal == 9 || e.SignalName == "SIGKILL"
-	if e.Signal != 0 && e.SignalName != "" && (e.Signal == 9) != (e.SignalName == "SIGKILL") || e.RunningAtBudget && !e.BudgetExpired || (!kill && (e.EngineKilled || memory || signing)) || (!signal && e.ExitDetail != 0) {
+	if e.Signal != 0 && e.SignalName != "" && (e.Signal == 9) != (e.SignalName == "SIGKILL") || e.RunningAtBudget && !e.BudgetExpired || (!kill && (signal && e.EngineKilled || memory || signing)) || (!signal && e.ExitDetail != 0) {
 		return 0, fmt.Errorf("QH21: inconsistent invocation end")
 	}
 	if r.Markers.CouldNotStart { // QH7, QO2: never infer this from the exit code.
 		return CouldNotStart, nil
 	}
+	// Darwin can send a group kill after the leader exits between its state
+	// lookup and the signal. Wait4's exit status is still the program's (QO5).
 	if !signal {
 		return Exited, nil
 	}

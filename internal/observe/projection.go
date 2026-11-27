@@ -66,17 +66,22 @@ func ProjectEnd(e End, markers Markers) map[string]any {
 	}
 	var by any
 	if name == "SIGKILL" {
+
+		memory, signing := DecodeExitDetail(e.ExitDetail)
 		switch {
-		case e.MemoryKilled:
-			by = "memory"
-		case e.CodeSigningKilled:
-			by = "code_signing"
-		case e.EngineKilled && e.BudgetExpired && e.RunningAtBudget:
-			by = "budget"
 		case !markers.Confinement:
 			by = "before_marker"
-		case !e.EngineKilled:
+		case e.EngineKilled:
+			if e.BudgetExpired && e.RunningAtBudget {
+				by = "budget"
+			}
+		case e.MemoryKilled || memory:
+			by = "memory"
+		case e.CodeSigningKilled || signing:
+			by = "code_signing"
+		case !e.BudgetExpired:
 			by = "confinement"
+
 		}
 	}
 	return map[string]any{"kind": "signal", "signal": name, "by": by}

@@ -31,7 +31,7 @@ func goodControls() observe.Controls {
 	return observe.Controls{ConfinementApplied: true, SelfTestPassed: true, SystemNamed: true, PrivateCopyUnchanged: true, KnownFastWithin: true}
 }
 func help(text string) observe.Run {
-	return observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte(text)}
+	return observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte(text), StdoutSeen: int64(len(text))}
 }
 func discoveryCheck(commands ...string) plan.Check {
 	cs := plan.Array{}
@@ -79,6 +79,7 @@ func TestDiscoveryUnreadable(t *testing.T) {
 						run.End = row.end
 						if row.empty {
 							run.Stdout = nil
+							run.StdoutSeen = 0
 						}
 					}
 					return run
@@ -245,7 +246,15 @@ func TestDiscoveryBounds(t *testing.T) {
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			ch := discoveryCheck()
-			_, d, s := resolveWalk(t, ch, func(w plan.Array) observe.Run {
+			if row.bound {
+				name := "self"
+				if row.children > 0 {
+					name = "c0"
+				}
+				ch = discoveryCheck(name)
+				ch.Subject["declared_count"] = strictjson.Number("0")
+			}
+			r, d, s := resolveWalk(t, ch, func(w plan.Array) observe.Run {
 				if row.children > 0 && len(w) == 0 {
 					var b strings.Builder
 					b.WriteString("Commands:\n")
@@ -259,6 +268,9 @@ func TestDiscoveryBounds(t *testing.T) {
 				}
 				return help("leaf")
 			})
+			if row.bound && r != (decide.Result{Level: 8, Outcome: decide.NotObserved, Reason: "precondition_unmet"}) {
+				t.Fatal(r)
+			}
 			if d.Bound != row.bound || len(s.keys) != row.requests {
 				t.Fatal(d.Bound, len(s.keys))
 			}
@@ -382,14 +394,22 @@ func TestDiscoveryOverrideAfterAllChecks(t *testing.T) {
 		return help("leaf")
 	}}
 	calls := 0
-	got, err := collect(plan.Plan{Checks: []plan.Check{ch, authored, authored}}, s, func(plan.Check, observe.Controls, decide.Evidence) decide.Result {
+	conditional := authored
+	conditional.Preimage = plan.Object{"probe": nil, "dimension": "idempotency", "expected": nil, "earlier": plan.Array{}}
+	got, err := collect(plan.Plan{Checks: []plan.Check{ch, authored, conditional}}, s, func(plan.Check, observe.Controls, decide.Evidence) decide.Result {
 		calls++
 		return decide.Result{Level: 8, Outcome: "held"}
 	})
 	if err != nil || calls != 3 || len(got) != 3 {
 		t.Fatal(calls, got, err)
 	}
-	for _, check := range got {
+	for i, check := range got {
+		if i == 2 {
+			if check.Result != (decide.Result{Level: 8, Outcome: "held"}) {
+				t.Fatal(check)
+			}
+			continue
+		}
 		if check.Result.Reason != "placeholder_unfilled" {
 			t.Fatal(check)
 		}

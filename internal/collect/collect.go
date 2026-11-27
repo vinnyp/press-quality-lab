@@ -21,6 +21,7 @@ func Collect(p plan.Plan, source observe.Source) ([]Check, error) {
 }
 
 func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) ([]Check, error) {
+	p.Checks = append([]plan.Check(nil), p.Checks...)
 	controls, err := source.Controls()
 	if err != nil {
 		return nil, err

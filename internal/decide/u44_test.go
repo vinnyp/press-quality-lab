@@ -100,6 +100,7 @@ func TestAcceptedExitCodes(t *testing.T) {
 		{"DeclaredExitProbe", plan.Object{"probe": "exit_codes", "parameters": plan.Object{"exit_codes": plan.Array{strictjson.Number("4")}}}, nil, 4},
 		{"AuthoredOwn", plan.Object{"probe": nil, "parameters": plan.Object{"exit_codes": plan.Array{strictjson.Number("5")}}}, nil, 5},
 		{"Command", plan.Object{"probe": nil, "words": plan.Array{"read", "all"}}, plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{}, "exit_codes": plan.Array{strictjson.Number("8")}}, plan.Object{"words": plan.Array{"read"}, "exit_codes": plan.Array{strictjson.Number("6")}}}}, 6},
+		{"CommandReverse", plan.Object{"probe": nil, "words": plan.Array{"read", "all"}}, plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{"read"}, "exit_codes": plan.Array{strictjson.Number("6")}}, plan.Object{"words": plan.Array{}, "exit_codes": plan.Array{strictjson.Number("8")}}}}, 6},
 		{"NullCommandCodes", plan.Object{"probe": nil, "words": plan.Array{"read"}}, plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{"read"}, "exit_codes": nil}}}, 0},
 		{"UndeclaredBare", plan.Object{"probe": "bare", "parameters": plan.Object{"exit_codes": nil}}, nil, 0},
 	} {
