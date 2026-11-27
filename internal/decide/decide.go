@@ -19,15 +19,21 @@ type Unbuilt struct {
 	Rule  string
 }
 type Result struct {
-	FailureKind string
-	Outcome     Outcome
-	Reason      Reason
-	Level       int
-	Unbuilt     *Unbuilt
+	Expected             any
+	TargetSize           *int64
+	PreconditionObserved *bool
+	FailureKind          string
+	Outcome              Outcome
+	Reason               Reason
+	Level                int
+	Unbuilt              *Unbuilt
 }
 
 // Evidence contains only runs actually made for this check, never planned keys.
 type Evidence struct {
+	Captures    []observe.Invocation
+	Earlier     map[string]Result
+	Membership  map[string]bool
 	Invocations []observe.Invocation
 	Discovery   *Discovery
 }
@@ -40,7 +46,7 @@ func Resolve(ch plan.Check, controls observe.Controls, facts Evidence) Result {
 	for _, step := range levels {
 		r := step(ch, controls, facts)
 		if r.Level != 0 {
-			return r
+			return authoredFields(ch, facts, r)
 		}
 	}
 	panic("precedence table has no terminal level")
@@ -78,14 +84,14 @@ func dependency(v any) bool {
 	return false
 }
 
-// BeforeInvocations tries levels 1 through 6 before the loop serves any key.
+// BeforeInvocations tries levels 1 through 5 before the loop serves any key.
 func BeforeInvocations(ch plan.Check, c observe.Controls) Result {
 	return BeforeInvocationsWithEvidence(ch, c, Evidence{})
 }
 
 // BeforeInvocationsWithEvidence includes the already completed discovery walk.
 func BeforeInvocationsWithEvidence(ch plan.Check, c observe.Controls, e Evidence) Result {
-	for _, step := range levels[:6] {
+	for _, step := range levels[:5] {
 		if r := step(ch, c, e); r.Level != 0 {
 			return r
 		}

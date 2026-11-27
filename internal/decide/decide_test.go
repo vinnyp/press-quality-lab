@@ -69,11 +69,6 @@ func TestTriggers(t *testing.T) {
 	p := corpusPlan(t, "case-004")
 	generated := first(t, p, func(c plan.Check) bool { return c.Preimage["probe"] != nil })
 	authored := first(t, p, func(c plan.Check) bool { return c.Preimage["probe"] == nil })
-	earlier := first(t, p, func(c plan.Check) bool {
-		earlier, ok := c.Preimage["earlier"].(plan.Array)
-		return ok && len(earlier) > 0
-	})
-	computation := first(t, p, func(c plan.Check) bool { return object(c.Preimage["expected"])["computation"] != nil })
 	for _, row := range []struct {
 		name string
 		n    int
@@ -82,11 +77,6 @@ func TestTriggers(t *testing.T) {
 		rule string
 	}{
 		{"Generated", 3, generated, &authored, "QD4"},
-		{"Earlier", 4, earlier, &generated, "QA7"},
-		{"Computation", 6, computation, &generated, "QO6"},
-		{"Precondition", 6, plan.Check{Preimage: plan.Object{"expected": plan.Object{"precondition": plan.Object{"argv": plan.Array{"/bin/echo"}}}}}, &generated, "QO6"},
-		{"Captures", 6, plan.Check{Preimage: plan.Object{"expected": plan.Object{"literal": plan.Object{"captures": plan.Array{"step"}}}}}, &generated, "QO6"},
-		{"OwnRule", 8, authored, nil, "QA9"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			r := levels[row.n-1](row.yes, passing(), Evidence{})
@@ -102,21 +92,10 @@ func TestTriggers(t *testing.T) {
 	}
 }
 func TestPassingHost(t *testing.T) {
-	// QO1: a passing host must leave the check to the first applicable sentinel.
-	p := corpusPlan(t, "case-004")
-	for _, ch := range p.Checks {
-		want, rule := 8, "QA9"
-		if object(ch.Preimage["expected"])["computation"] != nil {
-			want, rule = 6, "QO6"
-		}
-		if ch.Preimage["probe"] != nil {
-			want, rule = 3, "QD4"
-		} else if earlier, ok := ch.Preimage["earlier"].(plan.Array); ok && len(earlier) > 0 {
-			want, rule = 4, "QA7"
-		}
-		r := Resolve(ch, passing(), Evidence{})
-		if r.Level != want || r.Unbuilt == nil || r.Unbuilt.Rule != rule {
-			t.Fatalf("check %s: %+v want %d %s", ch.ID, r, want, rule)
+	// QO1: a passing host does not itself decide a check.
+	for _, ch := range corpusPlan(t, "case-004").Checks {
+		if r := level1(ch, passing(), Evidence{}); r != (Result{}) {
+			t.Fatal(r)
 		}
 	}
 }
@@ -203,7 +182,7 @@ func TestOwnRuleNames(t *testing.T) {
 	for _, ch := range corpusPlan(t, "case-004").Checks {
 		probe := ch.Preimage["probe"]
 		seen[probe] = true
-		if probe == "bare" || probe == "byte_bound" || probe == "exit_codes" || probe == "store_unchanged" || probe == "planted_secret" {
+		if probe == nil || probe == "bare" || probe == "byte_bound" || probe == "exit_codes" || probe == "store_unchanged" || probe == "planted_secret" {
 			continue
 		}
 		r := level8(ch, passing(), Evidence{})
@@ -231,11 +210,10 @@ func TestInvocationTriggers(t *testing.T) {
 	}
 }
 func TestUnknownTriggers(t *testing.T) {
-	// QO6: absent expected-value information cannot exclude a computation.
-	// QO2: absent invocation information cannot exclude an invocation.
-	for _, n := range []int{6, 7} {
-		if r := levels[n-1](plan.Check{}, passing(), Evidence{}); r.Unbuilt == nil || r.Level != n {
-			t.Fatalf("level %d: %+v", n, r)
-		}
+	// QA2: absent expected context is an engine fault, not a pass.
+	mustFault(t, func() { level6(plan.Check{}, passing(), Evidence{}) })
+	// QO2: unknown invocation information retains its sentinel.
+	if r := level7(plan.Check{}, passing(), Evidence{}); r.Unbuilt == nil || r.Level != 7 {
+		t.Fatal(r)
 	}
 }

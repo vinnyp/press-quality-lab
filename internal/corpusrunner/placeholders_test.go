@@ -105,3 +105,22 @@ func TestCreateThenGrade(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestCapturePlaceholderClassifier(t *testing.T) {
+	// QS5, E-51: both forms of capture inherit the earlier command's placeholder.
+	for _, required := range []bool{false, true} {
+		checks := []any{}
+		if required {
+			checks = append(checks, map[string]any{"dimension": "availability"})
+		}
+		s := map[string]any{"commands": []any{map[string]any{"words": []any{"blocked"}, "class": map[string]any{"placeholder": "supply class"}, "writes": false}}, "runbooks": []any{map[string]any{"name": "book", "steps": []any{map[string]any{"name": "first", "words": []any{"blocked"}, "checks": checks}}}}}
+		pre := map[string]any{"runbook": "book", "words": []any{}, "expected": map[string]any{"computation": map[string]any{"captures": []any{"first"}}}}
+		if !levelTwoPlaceholder(s, pre) {
+			t.Fatal("capture dependency lost", required)
+		}
+		object(list(s["commands"])[0])["class"] = "safe"
+		if levelTwoPlaceholder(s, pre) {
+			t.Fatal("positive control blocked", required)
+		}
+	}
+}

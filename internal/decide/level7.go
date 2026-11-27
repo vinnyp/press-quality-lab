@@ -37,7 +37,7 @@ func level7(ch plan.Check, c observe.Controls, e Evidence) Result {
 		if invocation.Key["computation"] != nil {
 			continue
 		}
-		if r := InvocationOutcome(ch, c, invocation.Run); r.Level != 0 {
+		if r := invocationOutcome(ch, c, invocation.Run, e); r.Level != 0 {
 			return r
 		}
 	}
@@ -47,6 +47,10 @@ func level7(ch plan.Check, c observe.Controls, e Evidence) Result {
 // InvocationOutcome decides QO1 to QO5 for a single subject invocation.
 // Discovery limits this helper to QO1 to QO4 in its QO7 combination.
 func InvocationOutcome(ch plan.Check, c observe.Controls, run observe.Run) Result {
+	return invocationOutcome(ch, c, run, Evidence{})
+}
+
+func invocationOutcome(ch plan.Check, c observe.Controls, run observe.Run, e Evidence) Result {
 	a, err := observe.Attribute(run)
 	if err != nil {
 		panic(err)
@@ -68,7 +72,7 @@ func InvocationOutcome(ch plan.Check, c observe.Controls, run observe.Run) Resul
 	case observe.Crashed:
 		return Result{Outcome: "not_held", FailureKind: "crashed", Level: 7}
 	case observe.Exited:
-		if !acceptedCode(ch, run.End.Code) {
+		if !acceptedCodeWithEvidence(ch, run.End.Code, e) {
 			return Result{Outcome: "not_held", FailureKind: "wrong_exit", Level: 7}
 		}
 		return Result{}
@@ -91,11 +95,14 @@ func AcceptedInvocationCode(ch plan.Check, key observe.Key, code int) bool {
 }
 
 func acceptedCode(ch plan.Check, code int) bool {
+	return acceptedCodeWithEvidence(ch, code, Evidence{})
+}
+func acceptedCodeWithEvidence(ch plan.Check, code int, e Evidence) bool {
 	p := ch.Preimage
 	var codes strictjson.Array
 	switch {
 	case p["predicate"] == "exit_code":
-		codes = strictjson.Array{object(p["expected"])["literal"]}
+		codes = strictjson.Array{Expected(ch, e)}
 	case p["probe"] == "bare" || p["probe"] == "exit_codes":
 		codes = array(object(p["parameters"])["exit_codes"])
 	case p["probe"] == nil && object(p["parameters"])["exit_codes"] != nil:
