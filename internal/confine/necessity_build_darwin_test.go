@@ -5,8 +5,10 @@ package confine
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -36,12 +38,25 @@ func necessityBuild(t *testing.T, overlayProbe bool) string {
 		if strings.Count(string(b), needle) != 1 {
 			t.Fatal("hidden entry point changed")
 		}
-		text := strings.Replace(string(b), needle, needle+"\n if name == \"u16_allowance\" { return u16Allowance(target,pidText) }", 1) + necessityAllowanceSource
+		b = []byte(strings.Replace(string(b), "\"strconv\"", "\"strconv\"\n\"strings\"\n\"path/filepath\"", 1))
+		text := strings.Replace(string(b), needle, needle+"\n if name == \"u16_allowance\" { return u16Allowance(target,pidText) }\n if name == \"u16_system_probe\" { return u16SystemProbe(target,pidText) }", 1) + necessityAllowanceSource + systemInfoProbeSource
 		replacement := filepath.Join(dir, "selftest_darwin.go")
 		if err := os.WriteFile(replacement, []byte(text), 0600); err != nil {
 			t.Fatal(err)
 		}
-		data, err := json.Marshal(map[string]any{"Replace": map[string]string{source: replacement}})
+		assembly := filepath.Join(root, "internal/confine/service_darwin_"+runtime.GOARCH+".s")
+		original, err := os.ReadFile(assembly)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, symbol := range systemInfoProbeSymbols {
+			original = append(original, []byte(fmt.Sprintf("\nTEXT %sProbeTrampoline<>(SB),NOSPLIT,$0-0\n JMP pql_probe_%s(SB)\nGLOBL ·%sProbeAddr(SB),RODATA,$8\nDATA ·%sProbeAddr(SB)/8,$%sProbeTrampoline<>(SB)\n", symbol, symbol, symbol, symbol, symbol))...)
+		}
+		assemblyReplacement := filepath.Join(dir, "service.s")
+		if err := os.WriteFile(assemblyReplacement, original, 0600); err != nil {
+			t.Fatal(err)
+		}
+		data, err := json.Marshal(map[string]any{"Replace": map[string]string{source: replacement, assembly: assemblyReplacement}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -105,6 +120,9 @@ func TestNecessityProbeBuild(t *testing.T) {
 	b, err := os.ReadFile(binary)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !bytes.Contains(b, []byte("internal/confine.u16SystemProbe")) {
+		t.Fatal("system-info overlay did not reach the built binary")
 	}
 	if !bytes.Contains(b, []byte("internal/confine.u16Allowance")) {
 		t.Fatal("canonical overlay did not reach the built binary")
