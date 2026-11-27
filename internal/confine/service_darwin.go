@@ -3,6 +3,7 @@
 package confine
 
 import (
+	"encoding/binary"
 	"fmt"
 	"runtime"
 	"syscall"
@@ -52,7 +53,7 @@ func selfTestSysctlByName(name string) error {
 	size := uintptr(len(data))
 	result, _, callErr := serviceSyscall6(sysctlByNameAddr, uintptr(unsafe.Pointer(p)), uintptr(unsafe.Pointer(&data[0])), uintptr(unsafe.Pointer(&size)), 0, 0, 0)
 	runtime.KeepAlive(p)
-	return fmt.Errorf("sysctl result=%d bytes=%d errno=%d", int32(result), size, callErr)
+	return fmt.Errorf("sysctl result=%d bytes=%d value=%d errno=%d", int32(result), size, binary.LittleEndian.Uint64(data[:8]), callErr)
 }
 
 //go:uintptrescapes

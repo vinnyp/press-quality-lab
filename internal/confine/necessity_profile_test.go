@@ -4,6 +4,7 @@ package confine
 
 import (
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -218,7 +219,9 @@ func necessityAllowanceControl(row necessityAllowance, r observe.Run) bool {
 	case "system_tools":
 		return result == "returned read=1 exec=0\n"
 	case "pagesize":
-		return result == "returned sysctl result=0 bytes=4 errno=0\n"
+		var width, value uint64
+		n, err := fmt.Sscanf(result, "returned sysctl result=0 bytes=%d value=%d errno=0\n", &width, &value)
+		return err == nil && n == 2 && value == uint64(os.Getpagesize()) && result == fmt.Sprintf("returned sysctl result=0 bytes=%d value=%d errno=0\n", width, value)
 	case "groups", "memory":
 		return strings.HasPrefix(result, "returned sysctl result=0 bytes=") && strings.HasSuffix(result, " errno=0\n") && strings.Count(result, "\n") == 1
 	case "service":
@@ -317,7 +320,7 @@ func TestNecessityCleanResults(t *testing.T) {
 		{"stream", "", "<nil>"},
 		{"child_signal", "", "<nil>"},
 		{"pipeline", "", "pipeline uid_ok=true"},
-		{"pagesize", "", "sysctl result=0 bytes=4 errno=0"},
+		{"pagesize", "", fmt.Sprintf("sysctl result=0 bytes=8 value=%d errno=0", os.Getpagesize())},
 		{"system_tools", "", "read=1 exec=0"},
 	} {
 		t.Run(row.op+"_"+row.param, func(t *testing.T) {
@@ -439,15 +442,25 @@ func TestNecessityRevisedResults(t *testing.T) {
 	}
 }
 
-func TestNecessityPageSizeWidth(t *testing.T) {
-	// QH11: hw.pagesize is a four-byte integer; hw.memsize cannot stand in for it.
-	row := necessityAllowance{operation: "pagesize"}
-	r := observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("attempt_pagesize\nreturned sysctl result=0 bytes=4 errno=0\n")}
-	if !necessityAllowanceControl(row, r) {
-		t.Fatal("page size control refused")
-	}
-	r.Stdout = []byte("attempt_pagesize\nreturned sysctl result=0 bytes=8 errno=0\n")
-	if necessityAllowanceControl(row, r) {
-		t.Fatal("memory size passed for page size")
+func TestNecessityPageSizeValue(t *testing.T) {
+	// QH11: named hw.pagesize and hw.memsize can both return eight bytes;
+	// the page-size value, rather than its width, identifies the intended lookup.
+	for _, row := range []struct {
+		name                        string
+		result, width, value, errno int
+		want                        bool
+	}{
+		{"PageSize", 0, 8, os.Getpagesize(), 0, true},
+		{"PageSizeFourBytes", 0, 4, os.Getpagesize(), 0, true},
+		{"MemorySize", 0, 8, 1 << 30, 0, false},
+		{"FailedResult", -1, 8, os.Getpagesize(), 0, false},
+		{"FailedErrno", 0, 8, os.Getpagesize(), 1, false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			r := observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte(fmt.Sprintf("attempt_pagesize\nreturned sysctl result=%d bytes=%d value=%d errno=%d\n", row.result, row.width, row.value, row.errno))}
+			if got := necessityAllowanceControl(necessityAllowance{operation: "pagesize"}, r); got != row.want {
+				t.Fatalf("control = %v, want %v: %s", got, row.want, r.Stdout)
+			}
+		})
 	}
 }
