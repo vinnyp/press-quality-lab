@@ -21,6 +21,11 @@ TEXT sysctlTrampoline<>(SB),NOSPLIT,$0-0
 GLOBL ·sysctlAddr(SB),RODATA,$8
 DATA ·sysctlAddr(SB)/8,$sysctlTrampoline<>(SB)
 
+TEXT sysctlByNameTrampoline<>(SB),NOSPLIT,$0-0
+	JMP pql_sysctlbyname(SB)
+GLOBL ·sysctlByNameAddr(SB),RODATA,$8
+DATA ·sysctlByNameAddr(SB)/8,$sysctlByNameTrampoline<>(SB)
+
 TEXT ·bootstrapPort(SB),NOSPLIT,$0-4
 	MOVD $pql_bootstrap_port(SB), R0
 	MOVWU (R0), R0

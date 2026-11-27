@@ -39,6 +39,22 @@ func selfTestSysctl(mib []int32) error {
 	return fmt.Errorf("sysctl result=%d bytes=%d errno=%d", int32(result), size, err)
 }
 
+// selfTestSysctlByName uses libSystem's named entry point for witnesses whose
+// numeric MIB can select a compatibility entry instead.
+//
+//lint:ignore U1000 Called by the generated U16 necessity overlay.
+func selfTestSysctlByName(name string) error {
+	p, err := unix.BytePtrFromString(name)
+	if err != nil {
+		return err
+	}
+	var data [65536]byte
+	size := uintptr(len(data))
+	result, _, callErr := serviceSyscall6(sysctlByNameAddr, uintptr(unsafe.Pointer(p)), uintptr(unsafe.Pointer(&data[0])), uintptr(unsafe.Pointer(&size)), 0, 0, 0)
+	runtime.KeepAlive(p)
+	return fmt.Errorf("sysctl result=%d bytes=%d errno=%d", int32(result), size, callErr)
+}
+
 //go:uintptrescapes
 //go:linkname serviceSyscall syscall.syscall
 func serviceSyscall(fn, a1, a2, a3 uintptr) (r1, r2 uintptr, err syscall.Errno)
@@ -54,8 +70,12 @@ var resourceUsageAddr uintptr
 var codeSignatureAddr uintptr
 var sysctlAddr uintptr
 
+//lint:ignore U1000 Used by the generated U16 necessity overlay's named sysctl call.
+var sysctlByNameAddr uintptr
+
 //go:cgo_import_dynamic pql_bootstrap_lookup bootstrap_look_up "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic pql_bootstrap_port bootstrap_port "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic pql_resource_usage proc_pid_rusage "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic pql_code_signature csops "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic pql_sysctl sysctl "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic pql_sysctlbyname sysctlbyname "/usr/lib/libSystem.B.dylib"
