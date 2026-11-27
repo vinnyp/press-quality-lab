@@ -100,6 +100,19 @@ PROBE_LEVEL_EIGHT_RULES = {
 }
 
 
+# Only probes have independently buildable level-8 capabilities.
+PROBE_LEVEL_EIGHT_BUILDS = {
+    probe: rules for probe, rules in PROBE_LEVEL_EIGHT_RULES.items()
+    if probe not in (None, 'discovery')
+}
+PROBE_LEVEL_EIGHT_BUILDS['discovery'] = (
+    'QD2.bounds',
+    'QD3',
+    'QD5',
+    'QO7.discovery',
+)
+
+
 def level_rules(level):
     rules = LEVEL_RULE[level]
     return (rules,) if isinstance(rules, str) else rules
@@ -112,6 +125,17 @@ RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
 # An integer means observation support, needed only at that invocation's serving level.
 # override means the QS5 step after level 8, independent of its level-2 step.
 BUILD_PHASE = {
+    'QP2': 8,
+    'QP3': 8,
+    'QP4': 8,
+    'QP6': 8,
+    'QP7': 8,
+    'QP8': 8,
+    'QP9': 8,
+    'QP10': 8,
+    'QP11': 8,
+    'QP12': 8,
+    'QP13': 8,
     'QD2.bounds': 8,
     'QD3': 8,
     'QD5': 8,
@@ -424,14 +448,10 @@ def check_ending(level, built, subject, preimage, gaps):
                 current in built['levels'] and
                 not supports(capabilities, 'QO7.discovery')):
             return ending(70, ['QO7'], 'sentinel')
-        discovery_built = (current == 8 and preimage['probe'] == 'discovery' and
-                           all(supports(capabilities, token) for token in (
-                               'QD2.bounds',
-                               'QD3',
-                               'QD5',
-                               'QO7.discovery',
-                           )))
-        if current not in built['levels'] and applies and not discovery_built:
+        tokens = PROBE_LEVEL_EIGHT_BUILDS.get(preimage['probe'])
+        probe_built = (current == 8 and tokens is not None and
+                       all(supports(capabilities, token) for token in tokens))
+        if current not in built['levels'] and applies and not probe_built:
             return ending(70, PROBE_LEVEL_EIGHT_RULES[preimage['probe']]
                           if current == 8 else level_rules(current), 'sentinel')
     return ending(None, level_rules(level))

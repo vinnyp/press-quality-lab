@@ -25,6 +25,65 @@ class PredictorTests(unittest.TestCase):
     def case(self, number, built=None):
         return predictor.predict_case(KIT / 'cases' / f'case-{number:03d}', built or BUILT)
 
+    def test_pr10_probe_tokens(self):
+        # QP2–QP4, QP6–QP13, QO7: independent probe capabilities.
+        rows = {
+            'bare': [
+                'QP2',
+            ],
+            'byte_bound': [
+                'QP3',
+            ],
+            'exit_codes': [
+                'QP4',
+            ],
+            'store_unchanged': [
+                'QP6',
+                'QP7',
+                'QP8',
+                'QP9',
+            ],
+            'planted_secret': [
+                'QP10',
+                'QP11',
+                'QP12',
+                'QP13',
+            ],
+        }
+        subject = {'binary': 'bin/subject', 'declared_count': 0,
+                   'seed': None, 'store': None, 'secret': None, 'commands': []}
+        for probe, tokens in rows.items():
+            pre = {'probe': probe, 'words': [], 'earlier': [], 'expected': None}
+            built = {'levels': [1, 2, 3, 5, 7],
+                     'builds': tokens + ['QO7.planted_secret']}
+            with self.subTest(probe=probe):
+                self.assertEqual(predictor.check_ending(8, built, subject, pre, [])['phase'],
+                                 'deciding')
+            for token in tokens:
+                with self.subTest(probe=probe, token=token):
+                    missing = dict(built, builds=[t for t in built['builds'] if t != token])
+                    self.assertEqual(predictor.check_ending(8, missing, subject, pre, []),
+                                     {'exit_code': 70, 'rules': sorted(tokens),
+                                      'phase': 'sentinel'})
+            authored = dict(pre, probe=None)
+            self.assertEqual(predictor.check_ending(8, built, subject, authored, []),
+                             {'exit_code': 70, 'rules': ['QA9'], 'phase': 'sentinel'})
+
+    def test_pr10_prediction(self):
+        # QP2–QP4, QP6–QP13, QO7, QA9: literal slice-b2 case set.
+        directory = Path(__file__).with_name('ratchet')
+        built = predictor.load(directory / 'pr10.json')
+        self.assertNotIn(8, built['levels'])
+        result = predictor.predict(built)
+        previous = predictor.load(directory / 'pr9-prediction.json')['predicted']
+        additions = {f'case-{n:03d}' for n in (
+            12, 13, 14, 15, 88, 74, 75, 96, 99, 148, 72,
+            73, 76, 78, 89, 77, 79, 95, 98, 150, 151)}
+        self.assertEqual(set(result['predicted']), set(previous) | additions)
+        self.assertEqual(len(result['predicted']), 58)
+        actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(actual, (directory / 'pr10-prediction.json').read_bytes())
+
     def test_pr9_discovery_tokens(self):
         # QD2 bounds, QD3, QD5, QO7: all discovery capabilities are needed.
         tokens = [
@@ -142,6 +201,13 @@ class PredictorTests(unittest.TestCase):
                 result = predictor.predict(predictor.load(directory / (version + '.json')))
                 actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
                 self.assertEqual(actual, (directory / (version + '-prediction.json')).read_bytes())
+                completed = subprocess.run(
+                    [sys.executable, '-I', '-B',
+                     str(Path(__file__).with_name('predict-ratchet.py')),
+                     '--built', str(directory / (version + '.json')), '--json'],
+                    check=True, capture_output=True)
+                self.assertEqual(completed.stdout, actual)
+                self.assertEqual(completed.stderr, b'')
         pr8 = predictor.load(directory / 'pr8-prediction.json')['predicted']
         pr9 = predictor.load(directory / 'pr9-prediction.json')['predicted']
         self.assertEqual(set(pr9), set(pr8) | {'case-061', 'case-062'})
