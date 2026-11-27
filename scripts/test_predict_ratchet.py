@@ -105,17 +105,18 @@ class PredictorTests(unittest.TestCase):
         for checks in ([], [{'id': 'check'}]):
             subject['runbooks'][0]['steps'][0]['checks'] = checks
             for field in ('class', 'writes'):
-                with self.subTest(field=field, required=bool(checks)):
-                    self.assertFalse(predictor.depends(subject, pre, ("destructive",)))
-                    changed = copy.deepcopy(subject)
-                    changed['commands'][1][field] = {'placeholder': 'Supply value'}
-                    self.assertTrue(predictor.depends(changed, pre, ("destructive",)))
-                    unrelated = copy.deepcopy(pre)
-                    unrelated['expected']['computation']['captures'] = []
-                    self.assertFalse(predictor.depends(changed, unrelated, ("destructive",)))
-                    changed['commands'][1][field] = subject['commands'][1][field]
-                    changed['commands'][0][field] = {'placeholder': 'Supply value'}
-                    self.assertFalse(predictor.depends(changed, pre, ("destructive",)))
+                for scopes in ((("destructive",), ("conformance",)) if field == "writes" else (("destructive",),)):
+                    with self.subTest(field=field, required=bool(checks), scopes=scopes):
+                        self.assertFalse(predictor.depends(subject, pre, scopes))
+                        changed = copy.deepcopy(subject)
+                        changed['commands'][1][field] = {'placeholder': 'Supply value'}
+                        self.assertTrue(predictor.depends(changed, pre, scopes))
+                        unrelated = copy.deepcopy(pre)
+                        unrelated['expected']['computation']['captures'] = []
+                        self.assertFalse(predictor.depends(changed, unrelated, scopes))
+                        changed['commands'][1][field] = subject['commands'][1][field]
+                        changed['commands'][0][field] = {'placeholder': 'Supply value'}
+                        self.assertFalse(predictor.depends(changed, pre, scopes))
 
     def test_placeholder_runbook(self):
         # QS5, QA7, E-54: unknown classes block whole books outside destructive.

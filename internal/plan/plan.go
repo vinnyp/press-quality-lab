@@ -60,6 +60,8 @@ type Input struct {
 // Check holds a required entry, its preimage and subject invocation keys.
 // Keys include subject and computation invocations.
 type Check struct {
+	// Scopes is load-bearing for E-54 in level 2 and MayServe. A check built
+	// without it is treated as outside destructive.
 	Scopes []rulebook.Scope
 	Seed   []Entry
 	// Subject supplies QS5 dependency context; it is not part of the check id.

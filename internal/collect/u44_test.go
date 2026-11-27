@@ -24,7 +24,7 @@ func (s *servingSource) Observe(k observe.Key, _ observe.Spec) (observe.Run, err
 }
 
 func TestInvocationServing(t *testing.T) {
-	// QE8, QO1, QH8, QA7, QA8, QO6, QO7: steps serve once; probes retain their own keys.
+	// QS6, QE8, QO1, QH8, QA7, QA8, QO6, QO7: steps serve once; probes retain their own keys.
 	for _, name := range []string{"Ordered", "UnconfinedInvocation", "GradeWide", "Placeholder", "DiscoveryWalk", "Destructive", "ChangedCopy", "Computation", "NoInvocation", "SourceFault", "Unscheduled"} {
 		t.Run(name, func(t *testing.T) {
 			ch := plan.Check{ID: "synthetic", Subject: plan.Object{"commands": plan.Array{}, "runbooks": plan.Array{}}, Preimage: plan.Object{"probe": nil, "predicate": "stdout_equals", "earlier": plan.Array{}, "words": plan.Array{"read"}, "expected": plan.Object{"literal": "value"}}, Keys: []plan.Object{{"words": plan.Array{"read"}, "computation": nil}}}
@@ -82,7 +82,12 @@ func TestInvocationServing(t *testing.T) {
 			}
 			got, err := Collect(p, source)
 			if name == "Destructive" || name == "Unscheduled" {
-				if err == nil || got != nil || len(source.keys) != 0 {
+				wantRule := "QA7"
+				if name == "Destructive" {
+					wantRule = "QS6"
+				}
+				var fault *plan.Fault
+				if !errors.As(err, &fault) || fault.Rule != wantRule || got != nil || len(source.keys) != 0 {
 					t.Fatal(got, err, source.keys)
 				}
 				return

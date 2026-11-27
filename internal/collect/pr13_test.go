@@ -1,6 +1,7 @@
 package collect
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -124,7 +125,7 @@ func TestDestructiveRunbooks(t *testing.T) {
 }
 
 func TestDestructivePreflight(t *testing.T) {
-	// QE3, QA8, E-49: a corrupt plan is refused before discovery, including unchecked steps.
+	// QS6, QE3, QA8, E-49: a corrupt plan is refused before discovery, including unchecked steps.
 	for _, outside := range []bool{false, true} {
 		check := loopCheck()
 		if outside {
@@ -145,7 +146,8 @@ func TestDestructivePreflight(t *testing.T) {
 		source.keys = nil
 		p.Checks[0].Subject["commands"] = append(discoveryArray(p.Checks[0].Subject["commands"]), plan.Object{"words": plan.Array{"remove"}, "class": "destructive"})
 		got, err := Collect(p, source)
-		if err == nil || got != nil || len(source.keys) != 0 {
+		var fault *plan.Fault
+		if !errors.As(err, &fault) || fault.Rule != "QS6" || got != nil || len(source.keys) != 0 {
 			t.Fatal(got, err, source.keys)
 		}
 	}
@@ -164,19 +166,25 @@ func TestServeSafetyBrakes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			p := loopPlan(t, plan.Array{loopStep("first", loopCheck())})
 			source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
+			sub := p.Checks[0].Subject
+			cmd := plan.Object{"words": plan.Array{"different"}, "class": "safe", "writes": false}
+			sub["commands"] = append(discoveryArray(sub["commands"]), cmd)
+			if name != "Destructive" {
+				// E-54 must allow the book so only the serve placeholder brake refuses it.
+				p.Scopes = append(p.Scopes, "destructive")
+				p.Checks[0].Scopes = p.Scopes
+				// Preimage dependencies remain safe; a corrupt schedule must still never
+				// serve a placeholder key even when level 2 cannot see that corruption.
+				p.Runbooks[0].Steps[0].Key["words"] = plan.Array{"different"}
+				p.Checks[0].Keys[0]["words"] = plan.Array{"different"}
+				book := discoveryObject(discoveryArray(sub["runbooks"])[0])
+				discoveryObject(discoveryArray(book["steps"])[0])["words"] = plan.Array{"different"}
+			}
 			positive, err := Collect(p, source)
 			if err != nil || len(positive) != 1 || positive[0].Result.Outcome != "held" || len(source.keys) != 1 {
 				t.Fatal(positive, err, source.keys)
 			}
 			source.keys = nil
-			sub := p.Checks[0].Subject
-			cmd := plan.Object{"words": plan.Array{"different"}, "class": "safe", "writes": false}
-			sub["commands"] = append(discoveryArray(sub["commands"]), cmd)
-			if name != "Destructive" {
-				// Preimage dependencies remain safe; a corrupt schedule must still never
-				// serve a placeholder key even when level 2 cannot see that corruption.
-				p.Runbooks[0].Steps[0].Key["words"] = plan.Array{"different"}
-			}
 			changed := changingControls{loopSource: source, change: func() {
 				switch name {
 				case "Destructive":
@@ -188,7 +196,12 @@ func TestServeSafetyBrakes(t *testing.T) {
 				}
 			}}
 			got, err := Collect(p, changed)
-			if err == nil || got != nil || len(source.keys) != 0 {
+			want := "QS5"
+			if name == "Destructive" {
+				want = "QS6"
+			}
+			var fault *plan.Fault
+			if !errors.As(err, &fault) || fault.Rule != want || got != nil || len(source.keys) != 0 {
 				t.Fatal(got, err, source.keys)
 			}
 		})

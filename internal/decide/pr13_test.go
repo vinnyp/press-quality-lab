@@ -1,11 +1,13 @@
 package decide
 
 import (
+	"errors"
+	"testing"
+
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
 	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
-	"testing"
 )
 
 func TestMayServe(t *testing.T) {
@@ -17,7 +19,7 @@ func TestMayServe(t *testing.T) {
 		plan.Object{"words": plan.Array{"config", "reset"}, "class": "destructive", "writes": true},
 		plan.Object{"words": plan.Array{"unknown"}, "class": plan.Object{"placeholder": "class"}},
 		plan.Object{"words": plan.Array{"pending"}, "class": "safe", "writes": plan.Object{"placeholder": "writes"}},
-	}, "runbooks": plan.Array{plan.Object{"name": "mixed", "steps": plan.Array{plan.Object{"words": plan.Array{"config"}}, plan.Object{"words": plan.Array{"remove", "gear"}}}}}}
+	}, "runbooks": plan.Array{plan.Object{"name": "mixed", "steps": plan.Array{plan.Object{"words": plan.Array{"config"}}, plan.Object{"words": plan.Array{"remove", "gear"}}, plan.Object{"words": plan.Array{"remove", "--help"}}}}}}
 	for _, row := range []struct {
 		name, probe, book, home string
 		words                   plan.Array
@@ -31,7 +33,7 @@ func TestMayServe(t *testing.T) {
 		{"Inside", "", "mixed", "runbook", plan.Array{"config"}, []rulebook.Scope{"conformance", "destructive"}, true},
 		{"UnknownToken", "", "mixed", "runbook", plan.Array{"config"}, []rulebook.Scope{"destructive-guard"}, false},
 		{"Discovery", "discovery", "", "empty", plan.Array{"remove", "--help"}, nil, true},
-		{"RunbookHelp", "", "mixed", "runbook", plan.Array{"remove", "--help"}, nil, false},
+		{"RunbookHelp", "", "mixed", "runbook", plan.Array{"remove", "--help"}, []rulebook.Scope{"conformance"}, false},
 		{"Computation", "", "mixed", "scratch", nil, nil, true},
 		{"ClassPlaceholder", "bare", "", "seed", plan.Array{"unknown"}, nil, false},
 		{"WritesPlaceholder", "bare", "", "seed", plan.Array{"pending"}, nil, false},
@@ -41,16 +43,29 @@ func TestMayServe(t *testing.T) {
 			if row.probe != "" {
 				pre["probe"] = row.probe
 			}
-			key := plan.Object{"computation": "compute", "words": row.words, "home": row.home, "runbook": nil}
-			if row.words == nil {
+			key := plan.Object{"computation": nil, "words": row.words, "home": row.home, "runbook": nil}
+			if row.name == "Computation" {
 				key["words"] = nil
+				key["computation"] = "compute"
 			}
 			if row.book != "" {
 				key["runbook"] = row.book
 			}
 			ch := plan.Check{Subject: sub, Preimage: pre}
-			if (MayServe(ch, key, row.scopes) == nil) != row.allowed {
-				t.Fatal(row.name)
+			err := MayServe(ch, key, row.scopes)
+			if row.allowed {
+				if err != nil {
+					t.Fatal(err)
+				}
+				return
+			}
+			want := "QS6"
+			if row.name == "ClassPlaceholder" || row.name == "WritesPlaceholder" {
+				want = "QS5"
+			}
+			var fault *plan.Fault
+			if !errors.As(err, &fault) || fault.Rule != want {
+				t.Fatalf("got %v, want %s", err, want)
 			}
 		})
 	}
@@ -88,6 +103,7 @@ func TestMayPlanServeMissingFacts(t *testing.T) {
 			key := plan.Object{"runbook": "book", "words": plan.Array{"read"}}
 			switch name {
 			case "Subject":
+				// The nil-subject guard and commands type guard both refuse this input.
 				sub = nil
 			case "Commands":
 				sub["commands"] = "wrong"
@@ -107,8 +123,13 @@ func TestMayPlanServeMissingFacts(t *testing.T) {
 				}
 				return
 			}
-			if _, ok := err.(*plan.Fault); !ok {
-				t.Fatal(err)
+			want := "QA7"
+			if name == "Subject" || name == "Commands" {
+				want = "QS6"
+			}
+			var fault *plan.Fault
+			if !errors.As(err, &fault) || fault.Rule != want {
+				t.Fatalf("got %v, want %s", err, want)
 			}
 		})
 	}
@@ -120,6 +141,11 @@ func TestComputationExemption(t *testing.T) {
 	if err := MayPlanServe(ch, key, nil); err != nil {
 		t.Fatal(err)
 	}
+	key["home"] = "seed"
+	if err := MayPlanServe(ch, key, nil); err == nil {
+		t.Fatal("non-scratch computation accepted")
+	}
+	key["home"] = "scratch"
 	key["computation"] = nil
 	if err := MayPlanServe(ch, key, nil); err == nil {
 		t.Fatal("missing computation accepted")

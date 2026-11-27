@@ -38,6 +38,7 @@ func StepRuns(f StepFacts) bool {
 	if f.Check == nil {
 		panic("E-49: missing step context")
 	}
+	// E-54: this is a second brake behind level 2.
 	if placeholderRunbook(*f.Check, f.Check.Preimage["runbook"], f.Check.Scopes) {
 		return false
 	}

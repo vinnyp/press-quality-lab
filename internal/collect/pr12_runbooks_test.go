@@ -1,6 +1,7 @@
 package collect
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -127,7 +128,7 @@ func TestRunbookStops(t *testing.T) {
 }
 
 func TestOutsideStepRuns(t *testing.T) {
-	// QA9, QA7, QA8, E-49: an outside check is not evaluated and its step never stops the book.
+	// QS6, QA9, QA7, QA8, E-49: an outside check is not evaluated and its step never stops the book.
 	for _, name := range []string{"Run", "Stopped", "Confinement", "SelfTest", "System", "Copy", "Placeholder", "Destructive"} {
 		t.Run(name, func(t *testing.T) {
 			outside := loopCheck()
@@ -168,7 +169,8 @@ func TestOutsideStepRuns(t *testing.T) {
 			}
 			got, err := Collect(p, source)
 			if name == "Destructive" {
-				if err == nil || got != nil || len(source.keys) != 0 {
+				var fault *plan.Fault
+				if !errors.As(err, &fault) || fault.Rule != "QS6" || got != nil || len(source.keys) != 0 {
 					t.Fatal(got, err, source.keys)
 				}
 				return

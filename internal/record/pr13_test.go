@@ -1,6 +1,7 @@
 package record
 
 import (
+	"errors"
 	"os"
 	"reflect"
 	"regexp"
@@ -33,6 +34,12 @@ func TestReasonPairing(t *testing.T) {
 		t.Run(row.name, func(t *testing.T) {
 			in := Input{Plan: plan.Plan{Checks: []plan.Check{{ID: "check"}}}, Results: map[string]Resolution{"check": {Result: decide.Result{Outcome: row.outcome, Reason: row.reason}}}}
 			doc, err := Build(in)
+			if !row.valid {
+				var fault *Fault
+				if !errors.As(err, &fault) || fault.Rule != "QE13" {
+					t.Fatalf("got %v, want QE13", err)
+				}
+			}
 			if (err == nil) != row.valid || !row.valid && doc != nil {
 				t.Fatal(doc, err)
 			}
