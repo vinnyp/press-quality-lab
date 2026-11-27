@@ -100,6 +100,19 @@ PROBE_LEVEL_EIGHT_RULES = {
 }
 
 
+# Only probes have independently buildable level-8 capabilities.
+PROBE_LEVEL_EIGHT_BUILDS = {
+    probe: rules for probe, rules in PROBE_LEVEL_EIGHT_RULES.items()
+    if probe not in (None, 'discovery')
+}
+PROBE_LEVEL_EIGHT_BUILDS['discovery'] = (
+    'QD2.bounds',
+    'QD3',
+    'QD5',
+    'QO7.discovery',
+)
+
+
 def level_rules(level):
     rules = LEVEL_RULE[level]
     return (rules,) if isinstance(rules, str) else rules
@@ -112,6 +125,17 @@ RULE_ORDER = ['QS1'] + ['QS' + str(i) for i in range(3, 13)] + [
 # An integer means observation support, needed only at that invocation's serving level.
 # override means the QS5 step after level 8, independent of its level-2 step.
 BUILD_PHASE = {
+    'QP2': 8,
+    'QP3': 8,
+    'QP4': 8,
+    'QP6': 8,
+    'QP7': 8,
+    'QP8': 8,
+    'QP9': 8,
+    'QP10': 8,
+    'QP11': 8,
+    'QP12': 8,
+    'QP13': 8,
     'QD2.bounds': 8,
     'QD3': 8,
     'QD5': 8,
@@ -235,6 +259,41 @@ def runs_for(preimage, recording):
     return result
 
 
+def planted_secret_level(preimage, subject, host, runs):
+    """QO7's combination, with E-35 through E-38, in deciding order."""
+    if subject.get('secret') is None:
+        return 8
+    ordered = [(key, run) for words in preimage['parameters']['commands']
+               for key, run in runs if key['words'] == words]
+    if any(run['leak_scan']['leaks'] for _, run in ordered):
+        return 8
+    if any(run['end'].get('by') != 'budget' and
+           any(a['invocation'] == key and a['by'] == 'engine'
+               for a in host['kill_attribution']) for key, run in ordered):
+        return 7
+    if host.get('read_calibration', 'moved') == 'moved':
+        for key, run in ordered:
+            commands = [c for c in subject['commands']
+                        if key['words'][:len(c['words'])] == c['words']]
+            command = max(commands, key=lambda c: len(c['words']), default={})
+            planted = run['planted']
+            if (run['end']['kind'] == 'exit' and
+                    run['end']['code'] in (command.get('exit_codes') or [0]) and
+                    planted is not None and planted['atime_moved'] and planted['same_file']):
+                control = host.get('read_control')
+                killed = (control == 'killed' if control is not None else
+                          planted['control_end'] == dict(kind='signal', signal='SIGKILL',
+                                                         by='confinement'))
+                if not killed:
+                    return 8
+    for _, run in ordered:
+        if (run['markers']['could_not_start'] or
+                run['end'].get('by') in ('confinement', 'budget')):
+            return 7
+    # QP13's bound, a proved read, and input_missing all decide at level 8.
+    return 8
+
+
 def deciding_level(evidence, preimage, subject, host, recording, all_evidence, preimages):
     reason = evidence['reason'] or evidence['failure_kind'] or evidence['outcome']
     runs = runs_for(preimage, recording)
@@ -266,6 +325,8 @@ def deciding_level(evidence, preimage, subject, host, recording, all_evidence, p
             if (key['runbook'] == preimage['runbook'] and key['step'] in captures and
                     invocation['confined'][0]['stdout']['cut']):
                 return 6
+        if preimage['probe'] == 'planted_secret':
+            return planted_secret_level(preimage, subject, host, runs)
         for key, run in runs:
             if key['computation'] is not None:
                 continue
@@ -424,14 +485,10 @@ def check_ending(level, built, subject, preimage, gaps):
                 current in built['levels'] and
                 not supports(capabilities, 'QO7.discovery')):
             return ending(70, ['QO7'], 'sentinel')
-        discovery_built = (current == 8 and preimage['probe'] == 'discovery' and
-                           all(supports(capabilities, token) for token in (
-                               'QD2.bounds',
-                               'QD3',
-                               'QD5',
-                               'QO7.discovery',
-                           )))
-        if current not in built['levels'] and applies and not discovery_built:
+        tokens = PROBE_LEVEL_EIGHT_BUILDS.get(preimage['probe'])
+        probe_built = (current == 8 and tokens is not None and
+                       all(supports(capabilities, token) for token in tokens))
+        if current not in built['levels'] and applies and not probe_built:
             return ending(70, PROBE_LEVEL_EIGHT_RULES[preimage['probe']]
                           if current == 8 else level_rules(current), 'sentinel')
     return ending(None, level_rules(level))

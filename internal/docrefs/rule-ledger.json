@@ -222,6 +222,83 @@
         "file": "internal/grade/prediction_scripted_test.go",
         "function": "TestPredictedCheckEndings"
       }
+    ],
+    "QP1": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_probes_test.go",
+        "function": "TestPR10ProbePredicates"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestNoCommandPreimages"
+      }
+    ],
+    "QP2": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_probes_test.go",
+        "function": "TestPR10ProbePredicates"
+      },
+      {
+        "kind": "test",
+        "file": "internal/plan/u39_test.go",
+        "function": "TestNoCommandPreimages"
+      }
+    ],
+    "QP3": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_probes_test.go",
+        "function": "TestPR10ProbePredicates"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/pr10_evidence_test.go",
+        "function": "TestPR10TargetSize"
+      }
+    ],
+    "QP4": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_probes_test.go",
+        "function": "TestPR10ProbePredicates"
+      }
+    ],
+    "QP11": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_b2_test.go",
+        "function": "TestPlantedReadConditions"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_probes_test.go",
+        "function": "TestPR10PlantedAcceptedCode"
+      }
+    ],
+    "QO7": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_b2_test.go",
+        "function": "TestPlantedPrecedence"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_b2_test.go",
+        "function": "TestPlantedCombination"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/discovery_test.go",
+        "function": "TestDiscoveryOutcomeOrder"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_b2_test.go",
+        "function": "TestPlantedReadConditions"
+      }
     ]
   }
 }

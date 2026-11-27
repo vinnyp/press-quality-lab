@@ -60,6 +60,7 @@ type Input struct {
 // Check holds a required entry, its preimage and subject invocation keys.
 // Keys include subject and computation invocations.
 type Check struct {
+	Seed []Entry
 	// Subject supplies QS5 dependency context; it is not part of the check id.
 	Subject  subject.File
 	ID       string
@@ -218,7 +219,7 @@ func Build(in Input) (Plan, error) {
 			return "", err
 		}
 		r := Object{"id": id, "kind": "plain", "dimension": pre["dimension"], "record": pre["runbook"], "crediting": credit, "empty_satisfiable": empty, "asserts_emptiness": false, "precondition": nil, "declared_count": nil, "condition": nil, "condition_a": nil}
-		p.Checks = append(p.Checks, Check{ID: id, Preimage: pre, Required: r, Keys: keys, Subject: s})
+		p.Checks = append(p.Checks, Check{ID: id, Preimage: pre, Required: r, Keys: keys, Subject: s, Seed: in.Seed})
 		return id, nil
 	}
 	commands := append(Array{}, arr(s["commands"])...)

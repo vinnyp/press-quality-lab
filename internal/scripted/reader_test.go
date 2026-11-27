@@ -95,7 +95,7 @@ func TestCorpusProjection(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				same(t, observe.ProjectRun(r), arr(i["confined"])[0])
+				same(t, observe.ProjectRun(r), expectedHostControls(t, obj(arr(i["confined"])[0]), decode(t, []byte(passing))))
 			}
 		})
 	}
@@ -130,7 +130,7 @@ func TestCorpusProjection(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			same(t, observe.ProjectRun(run), arr(invocation["confined"])[0])
+			same(t, observe.ProjectRun(run), expectedHostControls(t, obj(arr(invocation["confined"])[0]), obj(in["host"])))
 		}
 
 	}
@@ -427,7 +427,12 @@ func TestSchemaBoundaries(t *testing.T) {
 			}
 		}
 		s, err := Read([]byte(passing), strictjson.Write(b), nil)
-		valid := count == "0" || count == "1e32"
+		// QE10: schema-valid oversized integers are engine faults.
+		if count == "1e32" {
+			errorCode(t, err, 70, "QE10")
+			continue
+		}
+		valid := count == "0"
 		if (err == nil) != valid {
 			t.Fatalf("bytes %s: %v", count, err)
 		}
@@ -437,21 +442,14 @@ func TestSchemaBoundaries(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			same(t, observe.ProjectRun(r), arr(i["confined"])[0])
+			same(t, observe.ProjectRun(r), expectedHostControls(t, obj(arr(i["confined"])[0]), decode(t, []byte(passing))))
 		}
 	}
 	h := decode(t, []byte(passing))
 	obj(h["confinement"])["applied"] = false
 	obj(h["confinement"])["sandbox_exec_exit"] = number("1e32")
-	s, err := Read(strictjson.Write(h), base, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	c, err := s.Controls()
-	if err != nil {
-		t.Fatal(err)
-	}
-	same(t, observe.ProjectHost(c), h)
+	_, err := Read(strictjson.Write(h), base, nil)
+	errorCode(t, err, 70, "QE10")
 }
 
 func TestRawValuesProjection(t *testing.T) {
@@ -488,7 +486,7 @@ func TestRawValuesProjection(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			same(t, observe.ProjectRun(r), arr(i["confined"])[0])
+			same(t, observe.ProjectRun(r), expectedHostControls(t, obj(arr(i["confined"])[0]), decode(t, []byte(passing))))
 		})
 	}
 }
@@ -697,4 +695,22 @@ func TestOutcomeLedgerCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func expectedHostControls(t *testing.T, raw, host object) object {
+	t.Helper()
+	expected := decode(t, strictjson.Write(raw))
+	home := obj(expected["home_changes"])
+	if home["control_detected"] != nil {
+		home["control_detected"] = host["store_control"] == "detected"
+	}
+	planted := obj(expected["planted"])
+	if planted != nil && (planted["control_end"] != nil || host["read_calibration"] == "moved" && planted["atime_moved"] == true && planted["same_file"] == true && obj(expected["end"])["kind"] == "exit" && obj(expected["markers"])["confinement"] == true && obj(expected["markers"])["could_not_start"] == false) {
+		end := object{"kind": "exit", "code": number("0")}
+		if host["read_control"] == "killed" {
+			end = object{"kind": "signal", "signal": "SIGKILL", "by": "confinement"}
+		}
+		planted["control_end"] = end
+	}
+	return expected
 }

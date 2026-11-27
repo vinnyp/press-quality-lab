@@ -20,6 +20,7 @@ type HomeChange struct {
 	Digest             *string
 }
 type HomeChanges struct {
+	Unreadable      bool
 	Changes         []HomeChange
 	ControlDetected *bool
 }
@@ -29,6 +30,7 @@ type Planted struct {
 }
 type Leak struct{ Place, Encoding string }
 type LeakScan struct {
+	Unreadable   bool
 	BoundReached bool
 	Leaks        []Leak
 }

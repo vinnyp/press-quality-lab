@@ -203,6 +203,9 @@ func TestOwnRuleNames(t *testing.T) {
 	for _, ch := range corpusPlan(t, "case-004").Checks {
 		probe := ch.Preimage["probe"]
 		seen[probe] = true
+		if probe == "bare" || probe == "byte_bound" || probe == "exit_codes" || probe == "store_unchanged" || probe == "planted_secret" {
+			continue
+		}
 		r := level8(ch, passing(), Evidence{})
 		if r.Unbuilt == nil || r.Unbuilt.Rule != want[probe] || r.Level != 8 {
 			t.Fatalf("probe %v: %+v", probe, r)
@@ -214,11 +217,11 @@ func TestOwnRuleNames(t *testing.T) {
 }
 
 func TestInvocationTriggers(t *testing.T) {
-	// QO7: absent discovery facts and the unbuilt planted-secret combination stop here.
+	// QO7: absent discovery facts stop here; planted-secret decisions defer to level 8.
 	// QO2: other checks have built invocation rules, even with no facts yet.
 	for _, ch := range corpusPlan(t, "case-004").Checks {
 		r := level7(ch, passing(), Evidence{})
-		if ch.Preimage["probe"] == "discovery" || ch.Preimage["probe"] == "planted_secret" {
+		if ch.Preimage["probe"] == "discovery" {
 			if r.Unbuilt == nil || r.Unbuilt.Rule != "QO7" || r.Level != 7 {
 				t.Fatal(r)
 			}
