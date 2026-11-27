@@ -196,3 +196,15 @@ QP11 runs "each listed command once", QE8 numbers the planted secret's targets b
 ### E-43. Stated limit: a canary in a name
 
 QP12 finds the canary in a drained stream or in the contents of a file of the used home. **The specification states the limit that a canary written into a file's or a directory's name, or into a link's target, is not a leak QP12 finds: only stream bytes and regular files' contents are scanned. Masking (QE18) still covers names wherever a record or scorecard shows them.** The owner ruled on 2026-11-26. No record changes.
+
+### E-44. Overlapping masked values
+
+QE18 masks the canary and each declared value of 8 bytes or more, in every §4 encoding. It does not say what replaces two matches that overlap. **Masking first finds every match of every masked value's forms in the text, then replaces every byte any match covers. A byte that a canary form covers becomes the byte of the zero canary in the same form and position. A byte that a declared value's form covers becomes `*`, one for each code point, as E-39 says. Nothing of any masked value survives an overlap.** The owner ruled on 2026-11-27. No case of the corpus has overlapping masked values, so no record changes.
+
+### E-45. Stated limit: extended attributes and resource forks
+
+QP12 finds the canary in a drained stream or in the contents of a regular file of the used home, and E-43 states the limit for names and link targets. **The specification also states the limit that a canary written into a file's extended attribute or its resource fork is not a leak QP12 finds.** The owner ruled on 2026-11-27. No record changes.
+
+### E-46. An inspection that cannot finish
+
+QH25 inspects a used home without following a link, opening a special file or reading past a bound, and E-10 makes a file it cannot read `harness_fault`. **A directory of the used home the inspection cannot read, and an inspection or a leak scan that reaches its entry or time bound, make the check that needed it, the store-unchanged or the planted-secret check, not observed with `harness_fault`. That check never ends unchanged or held, and any leak already found still decides first (QO7, step 1). The other checks of the grade go on.** The owner ruled on 2026-11-27. No case of the corpus has such a home, so no record changes.
