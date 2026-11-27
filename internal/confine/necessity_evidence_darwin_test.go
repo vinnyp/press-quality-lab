@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -88,8 +89,17 @@ func newNecessityScenarioProgram(t *testing.T, launcher, program string, computa
 		values["BIN_DIR"] = "/bin"
 		values["USR_BIN_DIR"] = "/usr/bin"
 		values["TTY_DEVICE"] = "/dev/tty"
-		values["SUBJECT"] = filepath.Join(files.Home, "absent_subject")
-		values["SUBJECT_COPY"] = filepath.Join(files.Home, "absent_subject_copy")
+		// QH11: real canonical files outside HOME; no witness uses these targets.
+		subjectDir, err := filepath.EvalSymlinks(t.TempDir())
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, name := range []string{"SUBJECT", "SUBJECT_COPY"} {
+			values[name] = filepath.Join(subjectDir, name)
+			if err := os.WriteFile(values[name], []byte("unused subject\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+		}
 	}
 	inv := Invocation{Workspace: w, Paths: Paths{Values: values}, Directory: files.Home, Computation: computation, Budget: 10 * time.Second}
 	decoy, err := startSelfTestDecoy(l, files.Home, w)
@@ -471,8 +481,12 @@ func TestMacOSSelfTestDecoyIntegrity(t *testing.T) {
 			}
 			launcher, program := s.c.CopyPaths()
 			_, err := runProfileSelfTest(s.c, selfTestInvocation(s.inv, s.files, s.w), launcher, program, s.files)
-			if err == nil {
-				t.Fatal("changed decoy passed suite")
+			want := "outside decoy changed"
+			if name == "Create" {
+				want = "create decoy changed"
+			}
+			if err == nil || !strings.Contains(err.Error(), want) {
+				t.Fatalf("suite error=%v want %q", err, want)
 			}
 		})
 	}

@@ -1,6 +1,7 @@
 package confine_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -92,7 +93,6 @@ func TestCalibrationMoved(t *testing.T) {
 		{"Moved", before.Add(time.Nanosecond), true, true},
 		{"Unchanged", before, true, false},
 		{"Backwards", before.Add(-time.Nanosecond), true, false},
-		{"ZeroAfter", time.Time{}, true, false},
 		{"NoRead", before.Add(time.Hour), false, false},
 	} {
 		t.Run(row.name, func(t *testing.T) {
@@ -137,6 +137,12 @@ func TestControlFactsApply(t *testing.T) {
 	if got := f.Apply(observe.Controls{}); !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %+v want %+v", got, want)
 	}
+	f.Error = fmt.Errorf("suite failed after collecting facts")
+	if got := f.Apply(want); !reflect.DeepEqual(got, observe.Controls{}) {
+		t.Fatalf("error retained facts: %+v", got)
+	}
+	f.Error = nil
+
 	f.CalibrationRead.Stdout = []byte("wrong_value\n")
 	want.ReadCalibrationMoved = false
 	if got := f.Apply(observe.Controls{}); !reflect.DeepEqual(got, want) {

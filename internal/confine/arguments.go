@@ -90,7 +90,7 @@ func Arguments(computation, control bool, paths Paths, hiddenArgs []string) ([]s
 	}
 	values := make(map[string]string)
 	for _, name := range names {
-		value, err := canonical(paths.Values[name], name == "PLANTED" || name == "SUBJECT" || name == "SUBJECT_COPY")
+		value, err := canonical(paths.Values[name], name == "PLANTED")
 		if err != nil {
 			return nil, fmt.Errorf("profile parameter %s: %w", name, err)
 		}

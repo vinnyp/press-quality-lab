@@ -364,3 +364,55 @@ func TestSampleAndKillErrorsJoined(t *testing.T) {
 		})
 	}
 }
+
+func TestDrainDeadlineRequiresHUP(t *testing.T) {
+	// QE10, QH19: queued bytes drain after the deadline only once every writer closed.
+	for _, closed := range []bool{false, true} {
+		name := "LiveWriter"
+		if closed {
+			name = "ClosedWriter"
+		}
+		t.Run(name, func(t *testing.T) {
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !closed {
+				defer func() {
+					if err := w.Close(); err != nil {
+						t.Error(err)
+					}
+				}()
+			}
+			payload := "queued bytes"
+			if _, err := w.WriteString(payload); err != nil {
+				t.Fatal(err)
+			}
+			if closed {
+				if err := w.Close(); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := r.SetReadDeadline(time.Now()); err != nil {
+				t.Fatal(err)
+			}
+			c := drainLimitWithPoll(r, 1024, unix.Poll)
+			<-c.done
+			wantSeen, wantHead := int64(0), ""
+			if closed {
+				wantSeen, wantHead = int64(len(payload)), payload
+			}
+			if c.err != nil || c.seen != wantSeen || string(c.head) != wantHead || c.cutAfterExit != !closed {
+				t.Fatalf("seen=%d head=%q cut=%t err=%v", c.seen, c.head, c.cutAfterExit, c.err)
+			}
+		})
+	}
+}
+
+func TestControlSuiteErrorDiscardsFacts(t *testing.T) {
+	// QH9, QH24, QH26: infrastructure errors invalidate every control fact.
+	facts, err := RunControlSuite(nil, nil, Invocation{}, Invocation{})
+	if err == nil || facts.Error != err || len(facts.Subject) != 0 || len(facts.Computation) != 0 || len(facts.Fast) != 0 || !facts.Before.IsZero() || !facts.After.IsZero() {
+		t.Fatalf("facts=%+v err=%v", facts, err)
+	}
+}

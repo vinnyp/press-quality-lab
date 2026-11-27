@@ -214,7 +214,7 @@ func selfTestNetwork(name, target string) int {
 		err = unix.Sendto(fd, []byte("decoy"), 0, addr)
 	case "bind":
 		err = unix.Bind(fd, addr)
-	// QH9 stated limit: binding first would test bind rather than listen.
+	// Engine design note: binding first would test bind rather than listen.
 	case "listen":
 		err = unix.Listen(fd, 1)
 	}

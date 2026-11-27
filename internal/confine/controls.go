@@ -15,6 +15,8 @@ type ControlRun struct {
 
 // ControlFacts is the complete raw result of U29's grade-wide harness.
 type ControlFacts struct {
+	// Error invalidates all suite facts, even those collected before the failure.
+	Error                error
 	Subject, Computation []observe.Run
 	Fast                 []ControlRun
 	CalibrationRead      observe.Run
@@ -22,6 +24,9 @@ type ControlFacts struct {
 }
 
 func (f ControlFacts) Apply(c observe.Controls) observe.Controls {
+	if f.Error != nil {
+		f = ControlFacts{}
+	}
 	return ApplyControlResults(c, f.Subject, f.Computation, f.Fast, f.Before, f.After, CalibrationReadPassed(f.CalibrationRead))
 }
 
@@ -50,7 +55,7 @@ func cleanEnd(r observe.Run) bool {
 // CalibrationMoved compares the observed access times, at native precision.
 // A successful read is also required; metadata alone does not prove a read.
 func CalibrationMoved(before, after time.Time, readOK bool) bool {
-	return readOK && !before.IsZero() && !after.IsZero() && after.After(before)
+	return readOK && !before.IsZero() && after.After(before)
 }
 
 // SelfTestProgram describes one QH9 witness. Target arguments are supplied by

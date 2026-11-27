@@ -18,7 +18,7 @@ import (
 
 // Keep the exact operation bodies shared by the controls and confined probes.
 // The unconfined listen control binds loopback to keep its endpoint local.
-// The confined witness cannot bind first: it must isolate listen (QH9 stated limit).
+// The confined witness cannot bind first: the engine isolates the listen operation.
 const computationNetworkFunctions = `
 func network(op, target string) {
  kind:=syscall.SOCK_STREAM;domain:=syscall.AF_INET

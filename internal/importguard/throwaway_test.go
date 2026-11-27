@@ -86,7 +86,7 @@ func filesystemTreeProblems(base string) ([]string, error) {
 			return err
 		}
 		pkg := strings.Split(filepath.ToSlash(rel), "/")[0]
-		if filesystemAllowed[pkg] || filepath.ToSlash(rel) == "confine/process_darwin.go" || filepath.ToSlash(rel) == "confine/launcher_darwin.go" || filepath.ToSlash(rel) == "confine/arguments.go" {
+		if filesystemAllowed[pkg] || filepath.ToSlash(rel) == "confine/process_darwin.go" || filepath.ToSlash(rel) == "confine/arguments.go" {
 			return nil
 		}
 		data, err := os.ReadFile(path)
@@ -119,7 +119,7 @@ func TestThrowawayFilesystemTreeControl(t *testing.T) {
 	if err := os.Mkdir(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(dir, "controls_darwin.go")
+	path := filepath.Join(dir, "launcher_darwin.go")
 	if err := os.WriteFile(path, []byte("package collect\nimport \"os\"\nfunc planted(){ os.RemoveAll(\"fixture\") }\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func TestThrowawayFilesystemTreeControl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"confine/controls_darwin.go: forbidden os.RemoveAll"}
+	want := []string{"confine/launcher_darwin.go: forbidden os.RemoveAll"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}

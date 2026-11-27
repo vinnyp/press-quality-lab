@@ -66,8 +66,8 @@ func TestSelfTestCalibration(t *testing.T) {
 }
 
 func TestSelfTestDecoys(t *testing.T) {
-	// QH9: a violator cannot pass by returning the expected raw kill.
-	for _, name := range []string{"Outside", "Create", "OutsideLink"} {
+	// QH9, KTD20: a violator cannot pass by returning the expected raw kill.
+	for _, name := range []string{"Outside", "Create", "OutsideLink", "ParentEscape"} {
 		t.Run(name, func(t *testing.T) {
 			w, err := BeginAt(filepath.Join(t.TempDir(), "runs"))
 			if err != nil {
@@ -86,6 +86,13 @@ func TestSelfTestDecoys(t *testing.T) {
 				t.Fatal(err)
 			}
 			switch name {
+			case "ParentEscape":
+				parent := filepath.Dir(f.Outside)
+				moved := filepath.Join(t.TempDir(), "moved")
+				if err := os.Rename(parent, moved); err != nil {
+					t.Fatal(err)
+				}
+				err = os.Symlink(moved, parent)
 			case "Outside":
 				err = os.WriteFile(f.Outside, []byte("changed"), 0600)
 			case "Create":

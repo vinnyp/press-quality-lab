@@ -196,6 +196,16 @@ func TestAbsentComputationParameters(t *testing.T) {
 	for _, name := range []string{"PLANTED", "SUBJECT", "SUBJECT_COPY"} {
 		t.Run(name, func(t *testing.T) {
 			p := testPaths(t)
+			for _, subjectName := range []string{"SUBJECT", "SUBJECT_COPY"} {
+				p.Values[subjectName] = filepath.Join(p.Values["HOME"], subjectName)
+				if err := os.WriteFile(p.Values[subjectName], []byte("subject"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if _, err := Arguments(true, false, p, nil); err != nil {
+				t.Fatalf("positive control: %v", err)
+			}
+
 			root := p.Values["HOME"]
 			resolved, err := filepath.EvalSymlinks(root)
 			if err != nil {
@@ -208,6 +218,12 @@ func TestAbsentComputationParameters(t *testing.T) {
 			path := filepath.Join(link, "absent")
 			p.Values[name] = path
 			args, err := Arguments(true, false, p, nil)
+			if name != "PLANTED" {
+				if err == nil {
+					t.Fatal("absent subject accepted")
+				}
+				return
+			}
 			if err != nil {
 				t.Fatal(err)
 			}

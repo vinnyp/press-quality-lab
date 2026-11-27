@@ -716,7 +716,7 @@ func TestGateTagSets(t *testing.T) {
 		}
 	}
 	for _, line := range strings.Split(string(b), "\n") {
-		if strings.Contains(line, "GOOS=darwin") && !strings.Contains(line, "GOARCH=arm64") && !strings.Contains(line, "GOARCH=amd64") {
+		if !supportedDarwinArchitecture(line) {
 			t.Fatalf("darwin architecture not pinned: %s", line)
 		}
 	}
@@ -802,6 +802,29 @@ label=scripted
 				if defect && (err == nil || !strings.Contains(string(out), diagnostic)) {
 					t.Fatalf("gate execution missed defect: %v %s", err, out)
 				}
+			}
+		})
+	}
+}
+
+func supportedDarwinArchitecture(line string) bool {
+	return !strings.Contains(line, "GOOS=darwin") || strings.Contains(line, "GOARCH=arm64")
+}
+
+func TestGateDarwinArchitectureControl(t *testing.T) {
+	// KTD7, QH9: only arm64 can execute the native self-test witnesses.
+	for _, row := range []struct {
+		name, line string
+		want       bool
+	}{
+		{"Arm64", "GOOS=darwin GOARCH=arm64 go test", true},
+		{"AMD64", "GOOS=darwin GOARCH=amd64 go test", false},
+		{"Unpinned", "GOOS=darwin go test", false},
+		{"Linux", "GOOS=linux GOARCH=amd64 go test", true},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			if got := supportedDarwinArchitecture(row.line); got != row.want {
+				t.Fatalf("got %t want %t", got, row.want)
 			}
 		})
 	}

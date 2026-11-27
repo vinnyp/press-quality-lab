@@ -3,6 +3,7 @@ package throwaway
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -109,8 +110,21 @@ func (f *SelfTestFiles) CalibrationAfter() (_ time.Time, err error) {
 }
 
 // CheckDecoys enforces QH9's violator rule after the witness suite.
-func (f *SelfTestFiles) CheckDecoys() error {
-	info, err := os.Lstat(f.Outside)
+func (f *SelfTestFiles) CheckDecoys() (err error) {
+	// KTD20: resolve beneath the workspace and refuse replacement links.
+	root, err := os.OpenRoot(f.workspace.path)
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, root.Close()) }()
+	outside := filepath.Join(filepath.Dir(f.calibrationName), "..", "outside")
+	create := filepath.Join(filepath.Dir(f.calibrationName), "..", "create")
+	file, err := root.OpenFile(outside, os.O_RDONLY|syscall.O_NOFOLLOW, 0)
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, file.Close()) }()
+	info, err := file.Stat()
 	if err != nil {
 		return err
 	}
@@ -118,14 +132,14 @@ func (f *SelfTestFiles) CheckDecoys() error {
 	if !ok || !info.Mode().IsRegular() || s.Dev != f.outsideIdentity.Dev || s.Ino != f.outsideIdentity.Ino || s.Mode != f.outsideIdentity.Mode || s.Size != f.outsideIdentity.Size || s.Mtimespec != f.outsideIdentity.Mtimespec || s.Ctimespec != f.outsideIdentity.Ctimespec {
 		return fmt.Errorf("outside decoy changed")
 	}
-	b, err := os.ReadFile(f.Outside)
+	b, err := io.ReadAll(file)
 	if err != nil {
 		return err
 	}
 	if string(b) != "outside_value\n" {
 		return fmt.Errorf("outside decoy changed")
 	}
-	if _, err := os.Lstat(f.Create); !os.IsNotExist(err) {
+	if _, err := root.Lstat(create); !os.IsNotExist(err) {
 		return errors.Join(fmt.Errorf("create decoy changed"), err)
 	}
 	return nil
