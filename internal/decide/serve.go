@@ -12,6 +12,9 @@ func MayServe(ch plan.Check, key plan.Object, scopes []rulebook.Scope) error {
 	if err := MayPlanServe(ch, key, scopes); err != nil {
 		return err
 	}
+	if placeholderRunbook(ch, key["runbook"], scopes) {
+		return &plan.Fault{Rule: "QS5", Cause: "placeholder runbook"}
+	}
 	if exemptKey(ch, key) {
 		return nil
 	}
@@ -27,6 +30,31 @@ func MayServe(ch plan.Check, key plan.Object, scopes []rulebook.Scope) error {
 func MayPlanServe(ch plan.Check, key plan.Object, scopes []rulebook.Scope) error {
 	if exemptKey(ch, key) {
 		return nil
+	}
+	if ch.Subject == nil {
+		return &plan.Fault{Rule: "QS6", Cause: "missing subject"}
+	}
+	if _, ok := ch.Subject["commands"].(plan.Array); !ok {
+		return &plan.Fault{Rule: "QS6", Cause: "invalid commands"}
+	}
+	if _, ok := ch.Subject["runbooks"].(plan.Array); !ok {
+		return &plan.Fault{Rule: "QA7", Cause: "invalid runbooks"}
+	}
+	if key["runbook"] != nil {
+		matches, words := 0, false
+		for _, v := range array(ch.Subject["runbooks"]) {
+			b := object(v)
+			if b["name"] != key["runbook"] {
+				continue
+			}
+			matches++
+			for _, st := range array(b["steps"]) {
+				words = words || reflect.DeepEqual(object(st)["words"], key["words"])
+			}
+		}
+		if matches != 1 || !words {
+			return &plan.Fault{Rule: "QA7", Cause: "unresolved runbook key"}
+		}
 	}
 	destructive := servingCommand(ch, array(key["words"]))["class"] == "destructive"
 	if key["runbook"] != nil {
@@ -54,7 +82,7 @@ func MayPlanServe(ch plan.Check, key plan.Object, scopes []rulebook.Scope) error
 }
 
 func exemptKey(ch plan.Check, key plan.Object) bool {
-	return ch.Preimage["probe"] == "discovery" || key["words"] == nil && key["home"] == "scratch"
+	return ch.Preimage["probe"] == "discovery" || key["computation"] != nil && key["words"] == nil && key["home"] == "scratch"
 }
 
 func servingCommand(ch plan.Check, words plan.Array) plan.Object {
@@ -68,4 +96,28 @@ func servingCommand(ch plan.Check, words plan.Array) plan.Object {
 		}
 	}
 	return selected
+}
+
+// placeholderRunbook applies E-54 using raw scope tokens and source classes.
+func placeholderRunbook(ch plan.Check, name any, scopes []rulebook.Scope) bool {
+	if name == nil {
+		return false
+	}
+	for _, scope := range scopes {
+		if scope == "destructive" {
+			return false
+		}
+	}
+	for _, v := range array(ch.Subject["runbooks"]) {
+		b := object(v)
+		if b["name"] != name {
+			continue
+		}
+		for _, st := range array(b["steps"]) {
+			if placeholder(servingCommand(ch, array(object(st)["words"]))["class"]) {
+				return true
+			}
+		}
+	}
+	return false
 }

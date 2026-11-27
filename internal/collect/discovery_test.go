@@ -384,6 +384,7 @@ func TestDiscoveryWalkSuppression(t *testing.T) {
 func TestDiscoveryOverrideAfterAllChecks(t *testing.T) {
 	// QS5, QD3: the final discovery trigger runs only after every runbook resolves.
 	ch := discoveryCheck("a")
+	ch.Subject["runbooks"] = plan.Array{}
 	authored := ch
 	authored.Preimage = plan.Object{"probe": nil, "dimension": "availability", "expected": nil, "earlier": plan.Array{}, "budget_seconds": strictjson.Number("10")}
 	authored.Keys = nil

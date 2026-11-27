@@ -20,6 +20,7 @@ func TestReasonPairing(t *testing.T) {
 		valid   bool
 	}{
 		{"Held", "held", "", true},
+		{"UnknownOutcome", "unknown", "", false},
 		{"NotHeld", "not_held", "", true},
 		{"Network", decide.NotObserved, "network_unverifiable", true},
 		{"Attempted", decide.NotObserved, "network_attempted", false},

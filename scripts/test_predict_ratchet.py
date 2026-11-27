@@ -106,16 +106,30 @@ class PredictorTests(unittest.TestCase):
             subject['runbooks'][0]['steps'][0]['checks'] = checks
             for field in ('class', 'writes'):
                 with self.subTest(field=field, required=bool(checks)):
-                    self.assertFalse(predictor.depends(subject, pre))
+                    self.assertFalse(predictor.depends(subject, pre, ("destructive",)))
                     changed = copy.deepcopy(subject)
                     changed['commands'][1][field] = {'placeholder': 'Supply value'}
-                    self.assertTrue(predictor.depends(changed, pre))
+                    self.assertTrue(predictor.depends(changed, pre, ("destructive",)))
                     unrelated = copy.deepcopy(pre)
                     unrelated['expected']['computation']['captures'] = []
-                    self.assertFalse(predictor.depends(changed, unrelated))
+                    self.assertFalse(predictor.depends(changed, unrelated, ("destructive",)))
                     changed['commands'][1][field] = subject['commands'][1][field]
                     changed['commands'][0][field] = {'placeholder': 'Supply value'}
-                    self.assertFalse(predictor.depends(changed, pre))
+                    self.assertFalse(predictor.depends(changed, pre, ("destructive",)))
+
+    def test_placeholder_runbook(self):
+        # QS5, QA7, E-54: unknown classes block whole books outside destructive.
+        subject = {'binary': 'bin/subject', 'seed': None, 'store': None,
+                   'commands': [{'words': ['read'], 'class': 'safe', 'writes': False},
+                                {'words': ['pending'], 'class': {'placeholder': 'class'}, 'writes': False}],
+                   'runbooks': [{'name': 'book', 'steps': [
+                       {'name': 'first', 'words': ['read'], 'checks': []}, {'name': 'last', 'words': ['pending'], 'checks': []}]}]}
+        pre = {'probe': None, 'words': ['read'], 'runbook': 'book'}
+        self.assertTrue(predictor.depends(subject, pre, ('conformance',)))
+        self.assertFalse(predictor.depends(subject, pre, ('conformance', 'destructive')))
+        subject['commands'][1]['class'] = 'safe'
+        subject['commands'][1]['writes'] = {'placeholder': 'writes'}
+        self.assertFalse(predictor.depends(subject, pre, ('conformance',)))
 
     def test_pr10_probe_tokens(self):
         # QP2–QP4, QP6–QP13, QO7: independent probe capabilities.

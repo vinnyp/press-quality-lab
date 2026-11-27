@@ -121,3 +121,27 @@ func TestTraceDestructiveScopes(t *testing.T) {
 		}
 	}
 }
+
+func TestTracePlaceholderScopes(t *testing.T) {
+	// QS5, QA7, E-54, QT5: derive whole-book exclusion independently of required checks.
+	help := map[string]any{"words": []any{"--help"}, "offline_args": []any{}, "env": []any{}, "home": "empty", "runbook": nil, "step": nil, "computation": nil}
+	first := map[string]any{"words": []any{"read"}, "offline_args": []any{}, "env": []any{}, "home": "runbook", "runbook": "book", "step": "first", "computation": nil}
+	last := map[string]any{"words": []any{"remove", "gear"}, "offline_args": []any{}, "env": []any{}, "home": "runbook", "runbook": "book", "step": "last", "computation": nil}
+	host := map[string]any{"confinement": map[string]any{"applied": true}, "self_test": "passed"}
+	sub := map[string]any{"commands": []any{map[string]any{"words": []any{"read"}, "class": "safe"}, map[string]any{"words": []any{"remove"}, "class": map[string]any{"placeholder": "class"}}}, "runbooks": []any{map[string]any{"name": "book", "steps": []any{map[string]any{"name": "first", "words": []any{"read"}}, map[string]any{"name": "last", "words": []any{"remove", "gear"}}}}}}
+	pres := map[string]any{"check": map[string]any{"runbook": "book", "step": "first", "index": json.Number("0"), "words": []any{"read"}, "offline_args": []any{}, "env": map[string]any{}}}
+	predictions := map[string]tracePrediction{"check": {Level: 8}}
+	recording := mustJSON(t, map[string]any{"invocations": []any{map[string]any{"key": help, "confined": []any{map[string]any{"markers": map[string]any{"confinement": false}}}}, map[string]any{"key": first, "confined": []any{map[string]any{"markers": map[string]any{"confinement": true}}}}, map[string]any{"key": last, "confined": []any{map[string]any{"markers": map[string]any{"confinement": true}}}}}})
+	for _, inside := range []bool{false, true} {
+		scope := []any{"conformance"}
+		want := []map[string]any{help}
+		if inside {
+			scope = append(scope, "destructive")
+			want = append(want, first)
+		}
+		input := map[string]any{"scope": scope, "evidence": []any{map[string]any{"check_id": "check", "outcome": "held"}}}
+		if got := independentTrace(t, recording, host, sub, input, pres, predictions); !reflect.DeepEqual(got, want) {
+			t.Fatal(inside, got, want)
+		}
+	}
+}

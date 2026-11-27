@@ -21,7 +21,7 @@ func level2(ch plan.Check, _ observe.Controls, _ Evidence) Result {
 		panic("QS5: check lacks subject")
 	}
 	s := ch.Subject
-	blocked := placeholder(s["binary"])
+	blocked := placeholder(s["binary"]) || placeholderRunbook(ch, ch.Preimage["runbook"], ch.Scopes)
 	probe := ch.Preimage["probe"]
 	if probe == "discovery" {
 		blocked = blocked || placeholder(s["declared_count"])

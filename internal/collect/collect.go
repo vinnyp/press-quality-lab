@@ -31,10 +31,14 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 	scheduledAtStart := map[int]bool{}
 	for _, book := range p.Runbooks {
 		var context plan.Check
+		contextSet := false
 		for _, step := range book.Steps {
 			for _, i := range step.Required {
 				scheduledAtStart[i] = true
-				context = p.Checks[i]
+				if !contextSet {
+					context = p.Checks[i]
+					contextSet = true
+				}
 			}
 		}
 		for _, step := range book.Steps {
@@ -170,7 +174,7 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 				if !bookOK || !stepOK {
 					panic("QA7: invalid step key")
 				}
-				ch := plan.Check{ID: "runbook:" + bookName + ":step:" + stepName, Subject: context.Subject, Keys: []plan.Object{step.Key}, Preimage: plan.Object{"probe": nil, "runbook": step.Key["runbook"], "step": step.Key["step"], "words": step.Key["words"], "earlier": plan.Array{}, "expected": nil, "budget_seconds": step.BudgetSeconds, "offline_args": step.OfflineArgs, "env": step.Env}}
+				ch := plan.Check{ID: "runbook:" + bookName + ":step:" + stepName, Subject: context.Subject, Scopes: p.Scopes, Keys: []plan.Object{step.Key}, Preimage: plan.Object{"probe": nil, "runbook": step.Key["runbook"], "step": step.Key["step"], "words": step.Key["words"], "earlier": plan.Array{}, "expected": nil, "budget_seconds": step.BudgetSeconds, "offline_args": step.OfflineArgs, "env": step.Env}}
 				if decide.StepRuns(decide.StepFacts{Stopped: stopped, Controls: controls, Check: &ch}) {
 					inv, err := serve(step.Key, ch)
 					if err != nil {

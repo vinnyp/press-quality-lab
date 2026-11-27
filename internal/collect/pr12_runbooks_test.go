@@ -87,7 +87,7 @@ func TestRunbookStops(t *testing.T) {
 			}
 			p := loopPlan(t, plan.Array{loopStep("first", first), loopStep("second", loopCheck())})
 			if name == "LevelTwo" {
-				p.Checks[0].Subject["commands"] = append(discoveryArray(p.Checks[0].Subject["commands"]), plan.Object{"words": plan.Array{"first"}, "class": plan.Object{"placeholder": "supply class"}})
+				p.Checks[0].Subject["commands"] = append(discoveryArray(p.Checks[0].Subject["commands"]), plan.Object{"words": plan.Array{"first"}, "class": "safe", "writes": plan.Object{"placeholder": "supply writes"}})
 			}
 			source := loopSourceWith(func(k observe.Key) observe.Run {
 				r := cleanLoopRun()
@@ -409,7 +409,7 @@ func TestSharedStepBeforeComputations(t *testing.T) {
 	comp["captures"] = plan.Array{"outside"}
 	capture["expected"] = plan.Object{"computation": comp}
 	p := loopPlan(t, plan.Array{loopStep("outside", outside), loopStep("last", capture, loopCheck())})
-	p.Checks[0].Subject["commands"] = append(discoveryArray(p.Checks[0].Subject["commands"]), plan.Object{"words": plan.Array{"outside"}, "class": plan.Object{"placeholder": "supply class"}})
+	p.Checks[0].Subject["commands"] = append(discoveryArray(p.Checks[0].Subject["commands"]), plan.Object{"words": plan.Array{"outside"}, "class": "safe", "writes": plan.Object{"placeholder": "supply writes"}})
 	source := loopSourceWith(func(k observe.Key) observe.Run {
 		if k["step"] != "last" || k["computation"] != nil {
 			t.Fatal("unexpected run", k)

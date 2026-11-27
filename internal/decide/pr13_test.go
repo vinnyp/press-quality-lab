@@ -41,7 +41,7 @@ func TestMayServe(t *testing.T) {
 			if row.probe != "" {
 				pre["probe"] = row.probe
 			}
-			key := plan.Object{"words": row.words, "home": row.home, "runbook": nil}
+			key := plan.Object{"computation": "compute", "words": row.words, "home": row.home, "runbook": nil}
 			if row.words == nil {
 				key["words"] = nil
 			}
@@ -74,6 +74,86 @@ func TestDestructiveGuardPredicate(t *testing.T) {
 			r := Resolve(ch, passing(), Evidence{Invocations: []observe.Invocation{{Run: observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Code: row.code}, Stderr: []byte(row.stderr), StderrSeen: int64(len(row.stderr))}}}})
 			if r.Outcome != row.outcome || r.FailureKind != row.kind {
 				t.Fatal(r)
+			}
+		})
+	}
+}
+
+func TestMayPlanServeMissingFacts(t *testing.T) {
+	// QS6, QA7, X3: absent safety facts are engine faults.
+	for _, name := range []string{"Held", "Subject", "Commands", "Runbooks", "MissingBook", "DuplicateBook", "Words"} {
+		t.Run(name, func(t *testing.T) {
+			book := plan.Object{"name": "book", "steps": plan.Array{plan.Object{"words": plan.Array{"read"}}}}
+			sub := plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{"read"}, "class": "safe"}}, "runbooks": plan.Array{book}}
+			key := plan.Object{"runbook": "book", "words": plan.Array{"read"}}
+			switch name {
+			case "Subject":
+				sub = nil
+			case "Commands":
+				sub["commands"] = "wrong"
+			case "Runbooks":
+				sub["runbooks"] = "wrong"
+			case "MissingBook":
+				key["runbook"] = "missing"
+			case "DuplicateBook":
+				sub["runbooks"] = plan.Array{book, book}
+			case "Words":
+				key["words"] = plan.Array{"other"}
+			}
+			err := MayPlanServe(plan.Check{Subject: sub}, key, nil)
+			if name == "Held" {
+				if err != nil {
+					t.Fatal(err)
+				}
+				return
+			}
+			if _, ok := err.(*plan.Fault); !ok {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+func TestComputationExemption(t *testing.T) {
+	// QS6, QA7, X3: scratch and null words alone do not identify a computation.
+	key := plan.Object{"home": "scratch", "words": nil, "computation": "compute"}
+	ch := plan.Check{}
+	if err := MayPlanServe(ch, key, nil); err != nil {
+		t.Fatal(err)
+	}
+	key["computation"] = nil
+	if err := MayPlanServe(ch, key, nil); err == nil {
+		t.Fatal("missing computation accepted")
+	}
+}
+
+func TestPlaceholderRunbook(t *testing.T) {
+	// QS5, QA7, E-49, E-54: whole-book safety depends on class, never writes alone.
+	for _, name := range []string{"Outside", "Inside", "Writes"} {
+		t.Run(name, func(t *testing.T) {
+			pending := plan.Object{"words": plan.Array{"pending"}, "class": plan.Object{"placeholder": "class"}, "writes": false}
+			sub := plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{"read"}, "class": "safe", "writes": false}, pending}, "runbooks": plan.Array{plan.Object{"name": "book", "steps": plan.Array{plan.Object{"words": plan.Array{"read"}}, plan.Object{"words": plan.Array{"pending"}}}}}}
+			ch := plan.Check{Subject: sub, Preimage: plan.Object{"probe": nil, "earlier": plan.Array{}, "runbook": "book", "words": plan.Array{"read"}}, Scopes: []rulebook.Scope{"conformance"}}
+			if name == "Inside" {
+				ch.Scopes = append(ch.Scopes, "destructive")
+			}
+			if name == "Writes" {
+				pending["class"] = "safe"
+				pending["writes"] = plan.Object{"placeholder": "writes"}
+			}
+			blocked := name == "Outside"
+			if r := level2(ch, passing(), Evidence{}); (r.Level == 2 && r.Reason == "placeholder_unfilled") != blocked {
+				t.Fatal(r)
+			}
+			if got := StepRuns(StepFacts{Check: &ch, Controls: passing()}); got == blocked {
+				t.Fatal("StepRuns", got)
+			}
+			key := plan.Object{"runbook": "book", "words": plan.Array{"read"}}
+			if err := MayServe(ch, key, ch.Scopes); (err != nil) != blocked {
+				t.Fatal(err)
+			}
+			key["words"], key["home"], key["computation"] = nil, "scratch", "compute"
+			if err := MayServe(ch, key, ch.Scopes); (err != nil) != blocked {
+				t.Fatal("computation", err)
 			}
 		})
 	}

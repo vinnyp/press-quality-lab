@@ -38,6 +38,9 @@ func StepRuns(f StepFacts) bool {
 	if f.Check == nil {
 		panic("E-49: missing step context")
 	}
+	if placeholderRunbook(*f.Check, f.Check.Preimage["runbook"], f.Check.Scopes) {
+		return false
+	}
 	if BeforeInvocationsWithEvidence(*f.Check, f.Controls, Evidence{}).Level != 0 {
 		return false
 	}

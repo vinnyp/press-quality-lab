@@ -2,6 +2,7 @@ package decide
 
 import (
 	"encoding/json"
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"os"
 	"path/filepath"
@@ -120,6 +121,12 @@ func TestPlaceholderClassifiers(t *testing.T) {
 			return result
 		}
 		subject := decode(filepath.Join(directory, "subject.json"))
+		scopes := []rulebook.Scope{}
+		for _, scope := range array(object(decode(filepath.Join(directory, "case.json"))["input"])["scope"]) {
+			if token, ok := scope.(string); ok {
+				scopes = append(scopes, rulebook.Scope(token))
+			}
+		}
 		preimages := decode(filepath.Join(directory, "preimages.json"))
 		if len(preimages) != len(predictions) {
 			t.Fatal("preimage coverage", name)
@@ -133,7 +140,7 @@ func TestPlaceholderClassifiers(t *testing.T) {
 			if !ok {
 				t.Fatal("invalid preimage", name, id)
 			}
-			got := level2(plan.Check{Subject: subject, Preimage: pre}, passing(), Evidence{})
+			got := level2(plan.Check{Scopes: scopes, Subject: subject, Preimage: pre}, passing(), Evidence{})
 			expected := Result{}
 			if want {
 				expected = Result{Outcome: NotObserved, Reason: "placeholder_unfilled", Level: 2}

@@ -1,6 +1,6 @@
 package record
 
-// NextActions returns QE12’s literal table; U18 attaches actions to judge results.
+// NextActions returns QE12's literal table; U18 attaches actions to judge results.
 func NextActions() map[string]string {
 	return map[string]string{
 		"network_unverifiable": "The confinement ended the subject. Possible causes: a network request, a child process, another refused operation, or an external kill. Check that the command has an offline setting that keeps it off the network, and that it starts no child process. On an unsupported system, grade on one QH1 names.",

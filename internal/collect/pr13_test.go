@@ -31,26 +31,29 @@ func authoredPlan(t *testing.T, sub plan.Object, scopes []rulebook.Scope) plan.P
 }
 
 func TestDestructiveRunbooks(t *testing.T) {
-	// QA7, QA8, QS5, QS6, QO1, E-15: scope gates the whole book; precedence still decides each check.
-	for _, name := range []string{"Inside", "Outside", "Stopped", "GradeWide", "WritesPlaceholder", "FactFalse", "FactPlaceholder", "ClassPlaceholder"} {
+	// QA7, QA8, QS5, QS6, QO1, E-15, E-54: scope gates the whole book; precedence still decides each check.
+	for _, name := range []string{"Inside", "Outside", "Stopped", "GradeWide", "WritesPlaceholder", "FactFalse", "FactPlaceholder", "ClassPlaceholder", "ClassPlaceholderInside", "SafeWritesPlaceholder"} {
 		t.Run(name, func(t *testing.T) {
 			base := loopPlan(t, plan.Array{loopStep("first", loopCheck()), loopStep("remove", loopCheck()), loopStep("last", loopCheck())})
 			sub := base.Checks[0].Subject
 			class := any("destructive")
-			if name == "ClassPlaceholder" {
+			if name == "ClassPlaceholder" || name == "ClassPlaceholderInside" {
 				class = plan.Object{"placeholder": "supply class"}
 			}
 			command := plan.Object{"words": plan.Array{"remove"}, "class": class, "writes": true}
 			sub["commands"] = append(discoveryArray(sub["commands"]), command)
-			sub["facts"] = plan.Object{"has_destructive_ops": false}
+			sub["facts"] = plan.Object{"has_destructive_ops": name != "FactFalse"}
 			if name == "FactPlaceholder" {
 				discoveryObject(sub["facts"])["has_destructive_ops"] = plan.Object{"placeholder": "supply fact"}
 			}
-			if name == "WritesPlaceholder" {
+			if name == "SafeWritesPlaceholder" {
+				command["class"] = "safe"
+			}
+			if name == "WritesPlaceholder" || name == "SafeWritesPlaceholder" {
 				command["writes"] = plan.Object{"placeholder": "supply writes"}
 			}
 			scopes := []rulebook.Scope{"conformance", "destructive"}
-			if name == "Outside" || name == "ClassPlaceholder" {
+			if name == "Outside" || name == "ClassPlaceholder" || name == "SafeWritesPlaceholder" {
 				scopes = scopes[:1]
 			}
 			p := authoredPlan(t, sub, scopes)
@@ -70,9 +73,9 @@ func TestDestructiveRunbooks(t *testing.T) {
 			}
 			want := []any{"first", "remove", "last"}
 			switch name {
-			case "Outside", "GradeWide":
+			case "Outside", "GradeWide", "ClassPlaceholder":
 				want = nil
-			case "Stopped", "WritesPlaceholder", "ClassPlaceholder":
+			case "Stopped", "WritesPlaceholder", "ClassPlaceholderInside", "SafeWritesPlaceholder":
 				want = want[:1]
 			}
 			if !reflect.DeepEqual(stepsServed(source), want) {
@@ -97,7 +100,14 @@ func TestDestructiveRunbooks(t *testing.T) {
 					}
 				}
 			}
-			if name == "WritesPlaceholder" || name == "ClassPlaceholder" {
+			if name == "ClassPlaceholder" {
+				for _, ch := range got {
+					if ch.Result.Level != 2 || ch.Result.Reason != "placeholder_unfilled" {
+						t.Fatal(ch)
+					}
+				}
+			}
+			if name == "WritesPlaceholder" || name == "ClassPlaceholderInside" || name == "SafeWritesPlaceholder" {
 				if got[1].Result.Level != 2 || got[1].Result.Reason != "placeholder_unfilled" || got[2].Result.Reason != "earlier_step_failed" {
 					t.Fatal(got)
 				}
@@ -182,5 +192,19 @@ func TestServeSafetyBrakes(t *testing.T) {
 				t.Fatal(got, err, source.keys)
 			}
 		})
+	}
+}
+
+func TestPlaceholderUncheckedStep(t *testing.T) {
+	// QS5, QA7, E-49, E-54: even an unchecked safe step waits for whole-book safety.
+	outside := loopCheck()
+	outside["dimension"] = "destructive-guard"
+	p := loopPlan(t, plan.Array{loopStep("first", outside), loopStep("last", loopCheck())})
+	sub := p.Checks[0].Subject
+	sub["commands"] = append(discoveryArray(sub["commands"]), plan.Object{"words": plan.Array{"last"}, "class": plan.Object{"placeholder": "class"}})
+	source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
+	got, err := Collect(p, source)
+	if err != nil || len(got) != 1 || got[0].Result.Level != 2 || got[0].Result.Reason != "placeholder_unfilled" || len(source.keys) != 0 {
+		t.Fatal(got, err, source.keys)
 	}
 }

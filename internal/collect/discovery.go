@@ -108,6 +108,7 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source, scopes []rul
 			break
 		}
 		key := plan.DiscoveryKey(words)
+		// Discovery is exempt; call MayServe for uniformity with every other serve.
 		if err := decide.MayServe(ch, key, scopes); err != nil {
 			return nil, nil, err
 		}

@@ -267,9 +267,11 @@ func independentTrace(t *testing.T, recording []byte, host, subject, input, prei
 		book := traceObject(bv)
 		steps := traceArray(book["steps"])
 		destructive := false
+		placeholderClass := false
 		included := false
 		for _, sv := range steps {
 			st := traceObject(sv)
+			placeholderClass = placeholderClass || placeholder(selected(st["words"])["class"])
 			destructive = destructive || selected(st["words"])["class"] == "destructive"
 			for id := range predictions {
 				pre := traceObject(preimages[id])
@@ -280,7 +282,7 @@ func independentTrace(t *testing.T, recording []byte, host, subject, input, prei
 		for _, token := range traceArray(input["scope"]) {
 			destructiveScope = destructiveScope || token == "destructive"
 		}
-		if destructive && !destructiveScope || !included {
+		if (destructive || placeholderClass) && !destructiveScope || !included {
 			continue
 		}
 		stopped := false
