@@ -13,21 +13,29 @@ import (
 func TestFixedHelpArgumentLimit(t *testing.T) {
 	// E-34, QD5: count UTF-8 bytes and one byte for every request word, including --help.
 	for _, row := range []struct {
-		name            string
-		ancestor, child string
-		calls           int
-		unreadable      bool
+		name                    string
+		ancestor, parent, child string
+		calls                   int
+		unreadable              bool
 	}{
-		{"Exact", "", strings.Repeat("a", 131064), 2, false},
-		{"PlusOne", "", strings.Repeat("a", 131065), 1, true},
-		{"Ancestor", strings.Repeat("a", 131060), "tiny", 2, true},
-		{"UTF8", "", strings.Repeat("é", 65532), 2, false},
-		{"UTF8PlusOne", "", strings.Repeat("é", 65532) + "a", 1, true},
+		{"Exact", "", "", strings.Repeat("a", 131064), 2, false},
+		{"PlusOne", "", "", strings.Repeat("a", 131065), 1, true},
+		{"Ancestor", strings.Repeat("a", 131060), "", "tiny", 2, true},
+		// 70,001 + 61,061 + 5 + 7 (--help) = 131,074 bytes: tiny is never requested.
+		{"TwoAncestors", strings.Repeat("a", 70000), strings.Repeat("b", 61060), "tiny", 3, true},
+		{"UTF8", "", "", strings.Repeat("é", 65532), 2, false},
+		{"UTF8PlusOne", "", "", strings.Repeat("é", 65532) + "a", 1, true},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			_, d, s := resolveWalk(t, discoveryCheck(), func(w plan.Array) observe.Run {
 				if len(w) == 0 && row.ancestor != "" {
 					return help("Commands:\n  " + row.ancestor + "  desc")
+				}
+				if len(w) == 1 && row.parent != "" {
+					return help("Commands:\n  " + row.parent + "  desc")
+				}
+				if len(w) == 2 && row.parent != "" {
+					return help("Commands:\n  " + row.child + "  desc")
 				}
 				if len(w) == 0 || row.ancestor != "" && len(w) == 1 {
 					return help("Commands:\n  " + row.child + "  desc")
@@ -77,8 +85,11 @@ func TestDeclaredPrefixAllocation(t *testing.T) {
 }
 
 func TestDiscoveryDeepWideMemory(t *testing.T) {
-	// Measured on darwin/arm64: peak HeapInuse 18,112,512 bytes, baseline 991,232.
-	// QD2, QE10, E-34: about 260 KB of valid pending sibling names per level, to depth 64.
+	// QD2, QE10, E-34: this input retains about 260 KB of valid pending sibling names
+	// per level, to depth 64. Measured on darwin/arm64: peak HeapInuse
+	// 18,112,512 bytes, baseline 991,232. The 32 MiB ceiling covers only this input.
+	// The stated worst case is about 1 MiB of names per level, each under 128 KiB;
+	// the reviewer measured about 66 MiB live for that input.
 	runtime.GC()
 	var before, live runtime.MemStats
 	runtime.ReadMemStats(&before)
