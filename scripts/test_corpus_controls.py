@@ -25,6 +25,29 @@ outcomes = load('outcomes_control', 'check-case-outcomes.py')
 
 
 class CorpusControls(unittest.TestCase):
+    def testReadCalibration(self):
+        # E-38, QO7: a failed calibration prevents the read control from running.
+        pre = dict(probe='planted_secret', words=None, earlier=[],
+                   parameters=dict(commands=[['read']]))
+        subject = dict(binary='subject', seed=None, store=None,
+                       secret=dict(commands=[['read']]), commands=[])
+        run = dict(leak_scan=dict(leaks=False, bound_reached=False),
+                   end=dict(kind='exit', code=0),
+                   markers=dict(confinement=True, could_not_start=False),
+                   planted=dict(atime_moved=True, same_file=True))
+        for name, calibration, control, expected in [
+                ('MovedKilled', 'moved', 'killed', ('held', None, None)),
+                ('MovedNotKilled', 'moved', 'not_killed',
+                 ('not_observed', 'harness_fault', None)),
+                ('NotMovedNotKilled', 'not_moved', 'not_killed',
+                 ('not_observed', 'input_missing', None))]:
+            with self.subTest(name=name), patch.object(outcomes, 'key', return_value=dict(words=['read'])), \
+                    patch.object(outcomes, 'find', return_value=run):
+                self.assertEqual(outcomes.derive_all(
+                    pre, subject, {}, dict(read_calibration=calibration,
+                                          read_control=control),
+                    {}, (None, False), None), (expected, None))
+
     def testFixedHelpLimit(self):
         # E-34, QD5: Control 3 independently enforces the same fixed request-word limit.
         for label, ancestor, child, allowed in [

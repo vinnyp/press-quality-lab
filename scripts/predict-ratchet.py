@@ -259,6 +259,41 @@ def runs_for(preimage, recording):
     return result
 
 
+def planted_secret_level(preimage, subject, host, runs):
+    """QO7's combination, with E-35 through E-38, in deciding order."""
+    if subject.get('secret') is None:
+        return 8
+    ordered = [(key, run) for words in preimage['parameters']['commands']
+               for key, run in runs if key['words'] == words]
+    if any(run['leak_scan']['leaks'] for _, run in ordered):
+        return 8
+    if any(run['end'].get('by') != 'budget' and
+           any(a['invocation'] == key and a['by'] == 'engine'
+               for a in host['kill_attribution']) for key, run in ordered):
+        return 7
+    if host.get('read_calibration', 'moved') == 'moved':
+        for key, run in ordered:
+            commands = [c for c in subject['commands']
+                        if key['words'][:len(c['words'])] == c['words']]
+            command = max(commands, key=lambda c: len(c['words']), default={})
+            planted = run['planted']
+            if (run['end']['kind'] == 'exit' and
+                    run['end']['code'] in (command.get('exit_codes') or [0]) and
+                    planted is not None and planted['atime_moved'] and planted['same_file']):
+                control = host.get('read_control')
+                killed = (control == 'killed' if control is not None else
+                          planted['control_end'] == dict(kind='signal', signal='SIGKILL',
+                                                         by='confinement'))
+                if not killed:
+                    return 8
+    for _, run in ordered:
+        if (run['markers']['could_not_start'] or
+                run['end'].get('by') in ('confinement', 'budget')):
+            return 7
+    # QP13's bound, a proved read, and input_missing all decide at level 8.
+    return 8
+
+
 def deciding_level(evidence, preimage, subject, host, recording, all_evidence, preimages):
     reason = evidence['reason'] or evidence['failure_kind'] or evidence['outcome']
     runs = runs_for(preimage, recording)
@@ -290,6 +325,8 @@ def deciding_level(evidence, preimage, subject, host, recording, all_evidence, p
             if (key['runbook'] == preimage['runbook'] and key['step'] in captures and
                     invocation['confined'][0]['stdout']['cut']):
                 return 6
+        if preimage['probe'] == 'planted_secret':
+            return planted_secret_level(preimage, subject, host, runs)
         for key, run in runs:
             if key['computation'] is not None:
                 continue
