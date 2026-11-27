@@ -50,6 +50,17 @@ class PredictorTests(unittest.TestCase):
         actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
         self.assertEqual(actual, (directory / 'pr12-prediction.json').read_bytes())
 
+    def test_current_prediction_cli(self):
+        # QT6: the current ratchet artifact matches the command's complete output.
+        directory = Path(__file__).with_name('ratchet')
+        completed = subprocess.run(
+            [sys.executable, '-I', '-B', str(Path(__file__).with_name('predict-ratchet.py')),
+             '--built', str(directory / 'pr12.json'), '--json'],
+            check=True, capture_output=True, text=True)
+        self.assertEqual(json.loads(completed.stdout),
+                         predictor.load(directory / 'pr12-prediction.json'))
+        self.assertEqual(completed.stderr, '')
+
     def test_previous_predictions_unchanged(self):
         # QA8: the new token never alters an already blocked check.
         directory = Path(__file__).with_name('ratchet')

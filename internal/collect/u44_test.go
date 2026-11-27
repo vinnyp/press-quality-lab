@@ -7,6 +7,7 @@ import (
 
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
+	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 )
 
 type servingSource struct {
@@ -23,17 +24,13 @@ func (s *servingSource) Observe(k observe.Key, _ observe.Spec) (observe.Run, err
 }
 
 func TestInvocationServing(t *testing.T) {
-	// QE8, QO1, QH8, QA7, QO6, QO7: only built checks reaching level 7 serve their keys, in target order.
-	base := plan.Check{ID: "synthetic", Subject: plan.Object{}, Preimage: plan.Object{"probe": nil, "earlier": plan.Array{}, "words": plan.Array{"read"}, "expected": plan.Object{"literal": "value"}}, Keys: []plan.Object{{"words": plan.Array{"first"}}, {"words": plan.Array{"second"}}}}
-	for _, name := range []string{"Ordered", "UnconfinedInvocation", "GradeWide", "Placeholder", "DiscoveryWalk", "RunbookSentinel", "ChangedCopy", "ComputationSentinel", "NoInvocation", "SourceFault"} {
+	// QE8, QO1, QH8, QA7, QO6, QO7: steps serve once; probes retain their own keys.
+	for _, name := range []string{"Ordered", "UnconfinedInvocation", "GradeWide", "Placeholder", "DiscoveryWalk", "Destructive", "ChangedCopy", "Computation", "NoInvocation", "SourceFault"} {
 		t.Run(name, func(t *testing.T) {
-			ch := base
-			ch.Preimage = plan.Object{}
-			for k, v := range base.Preimage {
-				ch.Preimage[k] = v
-			}
-			source := &servingSource{controls: observe.Controls{ConfinementApplied: true, SelfTestPassed: true, SystemNamed: true, PrivateCopyUnchanged: true}, run: observe.Run{Markers: observe.Markers{Confinement: true}}}
-			want := []observe.Key{map[string]any(base.Keys[0]), map[string]any(base.Keys[1])}
+			ch := plan.Check{ID: "synthetic", Subject: plan.Object{}, Preimage: plan.Object{"probe": nil, "predicate": "stdout_equals", "earlier": plan.Array{}, "words": plan.Array{"read"}, "expected": plan.Object{"literal": "value"}}, Keys: []plan.Object{{"words": plan.Array{"read"}, "computation": nil}}}
+			p := plan.Plan{Checks: []plan.Check{ch}}
+			source := &servingSource{controls: goodControls(), run: cleanLoopRun()}
+			want := []observe.Key{map[string]any(ch.Keys[0])}
 			level := 8
 			switch name {
 			case "UnconfinedInvocation":
@@ -44,32 +41,42 @@ func TestInvocationServing(t *testing.T) {
 				want = nil
 				level = 1
 			case "Placeholder":
-				ch.Subject = plan.Object{"binary": plan.Object{"placeholder": "Supply binary."}}
+				ch.Subject = plan.Object{"binary": plan.Object{"placeholder": "supply binary"}}
 				want = nil
 				level = 2
 			case "DiscoveryWalk":
 				ch.Preimage["probe"] = "discovery"
+				ch.Subject["declared_count"] = strictjson.Number("0")
 				want = []observe.Key{map[string]any(plan.DiscoveryKey(plan.Array{}))}
-				level = 8
-			case "RunbookSentinel":
-				ch.Preimage["earlier"] = plan.Array{"prior"}
+			case "Destructive":
+				p = loopPlan(t, plan.Array{loopStep("first", loopCheck())})
+				discoveryObject(discoveryArray(p.Checks[0].Subject["commands"])[0])["class"] = "destructive"
 				want = nil
 				level = 4
 			case "ChangedCopy":
 				source.controls.PrivateCopyUnchanged = false
 				want = nil
 				level = 5
-			case "ComputationSentinel":
-				ch.Preimage["expected"] = plan.Object{"computation": plan.Object{"argv": plan.Array{"compute"}}}
-				want = nil
-				level = 6
+			case "Computation":
+				c := loopCheck()
+				c["expected"] = plan.Object{"computation": loopComp("compute")}
+				p = loopPlan(t, plan.Array{loopStep("first", c)})
+				source.run.Details.Printed = &observe.PrintedValue{Value: "value"}
+				want = []observe.Key{map[string]any(p.Runbooks[0].Steps[0].Key), map[string]any(p.Checks[0].Keys[1])}
 			case "NoInvocation":
 				ch.Keys = nil
-				want = nil
+				defer func() {
+					if recover() == nil {
+						t.Fatal("missing own invocation accepted")
+					}
+				}()
 			case "SourceFault":
 				source.err = errors.New("observation failed")
 			}
-			got, err := Collect(plan.Plan{Checks: []plan.Check{ch}}, source)
+			if name != "Destructive" && name != "Computation" {
+				p.Checks[0] = ch
+			}
+			got, err := Collect(p, source)
 			if name == "SourceFault" {
 				if !errors.Is(err, source.err) || got != nil {
 					t.Fatal(got, err)

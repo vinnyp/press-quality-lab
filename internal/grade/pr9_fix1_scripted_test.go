@@ -66,5 +66,29 @@ func TestTraceOwnInvocationQO1(t *testing.T) {
 		Level  int
 		Ending predictedEnding
 	}{"check": {Level: 1, Ending: predictedEnding{Phase: "deciding", Rules: []string{"QO1"}}}}
-	compareTrace(t, trace, recording, host, map[string]any{}, pre, predictions)
+	compareTrace(t, trace, recording, host, map[string]any{}, nil, pre, predictions)
+}
+
+func TestTraceOrderedLists(t *testing.T) {
+	// QT5, QA7: a repeated step, reordered keys, and serving after a stop each fail the comparison.
+	first := map[string]any{"step": "first"}
+	last := map[string]any{"step": "last"}
+	want := []map[string]any{first, last}
+	for _, row := range []struct {
+		name             string
+		actual, expected []map[string]any
+		matches          bool
+	}{
+		{"Exact", want, want, true},
+		{"RepeatedStep", []map[string]any{first, first, last}, want, false},
+		{"Reordered", []map[string]any{last, first}, want, false},
+		{"AfterStop", want, []map[string]any{first}, false},
+		{"Missing", []map[string]any{first}, want, false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			if traceMatches(row.actual, row.expected) != row.matches {
+				t.Fatal(row.name)
+			}
+		})
+	}
 }

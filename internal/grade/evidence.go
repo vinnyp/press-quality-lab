@@ -26,6 +26,17 @@ func checkResolution(ch collect.Check, masker *record.Masker) (record.Resolution
 		resolution.TargetSize = run.StdoutSeen + run.StderrSeen
 		resolution.Expected = subjectObject(ch.Plan.Preimage["parameters"])["bound"]
 	}
+	if ch.Plan.Preimage["probe"] == nil {
+		resolution.Expected = ch.Result.Expected
+		if ch.Result.Outcome != "not_observed" {
+			if ch.Result.TargetSize != nil {
+				resolution.TargetSize = *ch.Result.TargetSize
+			}
+			if ch.Result.PreconditionObserved != nil {
+				resolution.PreconditionObserved = *ch.Result.PreconditionObserved
+			}
+		}
+	}
 	if len(ch.Invocations) > 0 {
 		streams := strictjson.Array{}
 		for _, inv := range ch.Invocations {

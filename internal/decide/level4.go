@@ -20,7 +20,7 @@ func Stopped(earlier []string, resolutions map[string]Result, membership map[str
 			continue
 		}
 		r, ok := resolutions[id]
-		if !ok || r.Outcome == "" {
+		if !ok || r.Outcome == "" && r.Unbuilt == nil {
 			panic("QA7: missing earlier resolution")
 		}
 		stopped = stopped || r.Outcome != "held"
@@ -32,9 +32,13 @@ func Stopped(earlier []string, resolutions map[string]Result, membership map[str
 type StepFacts struct {
 	Stopped, Placeholder bool
 	Controls             observe.Controls
+	Check                *plan.Check
 }
 
 func StepRuns(f StepFacts) bool {
+	if f.Check != nil && BeforeInvocationsWithEvidence(*f.Check, f.Controls, Evidence{}).Level != 0 {
+		return false
+	}
 	return !f.Stopped && !f.Placeholder && f.Controls.ConfinementApplied && f.Controls.SelfTestPassed && f.Controls.SystemNamed && f.Controls.PrivateCopyUnchanged
 }
 
