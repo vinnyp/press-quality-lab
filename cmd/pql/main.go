@@ -134,7 +134,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		if collection.err == nil {
 			return collection.code
 		}
-		if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", collection.err); writeErr != nil {
+		if _, writeErr := fmt.Fprintf(stderr, "pql: %s\n", grade.Escape(collection.err.Error())); writeErr != nil {
 			return exitSoftware
 		}
 		return collection.code

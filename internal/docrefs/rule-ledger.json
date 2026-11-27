@@ -181,6 +181,47 @@
         "file": "internal/plan/u39_test.go",
         "function": "TestCreditConditionGuards"
       }
+    ],
+    "QD5": [
+      {
+        "kind": "test",
+        "file": "internal/collect/discovery_test.go",
+        "function": "TestDiscoveryUnreadable"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/discovery_test.go",
+        "function": "TestDiscoveryOutcomeOrder"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/prediction_scripted_test.go",
+        "function": "TestPredictedCheckEndings"
+      }
+    ],
+    "QO2": [
+      {
+        "kind": "test",
+        "file": "internal/decide/u44_test.go",
+        "function": "TestCouldNotStartCodes"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/prediction_scripted_test.go",
+        "function": "TestPredictedCheckEndings"
+      }
+    ],
+    "QO4": [
+      {
+        "kind": "test",
+        "file": "internal/decide/u44_test.go",
+        "function": "TestBudgetControl"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/prediction_scripted_test.go",
+        "function": "TestPredictedCheckEndings"
+      }
     ]
   }
 }

@@ -117,8 +117,8 @@ step ratchet-prediction-file 'verify committed ratchet prediction'
 (
  prediction_tmp=$(mktemp "${TMPDIR:-/tmp}/pql-prediction.XXXXXX")
  trap 'rm -f "$prediction_tmp"' EXIT
- PYTHONDONTWRITEBYTECODE=1 python3 -I -B scripts/predict-ratchet.py --built scripts/ratchet/pr8.json --out "$prediction_tmp" >/dev/null
- cmp scripts/ratchet/pr8-prediction.json "$prediction_tmp"
+ PYTHONDONTWRITEBYTECODE=1 python3 -I -B scripts/predict-ratchet.py --built scripts/ratchet/pr9.json --out "$prediction_tmp" >/dev/null
+ cmp scripts/ratchet/pr9-prediction.json "$prediction_tmp"
 )
 step behaviour 'validate behaviour schemas and agreement'
 PYTHONDONTWRITEBYTECODE=1 uv run --with jsonschema==4.23.0 python -I -B scripts/check-behaviour.py docs/specs/conformance-collection-1.0

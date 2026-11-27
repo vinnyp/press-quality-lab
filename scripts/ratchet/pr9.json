@@ -1,0 +1,249 @@
+{
+  "levels": [
+    1,
+    2,
+    3,
+    5,
+    7
+  ],
+  "rejects": [
+    {
+      "rule": "QS1",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS2",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS3",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS4",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS5",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS6",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS7",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS8",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS9",
+      "why": "U9 checks every rejecting clause before collection; E-17 resolves links naming the seed and rejects links or special files inside it."
+    },
+    {
+      "rule": "QS10",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS11",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QS12",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QP7",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QP10",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QA4",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QA9",
+      "why": "U9 checks every rejecting clause before collection."
+    },
+    {
+      "rule": "QE6",
+      "why": "U25 runs the pre-check and names user-caused rejections."
+    },
+    {
+      "rule": "QT1",
+      "why": "U2 validates scripted flag combinations; U6 rejects unreadable/invalid inputs."
+    },
+    {
+      "rule": "QT4",
+      "why": "U6 validates host shapes and attribution constraints."
+    },
+    {
+      "rule": "QT5",
+      "why": "U6 validates recording shape, unique keys, and agreement."
+    }
+  ],
+  "builds": [
+    {
+      "rule": "QE2.slice",
+      "why": "U39 completes every preimage kind, including captures and placeholders."
+    },
+    {
+      "rule": "QE3.declared_commands",
+      "why": "U39 completes declared-command required entries."
+    },
+    {
+      "rule": "QE3.runbooks",
+      "why": "U39 completes authored-runbook required entries."
+    },
+    {
+      "rule": "QE3.scope",
+      "why": "U33 filters dimensions through ScopeIncludes."
+    },
+    {
+      "rule": "QP1",
+      "why": "U33 places six probes and their command candidates."
+    },
+    {
+      "rule": "QA9.empty_satisfiable",
+      "why": "U33 sets empty_satisfiable; U9 validates predicates and U39 completes preconditions."
+    },
+    {
+      "rule": "QE7.slice",
+      "why": "U39 completes every required entry."
+    },
+    {
+      "rule": "QE8",
+      "why": "U7 builds evidence and ordered targets, including errata E-1."
+    },
+    {
+      "rule": "QE9",
+      "why": "U7 builds tiers, overridden by QT2 for scripted runs."
+    },
+    {
+      "rule": "QE10.record",
+      "why": "U7 bounds record fields and rejects an unfittable record; no real stream draining yet."
+    },
+    {
+      "rule": "QE11",
+      "why": "U7 passes markers as given."
+    },
+    {
+      "rule": "QS4",
+      "why": "U7 passes subject facts; U17 stores the record fields."
+    },
+    {
+      "rule": "QT2",
+      "why": "U7 makes the claimed, evidence, and target tiers scripted."
+    },
+    {
+      "rule": "QT3",
+      "why": "U6 reads raw scripted facts in place of running subjects/computations."
+    },
+    {
+      "rule": "QT4",
+      "why": "U6 reads host controls and replaces recording controls."
+    },
+    {
+      "rule": "QT5.recording_reads",
+      "why": "U6 reads first confined runs and checks recording agreement."
+    },
+    {
+      "rule": "QT5.subject_keys",
+      "why": "U39 completes every subject invocation key."
+    },
+    {
+      "rule": "QS7.invocation_keys",
+      "why": "U5 applies offline arguments/environment in preimages and invocation keys."
+    },
+    {
+      "rule": "QE14",
+      "why": "U25 calls the judge through Safe and uses its result."
+    },
+    {
+      "rule": "QE16",
+      "why": "U25 owns the exit funnel and judge exit cross-check."
+    },
+    {
+      "rule": "QE17",
+      "why": "U17 stores record fields with the specified modes."
+    },
+    {
+      "rule": "QE20.portable",
+      "why": "U17 and U46 create and sweep the portable workspace; U40 supplies the darwin half."
+    },
+    {
+      "rule": "QE5",
+      "why": "U25 validates generated checks and calls the judge pre-check before collection."
+    },
+    {
+      "rule": "QE6",
+      "why": "U25 classifies pre-check rejections by user or engine cause."
+    },
+    {
+      "rule": "QA3.slice",
+      "why": "U39 completes crediting under QA3 and credit-and-routes section 2."
+    },
+    {
+      "rule": "QE2.placeholders",
+      "why": "U39 includes parsed placeholder objects in preimages."
+    },
+    {
+      "rule": "QE2.captures",
+      "why": "U39 includes captures in preimages."
+    },
+    {
+      "rule": "QE3.placeholder_candidates",
+      "why": "U39 places every QS5 placeholder candidate in the required set."
+    },
+    {
+      "rule": "QT5.computation_keys",
+      "why": "U39 builds every computation invocation key."
+    },
+    {
+      "rule": "QA3.capture_crediting",
+      "why": "U39 applies capture self-agreement and every route credit condition."
+    },
+    {
+      "rule": "QA7.destructive_exclusion",
+      "why": "U39 excludes destructive runbooks outside destructive scope."
+    },
+    {
+      "rule": "QE7.asserts_emptiness",
+      "why": "U39 sets asserts_emptiness for QA9 checks."
+    },
+    {
+      "rule": "QA9.preconditions",
+      "why": "U39 builds QA9 preconditions and their preimages."
+    },
+    {
+      "rule": "QS5.final_override",
+      "why": "U10 builds the placeholder trigger only, reachable after all earlier levels through level 8; QS5.qd3_trigger awaits U11."
+    },
+    {
+      "rule": "QS5.qd3_trigger",
+      "why": "U11 builds discovery and its final override trigger."
+    },
+    {
+      "rule": "QD2.bounds",
+      "why": "U11 builds discovery and its final override trigger."
+    },
+    {
+      "rule": "QD3",
+      "why": "U11 builds discovery and its final override trigger."
+    },
+    {
+      "rule": "QD5",
+      "why": "U11 builds discovery and its final override trigger."
+    },
+    {
+      "rule": "QO7.discovery",
+      "why": "U11 builds discovery and its final override trigger."
+    }
+  ]
+}

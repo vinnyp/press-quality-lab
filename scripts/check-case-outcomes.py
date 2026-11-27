@@ -65,7 +65,7 @@ def discovery(subject, recording, host):
         result = invocation_result(run, k, host)
         if result is not None and result[2] != 'crashed':
             return result, False, False
-    unreadable = any(run['end'] != {'kind': 'exit', 'code': 0} or
+    unreadable = status.get("unreadable", False) or any(run['end'] != {'kind': 'exit', 'code': 0} or
                      not (run['stdout']['bytes'] or run['stderr']['bytes']) for run in runs)
     root = runs[0]['stdout'] if runs[0]['stdout']['bytes'] else runs[0]['stderr']
     root_text = kept(root).decode('utf-8', errors='replace')

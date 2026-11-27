@@ -61,6 +61,18 @@ func Read(host, recording []byte, trace io.Writer) (*Source, error) {
 			return nil, reject("QT5", "unconfined control presence differs")
 		}
 		confined := arr(invocation["confined"])
+		all := append(array{}, confined...)
+		if invocation["unconfined"] != nil {
+			all = append(all, invocation["unconfined"])
+		}
+		for _, value := range all {
+			run := obj(value)
+			by := obj(run["end"])["by"]
+			marker := obj(run["markers"])["confinement"] == true
+			if by == "before_marker" && marker || by == "confinement" && !marker {
+				return nil, reject("QT5", "marker contradicts attribution")
+			}
+		}
 		first := obj(confined[0])
 		for _, run := range confined[1:] {
 			if !agreement(first, obj(run)) {
@@ -124,7 +136,6 @@ func readEnd(v any) observe.End {
 			e.Signal = -1
 		}
 	}
-	e.AfterMarker = o["by"] != "before_marker"
 	switch o["by"] {
 	case "budget":
 		e.EngineKilled = true
@@ -178,7 +189,7 @@ func readRun(o object) observe.Run {
 		r.Details.Planted = &observe.Planted{AtimeMoved: p["atime_moved"] == true, SameFile: p["same_file"] == true}
 		if p["control_end"] != nil {
 			e := readEnd(p["control_end"])
-			r.Details.Planted.ControlEnd = &e
+			r.Details.Planted.ControlEnd = &observe.InvocationProtocol{End: e, Markers: observe.Markers{Confinement: obj(p["control_end"])["by"] != "before_marker"}}
 		}
 	}
 	l := obj(o["leak_scan"])

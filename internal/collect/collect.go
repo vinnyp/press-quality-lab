@@ -14,24 +14,50 @@ type Check struct {
 }
 
 // Collect resolves every check, retaining sentinels as values for inspection.
-// Grade-wide QO1 runs before serving any key. In this slice all later paths
-// stop at an unbuilt level before an invocation can be served. Later units add
-// sequencing at those levels; no source call may jump over an unbuilt level.
+// Discovery runs first so level 3 and the final override share its facts.
+// Other checks serve keys only after levels 1 through 6 and only with built rules.
 func Collect(p plan.Plan, source observe.Source) ([]Check, error) {
 	return collect(p, source, decide.Resolve)
 }
 
 func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) ([]Check, error) {
+	p.Checks = append([]plan.Check(nil), p.Checks...)
 	controls, err := source.Controls()
 	if err != nil {
 		return nil, err
 	}
+	var discovery *decide.Discovery
+	for i := range p.Checks {
+		if p.Checks[i].Preimage["probe"] == "discovery" {
+			var keys []plan.Object
+			discovery, keys, err = walk(p.Checks[i], controls, source)
+			if err != nil {
+				return nil, err
+			}
+			p.Checks[i].Keys = keys
+			break
+		}
+	}
 	checks := make([]Check, 0, len(p.Checks))
 	for _, ch := range p.Checks {
-		checks = append(checks, Check{Plan: ch, Result: resolve(ch, controls, decide.Evidence{})})
+		facts := decide.Evidence{Discovery: discovery}
+		if ch.Preimage["probe"] == "discovery" && discovery != nil {
+			facts.Invocations = discovery.Invocations
+		}
+		if ch.Preimage["probe"] != "discovery" && decide.BeforeInvocationsWithEvidence(ch, controls, facts).Level == 0 && decide.InvocationLevelBuilt(ch) {
+			for _, key := range ch.Keys {
+				run, err := source.Observe(map[string]any(key), observe.Spec{CheckID: ch.ID, Preimage: map[string]any(ch.Preimage)})
+				if err != nil {
+					return nil, err
+				}
+				facts.Invocations = append(facts.Invocations, observe.Invocation{Key: map[string]any(key), Run: run})
+			}
+		}
+		checks = append(checks, Check{Plan: ch, Result: resolve(ch, controls, facts)})
 	}
 	for i := range checks {
 		checks[i].Result = decide.FinalOverride(checks[i].Plan, checks[i].Result)
+		checks[i].Result = decide.DiscoveryOverride(checks[i].Plan, checks[i].Result, discovery)
 	}
 	return checks, nil
 }

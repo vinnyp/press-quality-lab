@@ -59,7 +59,11 @@ func level2(ch plan.Check, _ observe.Controls, _ Evidence) Result {
 // FinalOverride applies QS5 after the otherwise final result. It must not be used
 // to decide whether a runbook continues (QA7).
 func FinalOverride(ch plan.Check, result Result) Result {
-	if result.Unbuilt != nil || result.Outcome != "held" || !dependency(ch.Subject) {
+	return finalOverride(ch, result, dependency(ch.Subject))
+}
+
+func finalOverride(ch plan.Check, result Result, trigger bool) Result {
+	if result.Unbuilt != nil || result.Outcome != "held" || !trigger {
 		return result
 	}
 	switch ch.Preimage["dimension"] {

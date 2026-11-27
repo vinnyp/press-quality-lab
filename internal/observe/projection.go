@@ -2,9 +2,9 @@ package observe
 
 import (
 	"encoding/base64"
-	"strconv"
-
 	"encoding/json"
+	"fmt"
+	"strconv"
 )
 
 // StreamDetails retains the count, digest, display head and kept-byte presence.
@@ -25,7 +25,7 @@ type HomeChanges struct {
 }
 type Planted struct {
 	AtimeMoved, SameFile bool
-	ControlEnd           *End
+	ControlEnd           *InvocationProtocol
 }
 type Leak struct{ Place, Encoding string }
 type LeakScan struct {
@@ -56,9 +56,9 @@ type RunDetails struct {
 }
 
 // ProjectEnd derives QT5's spelling from raw termination facts.
-func ProjectEnd(e End) map[string]any {
+func ProjectEnd(e End, markers Markers) (map[string]any, error) {
 	if e.Signal == 0 && e.SignalName == "" {
-		return map[string]any{"kind": "exit", "code": e.Code}
+		return map[string]any{"kind": "exit", "code": e.Code}, nil
 	}
 	name := e.SignalName
 	if name == "" && e.Signal == 9 {
@@ -66,20 +66,26 @@ func ProjectEnd(e End) map[string]any {
 	}
 	var by any
 	if name == "SIGKILL" {
+		memory, signing := DecodeExitDetail(e.ExitDetail)
 		switch {
-		case e.MemoryKilled:
-			by = "memory"
-		case e.CodeSigningKilled:
-			by = "code_signing"
-		case e.EngineKilled && e.BudgetExpired && e.RunningAtBudget:
-			by = "budget"
-		case !e.AfterMarker:
+		case !markers.Confinement:
 			by = "before_marker"
-		case !e.EngineKilled:
+		case e.EngineKilled:
+			if e.BudgetExpired && e.RunningAtBudget {
+				by = "budget"
+			}
+		case e.MemoryKilled || memory:
+			by = "memory"
+		case e.CodeSigningKilled || signing:
+			by = "code_signing"
+		case !e.BudgetExpired:
 			by = "confinement"
 		}
+		if by == nil {
+			return nil, fmt.Errorf("QT5: SIGKILL attribution cannot be represented")
+		}
 	}
-	return map[string]any{"kind": "signal", "signal": name, "by": by}
+	return map[string]any{"kind": "signal", "signal": name, "by": by}, nil
 }
 func projectStream(d StreamDetails, b []byte, seen int64, cut bool) map[string]any {
 	count := d.Count
@@ -98,6 +104,9 @@ func projectStream(d StreamDetails, b []byte, seen int64, cut bool) map[string]a
 
 // ProjectRun reconstructs QT5's run shape from facts, before host overrides.
 func ProjectRun(r Run) map[string]any {
+	if r.BytesDropped {
+		panic("QT5: run capture bytes were dropped")
+	}
 	d := r.Details
 	if d.BeforeControls != nil {
 		r.End = d.BeforeControls.End
@@ -119,7 +128,11 @@ func ProjectRun(r Run) map[string]any {
 	if p := d.Planted; p != nil {
 		var end any
 		if p.ControlEnd != nil {
-			end = ProjectEnd(*p.ControlEnd)
+			var err error
+			end, err = ProjectEnd(p.ControlEnd.End, p.ControlEnd.Markers)
+			if err != nil {
+				panic(err)
+			}
 		}
 		planted = map[string]any{"atime_moved": p.AtimeMoved, "same_file": p.SameFile, "control_end": end}
 	}
@@ -135,7 +148,10 @@ func ProjectRun(r Run) map[string]any {
 	if d.Printed != nil {
 		printed = map[string]any{"value": d.Printed.Value}
 	}
-	end := ProjectEnd(r.End)
+	end, err := ProjectEnd(r.End, r.Markers)
+	if err != nil {
+		panic(err)
+	}
 	return map[string]any{
 		"markers":       map[string]any{"confinement": r.Markers.Confinement, "could_not_start": r.Markers.CouldNotStart},
 		"end":           end,
