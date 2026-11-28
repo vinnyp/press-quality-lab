@@ -32,4 +32,15 @@ The design note had its different-model review on agy (`docs/agent-reviews/2026-
 ## Evidence
 
 - `gate.sh` and `check.sh` pass at each fix head.
-- macOS evidence: the broad set, named in the pull request.
+- macOS evidence: the broad set at bdd0f3b, named in the pull request.
+
+## Round 2 (delta, 69ef522 to bdd0f3b)
+
+**Verdict:** both reviewers found no Blocker or Major.
+- **code:** every round 1 finding is fixed, and nine reverts were each caught. No subject-supplied key or value escapes masking.
+- **test:** all 21 round 1 survivors now fail a test, and the new end-to-end tests check against literals.
+
+Three Nits are left as they are:
+- `TestPR14EngineDisplayKeys` has three rows with keys under 8 bytes, which cannot fail;
+- `TestMalformedLookupValues` does not assert the action line;
+- nothing structural stops a future subject-keyed map from landing in `observed`.
