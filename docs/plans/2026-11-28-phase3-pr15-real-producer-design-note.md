@@ -2,170 +2,229 @@
 
 **Plan group:** `docs/plans/2026-11-24-2115-feat-grade-command-plan.md` PR15. **Units:** U41 and U32.
 
-This note follows the slice d note, `docs/plans/2026-11-27-phase3-pr13-slice-d-design-note.md`, and the self-test track's build review, `docs/agent-reviews/2026-11-27-phase3-pr11-self-test-track-build-reviews.md`. Their definitions and controls hold here. Its design review is logged in `docs/agent-reviews/2026-11-28-phase3-pr15-design-note-reviews.md`.
+This note follows the slice d note, `docs/plans/2026-11-27-phase3-pr13-slice-d-design-note.md`, and the self-test track's build review, `docs/agent-reviews/2026-11-27-phase3-pr11-self-test-track-build-reviews.md`. Their definitions and controls hold here. Its design review is logged in `docs/agent-reviews/2026-11-28-phase3-pr15-design-note-reviews.md`. Erratum E-55 (owner ruling, 2026-11-28) is part of it.
 
 ## Delivery: two pull requests
 
-Today nothing produces a real run. `ReleasedSource` refuses to observe (KTD21). No darwin `observe.Source` exists, and `collect` creates no home, plants no canary and runs neither of QP9's and QH27's controls, all of which KTD13 gives it. U32's parity replay cannot start until those exist. So the group lands as two pull requests, in this order:
-- **PR15a, the real producer** (U41 and the loop work it needs). `collect` owns homes and controls, the darwin source runs and inspects, and U41's read proof is shown on macOS. The released build still refuses to grade: KTD21's switch moves only in PR16.
-- **PR15b, parity** (U32). A darwin test replays the recorded invocations through `collect` with the darwin source, and compares each with its recording.
+Today nothing produces a real run:
+- `ReleasedSource` refuses to observe (KTD21);
+- no darwin `observe.Source` exists;
+- `collect` creates no home, plants no canary, and runs neither QP9's nor QH27's control, though KTD13 gives all of these to it.
 
-Each pull request has its own build review and its own macOS evidence. PR16 waits on both.
+U32's parity replay cannot start until those exist, so the group lands as two pull requests, in order:
+- **PR15a, the real producer** (U41, and the loop work it needs). The released build still refuses to grade: KTD21's switch moves only in PR16, which re-runs PR15a's macOS tests through `grade`'s wiring.
+- **PR15b, parity** (U32).
+
+Each has its own build review and macOS evidence. PR16 waits on both.
 
 ## PR15a: the real producer
 
 ### The loop owns homes and controls (KTD13)
 
-Through `internal/throwaway`, before each `Source.Observe`, `collect` prepares the home the key names (QT5's `home`):
+Before each `Source.Observe`, `collect` prepares the home the key names (QT5's `home`), through `internal/throwaway`:
 - `seed`: a fresh copy of the seed (QP5);
-- `empty`: an empty home (discovery's);
-- `planted`: a fresh seed copy with a fresh canary from `crypto/rand` (QP10, QH14). The access time is set a day before the modification time (QH27);
-- `runbook`: the runbook's one shared home, created at its first step and kept to its last (QA7);
-- `scratch`: a computation's scratch directory (QA4).
+- `empty`: discovery's empty home;
+- `planted`: a fresh seed copy with a canary that `collect` draws from `crypto/rand` (QP10, QH14). It is planted by a new `throwaway` function that takes the canary as an argument, so that the read control can plant the same one;
+- `runbook`: the runbook's one shared home, from its first step to its last (QA7);
+- `scratch`: a computation's scratch directory, with its capture files in place (QA4).
 
-`observe.Spec` gains what the source needs to run in that home: the home's path, its kind, and for a planted home the planted file's path. The canary itself stays in `collect`, which hands the leak scan its encodings. The source never chooses or keeps one.
+Every home gets an empty `.pql-tmp` (QH12, `confine/environment.go`).
 
-The scripted source ignores the new fields. A test asserts that the corpus trace is unchanged (control 3), and that every prediction file regenerates byte for byte.
+**The order for a planted home is fixed,** because on this machine the first read of a file after its last write or backdating moves its access time, and later reads do not:
+1. copy the seed;
+2. plant the canary;
+3. take the before-snapshot, with the planted file's digest supplied by the planting step, not read from the file;
+4. backdate the planted file's access time to a day before its modification time (QH27);
+5. record its access time, device and inode;
+6. serve the key.
 
-**The two controls stay in `collect`:**
-- **QP9's control copy.** For each invocation the store-unchanged probe makes, `collect` makes a second fresh copy of the same seed. It snapshots it, appends one byte to the declared store, and asks `throwaway.CompareHomes` whether the comparison reports the change. The answer is that run's `home_changes.control_detected` raw fact. With no store, or no regular file of one byte or more after the exclusions, nothing is appended, and QP9's `empty_target` decides, as `decide.storeUnchanged` already does.
-- **QH27's read control.** When QO7's condition holds after the ordinary invocation, `collect` serves the same key again in a fresh planted home, with the same canary and `Spec.Control` set, so the profile gains QH11's extra line. The control run's end is the ordinary run's `planted.control_end`. U37 already decides from it.
+Nothing reads the planted file between step 4 and the run. An untagged assertion checks at serve time that the access time is still at least 24 hours before the modification time, and fails the run as not evaluated if it is not. A fake-clock row on the throwaway reader fails if a snapshot reads the file after step 4.
 
-### The darwin source (KTD13: it only spawns, waits, kills the group and reads files)
+**A runbook's later steps** each get a before-snapshot of the shared home taken just before they are served. The recordings show a later step's `home_changes` as `[]` after step 1 created a directory.
 
-`internal/confine` gains a darwin `Source`. Its `Observe` does these things, in order:
-1. **The private copy (QH8).** It checks the private copy of the binary, or of the computation's executable, against the bytes it was copied from before each use. That gives the `PrivateCopyUnchanged` raw fact.
-2. **The run.** It renders QH11's profile for the key's variant through `confine.Arguments`, and spawns through `Copies.Start` and `Wait` (U15). It drains each stream, keeping QE10's byte count, digest, cut and head. The digest and the counts are of the drained bytes.
-3. **The planted file,** read through a new `throwaway` function before anything else reads it: its access time against the value before the run, and its device and inode against the values before. Every later read of the planted file moves its access time. So the snapshot, the comparison and the leak scan below all come after this step, and the snapshot reads the planted file's content only after its facts are taken.
-4. **The home's changes:** `throwaway.SnapshotHome` against the before-snapshot `collect` took when it prepared the home, then `throwaway.CompareHomes` (QH25, QP6, QP8, E-46, E-47).
-5. **The leak scan:** `throwaway.ScanHome` and the drained streams, with the encodings `collect` passed (QP12, QP13).
-6. **A computation's printed value:** QA6's parse, untagged (KTD13).
+`observe.Spec` gains what the source needs:
+- the home's path and kind;
+- for a planted home, the planted file's path and the before-facts of step 5;
+- `Control`, for QH27's control run;
+- `StoreControl`, QP9's result for this invocation.
 
-It fills `observe.Run` and its `Details` in QT5's run shape, and nothing else: no outcome, reason or attribution. KTD13's guard stays, and covers the new darwin files.
+The source never chooses or keeps a canary. The leak scan's encodings come from `collect`.
 
-**Grade-wide controls.** The darwin source's `Controls()` produces these:
-- `ConfinementApplied` and `SandboxExecExit`, from QH6's raw end of the first run;
-- `SystemNamed`, from `kern.osproductversion` against QH1's two versions, 27.0.1 and 27.2, checked before any check runs (QH2);
-- `SelfTestPassed`, `KnownFastWithin` and `ReadCalibrationMoved`, from `RunControlSuite`, which exists.
+### The two controls pass through the source
 
-`StoreControlDetected` and `ReadControlKilled` are per run, from the controls above, never grade-wide.
+The scripted source answers both controls from the host today, inside `Observe` (`internal/scripted/reader.go`). Two corpus cases force them: one with `store_control: not_detected` and one with `read_control: not_killed`. So both controls must reach the decision through the source, never around it:
+- **QP9.** For each invocation the store-unchanged probe makes, `collect` makes a second fresh copy of the seed, snapshots it, appends one byte to the declared store, and asks `throwaway.CompareHomes` whether the change shows. It passes the answer in `Spec.StoreControl`:
+  - the darwin source copies it into the run's `home_changes.control_detected`;
+  - the scripted source replaces it with the host's value, as QT4 says.
+
+  With no store, or no regular file of one byte or more after the exclusions, nothing is appended, and QP9's `empty_target` decides, as `decide.storeUnchanged` already does.
+- **QH27.** `collect` decides QO7's condition, untagged, after the ordinary run. The condition requires that the read calibration passed (E-38): when it failed, the control is not run. When the condition holds, `collect` plants the same canary in a fresh home and calls `Observe(key, Spec{Control: true})`:
+  - the darwin source renders the profile with QH11's extra line;
+  - the scripted source answers from the host's `read_control`, and does not record the call as served in its trace.
+
+  The control's end becomes the ordinary run's `planted.control_end`. The QO7 condition the scripted reader evaluates today is deleted from the reader, so the condition lives only in untagged `collect`.
+
+**Control 3 is restated as "the served keys are unchanged":** the trace's `Served` events, in order, for every case. The two controls' extra calls are not served keys. Every prediction file must regenerate byte for byte, and every corpus case must still pass.
+
+### The darwin source (KTD13)
+
+`internal/confine` gains a darwin `Source`. Its `Observe`:
+1. **The private copy (QH8, E-55).** It checks the private copy of the binary, or of a computation's executable given as a relative path, with the existing `fingerprintOf` and `SameCopy`: the directory's entries, inode, mode, size, times and digest. An executable under `/bin` or `/usr/bin` runs in place (E-55).
+2. **The run.** It renders QH11's profile for the key's variant, spawns through `Copies.Start` and waits through `Wait`. It drains each stream. QE10's byte count is of the bytes written. The digest, the cut and the head are of the kept bytes, as the `huge-output` recording shows: its digest is that of the first MiB.
+3. **The planted file's after-facts:** its access time, device and inode, read through `throwaway` before anything else reads the file.
+4. **The home's changes:** `throwaway.SnapshotHome` against `collect`'s before-snapshot, then `CompareHomes` (QH25, QP6, QP8, E-46, E-47).
+5. **The leak scan:** `throwaway.ScanHome` and the drained streams (QP12, QP13).
+6. **A computation's printed value,** through QA6's untagged parse.
+
+It fills `observe.Run` and its `Details` in QT5's run shape, and nothing else. KTD13's guard covers the new darwin files.
+
+**The darwin source also writes, in two places.** `Controls()` prepares the self-test files, and it makes the private copies inside `confine` (`process_darwin.go`). Both are unconfined work on throwaway directories, and they go through `throwaway` like the rest (KTD20). The note says so rather than claim the source only reads.
+
+**Grade-wide controls.** `Controls()` sets:
+- `ConfinementApplied` and `SandboxExecExit`, from QH6's raw end;
+- `PrivateCopyUnchanged`, from the once-per-grade private-copy check. Its zero value would stop discovery and void every check;
+- `SelfTestPassed`, `KnownFastWithin` and `ReadCalibrationMoved`, from `RunControlSuite`;
+- `SystemNamed`, from `kern.osproductversion` and `kern.osversion`, matched against QH1's 27.0.1 and 27.2 by an untagged function tested on Linux with U35's prefix cases (QH2).
 
 ### What stays out of PR15a
 
-- **The released build still refuses to observe.** PR15a adds the darwin source and a `scripted`-free test constructor for it. `grade` does not select it until PR16. A gate test asserts that `ReleasedSource` still refuses, and that the released binary still holds no reference to the darwin source's constructor.
-- **No subject is graded on this machine** outside the `macos_evidence` tests below.
+- **The released build still refuses to observe.** A gate test on a `GOOS=darwin` build asserts that `ReleasedSource` still refuses, and that the released binary holds no reference to the darwin source's constructor. A Linux build never compiles the darwin files, so it could not show this. The released path does not call the new home preparation.
+- **No subject is graded** outside the `macos_evidence` tests below.
 
-### U41's macOS tests (KTD19: written by codex, run here)
+### U41's macOS tests (KTD19: codex writes them, the main session runs them)
 
-Each is behind `darwin && macos_evidence`, runs with the tool sandbox off, and repeats 25 times, passing only 25 of 25 (KTD18: access times).
+Each is behind `darwin && macos_evidence`, runs with the tool sandbox off, and repeats 25 times, passing only 25 of 25 (KTD18). Each asserts the exact raw facts it printed, never an exit status alone, and is paired with a control that the restriction leaves clean runs alone (`docs/solutions/best-practices/clean-control-must-assert-on-output.md`, `sandbox-evidence-must-prove-the-decided-operation.md`).
+- **A real read.** The access time moved, the device and inode are unchanged, the control is killed by the confinement after its marker (QH21, E-37), and the decision is held (QP11). The rendered control profile's bytes hold QH11's extra line.
+- **The control profile's own control.** The same control profile with `never-reads-secret`, which never opens the file, exits cleanly. That shows the extra line kills only on a read.
+- **Forgery attempts, each killed** by the template's write rule on the planted file and its directories: `utimes`, `setattrlist`, a write, a rename and a replace. Each asserts its exact raw facts: a confinement kill, the access time not moved, and the same file.
+- **QH28's case, which only the control tells apart.** While `never-reads-secret` runs, the harness itself reads the planted file. The run exits 0, the access time moved, the file is the same, and the control is forced to run and exits 0 without being killed. The decision is `harness_fault` (QO7, E-37), never held.
+- **A run that never reads.** With `never-reads-secret`, the access time did not move. The test asserts this after the snapshot and the scan, which proves that the after-facts were read first.
+- **QP9's control copy, real.** One byte appended gives `control_detected` true. Its twin appends nothing, and gives false.
 
-**A real read of the planted file:**
-- the access time moved;
-- the device and inode are unchanged;
-- the control run, with QH11's extra line, is killed by the confinement after its marker (QH21 attributes it, E-37);
-- the decision is held (QP11).
+### Linux-runnable tests (codex writes them, the gate runs them)
 
-**An access-time forgery,** using the `forges-atime` form's operation: the subject sets the planted file's access time without reading it.
-- With a write, a rename or a replace, the confinement kills it (QH27).
-- With `utimes` and no read, the access time moved but the control is not killed, so no read is proved. The test asserts the raw facts, and that the decision is not held.
-
-**A run that never reads,** the `never-reads-secret` form: the access time did not move. The test asserts this after the snapshot and the scan have run. That proves step 3's ordering: reversing it moves the access time and turns this test red.
-
-**QP9's control copy, real:** one byte appended, the comparison detects it, `control_detected` is true. Its twin appends nothing, and must read false.
-
-**Each test is paired with a control that the restriction it shows leaves clean runs alone,** and each asserts the exact raw facts it printed, never an exit status alone (`docs/solutions/best-practices/clean-control-must-assert-on-output.md`, `sandbox-evidence-must-prove-the-decided-operation.md`).
-
-### Linux-runnable tests (written by codex, run in the gate)
-
-- `collect`'s home sequencing on a fake source:
-  - each key gets the home kind QT5 names;
-  - a fresh home for every invocation except within a runbook;
-  - a fresh canary for each planted home;
-  - the control run served only when QO7's condition holds, with the same canary.
-
-  Each rule has a twin.
-- QP9's control on fixture trees: detected, not detected, no store, an empty store.
-- The planted-facts ordering, with a fake clock on the throwaway reader: a snapshot taken before the facts makes the test fail.
+- **`collect`'s home sequencing on a fake source.** Each rule has a twin:
+  - every home kind;
+  - a fresh home per invocation, except within a runbook;
+  - a fresh canary per planted home;
+  - the planted order of steps 1 to 6;
+  - the read control served only when QO7's condition and the calibration hold, with the same canary;
+  - `Spec.StoreControl` passed for each store-unchanged invocation.
+- **A swapped planted file.** The `throwaway` reader's device and inode test, with a fixture that swaps the file. No confined run can show it, since the template kills every rename and replace.
+- **QP9's control on fixture trees:** detected, not detected, no store, an empty store.
+- **The scripted reader without its QO7 condition,** against the two forced-control corpus cases.
 
 ## PR15b: parity (U32)
 
 ### What is replayed
 
-There are 1,415 recorded invocations across 54 forms, and every case-named key exists in a recording. 1,206 are named by at least one case's `invocations` field, and 209 by none.
+There are 1,415 recorded invocations across 54 forms. 1,206 are named by at least one case's `invocations` field, and 209 by none. Every case-named key exists in a recording.
 
-**Which contexts.** U32 step 3 replays an invocation "once per context" the cases give it. But QT6's `invocations` field also names invocations a case implies but never ran, and some case contexts cannot produce a real run: a placeholder seed or binary, or a host that forces a changed copy, no confinement or a failed self-test. A real run in such a context cannot match a recording made in the canonical context. So this note replays only the contexts the corpus's own scripted run actually served (the trace's `Served`).
+**One replay is one grade of one served context.** A served context is a corpus case whose scripted run served at least one key. Its replay grades that case's subject file, seed and scope through `collect` with the darwin source and all controls passing. Only the keys in that case's served trace are compared. A key the real grade serves that the scripted one did not, as in a case whose host forced a failure, is reported as an extra, never compared.
 
-The build checks first that this set covers every case-named key at least once. Any key it misses is listed in the pull request, beside the 209 that no case names.
+Narrowing U32 step 3's "once per context" to the contexts a scripted run served is a plan amendment. This PR records it in the plan.
 
-**The 209 unnamed invocations** are replayed in their canonical context, the form's `subjects/<form>/` subject file, and reported separately. U32 step 7 leaves it to the owner whether that coverage stands. The pull request asks, through the owner question tool.
+**Repeats.** Each served context is graded five times. The 58 planted invocations, the 4 a budget ends, and every invocation with a decoy detected by its access time run 25 times. These repeats are targeted: an exported `collect` function serves one key with exactly the home preparation and controls a grade gives it, through the darwin source. So they never re-run whole grades or the self-test suite.
 
-### How each invocation is replayed
+**The 209 unnamed invocations** are replayed with the same function, in their form's canonical subject file. 54 of them are `remove guard` steps, which run in a scope that includes `destructive`. Some recorded steps can never be served, because QT6 names a step "whether or not an earlier failure would stop it". The build lists those by name, and does not count them as replayed. U32 step 7 leaves it to the owner whether that coverage stands, and the pull request asks.
 
-1. **Build.** Each form is built with `formtest.Build`, and its source digest is checked against `form_sha256`. The machine's version and build are recorded beside the recordings' 27.2 (26B123).
-2. **Decoys.** The harness prepares the decoys QT5 names, rebuilt from the spike's decoy set (PLAN U32 step 2), not copied:
-   - files under `/private/tmp/pql-decoys/`, in an owner-only directory checked with `Lstat`;
-   - a loopback listener;
-   - for a form that signals or reads another process, a decoy process that is an unreaped child of the harness, checked alive before its process id is written to `peer.pid`.
+**The cost, estimated.** About 600 grades, some 24,000 confined runs, plus the repeats: three to six hours. Decoy forms run one at a time, because the decoy directory and the port are fixed. The build measures the real time and reports it.
 
-   A stale `/private/tmp/pql-decoys` or a busy port fails the run as not evaluated. It never passes.
-3. **Replay.** Each invocation runs through `collect` with the darwin source, with a runbook's steps in order in one shared home. It runs five times, and 25 times for the 58 planted invocations and the 4 that a budget ends (KTD18: access times and timing).
-4. **Compare.** Each run's raw facts go through `observe.ProjectRun`, KTD13's serialiser, and are compared with the recording's run on every field QT5's agreement clause lists:
-   - the markers;
-   - the end;
-   - the leak scan;
-   - the planted file;
-   - the decoys;
-   - the home's change list;
-   - a computation's printed value;
-   - every stream's byte count, digest and cut.
+### The decoys
 
-   The comparison runs after the canary is replaced by the zero canary in every encoding, and the digests are taken after the replacement, as QT5 takes them. That is QT5's rule for a recording, and the reverse of QE18's rule for a record. The harness owns this masking, and the engine's record path is unchanged.
-5. **Positive controls.** A violating form's unconfined positive control runs with QH12's built environment and a throwaway home, both asserted, on each invocation whose recording's unconfined run touched a decoy. If it touches nothing, the form is not evaluated, and the test fails.
-6. **Mismatches.** Each is a hypothesis to triage:
-   - an observer defect is fixed in the producer, with a Linux test where one can be written;
-   - a build difference is recorded;
-   - a recording defect, or a disagreement that may be a specification matter, goes to the owner through the owner question tool, and its invocation stays failing until the owner rules.
+QT5 names three kinds of decoy. The harness rebuilds the spike's decoy set (U32 step 2) from the names and paths alone, without copying its code. The build lists each decoy in a table: its name, where it lives, and the rule that calls it touched. Among them:
+- **files under `/private/tmp/pql-decoys/`:** touched when the access time moved, or the modification time, the inode or the content changed;
+- **`token_file`, in the home:** touched when the change time moved, because it only detects writes;
+- **the loopback listener:** touched when it accepts a connection;
+- **the child-process and peer-process decoys:** touched when the process ended, or its environment was read.
 
-### Fields outside the agreement clause
+The detector's baseline is reset before every run.
 
-These are not compared: `head`, `kept`, `control_detected` and the unconfined run's fields other than its decoys. The profile and launcher digests cannot match either. The engine's launcher is Go and the spike's was C, and QT5 says a collector reads none of them.
+**`peer.pid`.** QT5 takes `home_changes` after `peer.pid` is written. `collect` gains a test-only option: a hook that runs after the home is created and before the before-snapshot. Only the parity harness sets it, so that `peer.pid` never shows as a change. Released and scripted code leave it unset, and a test asserts that.
+
+**The signal decoy** is an unreaped child of the harness, checked alive before its process id is written.
+
+**Not evaluated, never passed.** A stale `/private/tmp/pql-decoys`, a busy port, or a decoy that fails to prepare marks the run not evaluated, and the run fails.
+
+**Confined runs prove little about decoys,** because only one invocation's confined runs touch one. So each violating form's unconfined positive control runs directly before and directly after its confined repeats (QH12's built environment and a throwaway home, both asserted). The confined runs agree with the recording's untouched decoys only between two controls that touched them.
+
+### How a run is compared
+
+Each run's raw facts go through `observe.ProjectRun`, KTD13's serialiser, and are compared with the recording's run on every field QT5's agreement clause lists:
+- the markers;
+- the end;
+- the leak scan;
+- the planted file;
+- the decoys;
+- the home's change list;
+- a computation's printed value;
+- every stream's byte count, digest and cut.
+
+**Masking for parity.** A recording's digests are taken after the canary is replaced by the zero canary, in every encoding (QT5). That includes the digests of files in the home: `leak-file`'s `debug.log` holds the digest of the zero canary and a newline. A digest cannot be masked after the fact. So the harness's decorator digests the used home again, with the exact canary from `Spec` replaced, through a new `throwaway` function. It does this after `Observe` returns and before `collect` removes the home. It does the same for stream digests. The producer and the record path stay unchanged.
+
+**Masking checks:**
+- the canary is not the zero canary;
+- wherever the recording shows a leak, at least one replacement was made;
+- only the exact canary from `Spec` is replaced, never any 41-character string of its shape.
+
+So a producer that planted the zero canary cannot agree.
+
+**Not compared:**
+- `head`, `kept` and `control_detected`;
+- the unconfined run, apart from its decoys;
+- the profile and launcher digests. The engine's launcher is Go, the spike's was C, and QT5 says a collector reads none of them.
+
+### Mismatches
+
+Each one is a hypothesis to triage:
+- **An observer defect** is fixed in the producer, with a Linux test where one can be written.
+- **A build difference** is recorded only with evidence. The recorded invocation must reproduce on the form built from its recorded source digest, and the difference must trace to the machine or the toolchain. Otherwise it is an observer defect.
+- **A recording defect, or a possible specification matter,** goes to the owner through the owner question tool. Its invocation stays failing until the owner rules.
 
 ### Running it
 
-The suite runs here, outside the tool sandbox (KTD19), with automatic updates off (GKD9). Today they are on, and the owner is asked to turn them off before the run. The spike's lesson applies: one private copy per grade, not a fresh executable per run (`docs/solutions/test-failures/fresh-executable-per-run-stalls-parallel-sandbox-suite.md`).
+The suite runs here, outside the tool sandbox (KTD19), as one private copy per grade. It never makes a fresh executable per run (`docs/solutions/test-failures/fresh-executable-per-run-stalls-parallel-sandbox-suite.md`).
+
+Automatic updates must be off (GKD9). Today they are on, and the owner is asked to turn them off before the run.
+
+The run records Spotlight's indexing status for `/private/tmp`. The engine does not run as root and does not change it.
 
 The pull request reports:
-- the invocations replayed out of the recorded 1,415;
-- the 209 unnamed ones, by count and name;
-- every mismatch and its disposition.
+- the invocations replayed out of 1,415;
+- the extras;
+- the steps that cannot be served;
+- the 209 unnamed invocations, by count and name;
+- every mismatch and its disposition;
+- the measured time.
 
 ## Readings the build settled
 
-None is a two-way reading of the sealed text. These were grepped across the sealed folder and the errata: `context`, `implies`, `replay`, `parity`, `decoy`, `peer.pid`, `unreaped`, `pql-decoys`, `touched`, `positive control`, `five confined`, `unconfined`.
-- **"Once per context"** means the contexts a scripted run served. The plan's step, not a sealed rule.
-- **Five runs against KTD18's 25.** KTD18's 25 applies to the access-time and timing invocations, and U32's five to the rest. These are two plan sentences that apply to different invocations.
-- **Digests after replacement,** for parity only (QT5:296), against QE18's raw digests for records.
-- **"Touch its decoy"** applies per invocation whose recording's unconfined run touched one. The plan's `violates` flag and the recordings disagree on one invocation, `forges-atime` `account` in a seed home, which writes the home legitimately. The recording governs.
+None is a two-way reading of the sealed text. Both reviews grepped the sealed folder and the errata for: `context`, `implies`, `replay`, `parity`, `decoy`, `peer.pid`, `unreaped`, `pql-decoys`, `touched`, `positive control`, `five confined` and `unconfined`.
+- **"Once per context"** means the contexts a scripted run served, as a plan amendment.
+- **Five runs, or KTD18's 25:** the 25 applies to the access-time, timing and access-time-decoy invocations, and the five to the rest.
+- **Digests after replacement** apply to parity only (QT5). Records keep QE18's raw digests.
+- **"Touch its decoy"** applies to each invocation whose recording's unconfined run touched one. The recording governs where the plan's `violates` flag disagrees. That is one invocation, `forges-atime` `account` in a seed home, which writes the home legitimately.
+- **QH8 against `/bin` and `/usr/bin`:** settled by E-55.
 
 ## Rules this group moves off KTD22's list
 
-Each needs a proof test whose first body comment line names the rule. Where the rule needs macOS, a `macos_evidence` entry (KTD22, GR15). Each records its mutation and the test that fails. The PR15a and PR15b columns say which pull request moves it.
+Each move needs a proof test whose first body comment line names the rule. Where the rule needs macOS, the proof is a `macos_evidence` entry (KTD22, GR15). Each records a mutation that a named test catches.
 
-| Rule | Moves in | Proof | Mutation, and the test that fails |
+| Rule | PR | Proof | Mutation, and the test that fails |
 |---|---|---|---|
-| QP9 | 15a | the fixture-tree rows and the real control copy | skip the append; compare nothing |
-| QH27 | 15a | the read and forgery tests | drop QH11's control line; take the facts after the snapshot; ignore the device and inode |
-| QH26 | 15a | the existing calibration tests, now used by the real source | no backdating |
-| QH25 | 15a | the real inspection on the source path, plus the hostile-entry tests | follow a link; open a FIFO |
+| QP9 | 15a | the fixture-tree rows, the `Spec.StoreControl` row and the real control copy | skip the append: the real copy reads false; drop `StoreControl` from `Spec`: the sequencing row |
+| QH27 | 15a | the real read, the forgery tests, the QH28 case and the swap fixture | drop QH11's control line: the real read's control is not killed; take the after-facts after the snapshot: the never-reads test; ignore the device and inode: the swap fixture |
+| QH26 | 15a | the serve-time access-time assertion and the fake-clock row | read the planted file after backdating: the fake-clock row and the serve-time assertion |
+| QH25 | 15a | the real inspection on the source path, and the hostile-entry tests | follow a link; open a FIFO |
 | QP5, QP10, QH14 | 15a | the home-sequencing rows | reuse a home; reuse a canary |
-| QP6, QP8, QP12, QP13 | 15b | parity on the store and leak forms | drop the scan bound; skip an unreadable file |
-| QH5, QH7, QH8, QH21, QE10, QE8, QA1, QA4, QA6, QA7, QS6 | 15b | parity on real runs | each listed in the PR15b note's table |
-| GR15's macOS rules | 15a or 15b | each mapped to a named `macos_evidence` test | — |
+| QH8 | 15a | the once-per-grade check and E-55's in-place row | skip the check; copy a `/usr/bin` executable |
 
-**Stay listed:** QH9, until the second self-test run after PR15 (PLAN U16); QE18, until PR14's scorecard is in; QP14, QH19 and QH28, which are stated limits.
+**PR15b's moves** are listed in its own pull request. A rule moves only where the build names a mutation that parity catches, such as a producer that drops the leak scan's bound for QP13. Rules parity cannot break stay listed: QP8, which parity compares before its exclusions, then QE8 and QS6.
+
+**Stay listed:** QH9, until the second self-test run after PR15 (PLAN U16); QE18, until PR14's scorecard is in; QP14, QH19 and QH28, as stated limits.
 
 ## Stated limits
 
-- **The real producer grades nothing in the released build until PR16.**
-- **Parity proves the recorded invocations only,** in the contexts the corpus served, on this machine's build.
-- **An unrelated process reading a decoy,** such as Spotlight or a backup agent, would make an access-time decoy read as touched (QH28's limit, applied to decoys). The harness runs with the decoy directory excluded from Spotlight, and says so.
+- **The real producer grades nothing** in the released build until PR16.
+- **Parity proves only the recorded invocations,** in the contexts the corpus served, on this machine's build.
+- **An unrelated process reading a decoy,** such as Spotlight or a backup agent, makes an access-time decoy read as touched. This is QH28's limit, applied to decoys. The run records the indexing status.
