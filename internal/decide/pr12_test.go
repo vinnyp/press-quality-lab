@@ -3,6 +3,7 @@ package decide
 import (
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
+	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"reflect"
 	"strings"
@@ -503,11 +504,11 @@ func TestExpectedSourcesForPredicates(t *testing.T) {
 	}
 }
 func TestDestructiveSentinel(t *testing.T) {
-	// QA8: any destructive step makes the included runbook wait for PR13.
+	// QA8: the independent guard permits destructive runbooks only in their scope.
 	ch := plan.Check{Subject: plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{"delete"}, "class": "destructive"}}, "runbooks": plan.Array{plan.Object{"name": "book", "steps": plan.Array{plan.Object{"words": plan.Array{"delete"}}}}}}, Preimage: plan.Object{"runbook": "book", "earlier": plan.Array{}}}
-	r := level4(ch, passing(), Evidence{})
-	if r.Unbuilt == nil || r.Unbuilt.Rule != "QA8" || r.Level != 4 {
-		t.Fatal(r)
+	key := plan.Object{"words": plan.Array{"delete"}, "home": "runbook", "runbook": "book"}
+	if MayServe(ch, key, nil) == nil || MayServe(ch, key, []rulebook.Scope{rulebook.DestructiveScope}) != nil {
+		t.Fatal("scope guard")
 	}
 }
 func TestByteBoundSizes(t *testing.T) {

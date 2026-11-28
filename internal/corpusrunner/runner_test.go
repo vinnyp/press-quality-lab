@@ -225,7 +225,7 @@ func discovery(k map[string]any) bool {
 
 // levelTwoPlaceholder independently follows QS5's dependency bullets. Command
 // selection uses the longest declared prefix, including the bare binary.
-func levelTwoPlaceholder(subject, pre map[string]any) bool {
+func levelTwoPlaceholder(subject, pre map[string]any, scopes ...any) bool {
 	if placeholder(subject["binary"]) {
 		return true
 	}
@@ -248,6 +248,34 @@ func levelTwoPlaceholder(subject, pre map[string]any) bool {
 			}
 		}
 		return blocked
+	}
+	// E-54: resolve every source class independently of check words.
+	destructive := false
+	for _, scope := range scopes {
+		destructive = destructive || scope == "destructive"
+	}
+	if pre["runbook"] != nil && !destructive {
+		for _, v := range list(subject["runbooks"]) {
+			b := object(v)
+			if b["name"] != pre["runbook"] {
+				continue
+			}
+			for _, st := range list(b["steps"]) {
+				words := list(object(st)["words"])
+				best := -1
+				var selected map[string]any
+				for _, cv := range list(subject["commands"]) {
+					c := object(cv)
+					prefix := list(c["words"])
+					if len(prefix) > best && len(prefix) <= len(words) && reflect.DeepEqual(prefix, words[:len(prefix)]) {
+						selected, best = c, len(prefix)
+					}
+				}
+				if placeholder(selected["class"]) {
+					return true
+				}
+			}
+		}
 	}
 	if probe == "planted_secret" {
 		if placeholder(subject["secret"]) {
@@ -307,8 +335,8 @@ func hasPlaceholder(value any) bool {
 	return false
 }
 
-func placeholderClass(subject, pre map[string]any, invocations []any) (string, error) {
-	if levelTwoPlaceholder(subject, pre) {
+func placeholderClass(subject, pre map[string]any, invocations []any, scopes ...any) (string, error) {
+	if levelTwoPlaceholder(subject, pre, scopes...) {
 		return "level_two", nil
 	}
 	trigger := hasPlaceholder(subject)
@@ -349,7 +377,7 @@ func checkTrace(c caseassembly.Case, subject, input, preimages map[string]any, t
 	for _, value := range list(input["evidence"]) {
 		ev := object(value)
 		if ev["reason"] == "placeholder_unfilled" {
-			if _, err := placeholderClass(subject, object(preimages[fmt.Sprint(ev["check_id"])]), c.Invocations); err != nil {
+			if _, err := placeholderClass(subject, object(preimages[fmt.Sprint(ev["check_id"])]), c.Invocations, list(input["scope"])...); err != nil {
 				return err
 			}
 		}
@@ -392,7 +420,7 @@ func checkTrace(c caseassembly.Case, subject, input, preimages map[string]any, t
 			}
 			if match {
 				matched = true
-				if ev["reason"] != "earlier_step_failed" && (ev["reason"] != "placeholder_unfilled" || !levelTwoPlaceholder(subject, p)) {
+				if ev["reason"] != "earlier_step_failed" && (ev["reason"] != "placeholder_unfilled" || !levelTwoPlaceholder(subject, p, list(input["scope"])...)) {
 					runnable = true
 				}
 			}

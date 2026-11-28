@@ -245,3 +245,7 @@ QT5 keys a computation's recorded run by its argument list, runbook and step, an
 ### E-53. A capture of a step that ran without confinement
 
 QO1 makes a check not observed with `network_unverifiable` when the engine could not apply confinement to the invocation, and QA4 decides only a cut capture. Under E-49, a step with no required check still runs, and a later check can capture its output. **A check whose computation captures a step whose run was not confined is not observed with `network_unverifiable` at level 1, as if that run were its own: it depends on an invocation QO1 voids.** The owner ruled on 2026-11-27. No case of the corpus has such a capture, so no record changes.
+
+### E-54. A runbook with a step whose class is a placeholder
+
+QA7 runs a runbook with a step whose command is `destructive` only in a scope that includes `destructive`, and QS5 says a placeholder is never read as false. When a step's command has a placeholder class, whether the runbook may run in a scope without `destructive` is unknown. **In a scope without `destructive`, a runbook with a step whose command's class is a placeholder depends on that placeholder: none of its steps runs, a step with no required check included, and each of its required checks is not observed with `placeholder_unfilled` (QS5, level 2). In a scope with `destructive`, it runs as any runbook does, and level 2 stops the placeholder step's own checks.** The owner ruled on 2026-11-27. No case of the corpus has such a runbook, so no record changes.

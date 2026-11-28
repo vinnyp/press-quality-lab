@@ -57,6 +57,14 @@ func Build(in Input) (docResult Object, buildErr error) {
 		if !ok || r.Result.Unbuilt != nil || r.Result.Outcome == "" {
 			return nil, &Fault{"QE8"}
 		}
+
+		if r.Result.Outcome == decide.NotObserved {
+			if !decide.ValidReason(r.Result.Reason) {
+				return nil, &Fault{"QE13"}
+			}
+		} else if (r.Result.Outcome != "held" && r.Result.Outcome != "not_held") || r.Result.Reason != "" {
+			return nil, &Fault{"QE13"}
+		}
 		req := Object{}
 		for k, v := range ch.Required {
 			req[k] = v

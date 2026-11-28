@@ -364,6 +364,35 @@
         "file": "internal/grade/pr12_evidence_test.go",
         "function": "TestRunbookMarkers"
       }
+    ],
+    "QA8": [
+      {
+        "kind": "test",
+        "file": "internal/collect/pr13_test.go",
+        "function": "TestDestructiveRunbooks"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr13_test.go",
+        "function": "TestMayServe"
+      },
+      {
+        "kind": "test",
+        "file": "internal/decide/pr13_test.go",
+        "function": "TestDestructiveGuardPredicate"
+      }
+    ],
+    "QE13": [
+      {
+        "kind": "test",
+        "file": "internal/record/pr13_test.go",
+        "function": "TestReasonPairing"
+      },
+      {
+        "kind": "test",
+        "file": "internal/record/pr13_test.go",
+        "function": "TestNextActionsSealed"
+      }
     ]
   }
 }

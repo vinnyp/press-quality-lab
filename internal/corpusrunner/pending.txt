@@ -1,5 +1,3 @@
-case-002
-case-059
 case-069
 case-070
 case-071

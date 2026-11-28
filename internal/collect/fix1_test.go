@@ -211,6 +211,7 @@ func (s *ownInvocationSource) Observe(key observe.Key, spec observe.Spec) (obser
 func TestCollectUnconfinedHelpLeavesOtherInvocation(t *testing.T) {
 	// QO1, QD4, E-29: an unconfined help blocks QD4, while another generated check serves its own invocation.
 	ch := discoveryCheck("missing")
+	ch.Subject["runbooks"] = plan.Array{}
 	ch.Subject["declared_count"] = plan.Object{"placeholder": "count"}
 	other := ch
 	other.ID = "bare"

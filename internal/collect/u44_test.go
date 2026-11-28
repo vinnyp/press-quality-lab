@@ -24,11 +24,11 @@ func (s *servingSource) Observe(k observe.Key, _ observe.Spec) (observe.Run, err
 }
 
 func TestInvocationServing(t *testing.T) {
-	// QE8, QO1, QH8, QA7, QO6, QO7: steps serve once; probes retain their own keys.
-	for _, name := range []string{"Ordered", "UnconfinedInvocation", "GradeWide", "Placeholder", "DiscoveryWalk", "Destructive", "ChangedCopy", "Computation", "NoInvocation", "SourceFault"} {
+	// QS6, QE8, QO1, QH8, QA7, QA8, QO6, QO7: steps serve once; probes retain their own keys.
+	for _, name := range []string{"Ordered", "UnconfinedInvocation", "GradeWide", "Placeholder", "DiscoveryWalk", "Destructive", "ChangedCopy", "Computation", "NoInvocation", "SourceFault", "Unscheduled"} {
 		t.Run(name, func(t *testing.T) {
-			ch := plan.Check{ID: "synthetic", Subject: plan.Object{}, Preimage: plan.Object{"probe": nil, "predicate": "stdout_equals", "earlier": plan.Array{}, "words": plan.Array{"read"}, "expected": plan.Object{"literal": "value"}}, Keys: []plan.Object{{"words": plan.Array{"read"}, "computation": nil}}}
-			p := plan.Plan{Checks: []plan.Check{ch}}
+			ch := plan.Check{ID: "synthetic", Subject: plan.Object{"commands": plan.Array{}, "runbooks": plan.Array{}}, Preimage: plan.Object{"probe": nil, "predicate": "stdout_equals", "earlier": plan.Array{}, "words": plan.Array{"read"}, "expected": plan.Object{"literal": "value"}}, Keys: []plan.Object{{"words": plan.Array{"read"}, "computation": nil}}}
+			p := plan.Plan{Checks: []plan.Check{ch}, Runbooks: []plan.Runbook{{Steps: []plan.Step{{Key: ch.Keys[0], Required: []int{0}}}}}}
 			source := &servingSource{controls: goodControls(), run: cleanLoopRun()}
 			want := []observe.Key{map[string]any(ch.Keys[0])}
 			level := 8
@@ -41,10 +41,13 @@ func TestInvocationServing(t *testing.T) {
 				want = nil
 				level = 1
 			case "Placeholder":
-				ch.Subject = plan.Object{"binary": plan.Object{"placeholder": "supply binary"}}
+				ch.Subject["binary"] = plan.Object{"placeholder": "supply binary"}
 				want = nil
 				level = 2
+			case "Unscheduled":
+				p.Runbooks = nil
 			case "DiscoveryWalk":
+				p.Runbooks = nil
 				ch.Preimage["probe"] = "discovery"
 				ch.Subject["declared_count"] = strictjson.Number("0")
 				want = []observe.Key{map[string]any(plan.DiscoveryKey(plan.Array{}))}
@@ -65,6 +68,7 @@ func TestInvocationServing(t *testing.T) {
 				want = []observe.Key{map[string]any(p.Runbooks[0].Steps[0].Key), map[string]any(p.Checks[0].Keys[1])}
 			case "NoInvocation":
 				ch.Keys = nil
+				ch.Preimage["expected"] = plan.Object{"computation": loopComp("missing")}
 				defer func() {
 					if recover() == nil {
 						t.Fatal("missing own invocation accepted")
@@ -77,6 +81,17 @@ func TestInvocationServing(t *testing.T) {
 				p.Checks[0] = ch
 			}
 			got, err := Collect(p, source)
+			if name == "Destructive" || name == "Unscheduled" {
+				wantRule := "QA7"
+				if name == "Destructive" {
+					wantRule = "QS6"
+				}
+				var fault *plan.Fault
+				if !errors.As(err, &fault) || fault.Rule != wantRule || got != nil || len(source.keys) != 0 {
+					t.Fatal(got, err, source.keys)
+				}
+				return
+			}
 			if name == "SourceFault" {
 				if !errors.Is(err, source.err) || got != nil {
 					t.Fatal(got, err)

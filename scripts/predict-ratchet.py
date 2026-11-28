@@ -194,7 +194,7 @@ def contains_placeholder(subject):
                for k in ('class', 'writes'))
 
 
-def depends(subject, preimage):
+def depends(subject, preimage, scopes=()):
     """QS5's dependency list; a fact placeholder alone is a final override."""
     probe = preimage['probe']
     if placeholder(subject['binary']):
@@ -210,6 +210,16 @@ def depends(subject, preimage):
         words = secret.get('commands', []) if isinstance(secret, dict) else []
     else:
         words = [preimage['words']] if preimage['words'] is not None else []
+    # E-54: an unknown class leaves whole-book safety unknown outside destructive.
+    if preimage.get('runbook') is not None and 'destructive' not in scopes:
+        for book in subject.get('runbooks', []):
+            if book['name'] != preimage['runbook']:
+                continue
+            for step in book['steps']:
+                candidates = [c for c in subject['commands']
+                              if step['words'][:len(c['words'])] == c['words']]
+                if candidates and placeholder(max(candidates, key=lambda c: len(c['words']))['class']):
+                    return True
     # E-51: a captured step's command is also a dependency of the check.
     captures = (preimage.get('expected') or {}).get('computation', {}).get('captures', [])
     words = list(words)
@@ -239,8 +249,8 @@ def has_invocation(preimage):
                 preimage['parameters'].get('commands'))
 
 
-def trigger(level, subject, preimage):
-    return {2: lambda: depends(subject, preimage),
+def trigger(level, subject, preimage, scopes=()):
+    return {2: lambda: depends(subject, preimage, scopes),
             3: lambda: preimage['probe'] is not None,
             4: lambda: bool(preimage['earlier']),
             5: lambda: True,
@@ -302,7 +312,7 @@ def planted_secret_level(preimage, subject, host, runs):
     return 8
 
 
-def deciding_level(evidence, preimage, subject, host, recording, all_evidence, preimages):
+def deciding_level(evidence, preimage, subject, host, recording, all_evidence, preimages, scopes=()):
     reason = evidence['reason'] or evidence['failure_kind'] or evidence['outcome']
     runs = runs_for(preimage, recording)
     # E-15: grade-wide QO1 covers even checks that run nothing.
@@ -315,7 +325,7 @@ def deciding_level(evidence, preimage, subject, host, recording, all_evidence, p
             return 1
         return 7
     if reason == 'placeholder_unfilled':
-        return 2 if depends(subject, preimage) else 8
+        return 2 if depends(subject, preimage, scopes) else 8
     if reason == 'precondition_unmet':
         if preimage['probe'] != 'discovery':
             return 3 if preimage['probe'] is not None else 8
@@ -354,9 +364,9 @@ def deciding_level(evidence, preimage, subject, host, recording, all_evidence, p
     raise ValueError('unmapped evidence reason: ' + str(reason))
 
 
-def check_block(level, levels, subject, preimage):
+def check_block(level, levels, subject, preimage, scopes=()):
     for earlier in range(1, level):
-        applies = earlier == 1 or trigger(earlier, subject, preimage)
+        applies = earlier == 1 or trigger(earlier, subject, preimage, scopes)
         if earlier not in levels and applies:
             return f'level {earlier} ({LEVEL_RULE[earlier]}) trigger holds; exit 70'
     if level not in levels:
@@ -473,7 +483,7 @@ def pending_rules(built):
             }
 
 
-def check_ending(level, built, subject, preimage, gaps):
+def check_ending(level, built, subject, preimage, gaps, scopes=()):
     planning = {r for r in gaps if BUILD_PHASE[r] is None}
     if planning:
         return ending(70, planning, 'planning')
@@ -481,7 +491,7 @@ def check_ending(level, built, subject, preimage, gaps):
         keys = {r for r in gaps if BUILD_PHASE[r] == current}
         if keys:
             return ending(70, keys, 'observation')
-        applies = current == 1 or trigger(current, subject, preimage)
+        applies = current == 1 or trigger(current, subject, preimage, scopes)
         capabilities = names(built.get('builds', []))
         # QO7 combines planted-secret runs before their level-7 result is known.
         if (current == 7 and preimage['probe'] == 'planted_secret' and applies and
@@ -603,12 +613,12 @@ def predict_case(directory, built):
             check = evidence['check_id']
             preimage = preimages[check]
             level = deciding_level(evidence, preimage, subject, case['input']['host'],
-                                   recording, document['evidence'], preimages)
+                                   recording, document['evidence'], preimages, document['scope'])
             gaps = {r for r in common_gaps if BUILD_PHASE[r] is None or
                     (BUILD_PHASE[r] == 7 and has_invocation(preimage))}
             if has_computation(preimage) and not supports(names(built['builds']), 'QT5.computation_keys'):
                 gaps.add('QT5.computation_keys')
-            check_end = check_ending(level, built, subject, preimage, gaps)
+            check_end = check_ending(level, built, subject, preimage, gaps, document["scope"])
             if (check_end['phase'] == 'deciding' and level == 8 and
                     evidence['reason'] == 'placeholder_unfilled'):
                 # QS5's final override follows level 8, independently of level 2.
@@ -675,7 +685,7 @@ def predict(built, cases=None):
               'reason_to_level': REASON_LEVELS, 'built': built}
     if 'QS5.final_override' in names(built['builds']):
         result['placeholder_dependencies'] = {
-            d.name: {key: depends(load(d / 'subject.json'), pre)
+            d.name: {key: depends(load(d / 'subject.json'), pre, load(d / 'case.json')['input']['scope'])
                      for key, pre in load(d / 'preimages.json').items()}
             for d in sorted((cases or KIT / 'cases').iterdir())
             if (d / 'preimages.json').exists()}

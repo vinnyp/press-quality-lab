@@ -55,16 +55,16 @@ class PredictorTests(unittest.TestCase):
         directory = Path(__file__).with_name('ratchet')
         completed = subprocess.run(
             [sys.executable, '-I', '-B', str(Path(__file__).with_name('predict-ratchet.py')),
-             '--built', str(directory / 'pr12.json'), '--json'],
+             '--built', str(directory / 'pr13.json'), '--json'],
             check=True, capture_output=True, text=True)
         self.assertEqual(json.loads(completed.stdout),
-                         predictor.load(directory / 'pr12-prediction.json'))
+                         predictor.load(directory / 'pr13-prediction.json'))
         self.assertEqual(completed.stderr, '')
 
     def test_previous_predictions_unchanged(self):
         # QA8: the new token never alters an already blocked check.
         directory = Path(__file__).with_name('ratchet')
-        for phase in (6, 8, 9, 10):
+        for phase in (6, 8, 9, 10, 12):
             with self.subTest(phase=phase):
                 result = predictor.predict(predictor.load(directory / f'pr{phase}.json'))
                 actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
@@ -105,17 +105,32 @@ class PredictorTests(unittest.TestCase):
         for checks in ([], [{'id': 'check'}]):
             subject['runbooks'][0]['steps'][0]['checks'] = checks
             for field in ('class', 'writes'):
-                with self.subTest(field=field, required=bool(checks)):
-                    self.assertFalse(predictor.depends(subject, pre))
-                    changed = copy.deepcopy(subject)
-                    changed['commands'][1][field] = {'placeholder': 'Supply value'}
-                    self.assertTrue(predictor.depends(changed, pre))
-                    unrelated = copy.deepcopy(pre)
-                    unrelated['expected']['computation']['captures'] = []
-                    self.assertFalse(predictor.depends(changed, unrelated))
-                    changed['commands'][1][field] = subject['commands'][1][field]
-                    changed['commands'][0][field] = {'placeholder': 'Supply value'}
-                    self.assertFalse(predictor.depends(changed, pre))
+                for scopes in ((("destructive",), ("conformance",)) if field == "writes" else (("destructive",),)):
+                    with self.subTest(field=field, required=bool(checks), scopes=scopes):
+                        self.assertFalse(predictor.depends(subject, pre, scopes))
+                        changed = copy.deepcopy(subject)
+                        changed['commands'][1][field] = {'placeholder': 'Supply value'}
+                        self.assertTrue(predictor.depends(changed, pre, scopes))
+                        unrelated = copy.deepcopy(pre)
+                        unrelated['expected']['computation']['captures'] = []
+                        self.assertFalse(predictor.depends(changed, unrelated, scopes))
+                        changed['commands'][1][field] = subject['commands'][1][field]
+                        changed['commands'][0][field] = {'placeholder': 'Supply value'}
+                        self.assertFalse(predictor.depends(changed, pre, scopes))
+
+    def test_placeholder_runbook(self):
+        # QS5, QA7, E-54: unknown classes block whole books outside destructive.
+        subject = {'binary': 'bin/subject', 'seed': None, 'store': None,
+                   'commands': [{'words': ['read'], 'class': 'safe', 'writes': False},
+                                {'words': ['pending'], 'class': {'placeholder': 'class'}, 'writes': False}],
+                   'runbooks': [{'name': 'book', 'steps': [
+                       {'name': 'first', 'words': ['read'], 'checks': []}, {'name': 'last', 'words': ['pending'], 'checks': []}]}]}
+        pre = {'probe': None, 'words': ['read'], 'runbook': 'book'}
+        self.assertTrue(predictor.depends(subject, pre, ('conformance',)))
+        self.assertFalse(predictor.depends(subject, pre, ('conformance', 'destructive')))
+        subject['commands'][1]['class'] = 'safe'
+        subject['commands'][1]['writes'] = {'placeholder': 'writes'}
+        self.assertFalse(predictor.depends(subject, pre, ('conformance',)))
 
     def test_pr10_probe_tokens(self):
         # QP2–QP4, QP6–QP13, QO7: independent probe capabilities.
@@ -376,7 +391,7 @@ class PredictorTests(unittest.TestCase):
     def test_prediction_files_regenerate(self):
         # QS5, QO7: preserve earlier slices and PR9's independent prediction.
         directory = Path(__file__).with_name('ratchet')
-        for version in ('pr6', 'pr8', 'pr9', 'pr10'):
+        for version in ('pr6', 'pr8', 'pr9', 'pr10', 'pr12'):
             with self.subTest(version=version):
                 result = predictor.predict(predictor.load(directory / (version + '.json')))
                 actual = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()

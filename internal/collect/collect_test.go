@@ -71,7 +71,7 @@ func TestControlFault(t *testing.T) {
 	// QT4: a control that could not run cannot produce observations.
 	fault := errors.New("control fault")
 	s := &fake{err: fault}
-	got, err := Collect(plan.Plan{Checks: []plan.Check{{}}}, s)
+	got, err := Collect(plan.Plan{Checks: []plan.Check{{Preimage: plan.Object{"probe": "bare"}}}}, s)
 	if !errors.Is(err, fault) || got != nil || s.calls != 1 || s.observations != 0 {
 		t.Fatalf("%+v %v %+v", got, err, s)
 	}

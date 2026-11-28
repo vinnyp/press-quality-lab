@@ -17,11 +17,11 @@ func TestPlaceholderClassifiers(t *testing.T) {
 	var document struct {
 		Dependencies map[string]map[string]bool `json:"placeholder_dependencies"`
 	}
-	read(t, "../../scripts/ratchet/pr12-prediction.json", &document)
+	read(t, "../../scripts/ratchet/pr13-prediction.json", &document)
 	predicted := document.Dependencies
 	cases, checks := 0, 0
 	for name, predictions := range predicted {
-		_, _, s, pres := fixture(t, name)
+		c, _, s, pres := fixture(t, name)
 		if len(pres) != len(predictions) {
 			t.Fatal("preimage coverage", name)
 		}
@@ -36,7 +36,11 @@ func TestPlaceholderClassifiers(t *testing.T) {
 			if pre == nil {
 				t.Fatalf("%s missing preimage %s", name, id)
 			}
-			runner := levelTwoPlaceholder(s, pre)
+			scopes := []any{}
+			for _, scope := range c.Input.Scope {
+				scopes = append(scopes, scope)
+			}
+			runner := levelTwoPlaceholder(s, pre, scopes...)
 			if runner != want {
 				t.Fatalf("%s %s: runner=%v predictor=%v", name, id, runner, want)
 			}
@@ -122,5 +126,27 @@ func TestCapturePlaceholderClassifier(t *testing.T) {
 		if levelTwoPlaceholder(s, pre) {
 			t.Fatal("positive control blocked", required)
 		}
+	}
+}
+
+func TestPlaceholderRunbookClassifier(t *testing.T) {
+	// QS5, E-54: class placeholders block the whole book only outside destructive.
+	for _, name := range []string{"Outside", "Inside", "Writes"} {
+		t.Run(name, func(t *testing.T) {
+			pending := map[string]any{"words": []any{"pending"}, "class": map[string]any{"placeholder": "class"}, "writes": false}
+			s := map[string]any{"commands": []any{map[string]any{"words": []any{"read"}, "class": "safe", "writes": false}, pending}, "runbooks": []any{map[string]any{"name": "book", "steps": []any{map[string]any{"words": []any{"read"}}, map[string]any{"words": []any{"pending"}}}}}}
+			pre := map[string]any{"runbook": "book", "words": []any{"read"}}
+			scopes := []any{"conformance"}
+			if name == "Inside" {
+				scopes = append(scopes, "destructive")
+			}
+			if name == "Writes" {
+				pending["class"] = "safe"
+				pending["writes"] = map[string]any{"placeholder": "writes"}
+			}
+			if got := levelTwoPlaceholder(s, pre, scopes...); got != (name == "Outside") {
+				t.Fatal(got)
+			}
+		})
 	}
 }
