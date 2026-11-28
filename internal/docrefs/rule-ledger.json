@@ -393,6 +393,178 @@
         "file": "internal/record/pr13_test.go",
         "function": "TestNextActionsSealed"
       }
+    ],
+    "QD1": [
+      {
+        "kind": "test",
+        "file": "internal/collect/pr14_test.go",
+        "function": "TestPR14DiscoveryCarried"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/pr14_test.go",
+        "function": "TestPR14DiscoveryEvidence"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestDisplayRows"
+      }
+    ],
+    "QD2": [
+      {
+        "kind": "test",
+        "file": "internal/collect/discovery_test.go",
+        "function": "TestDiscoveryBounds"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestDisplayRows"
+      }
+    ],
+    "QD3": [
+      {
+        "kind": "test",
+        "file": "internal/collect/discovery_test.go",
+        "function": "TestDiscoveryCountAndPriority"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/discovery_test.go",
+        "function": "TestDiscoveryMissingAndOverride"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestDisplayRows"
+      }
+    ],
+    "QD4": [
+      {
+        "kind": "test",
+        "file": "internal/collect/discovery_test.go",
+        "function": "TestDiscoveryMissingAndOverride"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/pr14_test.go",
+        "function": "TestPR14DiscoveryEvidence"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestDisplayRows"
+      }
+    ],
+    "QD6": [
+      {
+        "kind": "test",
+        "file": "internal/scorecard/readme_test.go",
+        "function": "TestREADME"
+      }
+    ],
+    "QE12": [
+      {
+        "kind": "test",
+        "file": "internal/record/pr13_test.go",
+        "function": "TestNextActionsSealed"
+      },
+      {
+        "kind": "test",
+        "file": "internal/record/pr14_test.go",
+        "function": "TestPR14Interim"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/pr14_test.go",
+        "function": "TestPR14InterimStored"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestDisplayRows"
+      }
+    ],
+    "QE14": [
+      {
+        "kind": "test",
+        "file": "internal/grade/grade_test.go",
+        "function": "TestJudgeAuthority"
+      },
+      {
+        "kind": "test",
+        "file": "internal/corpusrunner/agreement_test.go",
+        "function": "TestAgreementControls"
+      },
+      {
+        "kind": "test",
+        "file": "internal/corpusrunner/runner_test.go",
+        "function": "TestCorpus"
+      }
+    ],
+    "QE21": [
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestAnchorRows"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/readme_test.go",
+        "function": "TestREADME"
+      }
+    ],
+    "QP7": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr10_b2_test.go",
+        "function": "TestStoreProbeRules"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/pr14_test.go",
+        "function": "TestPR14InterimStored"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestDisplayRows"
+      }
+    ],
+    "QS5": [
+      {
+        "kind": "test",
+        "file": "cmd/pql/create_test.go",
+        "function": "TestCreate"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/discovery_test.go",
+        "function": "TestDiscoveryOverrideAfterAllChecks"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestDisplayRows"
+      }
+    ],
+    "QS7": [
+      {
+        "kind": "test",
+        "file": "internal/grade/pr8_fix1_test.go",
+        "function": "TestPR8E9Order"
+      },
+      {
+        "kind": "test",
+        "file": "internal/grade/pr14_test.go",
+        "function": "TestPR14InterimStored"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scorecard/fixtures_test.go",
+        "function": "TestDisplayRows"
+      }
     ]
   }
 }
