@@ -29,13 +29,13 @@ The build reports which call sites it changed and why. A scorecard twin is added
 
 **Every verdict, state, reason, count and exit code comes from the stored record** (QE14, GR3). The scorecard renders from the record document as `internal/grade` serialises it for storage. Nothing in `internal/scorecard` calls the judge, re-derives a state, or maps an exit code to a word.
 
-Two derived numbers are read from the judge output's own arrays: the number of held checks, and the number of checks with each result. Counting entries is reading the judge's output. The judge's `counts`, `{xfail, xpass}`, are printed as the judge wrote them. Neither enters any other count (rulebook §8).
+Two derived numbers are read from the judge output's own arrays: the number of held checks, and the number of checks with each result other than `out_of_scope`. Counting entries is reading the judge's output. The judge's `counts`, `{xfail, xpass}`, are printed as the judge wrote them. Neither enters any other count (rulebook §8).
 
 **The names go in the evidence's `observed`.** This replaces the first draft's `Details` side channel. The judge contract says `expected` and `observed` are "carried for the scorecard; the judge decides nothing by them" (`evidence-record.md`, Part 2). QE19 leaves them out of the comparison, and the corpus runner reads `observed` only from the sealed case input, never from a stored record.
 
 **Today a check's `observed` is an array** of `{stdout, stderr}` stream pairs, one for each invocation, or `null` when the check has none (`internal/grade/evidence.go`). It becomes an object:
 - **`streams`:** today's array, unchanged.
-- **`invocations`:** an array aligned with `streams`, one entry for each invocation, holding its words, its runbook and step, or a computation's argument list as declared, before `{SEED}` and `{SUBJECT_DIR}` are replaced, so no workspace path is stored. A check that is not observed and names the invocation it would have used carries that entry with an empty `streams` (QT6).
+- **`invocations`:** an array aligned with the check's invocation targets, in their order, one entry for each invocation, holding its words, its runbook and step, or a computation's argument list as declared, before `{SEED}` and `{SUBJECT_DIR}` are replaced, so no workspace path is stored. A check that is not observed and names the invocation it would have used carries that entry with `null` in `streams` at the same index (QT6). The discovery check carries no `invocations`, since `discovery` covers it.
 
   A computation's standard error (QA4: "kept for the scorecard") is already its stream pair's `stderr`, so nothing is copied.
 - **On the discovery check only:**
@@ -48,9 +48,11 @@ Two derived numbers are read from the judge output's own arrays: the number of h
 
 The build lists every test that reads `observed` as an array and moves it, among them `pr12_evidence_test.go` and `pr10_fix1_test.go`.
 
-**`decide.Discovery`'s single `Bound` flag is split into two,** one for the request bound and one for the depth bound. Each is set only where the walk actually stopped on it: the request bound when the walk had made 4,096 requests and more remained, the depth bound when the next request would have passed 64 words. Trimming the queue against the remaining budget sets neither on its own. A fixture stops on depth with more than 4,096 names queued, and must report the depth bound only. **`Undeclared` gains its name list.** The found-names preview keeps its caps of 512 entries and 64 KiB. The undeclared list is held to 4,096 entries and 1 MiB. `undeclared_count` is always exact, and the scorecard says how many more were found than it names. A subject that defines more undeclared commands than that has its extra names counted, not named. That is a stated limit against QD3's "each", below.
+**`decide.Discovery`'s single `Bound` flag is split into two,** one for the request bound and one for the depth bound. The depth bound is set only when the walk stopped because the next request would have passed 64 words. The request bound is set when the walk did not stop on depth and any request was trimmed from the queue or remained at the end. That keeps today's decision exactly: `decide` still reads the two flags together, so either one gives QD2's `precondition_unmet`. Two fixtures:
+- a walk trimmed at the budget and exhausted at exactly 4,096 requests is not observed with `precondition_unmet`, and reports the request bound;
+- a walk that stops on depth with more than 4,096 names queued reports the depth bound only. **`Undeclared` gains its name list.** The found-names preview keeps its caps of 512 entries and 64 KiB. The undeclared list is held to 4,096 entries and 1 MiB. `undeclared_count` is always exact, and the scorecard says how many more were found than it names. A subject that defines more undeclared commands than that has its extra names counted, not named. That is a stated limit against QD3's "each", below.
 
-**The scorecard renders from the record before QE10's bound.** QE10 keeps the longest prefix of the evidence values, in check-id order, that fits in 4 MiB, and replaces each later value whole with its digest. A real CLI's discovery `observed`, with every help stream, can pass that bound by itself and lose its names. So `internal/grade` renders from the masked record document after masking and before QE10's bound replaces any evidence value.
+**The scorecard renders from the record before QE10's bound.** QE10 keeps the longest prefix of the evidence values, in check-id order, that fits in 4 MiB, and replaces each later value whole with its digest. A real CLI's discovery `observed`, with every help stream, can pass that bound by itself and lose its names. So `record.Build` takes a copy of each check's masked `expected` and `observed`, keyed by check id, between masking and QE10's bound, because the bound replaces values inside the shared evidence maps. The copy's type holds only those two fields. The renderer reads names only from that copy, and everything else from the stored document.
 
 The verdicts, states, reasons, counts and exit code it prints are all in `judge_output` and the record's top-level fields, which the bound never touches. They are the stored record's own values (QE14). Only the names can differ: the stored record and `--json` carry a digest wherever QE10 replaced a value, and the scorecard still names everything. A fixture lets an earlier check use up the 4 MiB, and asserts:
 - the scorecard still names the placeholders, the undeclared commands and the failed computation;
@@ -103,7 +105,7 @@ The scorecard is plain text, in this order. The renderer is total: a field it ca
 5. **Each check whose result is `unobserved`, `failed` or `failed_expected`,** under its dimension. An `out_of_scope` check is neither listed nor counted (rulebook §8). It shows:
    - its result, and its reason when the judge wrote one (a failed check's is null);
    - its next action, when `next_actions` holds one;
-   - its `observed.invocation`, or `discovery`, or the probe's name;
+   - its `observed.invocations`, or `discovery`, or the probe's name;
    - its full id, so that the defect's check is named (AE8).
 
    Held checks are counted, not listed.
@@ -252,9 +254,10 @@ Each move cites a proof test whose first body comment line names the rule, and r
 
 ## Stated limits of this slice
 
-- **The scorecard's text is not a stable interface.** Scripts and agents use `--json`, which carries every name the scorecard shows. The README and `--help` say so.
+- **The scorecard's text is not a stable interface.** Scripts and agents use `--json`, which carries every name the scorecard shows, up to QE10's cap, as the next item says. The README and `--help` say so.
 - **`Escape` is not injective,** as above.
 - **The names in the stored record and in `--json`** are lost wherever QE10's 4 MiB cap replaced a value with its digest. The scorecard, rendered before the cap, keeps them.
-- **More than 4,096 undeclared commands, or 1 MiB of their names,** are counted but not all named, against QD3's "each". No realistic subject reaches it, and the count is exact.
+- **More than 4,096 undeclared commands, or 1 MiB of their names,** are counted but not all named, against QD3's "each". No realistic subject reaches it, and the count is exact. The owner accepted this cap as a stated limit on 2026-11-28, and the README states it.
+- **A second signal** during the funnel ends the run at once with exit 70, before the scorecard renders, as `grade.go` does today.
 - **The first private scoring round,** on 2026-12-23, is listed in U18's verification. The owner ruled on 2026-11-28 that PR14 merges before it. The round scores the stored record and the exit code. Its counts are reported to the owner as counts only, when it runs. It compares only QE19's fields, which this slice does not change.
 - **Only fixtures prove some displays:** judge errata E-4 item 2 (`tool-description-efficacy`), the comparison display and QD2's bounds. No conformance case reaches them.

@@ -46,3 +46,16 @@
 | 17 | Two runs of one case share a trace and a store | agy (Major) | Confirmed against `readTrace` and the store's hash names | A trace and a store for each mode, compared byte for byte |
 | 18 | The note was said to move QE18, QA4 and QA6 | agy (Major) | Refuted: the note lists QE18 as staying, and moves neither QA4 nor QA6 | No change |
 | 19 | Minors: the bound flags' attribution, one-to-one pairing and `sub_label` in the agreement check, several post-judge faults, `env_names` masking, a refused anchor's reason, checks with a null reason or out of scope, `computation_stderr` duplicating a stream, the argument list as declared, always rendering in the funnel, `-shm` conditional on a path store, `check.sh`'s ratchet file | interface, agy | Confirmed | Each fixed in the note |
+
+## Round 3 (confirmation, note at 4b9b609)
+
+**Verdict:** interface reviewer, no Blocker, one Major. Both round 2 Majors are fixed, and it confirmed that rendering before the bound cannot make any verdict, state, reason, count or exit code differ from the stored record's.
+
+| # | finding | verify | disposition |
+|---|---|---|---|
+| 20 | Splitting the bound flag as written could leave neither flag set after a trimmed walk. QD2's `precondition_unmet` would then be skipped, and a CLI with more than 4,096 commands would go red | Confirmed against `discovery.go:106,183-191` and `discoveryLevel8` | The request bound is set whenever the walk did not stop on depth and a request was trimmed or remained. The decision reads both flags together. Two fixtures |
+| 21 | The copy taken before the bound needs a defined point and type, because the bound replaces values in the shared maps | Confirmed | `record.Build` copies `expected` and `observed` between masking and the bound, in a type holding only those two fields |
+| 22 | The undeclared-names cap departs from QD3's "each" | Confirmed | Put to the owner, who accepted it as a stated limit on 2026-11-28 |
+| 23 | Nits: `invocations` alignment, a stale key name, two contradictory sentences, a second signal in the funnel | Confirmed | Fixed |
+
+The design review is closed. The bound-flag rule is checked again in the build review, by its two fixtures.
