@@ -20,6 +20,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
 	"github.com/vinnyp/press-quality-lab/internal/record"
+	"github.com/vinnyp/press-quality-lab/internal/scorecard"
 	"github.com/vinnyp/press-quality-lab/internal/store"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"github.com/vinnyp/press-quality-lab/internal/subject"
@@ -33,7 +34,7 @@ type Options struct {
 	SubjectFile               string
 	Scope                     []string
 	Baseline, Retired, Accept string
-	Anchor, Scripted          bool
+	Anchor, Scripted, JSON    bool
 }
 
 // Error carries a classified failure without exiting the process.
@@ -134,6 +135,9 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	var waitCollector func() error
 	groupsEnded := true
 	var workspace *throwaway.Workspace
+	var decided strictjson.Object
+	var display record.EvidenceCopy
+	var postJudgeFaults []string
 	d = defaults(d)
 	if d.Masker == nil {
 		d.Masker = record.NewMasker(nil, nil)
@@ -164,6 +168,9 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	defer func() {
 		add := func(rule string, cause error) {
 			if cause != nil {
+				if decided != nil && rule != "QE20" && rule != "QH23" {
+					postJudgeFaults = append(postJudgeFaults, d.Masker.Mask(cause.Error()))
+				}
 				err = errors.Join(failure(70, rule, cause.Error()), err)
 				code = 70
 			}
@@ -211,7 +218,14 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 				}
 			}
 			if !groupsEnded {
-				_, reportErr := io.WriteString(out, "cleanup failed; directory left behind: "+Escape(workspace.Path())+"\n")
+				cleanup := d.Masker.Mask("cleanup failed; directory left behind: " + workspace.Path())
+				if decided != nil {
+					postJudgeFaults = append(postJudgeFaults, cleanup)
+				}
+				var reportErr error
+				if decided == nil || o.JSON {
+					_, reportErr = io.WriteString(d.Stderr, Escape(cleanup)+"\n")
+				}
 				add("QE20", reportErr)
 			}
 		}
@@ -231,6 +245,18 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 				classified = classify(err)
 				err = classified
 				code = classified.Code
+			}
+		}
+		if decided != nil {
+			var printErr error
+			if o.JSON {
+				_, printErr = record.RawWriter(out).Write(terminalJSON(strictjson.Write(decided["judge_output"])))
+			} else {
+				printErr = scorecard.Render(record.RawWriter(out), decided, display, Escape, postJudgeFaults)
+			}
+			if printErr != nil {
+				code = 70
+				err = errors.Join(err, printErr)
 			}
 		}
 	}()
@@ -392,7 +418,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if !markersOK {
 		return 70, failure(70, "QE16", "parsed subject shape lost")
 	}
-	input, err := record.Build(record.Input{Plan: p, Results: results, Request: request, Scope: scopes, SubjectFacts: facts, Markers: markers, Scripted: o.Scripted, Masker: d.Masker})
+	input, names, err := record.Build(record.Input{Plan: p, Results: results, Request: request, Scope: scopes, SubjectFacts: facts, Markers: markers, Scripted: o.Scripted, Masker: d.Masker})
 	if err != nil {
 		return 70, err
 	}
@@ -418,17 +444,20 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		}
 		r.SeedDigest = &digest
 	}
+	r.NextActions, r.OfflineSettings, r.BookkeepingExcluded = record.Interim(s, output, d.Masker)
 	r.BinaryDigest = in.BinaryDigest
 
 	displayPath := d.Masker.Mask(canonical)
 	r.DisplaySubjectFilePath = &displayPath
-	storeErr := persist(d, r)
 	if !rejected {
-		if _, err := record.RawWriter(out).Write(terminalJSON(strictjson.Write(output))); err != nil {
-			return 70, err
-		}
+		decided = r.Document()
+		display = names
 	}
+	storeErr := persist(d, r)
 	if storeErr != nil {
+		if decided != nil {
+			postJudgeFaults = append(postJudgeFaults, d.Masker.Mask("record was not stored"))
+		}
 		return 70, failure(70, "QE17", "record was not stored")
 	}
 	if rejected {

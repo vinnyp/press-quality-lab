@@ -22,7 +22,7 @@ func level3(ch plan.Check, c observe.Controls, e Evidence) Result {
 				return Result{}
 			}
 		}
-		if d.Ran && !d.Bound && !d.Unreadable && d.invocationResult(ch, c).Level == 0 && d.missing(ch) {
+		if d.Ran && !d.RequestBound && !d.DepthBound && !d.Unreadable && d.invocationResult(ch, c).Level == 0 && d.missing(ch) {
 			return Result{Level: 3, Outcome: NotObserved, Reason: "precondition_unmet"}
 		}
 	}

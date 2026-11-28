@@ -17,6 +17,7 @@ type Check struct {
 	Plan        plan.Check
 	Result      decide.Result
 	Invocations []observe.Invocation
+	Discovery   *decide.Discovery
 }
 
 // Collect resolves every check, retaining sentinels as values for inspection.
@@ -139,6 +140,9 @@ func collectPrepared(p plan.Plan, source *homeSource, resolve func(plan.Check, o
 		ch := p.Checks[i]
 		result := resolve(ch, controls, facts)
 		checks[i] = Check{Plan: ch, Result: result, Invocations: facts.Invocations}
+		if ch.Preimage["probe"] == "discovery" {
+			checks[i].Discovery = discovery
+		}
 		earlier[ch.ID] = result
 	}
 	// QP1's probes keep their existing serving procedure and order.

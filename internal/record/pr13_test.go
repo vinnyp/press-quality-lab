@@ -33,7 +33,7 @@ func TestReasonPairing(t *testing.T) {
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			in := Input{Plan: plan.Plan{Checks: []plan.Check{{ID: "check"}}}, Results: map[string]Resolution{"check": {Result: decide.Result{Outcome: row.outcome, Reason: row.reason}}}}
-			doc, err := Build(in)
+			doc, _, err := Build(in)
 			if !row.valid {
 				var fault *Fault
 				if !errors.As(err, &fault) || fault.Rule != "QE13" {
@@ -46,7 +46,7 @@ func TestReasonPairing(t *testing.T) {
 		})
 	}
 	for _, reason := range decide.Reasons() {
-		_, err := Build(Input{Plan: plan.Plan{Checks: []plan.Check{{ID: "check"}}}, Results: map[string]Resolution{"check": {Result: decide.Result{Outcome: decide.NotObserved, Reason: reason}}}})
+		_, _, err := Build(Input{Plan: plan.Plan{Checks: []plan.Check{{ID: "check"}}}, Results: map[string]Resolution{"check": {Result: decide.Result{Outcome: decide.NotObserved, Reason: reason}}}})
 		if err != nil {
 			t.Fatal(reason, err)
 		}

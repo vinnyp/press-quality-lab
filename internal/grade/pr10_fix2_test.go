@@ -20,6 +20,7 @@ func TestFix2TerminalJSON(t *testing.T) {
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			o, d, saved := fixture(t)
+			o.JSON = true
 			calls := 0
 			raw := []byte(`{"exit_code":0,"outcome":"graded","marker":"` + row.value + `"}`)
 			d.Judge = func(b []byte) ([]byte, int) {

@@ -44,12 +44,14 @@ func TestImmutableHardLinkCleanup(t *testing.T) {
 		}
 		return w, unix.Stat(outside, &before)
 	}
-	var output bytes.Buffer
+	var output, diagnostic bytes.Buffer
+	o.JSON = true
+	d.Stderr = &diagnostic
 	code, err := Run(o, d, &output)
 	if code != 70 || err == nil {
 		t.Fatalf("cleanup: %d %v", code, err)
 	}
-	if !strings.Contains(output.String(), "cleanup failed; directory left behind: "+Escape(w.Path())+"\n") {
+	if !strings.Contains(diagnostic.String(), "cleanup failed; directory left behind: "+Escape(w.Path())+"\n") {
 		t.Fatalf("directory unnamed: %q", output.String())
 	}
 	var report bytes.Buffer

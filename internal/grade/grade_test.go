@@ -123,6 +123,7 @@ func TestScopeOrdering(t *testing.T) {
 func TestJudgeAuthority(t *testing.T) {
 	// QE14, QE16, KTD16: output, stored document and exit follow the judge.
 	o, d, saved := fixture(t)
+	o.JSON = true
 	calls := 0
 	d.Judge = func(b []byte) ([]byte, int) {
 		calls++
@@ -155,6 +156,7 @@ func TestJudgeAuthority(t *testing.T) {
 func TestRejectedRecord(t *testing.T) {
 	// QE15, E-5: preserve a schema-invalid input rejected after collection; no verdict.
 	o, d, _ := fixture(t)
+	o.JSON = true
 	root := filepath.Join(t.TempDir(), "store")
 	d.Write = nil
 	d.StoreRoot = func() (string, error) { return root, nil }
@@ -372,6 +374,7 @@ func TestStoreFailureOutput(t *testing.T) {
 	for _, row := range []string{"Write", "Resolve"} {
 		t.Run(row, func(t *testing.T) {
 			o, d, _ := fixture(t)
+			o.JSON = true
 			if row == "Write" {
 				d.Write = func(store.Record) error { return errors.New("write") }
 			} else {

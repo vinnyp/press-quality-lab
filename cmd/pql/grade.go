@@ -13,6 +13,7 @@ import (
 
 // commandOptions is the parsed request handed to the pipeline.
 type commandOptions struct {
+	JSON        bool
 	Masker      *record.Masker
 	Output      io.Writer
 	Diagnostic  io.Writer
@@ -65,7 +66,7 @@ func executeCollection(o commandOptions, anchor bool) error {
 	if d.Stderr == nil {
 		d.Stderr = o.Diagnostic
 	}
-	code, err := grade.Run(grade.Options{SubjectFile: o.SubjectFile, Scope: o.Scope, Baseline: o.Baseline, Retired: o.Retired, Accept: o.Accept, Anchor: anchor, Scripted: o.Verifier == "scripted"}, d, o.Output)
+	code, err := grade.Run(grade.Options{SubjectFile: o.SubjectFile, Scope: o.Scope, Baseline: o.Baseline, Retired: o.Retired, Accept: o.Accept, Anchor: anchor, JSON: o.JSON, Scripted: o.Verifier == "scripted"}, d, o.Output)
 	return &collectionExit{code, err}
 }
 
@@ -81,7 +82,7 @@ func newCollectionCommand(name string, maskers ...*record.Masker) *cobra.Command
 	command := &cobra.Command{
 		Use:   name + " <subject-file>",
 		Short: "Collect evidence for " + name,
-		Long:  "Collect evidence for " + name + ".\n\n" + grade.ComputationWarning,
+		Long:  "Collect evidence for " + name + ". The text output is not a stable interface; use --json for scripts and agents.\n\n" + grade.ComputationWarning,
 		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return &usageError{errors.New("exactly one subject-file is required")}
@@ -110,6 +111,7 @@ func newCollectionCommand(name string, maskers ...*record.Masker) *cobra.Command
 		command.Flags().StringVar(&options.Retired, "retired", "", "Retired file")
 		command.Flags().StringVar(&options.Accept, "accept", "", "Acceptance file")
 	}
+	command.Flags().BoolVar(&options.JSON, "json", false, "Print the judge output as one JSON line instead of the scorecard")
 	addTestEntryFlags(command, &options)
 	return command
 }

@@ -198,12 +198,14 @@ func TestCleanupFailureIsNamedAndRetried(t *testing.T) {
 	if os.Geteuid() == 0 {
 		t.Fatal("cleanup permission fixture requires a non-root user")
 	}
-	var output bytes.Buffer
+	var output, diagnostic bytes.Buffer
+	o.JSON = true
+	d.Stderr = &diagnostic
 	code, err := Run(o, d, &output)
 	if code != 70 || err == nil || !strings.Contains(err.Error(), w.Path()) {
 		t.Fatalf("%d %v", code, err)
 	}
-	if !strings.Contains(output.String(), "cleanup failed; directory left behind: "+Escape(w.Path())+"\n") {
+	if !strings.Contains(diagnostic.String(), "cleanup failed; directory left behind: "+Escape(w.Path())+"\n") {
 		t.Fatalf("scorecard does not name directory: %q", output.String())
 	}
 	got, readErr := os.ReadFile(filepath.Join(w.Path(), "process.json"))

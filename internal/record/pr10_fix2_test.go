@@ -46,7 +46,7 @@ func TestFix2BoundedWriter(t *testing.T) {
 func TestFix2Collision(t *testing.T) {
 	// QE10, QE18: a masked key collision faults rather than losing a member.
 	p := plan.Plan{Checks: []plan.Check{{ID: "check", Required: plan.Object{}, Preimage: plan.Object{}}}}
-	_, err := Build(Input{Plan: p, Results: map[string]Resolution{"check": {Result: decide.Result{Outcome: "held"}, Expected: Object{"abcdefgh": 1, "ijklmnop": 2}}}, Masker: NewMasker(nil, []string{"abcdefgh", "ijklmnop"})})
+	_, _, err := Build(Input{Plan: p, Results: map[string]Resolution{"check": {Result: decide.Result{Outcome: "held"}, Expected: Object{"abcdefgh": 1, "ijklmnop": 2}}}, Masker: NewMasker(nil, []string{"abcdefgh", "ijklmnop"})})
 	if err == nil || err.Error() != "QE10: record cannot be built" {
 		t.Fatalf("collision %v", err)
 	}

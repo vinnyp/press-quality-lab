@@ -23,7 +23,7 @@ func TestAuthoredEvidence(t *testing.T) {
 	if err != nil || r.Expected != strictjson.Number("7") || r.TargetSize != size || r.PreconditionObserved != true {
 		t.Fatal(r, err)
 	}
-	streams, ok := r.Observed.(plan.Array)
+	streams, ok := subjectObject(r.Observed)["streams"].(plan.Array)
 	if !ok || len(streams) != 1 {
 		t.Fatal(r.Observed)
 	}

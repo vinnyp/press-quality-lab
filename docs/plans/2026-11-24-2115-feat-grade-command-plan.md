@@ -278,10 +278,10 @@ Phase 4 then runs a real, untrusted CLI on the owner's machine. The confinement,
   - **Validation.** A `check.sh` step then validates those files against `record.schema.json` and `baseline.schema.json` with the pinned Python `jsonschema`. It fails unless their number equals the number of scripted judge-checked cases off the pending list, which it counts itself from the corpus and the list, never from the runner. It also fails on any record the judge rejected, since no corpus case leads to one (`CASES.md`).
   - The step sits outside the span `scripts/check-draft.py` reads.
 - KTD16. **A run's bytes take one path, owned by `internal/grade`.**
-  - **Order.** Build, mask (QE18), bound (QE10, using the contract writer's length function), serialise once, judge, then store those exact bytes. The scorecard renders from the stored record.
+  - **Order.** Build, mask (QE18), bound (QE10, using the contract writer's length function), serialise once, judge, then store those exact bytes. The scorecard renders from the stored record, with the evidence's names as they stood before QE10's bound. (Amended 2026-11-28 by the PR14 design note: QE10's cap can replace a large discovery `observed` with its digest, and the names would then be lost. Every verdict, state, reason, count and exit code is still the stored record's own.)
   - **Exit-code cross-check.** The run takes its exit code from the judge output's `exit_code` field. If that differs from the code the judge function returned, the run exits 70.
   - **Masking.** It applies to captured bytes before any head is cut, so a value that straddles the 64 KiB head edge or QE10's digest cut is masked. One §4 encoder serves masking and the leak scan.
-  - **Interim fields.** Until U18, the stored record's `next_actions`, `offline_settings` and `bookkeeping_excluded` are empty lists, which no case compares (QE12).
+  - **Interim fields.** Until U18, the stored record's `next_actions`, `offline_settings` and `bookkeeping_excluded` are empty lists, which no case compares (QE12). U18 fills them, as the PR14 design note says.
   - **Escaping.** Every value from the subject or the subject file passes one escaping function before it reaches a terminal or standard stream: in the scorecard, in an error and in the exit funnel, whether or not the stream is a terminal.
     - It covers C0, DEL, C1, ESC, bidirectional controls, other format characters, U+2028, U+2029 and the tag characters.
     - Masking runs before escaping.
