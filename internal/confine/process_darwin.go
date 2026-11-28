@@ -64,44 +64,14 @@ func fingerprintOf(path string) (observe.CopySnapshot, error) {
 	return observe.CopySnapshot{Entries: names, Inode: s.Ino, Mode: uint32(s.Mode), Size: s.Size, MtimeSeconds: s.Mtimespec.Sec, MtimeNanos: s.Mtimespec.Nsec, CtimeSeconds: s.Ctimespec.Sec, CtimeNanos: s.Ctimespec.Nsec, Digest: digest}, nil
 }
 func makeCopy(run, source string) (privateCopy, error) {
-	// U40 will move run-directory entry ownership to internal/throwaway.
-	dir, err := os.MkdirTemp(run, "executable-")
-	if err != nil {
-		return privateCopy{}, err
-	}
-	dir, err = filepath.Abs(dir)
-	if err != nil {
-		return privateCopy{}, err
-	}
-	dir, err = filepath.EvalSymlinks(dir)
-	if err != nil {
-		return privateCopy{}, err
-	}
-	path := filepath.Join(dir, "program")
-	in, err := os.OpenFile(source, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
-	if err != nil {
-		return privateCopy{}, err
-	}
-	info, statErr := in.Stat()
-	if statErr != nil {
-		return privateCopy{}, errors.Join(statErr, in.Close())
-	}
-	if !info.Mode().IsRegular() {
-		return privateCopy{}, errors.Join(fmt.Errorf("executable is not regular"), in.Close())
-	}
-	out, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, info.Mode().Perm())
-	if err != nil {
-		return privateCopy{}, errors.Join(err, in.Close())
-	}
-	_, err = io.Copy(out, in)
-	err = errors.Join(err, out.Chmod(info.Mode().Perm()))
-	err = errors.Join(err, in.Close(), out.Close())
+	path, err := throwaway.CopyExecutable(run, source)
 	if err != nil {
 		return privateCopy{}, err
 	}
 	fp, err := fingerprintOf(path)
 	return privateCopy{path, fp}, err
 }
+
 func (c privateCopy) unchanged() bool {
 	entries, err := os.ReadDir(filepath.Dir(c.path))
 	if err != nil || len(entries) != 1 || entries[0].Name() != "program" {
