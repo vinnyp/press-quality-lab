@@ -77,7 +77,7 @@ The stored record's `next_actions` stays empty until U18 fills it and the scorec
   - the W1 to W3 set-aside reasons;
   - the anchor's refusals.
 - **Where a next action's reason comes from.** It comes from the judge's output (QE14), for checks and dimensions alike. The judge can decide a check differently from the evidence: C1 gives `no_evidence`, C3 gives `empty_target` (`case-011`) and C4 gives `precondition_unmet` (`case-093`). So U18 reads both kinds of reason from the judge's output, and that is outside this slice.
-- **A step whose class is a placeholder** is ruled by E-54, which the build review raised. In a scope without `destructive`, its whole runbook depends on the placeholder: no step of it runs, and each required check is `placeholder_unfilled` at level 2. In a destructive scope it runs as any runbook does, and level 2 stops the placeholder step's own checks. Level 2, `StepRuns`, `MayServe`, the trace reader and the prediction script's `depends()` all apply it.
+- **A step whose class is a placeholder** is ruled by E-54, which the build review raised. In a scope without `destructive`, its whole runbook depends on the placeholder: no step of it runs, and each required check is `placeholder_unfilled` at level 2. In a destructive scope it runs as any runbook does, and level 2 stops the placeholder step's own checks. Level 2, `StepRuns`, `MayServe`, the trace reader and the prediction script's `depends()` all apply it. `StepRuns`' own test is a second brake behind level 2, which it calls with the same check, so dropping either one alone turns no test red; dropping both does.
 
 ## Predicted ratchet set
 

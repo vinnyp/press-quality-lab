@@ -170,9 +170,11 @@ func TestServeSafetyBrakes(t *testing.T) {
 			cmd := plan.Object{"words": plan.Array{"different"}, "class": "safe", "writes": false}
 			sub["commands"] = append(discoveryArray(sub["commands"]), cmd)
 			if name != "Destructive" {
-				// E-54 must allow the book so only the serve placeholder brake refuses it.
-				p.Scopes = append(p.Scopes, "destructive")
-				p.Checks[0].Scopes = p.Scopes
+				if name == "ClassPlaceholder" {
+					// E-54 must allow the book so only the serve placeholder brake refuses it.
+					p.Scopes = append(p.Scopes, "destructive")
+					p.Checks[0].Scopes = p.Scopes
+				}
 				// Preimage dependencies remain safe; a corrupt schedule must still never
 				// serve a placeholder key even when level 2 cannot see that corruption.
 				p.Runbooks[0].Steps[0].Key["words"] = plan.Array{"different"}
@@ -210,14 +212,26 @@ func TestServeSafetyBrakes(t *testing.T) {
 
 func TestPlaceholderUncheckedStep(t *testing.T) {
 	// QS5, QA7, E-49, E-54: even an unchecked safe step waits for whole-book safety.
-	outside := loopCheck()
-	outside["dimension"] = "destructive-guard"
-	p := loopPlan(t, plan.Array{loopStep("first", outside), loopStep("last", loopCheck())})
-	sub := p.Checks[0].Subject
-	sub["commands"] = append(discoveryArray(sub["commands"]), plan.Object{"words": plan.Array{"last"}, "class": plan.Object{"placeholder": "class"}})
-	source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
-	got, err := Collect(p, source)
-	if err != nil || len(got) != 1 || got[0].Result.Level != 2 || got[0].Result.Reason != "placeholder_unfilled" || len(source.keys) != 0 {
-		t.Fatal(got, err, source.keys)
+	for _, name := range []string{"Outside", "Inside"} {
+		t.Run(name, func(t *testing.T) {
+			outside := loopCheck()
+			outside["dimension"] = "destructive-guard"
+			p := loopPlan(t, plan.Array{loopStep("first", outside), loopStep("last", loopCheck())})
+			sub := p.Checks[0].Subject
+			sub["commands"] = append(discoveryArray(sub["commands"]), plan.Object{"words": plan.Array{"last"}, "class": plan.Object{"placeholder": "class"}})
+			var want []observe.Key
+			if name == "Inside" {
+				p.Scopes = append(p.Scopes, "destructive")
+				for i := range p.Checks {
+					p.Checks[i].Scopes = p.Scopes
+				}
+				want = []observe.Key{p.Runbooks[0].Steps[0].Key}
+			}
+			source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
+			got, err := Collect(p, source)
+			if err != nil || len(got) != 1 || got[0].Result.Level != 2 || got[0].Result.Reason != "placeholder_unfilled" || !reflect.DeepEqual(source.keys, want) {
+				t.Fatal(got, err, source.keys)
+			}
+		})
 	}
 }

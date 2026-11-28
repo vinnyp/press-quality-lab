@@ -96,18 +96,21 @@ func TestDestructiveGuardPredicate(t *testing.T) {
 
 func TestMayPlanServeMissingFacts(t *testing.T) {
 	// QS6, QA7, X3: absent safety facts are engine faults.
-	for _, name := range []string{"Held", "Subject", "Commands", "Runbooks", "MissingBook", "DuplicateBook", "Words"} {
+	for _, name := range []string{"Held", "ProbeHeld", "Subject", "Commands", "Runbooks", "MissingBook", "DuplicateBook", "Words"} {
 		t.Run(name, func(t *testing.T) {
 			book := plan.Object{"name": "book", "steps": plan.Array{plan.Object{"words": plan.Array{"read"}}}}
 			sub := plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{"read"}, "class": "safe"}}, "runbooks": plan.Array{book}}
 			key := plan.Object{"runbook": "book", "words": plan.Array{"read"}}
 			switch name {
+			case "ProbeHeld":
+				key["runbook"] = nil
 			case "Subject":
-				// The nil-subject guard and commands type guard both refuse this input.
+				// Cause distinguishes the nil-subject guard from the commands type guard.
 				sub = nil
 			case "Commands":
 				sub["commands"] = "wrong"
 			case "Runbooks":
+				key["runbook"] = nil
 				sub["runbooks"] = "wrong"
 			case "MissingBook":
 				key["runbook"] = "missing"
@@ -117,19 +120,24 @@ func TestMayPlanServeMissingFacts(t *testing.T) {
 				key["words"] = plan.Array{"other"}
 			}
 			err := MayPlanServe(plan.Check{Subject: sub}, key, nil)
-			if name == "Held" {
+			if name == "Held" || name == "ProbeHeld" {
 				if err != nil {
 					t.Fatal(err)
 				}
 				return
 			}
-			want := "QA7"
-			if name == "Subject" || name == "Commands" {
-				want = "QS6"
+			want, cause := "QA7", "unresolved runbook key"
+			switch name {
+			case "Subject":
+				want, cause = "QS6", "missing subject"
+			case "Commands":
+				want, cause = "QS6", "invalid commands"
+			case "Runbooks":
+				cause = "invalid runbooks"
 			}
 			var fault *plan.Fault
-			if !errors.As(err, &fault) || fault.Rule != want {
-				t.Fatalf("got %v, want %s", err, want)
+			if !errors.As(err, &fault) || fault.Rule != want || fault.Cause != cause {
+				t.Fatalf("got %v, want %s: %s", err, want, cause)
 			}
 		})
 	}
@@ -141,14 +149,15 @@ func TestComputationExemption(t *testing.T) {
 	if err := MayPlanServe(ch, key, nil); err != nil {
 		t.Fatal(err)
 	}
+	var fault *plan.Fault
 	key["home"] = "seed"
-	if err := MayPlanServe(ch, key, nil); err == nil {
-		t.Fatal("non-scratch computation accepted")
+	if err := MayPlanServe(ch, key, nil); !errors.As(err, &fault) || fault.Rule != "QS6" {
+		t.Fatal(err)
 	}
 	key["home"] = "scratch"
 	key["computation"] = nil
-	if err := MayPlanServe(ch, key, nil); err == nil {
-		t.Fatal("missing computation accepted")
+	if err := MayPlanServe(ch, key, nil); !errors.As(err, &fault) || fault.Rule != "QS6" {
+		t.Fatal(err)
 	}
 }
 
@@ -173,12 +182,13 @@ func TestPlaceholderRunbook(t *testing.T) {
 			if got := StepRuns(StepFacts{Check: &ch, Controls: passing()}); got == blocked {
 				t.Fatal("StepRuns", got)
 			}
+			var fault *plan.Fault
 			key := plan.Object{"runbook": "book", "words": plan.Array{"read"}}
-			if err := MayServe(ch, key, ch.Scopes); (err != nil) != blocked {
+			if err := MayServe(ch, key, ch.Scopes); (err != nil) != blocked || blocked && (!errors.As(err, &fault) || fault.Rule != "QS5") {
 				t.Fatal(err)
 			}
 			key["words"], key["home"], key["computation"] = nil, "scratch", "compute"
-			if err := MayServe(ch, key, ch.Scopes); (err != nil) != blocked {
+			if err := MayServe(ch, key, ch.Scopes); (err != nil) != blocked || blocked && (!errors.As(err, &fault) || fault.Rule != "QS5") {
 				t.Fatal("computation", err)
 			}
 		})

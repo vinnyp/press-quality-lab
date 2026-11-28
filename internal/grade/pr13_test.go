@@ -3,14 +3,14 @@ package grade
 import (
 	"errors"
 	"io"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/vinnyp/press-quality-lab/internal/collect"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
-	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 	"github.com/vinnyp/press-quality-lab/internal/store"
-	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 )
 
 func TestScopeRefusals(t *testing.T) {
@@ -35,53 +35,73 @@ func TestScopeRefusals(t *testing.T) {
 
 // safetySource changes source facts after the collector's startup preflight.
 type safetySource struct {
+	observe.Source
 	change func()
 	served int
 }
 
 func (s *safetySource) Controls() (observe.Controls, error) {
 	s.change()
+	return s.Source.Controls()
+}
+func (s *safetySource) Observe(key observe.Key, spec observe.Spec) (observe.Run, error) {
+	if key["runbook"] != nil {
+		s.served++
+	}
+	return s.Source.Observe(key, spec)
+}
+
+type safetyFixtureSource struct{}
+
+func (safetyFixtureSource) Controls() (observe.Controls, error) {
 	return observe.Controls{ConfinementApplied: true, SelfTestPassed: true, SystemNamed: true, PrivateCopyUnchanged: true, KnownFastWithin: true}, nil
 }
-func (s *safetySource) Observe(observe.Key, observe.Spec) (observe.Run, error) {
-	s.served++
+func (safetyFixtureSource) Observe(observe.Key, observe.Spec) (observe.Run, error) {
 	return observe.Run{Markers: observe.Markers{Confinement: true}, Stdout: []byte("value"), StdoutSeen: 5}, nil
 }
 
 func TestDestructiveServeRefusal(t *testing.T) {
 	// QS6, QA7, QE3: a post-planning destructive invocation is an engine fault before storage.
-	command := plan.Object{"words": plan.Array{}, "class": "safe", "writes": false}
-	sub := plan.Object{"commands": plan.Array{command}, "runbooks": plan.Array{plan.Object{"name": "book", "steps": plan.Array{plan.Object{"name": "first", "words": plan.Array{}, "budget_seconds": strictjson.Number("1"), "checks": plan.Array{plan.Object{"dimension": "response-correctness", "predicate": "stdout_equals", "expected": plan.Object{"literal": "value"}}}}}}}}
-	p, err := plan.Build(plan.Input{Subject: sub, Scopes: []rulebook.Scope{"conformance"}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	n := 0
-	for n < len(p.Checks) && p.Checks[n].Preimage["probe"] != nil {
-		n++
-	}
-	p.Checks = p.Checks[n:]
-	for _, book := range p.Runbooks {
-		for _, step := range book.Steps {
-			for i := range step.Required {
-				step.Required[i] -= n
+	for _, name := range []string{"Allowed", "Refused"} {
+		t.Run(name, func(t *testing.T) {
+			o, d, _ := fixture(t)
+			input := strings.Replace(validSubject, `"runbooks":[]`, `"runbooks":[{"name":"book","steps":[{"name":"first","words":[],"budget_seconds":1,"checks":[{"dimension":"response-correctness","predicate":"stdout_equals","path":null,"expected":{"literal":"value"},"precondition":null,"exit_codes":null}]}]}]`, 1)
+			if err := os.WriteFile(o.SubjectFile, []byte(input), 0600); err != nil {
+				t.Fatal(err)
 			}
-		}
-	}
-	source := &safetySource{change: func() {}}
-	got, err := collect.Collect(p, source)
-	if err != nil || len(got) != 1 || got[0].Result.Outcome != "held" || source.served != 1 {
-		t.Fatal(got, err, source.served)
-	}
-	source.served = 0
-	source.change = func() { command["class"] = "destructive" }
-	o, d, _ := fixture(t)
-	writes := 0
-	d.Write = func(store.Record) error { writes++; return errors.New("unexpected write") }
-	d.Collect = func(plan.Plan, observe.Source) ([]collect.Check, error) { return collect.Collect(p, source) }
-	code, err := Run(o, d, io.Discard)
-	var fault *Error
-	if code != 70 || !errors.As(err, &fault) || fault.Rule != "QS6" || writes != 0 || source.served != 0 {
-		t.Fatalf("code=%d err=%v writes=%d served=%d", code, err, writes, source.served)
+			d.Source = func() (observe.Source, func() error, error) {
+				return safetyFixtureSource{}, func() error { return nil }, nil
+			}
+			var wrapped *safetySource
+			d.Collect = func(p plan.Plan, source observe.Source) ([]collect.Check, error) {
+				wrapped = &safetySource{Source: source, change: func() {
+					if name == "Refused" {
+						commands, ok := p.Checks[0].Subject["commands"].(plan.Array)
+						if !ok || len(commands) != 1 {
+							t.Fatal("invalid fixture commands")
+						}
+						command, ok := commands[0].(plan.Object)
+						if !ok {
+							t.Fatal("invalid fixture command")
+						}
+						command["class"] = "destructive"
+					}
+				}}
+				return collect.Collect(p, wrapped)
+			}
+			writes := 0
+			d.Write = func(store.Record) error { writes++; return nil }
+			code, err := Run(o, d, io.Discard)
+			if name == "Allowed" {
+				if err != nil || code != 4 || writes != 1 || wrapped == nil || wrapped.served != 1 {
+					t.Fatalf("code=%d err=%v writes=%d source=%+v", code, err, writes, wrapped)
+				}
+				return
+			}
+			var fault *Error
+			if code != 70 || !errors.As(err, &fault) || fault.Rule != "QS6" || writes != 0 || wrapped == nil || wrapped.served != 0 {
+				t.Fatalf("code=%d err=%v writes=%d source=%+v", code, err, writes, wrapped)
+			}
+		})
 	}
 }
