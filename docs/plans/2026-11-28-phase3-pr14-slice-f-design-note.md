@@ -31,28 +31,42 @@ The build reports which call sites it changed and why. A scorecard twin is added
 
 Two derived numbers are read from the judge output's own arrays: the number of held checks, and the number of checks with each result. Counting entries is reading the judge's output. The judge's `counts`, `{xfail, xpass}`, are printed as the judge wrote them. Neither enters any other count (rulebook §8).
 
-**The names go in the evidence's `observed`.** This replaces the first draft's `Details` side channel, and KTD16's "The scorecard renders from the stored record" stands unamended. The judge contract says `expected` and `observed` are "carried for the scorecard; the judge decides nothing by them" (`evidence-record.md`, Part 2). QE19 leaves them out of the comparison, and the corpus runner reads `observed` only for a stream's `cut`. Each check's `observed` keeps the keys it has today, and gains:
-- **`invocation`,** for a check whose evidence names an invocation: its words, its runbook and step, or a computation's argument list. A check that is not observed and names the invocation it would have used carries it too (QT6).
-- **`computation_stderr`,** for a check that is not observed with `computation_failed`: the stream object QE10 gives, under the same masking and bound as any stream (QA4: "kept for the scorecard").
-- **On the discovery check:**
-  - `discovery`: `found_count`, `declared_count`, `found_names`, `missing_names`, `undeclared_names`, `request_bound_reached`, `depth_bound_reached` and `names_cut`;
-  - `placeholders`: every placeholder location in the file (QS5);
+**The names go in the evidence's `observed`.** This replaces the first draft's `Details` side channel. The judge contract says `expected` and `observed` are "carried for the scorecard; the judge decides nothing by them" (`evidence-record.md`, Part 2). QE19 leaves them out of the comparison, and the corpus runner reads `observed` only from the sealed case input, never from a stored record.
+
+**Today a check's `observed` is an array** of `{stdout, stderr}` stream pairs, one for each invocation, or `null` when the check has none (`internal/grade/evidence.go`). It becomes an object:
+- **`streams`:** today's array, unchanged.
+- **`invocations`:** an array aligned with `streams`, one entry for each invocation, holding its words, its runbook and step, or a computation's argument list as declared, before `{SEED}` and `{SUBJECT_DIR}` are replaced, so no workspace path is stored. A check that is not observed and names the invocation it would have used carries that entry with an empty `streams` (QT6).
+
+  A computation's standard error (QA4: "kept for the scorecard") is already its stream pair's `stderr`, so nothing is copied.
+- **On the discovery check only:**
+  - `discovery`: `ran`, `found_count`, `declared_count`, `found_names`, `missing_names`, `undeclared_names`, `undeclared_count`, `request_bound_reached`, `depth_bound_reached`, `found_cut` and `undeclared_cut`. When the walk did not run (`ran` false: a placeholder binary, QO1, or a changed private copy), every count and list is `null`, and the scorecard says "discovery did not run". QD4's "missed" then never applies.
+  - `placeholders`: every placeholder location in the file (QS5).
   - `short_env_names`: each environment name whose declared value is shorter than 8 bytes (QE18).
 
   Discovery is always in the required set (QD1), so these run-level lists always have a check to carry them. A placeholder `declared_count` is carried as `null`.
+- A check with no invocation and none of these keeps `null`.
 
-So `--json` users and agents get every name the scorecard prints, from the same record.
+The build lists every test that reads `observed` as an array and moves it, among them `pr12_evidence_test.go` and `pr10_fix1_test.go`.
 
-**`decide.Discovery`'s single `Bound` flag is split into two,** one for the request bound and one for the depth bound. **`Undeclared` gains its name list.** QD3 says "each command found but not declared is named", so the list has no cap of its own. Only the walk's own bounds and QE10's limits on the record bound it. If QE10 cuts the record, the scorecard says the names were cut.
+**`decide.Discovery`'s single `Bound` flag is split into two,** one for the request bound and one for the depth bound. Each is set only where the walk actually stopped on it: the request bound when the walk had made 4,096 requests and more remained, the depth bound when the next request would have passed 64 words. Trimming the queue against the remaining budget sets neither on its own. A fixture stops on depth with more than 4,096 names queued, and must report the depth bound only. **`Undeclared` gains its name list.** The found-names preview keeps its caps of 512 entries and 64 KiB. The undeclared list is held to 4,096 entries and 1 MiB. `undeclared_count` is always exact, and the scorecard says how many more were found than it names. A subject that defines more undeclared commands than that has its extra names counted, not named. That is a stated limit against QD3's "each", below.
 
-The found-names preview keeps its existing caps, 512 entries and 64 KiB, and `names_cut` says when the preview was cut. QD1 asks for the names found and missed, and missed names are never capped.
+**The scorecard renders from the record before QE10's bound.** QE10 keeps the longest prefix of the evidence values, in check-id order, that fits in 4 MiB, and replaces each later value whole with its digest. A real CLI's discovery `observed`, with every help stream, can pass that bound by itself and lose its names. So `internal/grade` renders from the masked record document after masking and before QE10's bound replaces any evidence value.
 
-**Masking, then cutting, then escaping, on every path.** Every value from the subject, the subject file or a stream passes the masker when the evidence is built, so it is masked in the stored record, the scorecard and `--json` alike (QE18: "every record, a rejected one included"). This covers:
+The verdicts, states, reasons, counts and exit code it prints are all in `judge_output` and the record's top-level fields, which the bound never touches. They are the stored record's own values (QE14). Only the names can differ: the stored record and `--json` carry a digest wherever QE10 replaced a value, and the scorecard still names everything. A fixture lets an earlier check use up the 4 MiB, and asserts:
+- the scorecard still names the placeholders, the undeclared commands and the failed computation;
+- the stored record carries digests;
+- the verdict lines are identical to the stored record's.
+
+This amends KTD16's "The scorecard renders from the stored record" to "from the stored record, with evidence values as they stood before QE10's bound". The plan gets the amendment with this PR.
+
+So `--json` users and agents get every name the scorecard prints, from the same record, until QE10's cap is reached.
+
+**Masking, then cutting, then escaping, on every path.** Every value from the subject, the subject file or a stream passes the masker when the evidence is built, so it is masked in the stored record, the scorecard and `--json` alike. `offline_settings` and `bookkeeping_excluded` are top-level fields that the evidence masker does not reach, so they get their own masker call before the record is serialised (QE18: "every record, a rejected one included"). This covers:
 - `observed`'s new keys;
-- `offline_settings`' `args` and `applies_to` words;
+- `offline_settings`' `args`, `applies_to` words and `env_names`;
 - `bookkeeping_excluded`.
 
-A cut, such as `computation_stderr`'s head, comes after masking (KTD16). The renderer escapes last, with `grade.Escape`. The stream wrapper's masker stays as a backstop.
+A cut, such as a stream's head, comes after masking (KTD16). The renderer escapes last, with `grade.Escape`. The stream wrapper's masker stays as a backstop.
 
 A fixture declares an environment value with a C0 character, and another with a Cf character. It puts each into every place the scorecard prints a subject value, and asserts the value is masked in the stored record and in both outputs. Its twin uses a value shorter than 8 bytes, which is not masked and is named in `short_env_names`.
 
@@ -66,9 +80,9 @@ A fixture declares an environment value with a C0 character, and another with a 
 - **`offline_settings`:** each declared setting, in file order, as `{applies_to, args, env_names}`. `applies_to` is the declared word lists, which is what QS7 lists and the schema stores. `env_names` is sorted by byte value, since the subject's `env` is an object.
 - **`bookkeeping_excluded`:** the declared bookkeeping paths, in file order.
   - record-01 also stores `.pql-tmp`. This note does not, because both the subject schema and the record schema cap the list at 256 entries, and adding `.pql-tmp` to 256 declared paths would break the record schema.
-  - The scorecard lists `.pql-tmp` beside them, and `<store>-shm` (QP8), and says that directories on the way to a bookkeeping path are also left out (QP7).
+  - The scorecard lists `.pql-tmp` beside them. When the store is a path it also lists `<store>-shm`, and the empty `-wal` and `-journal` files (QP8). It says that directories on the way to a bookkeeping path are also left out (QP7).
 
-**Determinism.** Every list built from a JSON object is sorted by byte value before it is emitted (`CODING_STANDARDS.md`: "never expose map-iteration order"). That covers `env_names`, `short_env_names` and the `/facts/<name>` placeholder locations. Placeholder locations follow the file's order: `/binary`, `/declared_count`, `/seed`, `/store`, `/secret`, then `/facts/<name>` sorted, then `/commands/<i>/class` and `/commands/<i>/writes` by index.
+**Determinism.** Every list built from a JSON object is sorted by byte value before it is emitted (`CODING_STANDARDS.md`: "never expose map-iteration order"). That covers `env_names`, `short_env_names` and the `/facts/<name>` placeholder locations. Placeholder locations follow a fixed order: `/binary`, `/declared_count`, `/seed`, `/store`, `/secret`, then `/facts/<name>` sorted, then `/commands/<i>/class` and `/commands/<i>/writes` by index.
 
 ### What the scorecard shows
 
@@ -79,15 +93,16 @@ The scorecard is plain text, in this order. The renderer is total: a field it ca
    - `verdict.sub_label` follows in parentheses when it is non-null.
    - The exit code is the stored record's `exit_code`.
    - An anchor's own verdict is shown on its own labelled line, never on the run line. So an anchored exit 0 never shows `green` (QE21, judge errata E-4 item 1).
+   - A refused anchor shows `anchor.reason` and the checks it names (rulebook N5, N6; AE19: "says why").
    - Fixtures: an anchored exit 0 whose own verdict is PASSED, its twin whose own verdict is PROVISIONAL known-defects, and a graded exit 0 that shows `green`.
-2. **The process exit,** when it differs from the record's. Some runs exit 70 after the judge decided: a failed store (E-4), a failed cleanup (E-11) and a signal (E-6). The scorecard is then rendered after cleanup, in the exit funnel. Its last line is `exits 70: <reason>`, with E-4's note that the record was not stored, or E-11's directory left behind. Each of the three has a fixture.
+2. **The process exit,** when it differs from the record's. Some runs exit 70 after the judge decided: a failed store (E-4), a failed cleanup (E-11) and a signal (E-6). The scorecard is always rendered in the exit funnel, after cleanup, so any of these can still add a line. It ends with one `exits 70: <reason>` line for each post-judge fault that occurred: E-4's note that the record was not stored, E-11's directory left behind, and E-6's signal. Each has a fixture, and one fixture has E-4 and E-11 together.
 3. **The scope.**
 4. **Each dimension:** its name, its state and its reason, as the judge wrote them, then its next action when `next_actions` holds one.
    - Wherever `tool-description-efficacy` shows as green, each of its comparison checks' words shows beside it, `improved` or `no_material_change` (judge errata E-4 item 2). The conformance corpus never reaches this dimension, so a fixture proves it.
    - OUT-OF-SCOPE shows that plain word and its reason, and enters no count (rulebook §8).
-5. **Each check whose result is not `held_crediting` or `held_non_crediting`,** under its dimension. It shows:
-   - its result and reason, as the judge wrote them;
-   - its next action;
+5. **Each check whose result is `unobserved`, `failed` or `failed_expected`,** under its dimension. An `out_of_scope` check is neither listed nor counted (rulebook §8). It shows:
+   - its result, and its reason when the judge wrote one (a failed check's is null);
+   - its next action, when `next_actions` holds one;
    - its `observed.invocation`, or `discovery`, or the probe's name;
    - its full id, so that the defect's check is named (AE8).
 
@@ -105,7 +120,7 @@ The scorecard is plain text, in this order. The renderer is total: a field it ca
 9. **Bookkeeping exclusions** (QP7), from `bookkeeping_excluded`, with the fixed lines above.
 10. **QE18's note,** from `observed.short_env_names`: each name, with "not masked: shorter than 8 bytes". The value is never printed.
 11. **The comparison.** With no baseline, the line "no baseline for this scope" (rulebook B1). 113 judge-checked corpus cases end on B1. With a comparison, its entries as the judge wrote them, and R2's `next_action` when it is `re_anchor`. The baseline cases are on the pending list until PR17, so only fixtures prove the comparison display here.
-12. **A computation's standard error** (QA4, AE23): the masked head of `observed.computation_stderr`, under the check it served. The scorecard says when it was cut.
+12. **A computation's standard error** (QA4, AE23): the masked head of its stream pair's `stderr` in `observed.streams`, under the check it served. The scorecard says when it was cut.
 
 **A rejected record** (QE15) shows no verdict. Standard output is empty in both modes, and the rejection line goes to standard error.
 
@@ -115,7 +130,9 @@ The scorecard is plain text, in this order. The renderer is total: a field it ca
 
 ### The agreement check (AE21, GR3)
 
-`internal/corpusrunner` today discards standard output. Now, for every case off the pending list, it runs `pql grade` once without the flag and once with `--json`.
+`internal/corpusrunner` today discards standard output. Now, for every case off the pending list, it runs the case's command, `pql grade` or `pql anchor` as `input.request` says, once without the flag and once with `--json`.
+
+**Each mode runs against its own trace file and its own store,** because the scripted trace refuses a second `required` event, and a record's file name is its hash. The runner checks that the two stored records are byte-identical, and exports one of them.
 
 **For a judge-checked case,** these are all equal:
 - the process exit;
@@ -124,9 +141,9 @@ The scorecard is plain text, in this order. The renderer is total: a field it ca
 - the stored `judge_output.exit_code`.
 
 **The scorecard is parsed** and must state what the stored `judge_output` states:
-- the run line's word and exit code;
-- every dimension line's state and reason;
-- every listed check's result and reason;
+- the run line's word, `sub_label` and exit code;
+- every dimension line's state and reason, paired one-to-one with `judge_output.dimensions`;
+- every listed check's id, result and reason, paired one-to-one with the judge output's checks whose result is `unobserved`, `failed` or `failed_expected`;
 - the held-check count;
 - `counts.xfail` and `counts.xpass`.
 
@@ -146,6 +163,9 @@ The scorecard is plain text, in this order. The renderer is total: a field it ca
 - a stored `exit_code` changed by one;
 - a dimension line with its state changed;
 - a held-check count changed by one;
+- a listed check dropped, with the counts left right;
+- a `sub_label` dropped;
+- `counts.xfail` changed by one;
 - a `--json` document with one field changed;
 - a derivation-only case that prints a line on standard output.
 
@@ -202,7 +222,7 @@ None of these is a two-way reading of the sealed text. Each is a gap the text le
 
 ## Predicted ratchet set
 
-Unchanged at 142. U18 adds no case to the passing set. The agreement check is new on the same 142, and the pending list stays at 10. `observed` changes, but QE19 leaves it out of every comparison, so the prediction file regenerated from `scripts/ratchet/pr14.json`, which equals `pr13.json`, must be byte-identical to PR13's.
+Unchanged at 142. U18 adds no case to the passing set. The agreement check is new on the same 142, and the pending list stays at 10. `observed` changes, but QE19 leaves it out of every comparison, so PR14 adds no ratchet file. `check.sh` keeps regenerating from `pr13.json`, and its prediction must stay byte-identical.
 
 ## Rules this slice moves off KTD22's list
 
@@ -234,5 +254,7 @@ Each move cites a proof test whose first body comment line names the rule, and r
 
 - **The scorecard's text is not a stable interface.** Scripts and agents use `--json`, which carries every name the scorecard shows. The README and `--help` say so.
 - **`Escape` is not injective,** as above.
-- **The first private scoring round,** on 2026-12-23, is listed in U18's verification. The owner ruled on 2026-11-28 that PR14 merges before it. The round scores the stored record and the exit code. Its counts are reported to the owner as counts only, when it runs.
+- **The names in the stored record and in `--json`** are lost wherever QE10's 4 MiB cap replaced a value with its digest. The scorecard, rendered before the cap, keeps them.
+- **More than 4,096 undeclared commands, or 1 MiB of their names,** are counted but not all named, against QD3's "each". No realistic subject reaches it, and the count is exact.
+- **The first private scoring round,** on 2026-12-23, is listed in U18's verification. The owner ruled on 2026-11-28 that PR14 merges before it. The round scores the stored record and the exit code. Its counts are reported to the owner as counts only, when it runs. It compares only QE19's fields, which this slice does not change.
 - **Only fixtures prove some displays:** judge errata E-4 item 2 (`tool-description-efficacy`), the comparison display and QD2's bounds. No conformance case reaches them.

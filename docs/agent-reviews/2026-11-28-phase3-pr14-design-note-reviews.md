@@ -31,3 +31,18 @@
 | 11 | Map iteration order for `env_names`, the QE18 names and `/facts` locations | agy (Major) | Confirmed against `CODING_STANDARDS.md` | Each sorted by byte value; placeholder locations in a fixed order |
 | 12 | Existing tests that read standard output were missing from the migration | agy (Major) | Confirmed: three named tests exist, 27 call sites | Every reading test gets `--json`; the build reports each site |
 | 13 | Minors: the record-01 differences (`.pql-tmp`, row text), QD6's ledger kind, the README's `pql judge` line, escaping coverage per location, comparison words per check, `--help`, negative-row legs, renderer totality, determinism of the byte test | interface, agy | Confirmed | Each fixed in the note |
+
+## Round 2 (note at 214e4ca)
+
+**Verdicts:**
+- **interface:** no Blocker. Ten of its eleven round 1 Majors are fixed, and two new Majors.
+- **agy:** no Blocker, four Majors, two of them the same as the interface review's.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 14 | QE10's 4 MiB cap, in check-id order, replaces a whole evidence value with its digest. A real CLI's discovery `observed` can pass the cap by itself and lose every name | interface (Major), agy (Major) | Confirmed against `record.bound` | The scorecard renders from the masked record before QE10's bound. Its verdict lines are still the stored record's. The names in the stored record and `--json` become a stated limit. KTD16 is amended to match |
+| 15 | `observed` is an array today, so "keeps its keys" was undefined | interface (Major), agy (Major) | Confirmed against `evidence.go` | Defined as an object with `streams` and an aligned `invocations` array, and discovery's lists on the discovery check |
+| 16 | Discovery when the walk did not run would report every declared name as missed | interface, agy | Confirmed against `Discovery.Ran` | `ran`, with null counts and lists |
+| 17 | Two runs of one case share a trace and a store | agy (Major) | Confirmed against `readTrace` and the store's hash names | A trace and a store for each mode, compared byte for byte |
+| 18 | The note was said to move QE18, QA4 and QA6 | agy (Major) | Refuted: the note lists QE18 as staying, and moves neither QA4 nor QA6 | No change |
+| 19 | Minors: the bound flags' attribution, one-to-one pairing and `sub_label` in the agreement check, several post-judge faults, `env_names` masking, a refused anchor's reason, checks with a null reason or out of scope, `computation_stderr` duplicating a stream, the argument list as declared, always rendering in the funnel, `-shm` conditional on a path store, `check.sh`'s ratchet file | interface, agy | Confirmed | Each fixed in the note |
