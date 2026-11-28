@@ -184,7 +184,7 @@ func TestCleanupSignalHelper(t *testing.T) {
 			return nil, err
 		}
 		time.Sleep(200 * time.Millisecond)
-		return collect.Collect(p, s)
+		return collect.Collect(p, s, collect.Options{RunDirectory: t.TempDir()})
 	}
 	code, runErr := Run(o, d, io.Discard)
 	if runErr != nil {

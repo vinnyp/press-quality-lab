@@ -68,7 +68,7 @@ func TestDestructiveRunbooks(t *testing.T) {
 			if name == "GradeWide" {
 				source.controls.SelfTestPassed = false
 			}
-			got, err := Collect(p, source)
+			got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -134,7 +134,7 @@ func TestDestructivePreflight(t *testing.T) {
 		p := loopPlan(t, plan.Array{loopStep("first", loopCheck()), loopStep("remove", check)})
 		p.Checks = append(p.Checks, discoveryCheck())
 		source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
-		positive, err := Collect(p, source)
+		positive, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 		if err != nil || len(source.keys) != 3 {
 			t.Fatal(positive, err, source.keys)
 		}
@@ -145,7 +145,7 @@ func TestDestructivePreflight(t *testing.T) {
 		}
 		source.keys = nil
 		p.Checks[0].Subject["commands"] = append(discoveryArray(p.Checks[0].Subject["commands"]), plan.Object{"words": plan.Array{"remove"}, "class": "destructive"})
-		got, err := Collect(p, source)
+		got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 		var fault *plan.Fault
 		if !errors.As(err, &fault) || fault.Rule != "QS6" || got != nil || len(source.keys) != 0 {
 			t.Fatal(got, err, source.keys)
@@ -182,7 +182,7 @@ func TestServeSafetyBrakes(t *testing.T) {
 				book := discoveryObject(discoveryArray(sub["runbooks"])[0])
 				discoveryObject(discoveryArray(book["steps"])[0])["words"] = plan.Array{"different"}
 			}
-			positive, err := Collect(p, source)
+			positive, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 			if err != nil || len(positive) != 1 || positive[0].Result.Outcome != "held" || len(source.keys) != 1 {
 				t.Fatal(positive, err, source.keys)
 			}
@@ -197,7 +197,7 @@ func TestServeSafetyBrakes(t *testing.T) {
 					cmd["writes"] = plan.Object{"placeholder": "writes"}
 				}
 			}}
-			got, err := Collect(p, changed)
+			got, err := Collect(p, changed, Options{RunDirectory: t.TempDir()})
 			want, cause := "QS5", "placeholder invocation"
 			if name == "Destructive" {
 				want, cause = "QS6", "destructive invocation outside allowed runbook scope"
@@ -228,7 +228,7 @@ func TestPlaceholderUncheckedStep(t *testing.T) {
 				want = []observe.Key{p.Runbooks[0].Steps[0].Key}
 			}
 			source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
-			got, err := Collect(p, source)
+			got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 			if err != nil || len(got) != 1 || got[0].Result.Level != 2 || got[0].Result.Reason != "placeholder_unfilled" || !reflect.DeepEqual(source.keys, want) {
 				t.Fatal(got, err, source.keys)
 			}

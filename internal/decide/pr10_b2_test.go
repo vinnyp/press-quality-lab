@@ -86,12 +86,12 @@ func TestStoreProbeRules(t *testing.T) {
 		name  string
 		seed  []plan.Entry
 		store any
-	}{{"NoStore", base.Seed, nil}, {"EmptySeed", nil, "data"}, {"ZeroFile", []plan.Entry{{Path: "data"}}, "data"}, {"ShmOnly", []plan.Entry{{Path: "data-shm", Data: []byte("index")}}, "data"}} {
+	}{{"NoStore", base.Seed, nil}, {"EmptySeed", nil, "data"}, {"ZeroFile", []plan.Entry{{Path: "data"}}, "data"}, {"EmptyStoreShm", []plan.Entry{{Path: "data"}, {Path: "data-shm", Data: []byte("index")}}, "data"}, {"EmptyStoreDirectory", []plan.Entry{{Path: "data"}, {Path: "directory", Directory: true}}, "data"}, {"ShmOnly", []plan.Entry{{Path: "data-shm", Data: []byte("index")}}, "data"}} {
 		t.Run(row.name, func(t *testing.T) {
 			ch := base
 			ch.Seed = row.seed
 			ch.Preimage = plan.Object{"probe": "store_unchanged", "store": row.store}
-			got := storeUnchanged(ch, Evidence{})
+			got := storeUnchanged(ch, Evidence{Invocations: []observe.Invocation{{Run: observe.Run{Details: observe.RunDetails{Home: observe.HomeChanges{ControlDetected: &yes}}}}}})
 			if got != (Result{Level: 8, Outcome: NotObserved, Reason: "empty_target"}) {
 				t.Fatalf("got %+v", got)
 			}
@@ -101,7 +101,7 @@ func TestStoreProbeRules(t *testing.T) {
 
 func TestPlantedReadConditions(t *testing.T) {
 	// QP11, QO7: four independent read conditions, E-37 attribution and E-38 calibration.
-	ch := plan.Check{Preimage: plan.Object{"probe": "planted_secret"}, Keys: []plan.Object{{}}, Subject: plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{"read"}, "exit_codes": plan.Array{strictjson.Number("3")}}}}}
+	ch := plan.Check{Preimage: plan.Object{"probe": "planted_secret", "earlier": plan.Array{}, "expected": nil}, Keys: []plan.Object{{}}, Subject: plan.Object{"commands": plan.Array{plan.Object{"words": plan.Array{"read"}, "exit_codes": plan.Array{strictjson.Number("3")}}}}}
 	clean := observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Code: 3}, Details: observe.RunDetails{Planted: &observe.Planted{AtimeMoved: true, SameFile: true, ControlEnd: &observe.InvocationProtocol{End: observe.End{Signal: 9}, Markers: observe.Markers{Confinement: true}}}}}
 	for _, row := range []struct {
 		name   string
@@ -134,7 +134,7 @@ func TestPlantedReadConditions(t *testing.T) {
 			c := passing()
 			c.ReadCalibrationMoved = true
 			row.change(&r, &c)
-			got := plantedSecret(ch, c, Evidence{Invocations: []observe.Invocation{{Key: observe.Key{"words": plan.Array{"read"}}, Run: r}}})
+			got := Resolve(ch, c, Evidence{Discovery: &Discovery{}, Invocations: []observe.Invocation{{Key: observe.Key{"words": plan.Array{"read"}}, Run: r}}})
 			outcome := NotObserved
 			if row.reason == "" {
 				outcome = "held"

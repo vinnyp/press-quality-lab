@@ -625,6 +625,182 @@
         "file": "internal/record/pr14_test.go",
         "function": "TestPR14Interim"
       }
+    ],
+    "QP9": [
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestStoreControlPassed"
+      },
+      {
+        "kind": "test",
+        "file": "internal/throwaway/pr15_test.go",
+        "function": "TestStoreCopyControl"
+      },
+      {
+        "kind": "test",
+        "file": "internal/throwaway/pr15_test.go",
+        "function": "TestStoreTargetExclusions"
+      },
+      {
+        "kind": "test",
+        "file": "internal/scripted/pr10_controls_test.go",
+        "function": "TestProbeControlFacts"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/source_evidence_darwin_test.go",
+        "function": "TestSourceStoreControl"
+      }
+    ],
+    "QH27": [
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestPlantedPreparationOrder"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestReadControlSequence"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestServeTimeAssertion"
+      },
+      {
+        "kind": "test",
+        "file": "internal/confine/pr15_test.go",
+        "function": "TestRoundAPlantedDirectories"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/source_evidence_darwin_test.go",
+        "function": "TestSourceRealRead"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/source_evidence_darwin_test.go",
+        "function": "TestSourceControlNeverReads"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/source_evidence_darwin_test.go",
+        "function": "TestSourceDirectoryRename"
+      }
+    ],
+    "QH26": [
+      {
+        "kind": "test",
+        "file": "internal/confine/controls_test.go",
+        "function": "TestCalibrationMoved"
+      },
+      {
+        "kind": "test",
+        "file": "internal/confine/controls_test.go",
+        "function": "TestCalibrationReadPassed"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/controls_evidence_darwin_test.go",
+        "function": "TestMacOSReadCalibration"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/controls_evidence_darwin_test.go",
+        "function": "TestMacOSCalibrationErrorClearsRead"
+      }
+    ],
+    "QH25": [
+      {
+        "kind": "test",
+        "file": "internal/throwaway/pr10_fix1_test.go",
+        "function": "TestFix1DeepHome"
+      },
+      {
+        "kind": "test",
+        "file": "internal/throwaway/pr10_fix1_test.go",
+        "function": "TestFix1Hardlinks"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/source_evidence_darwin_test.go",
+        "function": "TestSourceFIFO"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/source_evidence_darwin_test.go",
+        "function": "TestSourceLeafLink"
+      }
+    ],
+    "QP5": [
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestHomeKindsAndFreshness"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/round_a_test.go",
+        "function": "TestRoundASeedChanged"
+      },
+      {
+        "kind": "test",
+        "file": "internal/throwaway/pr10_home_test.go",
+        "function": "TestHomeKinds"
+      }
+    ],
+    "QP10": [
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestCanaryRandomSource"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestReadControlSequence"
+      },
+      {
+        "kind": "test",
+        "file": "internal/throwaway/pr10_home_test.go",
+        "function": "TestCanaryPlanting"
+      }
+    ],
+    "QH14": [
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestHomeKindsAndFreshness"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestSeparateRunbookHomes"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/pr15_test.go",
+        "function": "TestReadControlSequence"
+      }
+    ],
+    "QH8": [
+      {
+        "kind": "test",
+        "file": "internal/decide/pr15_test.go",
+        "function": "TestChangedCopyPrecedence"
+      },
+      {
+        "kind": "test",
+        "file": "internal/collect/u44_test.go",
+        "function": "TestInvocationServing"
+      },
+      {
+        "kind": "macos_evidence",
+        "file": "internal/confine/round_a_evidence_darwin_test.go",
+        "function": "TestMacOSSystemPrintfInPlace"
+      }
     ]
   }
 }

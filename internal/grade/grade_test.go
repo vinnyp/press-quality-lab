@@ -400,7 +400,7 @@ func TestEngineFaultRules(t *testing.T) {
 			if row == "Unbuilt" {
 				want = "QA9"
 				d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {
-					checks, err := collect.Collect(p, s)
+					checks, err := collect.Collect(p, s, collect.Options{RunDirectory: t.TempDir()})
 					if err != nil {
 						return nil, err
 					}
@@ -411,7 +411,7 @@ func TestEngineFaultRules(t *testing.T) {
 			} else {
 				d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {
 					p.Checks[0].Required["large"] = strings.Repeat("x", 16<<20)
-					return collect.Collect(p, s)
+					return collect.Collect(p, s, collect.Options{RunDirectory: t.TempDir()})
 				}
 			}
 			code, err := Run(o, d, io.Discard)

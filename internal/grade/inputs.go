@@ -72,6 +72,7 @@ func planningInputWith(o Options, s subject.File, access inputAccess) (in snapsh
 		return in, safeReadFailure("QS8", "subject directory", e)
 	}
 	directory := filepath.Dir(canonical)
+	in.SubjectDirectory = directory
 	root, err := os.OpenRoot(directory)
 	if err != nil {
 		return in, safeReadFailure("QS8", "subject directory", err)

@@ -2,6 +2,7 @@
 package collect
 
 import (
+	"errors"
 	"reflect"
 	"strconv"
 
@@ -22,11 +23,20 @@ type Check struct {
 // Collect resolves every check, retaining sentinels as values for inspection.
 // Discovery runs first so level 3 and the final override share its facts.
 // Runbook checks share each step run and resolve before the final overrides.
-func Collect(p plan.Plan, source observe.Source) ([]Check, error) {
-	return collect(p, source, decide.Resolve)
+func Collect(p plan.Plan, source observe.Source, options ...Options) ([]Check, error) {
+	var o Options
+	if len(options) > 0 {
+		o = options[0]
+	}
+	return collectWithOptions(p, source, o)
 }
 
-func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) ([]Check, error) {
+func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result, options Options) (checks []Check, err error) {
+	prepared := newHomeSource(p, source, options)
+	defer func() { err = errors.Join(err, prepared.close()) }()
+	return collectPrepared(p, prepared, resolve)
+}
+func collectPrepared(p plan.Plan, source *homeSource, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) ([]Check, error) {
 	p.Checks = append([]plan.Check(nil), p.Checks...)
 	// QE3, QA7: validate the entire schedule before discovery can serve a key.
 	scheduledAtStart := map[int]bool{}
@@ -116,6 +126,7 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 				panic("QA7: invalid planned budget")
 			}
 		}
+		source.checks[ch.ID] = ch
 		run, err := source.Observe(map[string]any(key), observe.Spec{BudgetSeconds: seconds, CheckID: ch.ID, Preimage: map[string]any(ch.Preimage)})
 		if err != nil {
 			return observe.Invocation{}, err
@@ -178,7 +189,7 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 				if !bookOK || !stepOK {
 					panic("QA7: invalid step key")
 				}
-				ch := plan.Check{ID: "runbook:" + bookName + ":step:" + stepName, Subject: context.Subject, Scopes: p.Scopes, Keys: []plan.Object{step.Key}, Preimage: plan.Object{"probe": nil, "runbook": step.Key["runbook"], "step": step.Key["step"], "words": step.Key["words"], "earlier": plan.Array{}, "expected": nil, "budget_seconds": step.BudgetSeconds, "offline_args": step.OfflineArgs, "env": step.Env}}
+				ch := plan.Check{ID: "runbook:" + bookName + ":step:" + stepName, Subject: context.Subject, Seed: context.Seed, Scopes: p.Scopes, Keys: []plan.Object{step.Key}, Preimage: plan.Object{"probe": nil, "runbook": step.Key["runbook"], "step": step.Key["step"], "words": step.Key["words"], "earlier": plan.Array{}, "expected": nil, "budget_seconds": step.BudgetSeconds, "offline_args": step.OfflineArgs, "env": step.Env}}
 				if decide.StepRuns(decide.StepFacts{Stopped: stopped, Controls: controls, Check: &ch}) {
 					inv, err := serve(step.Key, ch)
 					if err != nil {
@@ -251,6 +262,11 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 				previous = append(previous, p.Checks[i].ID)
 			}
 			previous = append(previous, step.Outside...)
+		}
+		if len(book.Steps) > 0 {
+			if err := source.finishBook(homeText(book.Steps[0].Key["runbook"])); err != nil {
+				return nil, err
+			}
 		}
 	}
 	for i := range checks {

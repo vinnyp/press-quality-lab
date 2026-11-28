@@ -3,6 +3,7 @@
 package scripted
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"testing"
@@ -57,12 +58,16 @@ func TestProbeControlFacts(t *testing.T) {
 				opposite := !detected
 				original.Details.Home.ControlDetected = &opposite
 				source.runs[id] = original
-				r, err := source.Observe(key, observe.Spec{})
+				r, err := source.Observe(key, observe.Spec{StoreControl: &opposite})
 				if err != nil {
 					t.Fatal(err)
 				}
 				if r.Details.Home.ControlDetected == nil || *r.Details.Home.ControlDetected != detected {
 					t.Fatal("recording defeated host store control")
+				}
+				r, err = source.Observe(key, observe.Spec{})
+				if err != nil || r.Details.Home.ControlDetected != nil {
+					t.Fatalf("nil store control %+v %v", r.Details.Home, err)
 				}
 				homeFound = true
 			}
@@ -77,11 +82,34 @@ func TestProbeControlFacts(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				var trace bytes.Buffer
+				source.trace = NewTrace(&trace)
+				if err := source.Required(array{}); err != nil {
+					t.Fatal(err)
+				}
+				before := trace.String()
+				if r.Details.Planted.ControlEnd != nil {
+					t.Fatal("ordinary run retained control")
+				}
+				r, err = source.Observe(key, observe.Spec{Control: true})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if trace.String() != before {
+					t.Fatal("control counted as served")
+				}
+				if _, err := source.Observe(key, observe.Spec{}); err != nil {
+					t.Fatal(err)
+				}
+				if trace.String() == before {
+					t.Fatal("ordinary run missing served event")
+				}
+				source.trace = NewTrace(nil)
 				by := "exit"
 				if detected {
 					by = "confinement"
 				}
-				CheckAttribution(t, observe.Run{End: r.Details.Planted.ControlEnd.End, Markers: r.Details.Planted.ControlEnd.Markers}, by)
+				CheckAttribution(t, r, by)
 				plantedFound = true
 			}
 		}

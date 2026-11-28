@@ -133,3 +133,13 @@ func ApplyControlResults(c observe.Controls, subject, computation []observe.Run,
 	c.ReadCalibrationMoved = CalibrationMoved(before, after, readOK)
 	return c
 }
+
+// ControlsFromProbe derives QH6 facts without interpreting a changed copy as QO1.
+func ControlsFromProbe(raw observe.Run) observe.Controls {
+	c := observe.Controls{PrivateCopyUnchanged: !raw.CopyChanged, ConfinementApplied: raw.Markers.Confinement}
+	if !raw.CopyChanged && !raw.Markers.Confinement && raw.End.Signal == 0 {
+		code := raw.End.Code
+		c.SandboxExecExit = &code
+	}
+	return c
+}

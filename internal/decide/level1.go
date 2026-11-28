@@ -13,7 +13,7 @@ func level1(ch plan.Check, c observe.Controls, e Evidence) Result {
 			continue
 		}
 		r := invocation.Run
-		if !r.Markers.Confinement {
+		if !r.CopyChanged && !r.Markers.Confinement {
 			failed = true
 		}
 	}
@@ -22,7 +22,7 @@ func level1(ch plan.Check, c observe.Controls, e Evidence) Result {
 		for _, name := range array(comp["captures"]) {
 			for _, invocation := range e.Captures {
 				if invocation.Key["runbook"] == ch.Preimage["runbook"] && invocation.Key["step"] == name {
-					failed = failed || !invocation.Run.Markers.Confinement
+					failed = failed || !invocation.Run.CopyChanged && !invocation.Run.Markers.Confinement
 				}
 			}
 		}

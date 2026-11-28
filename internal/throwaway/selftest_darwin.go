@@ -14,6 +14,7 @@ import (
 // The engine prepares these before any confined process can see the home.
 type SelfTestFiles struct {
 	Home, Outside, Create, Clean, Calibration string
+	Absent                                    string
 	Before                                    time.Time
 	workspace                                 *Workspace
 	calibrationName                           string
@@ -87,7 +88,11 @@ func (w *Workspace) PrepareSelfTest() (_ *SelfTestFiles, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &SelfTestFiles{Home: filepath.Join(dir, "home"), Outside: filepath.Join(dir, "outside"), Create: filepath.Join(dir, "create"), Clean: filepath.Join(dir, "home/clean"), Calibration: filepath.Join(dir, "home/calibration"), Before: time.Unix(stat.Atimespec.Sec, stat.Atimespec.Nsec), workspace: w, calibrationName: name, identity: *stat, outsideIdentity: *outsideStat}, nil
+	absent := filepath.Join(dir, "absent_planted")
+	if _, err := os.Lstat(absent); !errors.Is(err, os.ErrNotExist) {
+		return nil, errors.Join(fmt.Errorf("stand-in planted path exists"), err)
+	}
+	return &SelfTestFiles{Absent: absent, Home: filepath.Join(dir, "home"), Outside: filepath.Join(dir, "outside"), Create: filepath.Join(dir, "create"), Clean: filepath.Join(dir, "home/clean"), Calibration: filepath.Join(dir, "home/calibration"), Before: time.Unix(stat.Atimespec.Sec, stat.Atimespec.Nsec), workspace: w, calibrationName: name, identity: *stat, outsideIdentity: *outsideStat}, nil
 }
 
 // CalibrationAfter inspects metadata without reading the decoy or following

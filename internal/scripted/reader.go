@@ -259,7 +259,7 @@ func (s *Source) Controls() (observe.Controls, error) {
 }
 
 // Observe serves exactly the first confined run. Missing keys are engine faults.
-func (s *Source) Observe(key observe.Key, _ observe.Spec) (observe.Run, error) {
+func (s *Source) Observe(key observe.Key, spec observe.Spec) (observe.Run, error) {
 	id, err := externalKeyID(key)
 	if err != nil {
 		return observe.Run{}, err
@@ -281,20 +281,27 @@ func (s *Source) Observe(key observe.Key, _ observe.Spec) (observe.Run, error) {
 	if err != nil {
 		return observe.Run{}, err
 	}
-	if r.Details.Home.ControlDetected != nil {
-		detected := c.StoreControlDetected
-		r.Details.Home.ControlDetected = &detected
-	}
-	if r.Details.Planted != nil && (r.Details.Planted.ControlEnd != nil || c.ReadCalibrationMoved && r.Details.Planted.AtimeMoved && r.Details.Planted.SameFile && r.End.Signal == 0 && r.Markers.Confinement && !r.Markers.CouldNotStart) {
+	if spec.Control {
 		end := observe.End{}
 		if c.ReadControlKilled {
 			end.Signal = 9
 		}
+		return observe.Run{End: end, Markers: observe.Markers{Confinement: true}}, nil
+	}
+	if spec.StoreControl != nil {
+		detected := c.StoreControlDetected
+		r.Details.Home.ControlDetected = &detected
+	} else {
+		r.Details.Home.ControlDetected = nil
+	}
+	if r.Details.Planted != nil {
 		planted := *r.Details.Planted
-		planted.ControlEnd = &observe.InvocationProtocol{End: end, Markers: observe.Markers{Confinement: true}}
+		planted.ControlEnd = nil
 		r.Details.Planted = &planted
 	}
-	r.CopyChanged = !c.PrivateCopyUnchanged
+	if !c.PrivateCopyUnchanged {
+		return observe.Run{CopyChanged: true}, nil
+	}
 	if !c.ConfinementApplied {
 		r.Markers = observe.Markers{}
 		r.End = observe.End{Code: *c.SandboxExecExit}

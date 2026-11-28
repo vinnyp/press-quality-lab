@@ -122,8 +122,12 @@ func TestFix1NullReadControl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Details.Planted == nil || r.Details.Planted.ControlEnd == nil {
-		t.Fatal("host control absent")
+	if r.Details.Planted == nil || r.Details.Planted.ControlEnd != nil {
+		t.Fatal("ordinary run control")
 	}
-	CheckAttribution(t, observe.Run{End: r.Details.Planted.ControlEnd.End, Markers: r.Details.Planted.ControlEnd.Markers}, "confinement")
+	r, err = s.Observe(map[string]any(key), observe.Spec{Control: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	CheckAttribution(t, r, "confinement")
 }

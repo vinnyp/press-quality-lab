@@ -11,6 +11,15 @@ func level5(ch plan.Check, c observe.Controls, e Evidence) Result {
 	for _, invocation := range e.Invocations {
 		changed = changed || invocation.Run.CopyChanged
 	}
+	for _, comp := range Computations(ch) {
+		for _, name := range array(comp["captures"]) {
+			for _, inv := range e.Captures {
+				if inv.Key["runbook"] == ch.Preimage["runbook"] && inv.Key["step"] == name {
+					changed = changed || inv.Run.CopyChanged
+				}
+			}
+		}
+	}
 	if changed {
 		return Result{Outcome: NotObserved, Reason: "harness_fault", Level: 5}
 	}

@@ -111,7 +111,7 @@ func TestDestructiveServeRefusal(t *testing.T) {
 						command["class"] = "destructive"
 					}
 				}}
-				checks, err := collect.Collect(p, wrapped)
+				checks, err := collect.Collect(p, wrapped, collect.Options{RunDirectory: t.TempDir()})
 				collectErr = err
 				return checks, err
 			}

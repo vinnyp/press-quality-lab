@@ -14,7 +14,7 @@ func TestPR8OverrideWired(t *testing.T) {
 	got, e := collect(plan.Plan{Checks: []plan.Check{ch, ch}, Runbooks: []plan.Runbook{{Steps: []plan.Step{{Key: plan.Object{"words": plan.Array{}}, Required: []int{0, 1}}}}}}, &fake{}, func(plan.Check, observe.Controls, decide.Evidence) decide.Result {
 		calls++
 		return decide.Result{Outcome: "held", Level: 8}
-	})
+	}, Options{RunDirectory: t.TempDir()})
 	if e != nil || calls != 2 || len(got) != 2 {
 		t.Fatal(got, e, calls)
 	}

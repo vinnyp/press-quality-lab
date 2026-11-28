@@ -120,7 +120,7 @@ func TestPR14DiscoveryCarried(t *testing.T) {
 		controls := goodControls()
 		controls.ConfinementApplied = ran
 		source := &helpSource{controls: controls, serve: func(plan.Array) observe.Run { return help("leaf") }}
-		checks, err := Collect(plan.Plan{Checks: []plan.Check{ch, other}}, source)
+		checks, err := Collect(plan.Plan{Checks: []plan.Check{ch, other}}, source, Options{RunDirectory: t.TempDir()})
 		if err != nil {
 			t.Fatal(err)
 		}

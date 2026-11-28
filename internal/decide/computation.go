@@ -1,24 +1,17 @@
 package decide
 
 import (
-	"github.com/vinnyp/press-quality-lab/internal/strictjson"
+	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"strings"
 )
 
-// ComputedValueDepth is QA6's depth inside a judge input evidence item.
-const ComputedValueDepth = 61
+// ComputedValueDepth and ComputedValueBytes retain QA6's shared bounds.
+const ComputedValueDepth = observe.ComputedValueDepth
+const ComputedValueBytes = observe.ComputedValueBytes
 
-// ComputedValueBytes is QA6's inclusive output bound.
-const ComputedValueBytes = 1 << 20
-
-// ParseComputed applies QA6 to drained bytes, keeping valid JSON null distinct
-// from an invalid value through its boolean result. The darwin source must pass
-// cut || Run.OutputCutAfterExit as cut.
+// ParseComputed delegates to the sole QA6 reader used by the producer too.
 func ParseComputed(data []byte, cut bool, count int64) (any, bool) {
-	if cut || count < 0 || count > ComputedValueBytes || int64(len(data)) != count {
-		return nil, false
-	}
-	return strictjson.Read(data, strictjson.Bounds{Bytes: ComputedValueBytes, Depth: ComputedValueDepth, NumberChars: 32, ExponentDigits: 4}, nil)
+	return observe.ParseComputed(data, cut, count)
 }
 
 // Substitute replaces QA4 tokens after argv[0], without rescanning inserted paths.

@@ -81,7 +81,7 @@ func scanHomeWith(home, planted string, forms []ScanForm, stdout, stderr []byte,
 				return err
 			}
 			info, statErr := f.Stat()
-			if statErr != nil || !os.SameFile(e.info, info) {
+			if statErr != nil || !os.SameFile(e.Info, info) {
 				return errors.Join(errHomeUnreadable, statErr, f.Close())
 			}
 			b, readErr := io.ReadAll(io.LimitReader(deadlineReader{r: f, deadline: deadline, now: hooks.now}, limit))
