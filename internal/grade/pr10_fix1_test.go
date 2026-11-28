@@ -27,6 +27,7 @@ func (fix1Source) Observe(observe.Key, observe.Spec) (observe.Run, error) {
 func TestFix1DeclaredRun(t *testing.T) {
 	// QE18, QE10, KTD16: values mask once, while counts, digests and judge fields remain raw.
 	o, d, saved := fixture(t)
+	o.JSON = true
 	data := strings.Replace(validSubject, `"offline":[]`, `"offline":[{"applies_to":[[]],"args":[],"env":{"SYNTHETIC":"~~~???ab","FIELD":"execution"}}]`, 1)
 	data = strings.Replace(data, `"store_backed":false`, `"store_backed":true`, 1)
 	data = strings.Replace(data, `"seed":null`, `"seed":"seed"`, 1)

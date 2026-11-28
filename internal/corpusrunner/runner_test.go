@@ -480,11 +480,13 @@ func computationCaptureCut(key, subject, input, preimages map[string]any) bool {
 }
 
 type result struct {
-	Exit     int
-	Record   map[string]any
-	Baseline map[string]any
-	Rule     string
-	Trace    trace
+	Stdout      []byte
+	RecordBytes []byte
+	Exit        int
+	Record      map[string]any
+	Baseline    map[string]any
+	Rule        string
+	Trace       trace
 }
 
 func compareResult(c caseassembly.Case, want map[string]any, r result) error {
@@ -519,7 +521,7 @@ func compareResult(c caseassembly.Case, want map[string]any, r result) error {
 	return nil
 }
 
-func runGrade(binary string, c caseassembly.Case, l caseassembly.Layout) (result, error) {
+func runGrade(binary string, c caseassembly.Case, l caseassembly.Layout, jsonMode ...bool) (result, error) {
 	host, err := json.Marshal(c.Input.Host)
 	if err != nil {
 		return result{}, err
@@ -539,6 +541,9 @@ func runGrade(binary string, c caseassembly.Case, l caseassembly.Layout) (result
 	if l.Baseline != "" {
 		args = append(args, "--baseline", l.Baseline)
 	}
+	if len(jsonMode) > 0 && jsonMode[0] {
+		args = append(args, "--json")
+	}
 	cmd := exec.Command(binary, args...)
 	cmd.Dir = l.Work
 	// Both platform config locations stay inside the fixture's ambient home.
@@ -551,8 +556,8 @@ func runGrade(binary string, c caseassembly.Case, l caseassembly.Layout) (result
 	}
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
-	_, runErr := cmd.Output()
-	r := result{}
+	stdout, runErr := cmd.Output()
+	r := result{Stdout: stdout}
 	if runErr != nil {
 		var exit *exec.ExitError
 		if !errors.As(runErr, &exit) {
@@ -582,6 +587,10 @@ func runGrade(binary string, c caseassembly.Case, l caseassembly.Layout) (result
 		if r.Record != nil {
 			return errors.New("multiple stored records")
 		}
+		r.RecordBytes, e = os.ReadFile(path)
+		if e != nil {
+			return e
+		}
 		return caseassembly.Read(path, &r.Record)
 	})
 	if err != nil {
@@ -596,6 +605,10 @@ func runGrade(binary string, c caseassembly.Case, l caseassembly.Layout) (result
 		}
 		if r.Record != nil {
 			return errors.New("multiple stored records")
+		}
+		r.RecordBytes, e = os.ReadFile(path)
+		if e != nil {
+			return e
 		}
 		return caseassembly.Read(path, &r.Record)
 	})
@@ -649,7 +662,7 @@ func pendingSet(data string) map[string]bool {
 }
 
 func TestCorpus(t *testing.T) {
-	// QT6, QE19, QO1: execute the real command and independently compare its record and trace.
+	// QT6, QE19, QO1, QE14, GR3, AE21: compare both modes, their stored bytes, scorecard and traces.
 	// QE3, QE7: every judge-checked required set matches the trace (KTD2.7).
 	binary := filepath.Join(t.TempDir(), "pql")
 	build := exec.Command("go", "build", "-tags", "scripted", "-o", binary, "../../cmd/pql")
@@ -694,6 +707,26 @@ func TestCorpus(t *testing.T) {
 			r, failure := runGrade(binary, c, layout)
 			if failure != nil {
 				t.Fatal(failure)
+			}
+			if !pending[c.ID] {
+				other := caseassembly.Assemble(t, kit, source, c)
+				// Keep the measured subject path identical; only trace and store vary.
+				other.Subject = layout.Subject
+				jr, e := runGrade(binary, c, other, true)
+				if e != nil {
+					t.Fatal(e)
+				}
+				if e := agreement(c, r, jr); e != nil {
+					t.Fatal(e)
+				}
+				if c.Kind == "judge-checked" {
+					if e := checkRequired(jr.Trace, want); e != nil {
+						t.Fatal(e)
+					}
+				}
+				if e := checkTrace(c, subject, want, preimages, jr.Trace); e != nil {
+					t.Fatal(e)
+				}
 			}
 			if pending[c.ID] {
 				if err := checkEnding(predictions[c.ID].Ending, r.Exit, r.Rule); err != nil {

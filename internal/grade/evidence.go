@@ -39,7 +39,7 @@ func checkResolution(ch collect.Check, masker *record.Masker) (record.Resolution
 			}
 		}
 	}
-	observed := strictjson.Object{}
+	observed := strictjson.Object{"probe": ch.Plan.Preimage["probe"]}
 	streams := strictjson.Array{}
 	invocations := strictjson.Array{}
 	keys := ch.Plan.Keys
@@ -78,6 +78,7 @@ func checkResolution(ch collect.Check, masker *record.Masker) (record.Resolution
 				streams = append(streams, nil)
 			}
 		}
+		observed["store"] = ch.Plan.Subject["store"]
 		observed["discovery"] = discoveryEvidence(ch)
 		observed["placeholders"] = placeholderLocations(ch.Plan.Subject)
 		observed["short_env_names"] = shortEnvNames(ch.Plan.Subject)

@@ -54,7 +54,9 @@ func TestFunnelEndFailureKeepsPublication(t *testing.T) {
 			d.Source = func() (observe.Source, func() error, error) {
 				return ReleasedSource{}, func() error { closed = true; return nil }, nil
 			}
-			var output bytes.Buffer
+			var output, diagnostic bytes.Buffer
+			o.JSON = true
+			d.Stderr = &diagnostic
 			code, err := Run(o, d, &output)
 			if mode == "Control" {
 				if code != 4 || err != nil || !called || !closed {
@@ -72,7 +74,7 @@ func TestFunnelEndFailureKeepsPublication(t *testing.T) {
 			if code != 70 || !errors.As(err, &classified) || classified.Rule != "QH23" || !called {
 				t.Fatalf("result: %d %v called=%v", code, err, called)
 			}
-			if !strings.Contains(output.String(), "cleanup failed; directory left behind: "+Escape(w.Path())+"\n") {
+			if !strings.Contains(diagnostic.String(), "cleanup failed; directory left behind: "+Escape(w.Path())+"\n") {
 				t.Fatalf("directory unnamed: %q", output.String())
 			}
 			data, err := os.ReadFile(filepath.Join(w.Path(), "process.json"))
@@ -88,12 +90,14 @@ func TestFunnelRemovePanicAndPriorCause(t *testing.T) {
 	o, d, _ := fixture(t)
 	d.Open = func(string) (io.ReadCloser, error) { return nil, errors.New("original read failure") }
 	d.Remove = func(*throwaway.Workspace) error { panic("remove panic") }
-	var output bytes.Buffer
+	var output, diagnostic bytes.Buffer
+	o.JSON = true
+	d.Stderr = &diagnostic
 	code, err := Run(o, d, &output)
 	if code != 70 || err == nil || !strings.Contains(err.Error(), "remove panic") || !strings.Contains(err.Error(), "original read failure") {
 		t.Fatalf("lost cause: %d %v", code, err)
 	}
-	if !strings.Contains(output.String(), "cleanup failed; directory left behind:") {
+	if !strings.Contains(diagnostic.String(), "cleanup failed; directory left behind:") {
 		t.Fatalf("unnamed: %q", output.String())
 	}
 }
@@ -116,7 +120,9 @@ func TestSignalCollectorWaitBound(t *testing.T) {
 		<-release
 		return nil, nil
 	}
-	var output bytes.Buffer
+	var output, diagnostic bytes.Buffer
+	o.JSON = true
+	d.Stderr = &diagnostic
 	type result struct {
 		code int
 		err  error
@@ -141,7 +147,7 @@ func TestSignalCollectorWaitBound(t *testing.T) {
 	if code != 70 || err == nil || !strings.Contains(err.Error(), "collector did not stop after signal") {
 		t.Fatalf("unbounded collector: %d %v", code, err)
 	}
-	if !strings.Contains(output.String(), "cleanup failed; directory left behind:") {
+	if !strings.Contains(diagnostic.String(), "cleanup failed; directory left behind:") {
 		t.Fatalf("workspace unnamed: %q", output.String())
 	}
 }

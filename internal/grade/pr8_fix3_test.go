@@ -66,6 +66,7 @@ func TestPR8HomeEdges(t *testing.T) {
 	for _, row := range []string{"DanglingLink", "Relative"} {
 		t.Run(row, func(t *testing.T) {
 			o, d, _ := fixture(t)
+			o.JSON = true
 			home := t.TempDir()
 			d.AccountHome = func() (string, error) { return home, nil }
 			if code, e := Run(o, d, io.Discard); code != 4 || e != nil {

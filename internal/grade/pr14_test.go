@@ -43,7 +43,7 @@ func TestPR14InvocationEvidence(t *testing.T) {
 		}
 	}
 	r, err := checkResolution(collect.Check{}, nil)
-	if err != nil || r.Observed != nil {
+	if err != nil || !reflect.DeepEqual(r.Observed, strictjson.Object{"probe": nil, "streams": strictjson.Array{}}) {
 		t.Fatal(r, err)
 	}
 }
@@ -301,6 +301,29 @@ func TestPR14ComputationOrder(t *testing.T) {
 		}
 		if !same && !reflect.DeepEqual(subjectObject(names[2])["computation"], plan.Array{"expected", "{SEED}", "{SUBJECT_DIR}"}) {
 			t.Fatal(names)
+		}
+	}
+}
+
+func TestPR14ProbeStoreEvidence(t *testing.T) {
+	// QE14, QP7, QE18: every check carries its probe; only discovery carries the declared store.
+	for _, probe := range []any{nil, "discovery", "byte_bound"} {
+		for _, path := range []any{nil, "synthetic_store"} {
+			ch := collect.Check{Plan: plan.Check{Preimage: plan.Object{"probe": probe}, Subject: plan.Object{"store": path}}}
+			r, err := checkResolution(ch, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			o, ok := r.Observed.(strictjson.Object)
+			if !ok {
+				t.Fatalf("observed is not an object: %#v", r.Observed)
+			}
+			if v, present := o["probe"]; !present || v != probe {
+				t.Fatalf("probe: %#v", o)
+			}
+			if v, present := o["store"]; present != (probe == "discovery") || (present && v != path) {
+				t.Fatalf("store: %#v", o)
+			}
 		}
 	}
 }
