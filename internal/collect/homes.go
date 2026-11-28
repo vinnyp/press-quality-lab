@@ -2,9 +2,9 @@ package collect
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 	"reflect"
 	"time"
@@ -16,6 +16,8 @@ import (
 )
 
 type preparation struct {
+	random   io.Reader
+	compare  func(throwaway.HomeSnapshot, throwaway.HomeSnapshot) ([]throwaway.HomeDelta, bool)
 	plant    func(string, string, string, string) (string, error)
 	snapshot func(string, string, string) (throwaway.HomeSnapshot, error)
 	backdate func(string, string) (throwaway.FileFacts, error)
@@ -35,7 +37,7 @@ type homeSource struct {
 }
 
 func newHomeSource(p plan.Plan, source observe.Source, options Options) *homeSource {
-	s := &homeSource{preparation: preparation{plant: throwaway.PlantGivenCanary, snapshot: throwaway.SnapshotPlanted, backdate: throwaway.BackdatePlanted}, source: source, directory: p.SubjectDirectory, options: options, checks: map[string]plan.Check{}, books: map[string]string{}, homes: map[string]*throwaway.Workspace{}, captures: map[string][]observe.Invocation{}}
+	s := &homeSource{preparation: preparation{random: rand.Reader, compare: throwaway.CompareHomes, plant: throwaway.PlantGivenCanary, snapshot: throwaway.SnapshotPlanted, backdate: throwaway.BackdatePlanted}, source: source, directory: p.SubjectDirectory, options: options, checks: map[string]plan.Check{}, books: map[string]string{}, homes: map[string]*throwaway.Workspace{}, captures: map[string][]observe.Invocation{}}
 	for _, ch := range p.Checks {
 		s.checks[ch.ID] = ch
 	}
@@ -149,11 +151,11 @@ func (s *homeSource) prepare(ch plan.Check, key observe.Key, spec observe.Spec, 
 	}
 	if kind == "planted" {
 		if canary == "" {
-			var raw [16]byte
-			if _, err := rand.Read(raw[:]); err != nil {
+			var err error
+			canary, err = throwaway.DrawCanary(s.preparation.random)
+			if err != nil {
 				return spec, err
 			}
-			canary = "pqlcanary" + hex.EncodeToString(raw[:])
 			if s.options.CanaryDrawn != nil {
 				s.options.CanaryDrawn(canary)
 			}
@@ -211,7 +213,7 @@ func (s *homeSource) storeControl(ch plan.Check) (result *bool, err error) {
 	if err != nil {
 		return nil, err
 	}
-	changes, unreadable := throwaway.CompareHomes(before, after)
+	changes, unreadable := s.preparation.compare(before, after)
 	if unreadable {
 		return nil, &plan.Fault{Rule: "QP9", Cause: "control copy unreadable"}
 	}

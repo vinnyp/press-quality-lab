@@ -4,6 +4,7 @@ package confine_test
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
 	"golang.org/x/sys/unix"
@@ -39,7 +40,11 @@ func realSourceFixture(t *testing.T, afterWait func(observe.Spec) error) sourceF
 		if !ok {
 			return inv, fmt.Errorf("missing witness")
 		}
-		inv.Words = []string{confine.SelfTestMode, name, spec.PlantedPath, "1"}
+		target := spec.PlantedPath
+		if store, ok := key["store_target"].(string); ok {
+			target = filepath.Join(spec.HomePath, store)
+		}
+		inv.Words = []string{confine.SelfTestMode, name, target, "1"}
 		inv.Paths.PlantedDirs = nil
 		if dirs, ok := key["resolver_dirs"].([]string); ok {
 			inv.Paths.PlantedDirs = dirs
@@ -192,7 +197,14 @@ func TestSourceHarnessRead(t *testing.T) {
 
 func sourceForgery(t *testing.T, name string) {
 	t.Helper()
-	f := realSourceFixture(t, nil)
+	storeActive := false
+	var storeBefore throwaway.FileFacts
+	f := realSourceFixture(t, func(spec observe.Spec) error {
+		if storeActive {
+			assertForgeryEffect(t, name, filepath.Join(spec.HomePath, "store"), storeBefore)
+		}
+		return nil
+	})
 	for range 25 {
 		// Unconfined twin: the same native operation returns, with known output.
 		spec := f.planted(t)
@@ -212,10 +224,56 @@ func sourceForgery(t *testing.T, name string) {
 		if waitErr != nil || closeErr != nil || readErr != nil || !state.Success() || string(b) != "attempt_"+name+"\nreturned_"+name+"\n" {
 			t.Fatalf("unconfined witness %v %v %v %v %q", state, waitErr, closeErr, readErr, b)
 		}
+		assertForgeryEffect(t, name, spec.PlantedPath, spec.PlantedBefore)
+		storeSpec := f.planted(t)
+		store := filepath.Join(storeSpec.HomePath, "store")
+		storeBefore, err = throwaway.InspectFile(store)
+		if err != nil {
+			t.Fatal(err)
+		}
+		storeActive = true
+		storeRun, err := f.source.Observe(observe.Key{"witness": name, "store_target": "store"}, storeSpec)
+		storeActive = false
+		if err != nil {
+			t.Fatal(err)
+		}
+		if storeRun.End != (observe.End{}) || storeRun.Markers != (observe.Markers{Confinement: true}) || string(storeRun.Stdout) != "attempt_"+name+"\nreturned_"+name+"\n" || len(storeRun.Stderr) != 0 {
+			t.Fatalf("confined store twin %+v", storeRun)
+		}
 		_, run, _ := sourceObserve(t, f, name, false)
 		assertSourceRaw(t, run, "attempt_"+name+"\n", true, false)
 		_, clean, _ := sourceObserve(t, f, "never_reads_secret", false)
 		assertSourceRaw(t, clean, "never_reads_value\n", false, false)
+	}
+}
+
+func assertForgeryEffect(t *testing.T, name, target string, before throwaway.FileFacts) {
+	t.Helper()
+	switch name {
+	case "forge_utimes", "forge_setattrlist", "forge_directory":
+		after, err := throwaway.InspectFile(target)
+		if err != nil || !after.Access.Equal(time.Unix(4102444800, 0)) {
+			t.Fatalf("future access time %+v: %v", after, err)
+		}
+	case "forge_write":
+		data, err := os.ReadFile(target)
+		if err != nil || !strings.HasPrefix(string(data), "forged") {
+			t.Fatalf("forged content %q: %v", data, err)
+		}
+	case "forge_rename":
+		_, err := os.Lstat(target)
+		moved, movedErr := throwaway.InspectFile(target + ".renamed")
+		if !os.IsNotExist(err) || movedErr != nil || moved.Inode != before.Inode || moved.Device != before.Device {
+			t.Fatalf("renamed identity %+v: %v %v", moved, err, movedErr)
+		}
+	case "forge_replace":
+		data, err := os.ReadFile(target)
+		after, statErr := throwaway.InspectFile(target)
+		if err != nil || statErr != nil || string(data) != "replacement" || after.Inode == before.Inode {
+			t.Fatalf("replacement %q %+v: %v %v", data, after, err, statErr)
+		}
+	default:
+		t.Fatalf("no effect oracle for %s", name)
 	}
 }
 
@@ -430,8 +488,12 @@ func TestSourceComputation(t *testing.T) {
 import "fmt"
 func main(){fmt.Print("{\"value\":1}\n")}
 `)
+	program, err := filepath.EvalSymlinks(program)
+	if err != nil {
+		t.Fatal(err)
+	}
 	w, controls, subject, computation := controlFixture(t, launcher)
-	copies, err := confine.NewCopies(w.Path(), launcher, program)
+	copies, err := confine.NewCopies(w.Path(), launcher, launcher)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -453,7 +515,7 @@ func main(){fmt.Print("{\"value\":1}\n")}
 			t.Fatalf("printed %+v", run.Details.Printed)
 		}
 		// The subject profile is the clean twin for this computation's literal output.
-		process, err := copies.Start(confine.Invocation{Workspace: w, Paths: subject.Paths, Directory: spec.HomePath, Words: nil, Budget: 10 * time.Second})
+		process, err := copies.Start(confine.Invocation{Workspace: w, Paths: subject.Paths, Directory: spec.HomePath, Words: []string{confine.SelfTestMode, "never_reads_secret", spec.PlantedPath, "1"}, Budget: 10 * time.Second})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -461,7 +523,7 @@ func main(){fmt.Print("{\"value\":1}\n")}
 		if err != nil {
 			t.Fatal(err)
 		}
-		if twin.Markers != (observe.Markers{Confinement: true}) || twin.End != (observe.End{}) || string(twin.Stdout) != "{\"value\":1}\n" || len(twin.Stderr) != 0 {
+		if twin.Markers != (observe.Markers{Confinement: true}) || twin.End != (observe.End{}) || string(twin.Stdout) != "never_reads_value\n" || len(twin.Stderr) != 0 {
 			t.Fatalf("clean twin %+v", twin)
 		}
 	}
@@ -469,7 +531,13 @@ func main(){fmt.Print("{\"value\":1}\n")}
 
 func TestSourceDirectoryRename(t *testing.T) {
 	// QH11, QH27: renaming an ancestor is killed before the file can be retimed through its new path.
-	f := realSourceFixture(t, nil)
+	storeActive := false
+	f := realSourceFixture(t, func(spec observe.Spec) error {
+		if storeActive {
+			assertForgeryEffect(t, "forge_directory", filepath.Join(spec.HomePath, "ordinary/store"), throwaway.FileFacts{})
+		}
+		return nil
+	})
 	for range 25 {
 		spec := f.plantedAt(t, "d/token")
 		program := f.base.Paths.Values["BIN"]
@@ -487,6 +555,7 @@ func TestSourceDirectoryRename(t *testing.T) {
 		if waitErr != nil || closeErr != nil || readErr != nil || !state.Success() || string(output) != "attempt_forge_directory\nreturned_forge_directory\n" {
 			t.Fatalf("unconfined %v %v %v %v %q", state, waitErr, closeErr, readErr, output)
 		}
+		assertForgeryEffect(t, "forge_directory", spec.PlantedPath, spec.PlantedBefore)
 		spec = f.plantedAt(t, "d/token")
 		run, err := f.source.Observe(observe.Key{"witness": "forge_directory"}, spec)
 		if err != nil {
@@ -499,6 +568,16 @@ func TestSourceDirectoryRename(t *testing.T) {
 			t.Fatal(err)
 		}
 		assertSourceRaw(t, clean, "attempt_read\nread_value\n", false, true)
+		storeSpec := f.planted(t)
+		if err := throwaway.WriteHomeFiles(storeSpec.HomePath, []throwaway.NamedFile{{Name: "ordinary/store", Data: []byte("store_value")}}); err != nil {
+			t.Fatal(err)
+		}
+		storeActive = true
+		storeRun, err := f.source.Observe(observe.Key{"witness": "forge_directory", "store_target": "ordinary/store"}, storeSpec)
+		storeActive = false
+		if err != nil || storeRun.End != (observe.End{}) || storeRun.Markers != (observe.Markers{Confinement: true}) || string(storeRun.Stdout) != "attempt_forge_directory\nreturned_forge_directory\n" || len(storeRun.Stderr) != 0 {
+			t.Fatalf("confined directory twin %+v: %v", storeRun, err)
+		}
 	}
 }
 
@@ -537,5 +616,25 @@ func TestSourceRefusesResolverDirectories(t *testing.T) {
 				t.Fatalf("resolver refusal %v", err)
 			}
 		}
+	}
+}
+
+func TestSourceLeakScan(t *testing.T) {
+	// QP12, QP13, QT5: the real source finds encoded streams and plain home files.
+	f := realSourceFixture(t, nil)
+	for range 25 {
+		_, run, spec := sourceObserve(t, f, "leak_secret", false)
+		want := []observe.Leak{
+			{Place: "stdout", Encoding: "base64"},
+			{Place: "stdout", Encoding: "base64-nopad"},
+			{Place: "stdout", Encoding: "base64url"},
+			{Place: "stdout", Encoding: "base64url-nopad"},
+			{Place: "home/leaked", Encoding: "plain"},
+		}
+		if !reflect.DeepEqual(run.Details.LeakScan.Leaks, want) || run.Details.LeakScan.Unreadable || run.Details.LeakScan.BoundReached || run.End != (observe.End{}) || run.Markers != (observe.Markers{Confinement: true}) || string(run.Stdout) != base64.StdEncoding.EncodeToString([]byte(spec.Canary))+"\n" || len(run.Stderr) != 0 {
+			t.Fatalf("leaks %+v", run)
+		}
+		_, clean, _ := sourceObserve(t, f, "never_reads_secret", false)
+		assertSourceRaw(t, clean, "never_reads_value\n", false, false)
 	}
 }

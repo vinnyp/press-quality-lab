@@ -1,10 +1,14 @@
 package collect
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"testing"
 	"time"
 
@@ -115,7 +119,14 @@ func TestReadControlSequence(t *testing.T) {
 						digest = e.Digest
 					}
 				}
-				if digest == "" {
+				planted, err := os.ReadFile(s.PlantedPath)
+				if err != nil || string(planted) != s.Canary {
+					t.Fatalf("planted bytes %q %v", planted, err)
+				}
+				if !regexp.MustCompile(`^pqlcanary[0-9a-f]{32}$`).MatchString(s.Canary) {
+					t.Fatalf("canary shape %q", s.Canary)
+				}
+				if digest != fmt.Sprintf("%x", sha256.Sum256(planted)) {
 					t.Fatal("missing planted snapshot digest")
 				}
 				if s.Control {
@@ -126,7 +137,7 @@ func TestReadControlSequence(t *testing.T) {
 					if s.Canary != canaries[len(canaries)-1] {
 						t.Fatal("different control canary")
 					}
-					return observe.Run{Markers: observe.Markers{Confinement: true}, End: observe.End{Signal: 9}}, nil
+					return observe.Run{End: observe.End{Code: -1, Signal: 9}}, nil
 				}
 				if len(canaries) > 0 && s.Canary == canaries[len(canaries)-1] {
 					t.Fatal("reused canary")
@@ -155,6 +166,9 @@ func TestReadControlSequence(t *testing.T) {
 				if (r.Details.Planted.ControlEnd != nil) != (name == "Read") {
 					t.Fatal("control fold")
 				}
+				if name == "Read" && !reflect.DeepEqual(*r.Details.Planted.ControlEnd, observe.InvocationProtocol{End: observe.End{Code: -1, Signal: 9}}) {
+					t.Fatalf("control protocol %+v", r.Details.Planted.ControlEnd)
+				}
 			}
 			want := 0
 			if name == "Read" {
@@ -168,13 +182,17 @@ func TestReadControlSequence(t *testing.T) {
 }
 func TestStoreControlPassed(t *testing.T) {
 	// QP9: the appended separate copy supplies StoreControl; the subject copy stays pristine.
-	for _, name := range []string{"Detected", "NoStore", "EmptyStore"} {
+	for _, name := range []string{"Detected", "Missed", "NoStore", "EmptyStore", "NotStoreProbe"} {
 		t.Run(name, func(t *testing.T) {
 			calls := 0
 			f := &homeFake{run: func(k observe.Key, s observe.Spec) (observe.Run, error) {
 				calls++
 				want := name == "Detected"
-				if s.StoreControl == nil || *s.StoreControl != want {
+				if name == "NotStoreProbe" {
+					if s.StoreControl != nil {
+						t.Fatal("non-store control")
+					}
+				} else if s.StoreControl == nil || *s.StoreControl != want {
 					t.Fatalf("store control %v want %v", s.StoreControl, want)
 				}
 				b, err := os.ReadFile(filepath.Join(s.HomePath, "store"))
@@ -192,6 +210,12 @@ func TestStoreControlPassed(t *testing.T) {
 			}}
 			s, ch := homeFixture(t, f)
 			ch.Preimage["probe"] = "store_unchanged"
+			if name == "NotStoreProbe" {
+				ch.Preimage["probe"] = "bare"
+			}
+			if name == "Missed" {
+				s.preparation.compare = func(throwaway.HomeSnapshot, throwaway.HomeSnapshot) ([]throwaway.HomeDelta, bool) { return nil, false }
+			}
 			if name == "NoStore" {
 				ch.Subject["store"] = nil
 			}
@@ -220,23 +244,31 @@ func TestStoreControlPassed(t *testing.T) {
 }
 func TestServeTimeAssertion(t *testing.T) {
 	// QH27: metadata read at serve catches an intervening access before any source call.
-	f := &homeFake{}
-	s, ch := homeFixture(t, f)
-	spec, err := s.prepare(ch, homeKey("planted"), observe.Spec{}, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := assertBackdated(spec); err != nil {
-		t.Fatal(err)
-	}
-	now := time.Now()
-	if err := os.Chtimes(spec.PlantedPath, now, now); err != nil {
-		t.Fatal(err)
-	}
-	err = assertBackdated(spec)
-	var fault *plan.Fault
-	if !errors.As(err, &fault) || fault.Rule != "QH27" || fault.Cause != "planted access time moved before serve" {
-		t.Fatalf("fault %v", err)
+	for _, age := range []time.Duration{24 * time.Hour, 23*time.Hour + 59*time.Minute} {
+		t.Run(fmt.Sprint(int(age/time.Minute)), func(t *testing.T) {
+			calls := 0
+			f := &homeFake{run: func(observe.Key, observe.Spec) (observe.Run, error) { calls++; return cleanLoopRun(), nil }}
+			s, ch := homeFixture(t, f)
+			s.preparation.backdate = func(home, name string) (throwaway.FileFacts, error) {
+				facts, err := throwaway.BackdatePlanted(home, name)
+				if err != nil {
+					return facts, err
+				}
+				err = os.Chtimes(filepath.Join(home, name), facts.Modified.Add(-age), facts.Modified)
+				return facts, err
+			}
+			_, err := s.Observe(homeKey("planted"), observe.Spec{CheckID: ch.ID})
+			if age == 24*time.Hour {
+				if err != nil || calls != 1 {
+					t.Fatalf("boundary %d %v", calls, err)
+				}
+				return
+			}
+			var fault *plan.Fault
+			if calls != 0 || !errors.As(err, &fault) || fault.Rule != "QH27" || fault.Cause != "planted access time moved before serve" {
+				t.Fatalf("serve %d %v", calls, err)
+			}
+		})
 	}
 }
 
@@ -302,6 +334,41 @@ func TestPlantedPreparationOrder(t *testing.T) {
 		events = append(events, "facts")
 		return facts, err
 	}
+	if _, err := s.Observe(homeKey("planted"), observe.Spec{CheckID: ch.ID}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSeparateRunbookHomes(t *testing.T) {
+	// QH14: steps share within each book, never across books.
+	var paths []string
+	f := &homeFake{run: func(_ observe.Key, s observe.Spec) (observe.Run, error) {
+		paths = append(paths, s.HomePath)
+		return cleanLoopRun(), nil
+	}}
+	s, ch := homeFixture(t, f)
+	for _, book := range []string{"first", "first", "second", "second"} {
+		k := homeKey("runbook")
+		k["runbook"] = book
+		if _, err := s.Observe(k, observe.Spec{CheckID: ch.ID}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if paths[0] != paths[1] || paths[2] != paths[3] || paths[0] == paths[2] {
+		t.Fatal(paths)
+	}
+}
+
+func TestCanaryRandomSource(t *testing.T) {
+	// QP10: collection uses the shared generator and all sixteen random bytes.
+	f := &homeFake{run: func(_ observe.Key, s observe.Spec) (observe.Run, error) {
+		if s.Canary != "pqlcanaryabcdefabcdefabcdefabcdefabcdefab" {
+			t.Fatalf("draw %q", s.Canary)
+		}
+		return cleanLoopRun(), nil
+	}}
+	s, ch := homeFixture(t, f)
+	s.preparation.random = bytes.NewReader([]byte{0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab})
 	if _, err := s.Observe(homeKey("planted"), observe.Spec{CheckID: ch.ID}); err != nil {
 		t.Fatal(err)
 	}

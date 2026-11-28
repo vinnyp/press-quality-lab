@@ -3,6 +3,7 @@
 package confine
 
 import (
+	"encoding/base64"
 	"errors"
 	"golang.org/x/sys/unix"
 	"path/filepath"
@@ -10,12 +11,38 @@ import (
 	"unsafe"
 )
 
-// Each named witness attempts only its own operation and never reads the
-// planted file. The two read controls have separate, explicit output oracles.
+// Forgery witnesses attempt only their named operation without reading the file.
+// Read and leak witnesses have separate, explicit output oracles.
 func plantedWitness(name, target string) (bool, int) {
 	switch name {
 	case "never_reads_secret":
 		if err := selfTestOutput("never_reads_value\n"); err != nil {
+			return true, LauncherFailed
+		}
+		return true, 0
+	case "leak_secret":
+		fd, err := unix.Open(target, unix.O_RDONLY|unix.O_NOFOLLOW, 0)
+		if err != nil {
+			return true, selfTestError(err)
+		}
+		var buffer [128]byte
+		n, readErr := unix.Read(fd, buffer[:])
+		if err := errors.Join(readErr, unix.Close(fd)); err != nil {
+			return true, selfTestError(err)
+		}
+		data := buffer[:n]
+		out, err := unix.Open(filepath.Join(filepath.Dir(target), "leaked"), unix.O_WRONLY|unix.O_CREAT|unix.O_TRUNC, 0600)
+		if err != nil {
+			return true, selfTestError(err)
+		}
+		written, writeErr := unix.Write(out, data)
+		if err := errors.Join(writeErr, unix.Close(out)); err != nil {
+			return true, selfTestError(err)
+		}
+		if written != len(data) {
+			return true, LauncherFailed
+		}
+		if err := selfTestOutput(base64.StdEncoding.EncodeToString(data) + "\n"); err != nil {
 			return true, LauncherFailed
 		}
 		return true, 0
@@ -49,14 +76,14 @@ func plantedWitness(name, target string) (bool, int) {
 	var err error
 	switch name {
 	case "forge_utimes":
-		err = unix.Utimes(target, []unix.Timeval{{Sec: 1}, {Sec: 1}})
+		err = unix.Utimes(target, []unix.Timeval{{Sec: 4102444800}, {Sec: 4102444800}})
 	case "forge_setattrlist":
 		p, e := unix.BytePtrFromString(target)
 		if e != nil {
 			return true, selfTestError(e)
 		}
 		attrs := unix.Attrlist{Bitmapcount: 5, Commonattr: unix.ATTR_CMN_ACCTIME}
-		value := unix.Timespec{Sec: 1}
+		value := unix.Timespec{Sec: 4102444800}
 		//lint:ignore SA1019 x/sys has no setattrlist wrapper; this witness attempts that exact call.
 		_, _, errno := syscall.Syscall6(unix.SYS_SETATTRLIST, uintptr(unsafe.Pointer(p)), uintptr(unsafe.Pointer(&attrs)), uintptr(unsafe.Pointer(&value)), unsafe.Sizeof(value), 0, 0)
 		if errno != 0 {
@@ -74,7 +101,7 @@ func plantedWitness(name, target string) (bool, int) {
 		moved := directory + ".renamed"
 		err = unix.Rename(directory, moved)
 		if err == nil {
-			err = unix.Utimes(filepath.Join(moved, filepath.Base(target)), []unix.Timeval{{Sec: 1}, {Sec: 1}})
+			err = unix.Utimes(filepath.Join(moved, filepath.Base(target)), []unix.Timeval{{Sec: 4102444800}, {Sec: 4102444800}})
 		}
 		if err == nil {
 			err = unix.Rename(moved, directory)

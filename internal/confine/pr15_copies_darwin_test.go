@@ -1,6 +1,7 @@
 package confine
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -45,6 +46,26 @@ func TestCopiesPerExecutable(t *testing.T) {
 		}
 		return c.startWith(Invocation{Workspace: fakeWorkspace{}, Computation: executable != "", Executable: executable, Paths: selected}, func(_ string, argv []string, _ string, _ []string, _ string) (Process, error) {
 			launched++
+			if executable == computation {
+				copied := c.programs[computation].path
+				foundBIN, foundTarget := false, false
+				for i, arg := range argv {
+					foundBIN = foundBIN || arg == "BIN="+copied
+					if arg == LauncherMode && i+4 < len(argv) {
+						var words, environment []string
+						if err := json.Unmarshal([]byte(argv[i+3]), &words); err != nil {
+							t.Fatal(err)
+						}
+						if err := json.Unmarshal([]byte(argv[i+4]), &environment); err != nil {
+							t.Fatal(err)
+						}
+						foundTarget = argv[i+2] == copied && len(words) == 0
+					}
+				}
+				if !foundBIN || !foundTarget {
+					t.Fatalf("computation launch %v", argv)
+				}
+			}
 			if systemExecutable(executable) {
 				found := false
 				for _, arg := range argv {

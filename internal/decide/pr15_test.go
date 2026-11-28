@@ -13,13 +13,15 @@ func TestChangedCopyPrecedence(t *testing.T) {
 	for _, row := range []struct {
 		name             string
 		changed, capture bool
+		outside          bool
 		level            int
 		reason           Reason
 	}{
-		{"Changed", true, false, 5, "harness_fault"},
-		{"Unconfined", false, false, 1, NetworkUnverifiable},
-		{"ChangedCapture", true, true, 5, "harness_fault"},
-		{"UnconfinedCapture", false, true, 1, NetworkUnverifiable},
+		{"Changed", true, false, false, 5, "harness_fault"},
+		{"Unconfined", false, false, false, 1, NetworkUnverifiable},
+		{"ChangedCapture", true, true, false, 5, "harness_fault"},
+		{"UnconfinedCapture", false, true, false, 1, NetworkUnverifiable},
+		{"UncapturedChanged", true, true, true, 0, ""},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			ch, facts := computedCheck("exit_code", strictjson.Number("0"))
@@ -41,7 +43,17 @@ func TestChangedCopyPrecedence(t *testing.T) {
 				facts.Invocations[1].Run = observe.Run{CopyChanged: row.changed}
 			}
 
+			if row.outside {
+				facts.Captures[0].Key["step"] = "uncaptured"
+				facts.Captures = append(facts.Captures, observe.Invocation{Key: observe.Key{"runbook": "book", "step": "first"}, Run: observe.Run{Markers: observe.Markers{Confinement: true}}})
+			}
 			got := Resolve(ch, passing(), facts)
+			if row.outside {
+				if got.Outcome != "held" {
+					t.Fatalf("uncaptured %+v", got)
+				}
+				return
+			}
 			if got.Level != row.level || got.Outcome != NotObserved || got.Reason != row.reason {
 				t.Fatalf("got %+v", got)
 			}
@@ -80,7 +92,7 @@ func TestChangedCopyProtocolFault(t *testing.T) {
 					t.Fatalf("wrong engine fault: %v", fault)
 				}
 			}()
-			Resolve(ch, passing(), Evidence{Invocations: []observe.Invocation{{Run: row.run}}})
+			Resolve(ch, passing(), Evidence{Captures: []observe.Invocation{{Run: row.run}}})
 		})
 	}
 }

@@ -390,11 +390,10 @@ func replaceCanary(root *os.Root, name, token string, data []byte, random io.Rea
 	if count != 1 {
 		return "", errors.New("token must occur once")
 	}
-	var raw [16]byte
-	if _, err := io.ReadFull(random, raw[:]); err != nil {
+	canary, err := DrawCanary(random)
+	if err != nil {
 		return "", err
 	}
-	canary := "pqlcanary" + hex.EncodeToString(raw[:])
 	f, err := root.OpenFile(name, os.O_WRONLY|os.O_TRUNC|syscall.O_NOFOLLOW, 0)
 	if err != nil {
 		return "", err
@@ -427,4 +426,13 @@ func (r deadlineReader) Read(p []byte) (int, error) {
 		return 0, ErrTimeLimit
 	}
 	return r.r.Read(p[:min(len(p), 64<<10)])
+}
+
+// DrawCanary draws QP10's 128-bit, lowercase hexadecimal token.
+func DrawCanary(random io.Reader) (string, error) {
+	var raw [16]byte
+	if _, err := io.ReadFull(random, raw[:]); err != nil {
+		return "", err
+	}
+	return "pqlcanary" + hex.EncodeToString(raw[:]), nil
 }

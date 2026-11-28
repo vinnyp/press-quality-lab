@@ -23,6 +23,10 @@ func TestPlantedSnapshotOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	planted, readErr := os.ReadFile(filepath.Join(home, "token"))
+	if readErr != nil || string(planted) != "pqlcanary11111111111111111111111111111111" {
+		t.Fatalf("planted bytes %q: %v", planted, readErr)
+	}
 	now := time.Unix(100, 0)
 	reads := 0
 	hooks := defaultHomeHooks(func(root *os.Root, name string) (homeFile, error) {
@@ -115,5 +119,54 @@ func TestStoreCopyControl(t *testing.T) {
 		if appendByte && (changes[0].Path != "store" || changes[0].Kind != "file" || changes[0].Change != "modified") {
 			t.Fatal(changes)
 		}
+	}
+}
+
+func TestUnknownNativeFacts(t *testing.T) {
+	// QH27: unknown metadata layouts are errors, never zero observations.
+	known := struct {
+		Dev, Ino uint64
+		Atim     struct{ Sec, Nsec int64 }
+	}{Dev: 3, Ino: 7}
+	known.Atim.Sec, known.Atim.Nsec = 100, 123
+	facts, err := nativeFileFacts(known, time.Unix(200, 0))
+	if err != nil || facts != (FileFacts{Device: 3, Inode: 7, Access: time.Unix(100, 123), Modified: time.Unix(200, 0)}) {
+		t.Fatalf("known layout %+v: %v", facts, err)
+	}
+	for _, row := range []struct {
+		name  string
+		value any
+		fault string
+	}{
+		{"Struct", struct{}{}, "unsupported file identity or access time"},
+		{"Integer", 42, "unsupported file metadata"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			_, err := nativeFileFacts(row.value, time.Time{})
+			if err == nil || err.Error() != row.fault {
+				t.Fatalf("fault %v", err)
+			}
+		})
+	}
+}
+
+func TestStoreTargetExclusions(t *testing.T) {
+	// QP9, QP8: neither shared memory nor a directory makes an empty target nonempty.
+	for _, row := range []struct {
+		name, kind string
+		want       bool
+	}{
+		{"OrdinaryFile", "file", true}, {"SharedMemory", "file", false}, {"Directory", "directory", false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			name := "other"
+			if row.name == "SharedMemory" {
+				name = "store-shm"
+			}
+			snapshot := HomeSnapshot{Entries: []HomeEntry{{Path: "store", Kind: "file"}, {Path: name, Kind: row.kind, Size: 5}}}
+			if got := StoreTarget(snapshot, "store", nil); got != row.want {
+				t.Fatalf("target %v", got)
+			}
+		})
 	}
 }

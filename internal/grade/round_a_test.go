@@ -60,6 +60,7 @@ func TestRoundACanaryMasking(t *testing.T) {
 				source.text = "canary"
 			}
 			d.Source = func() (observe.Source, func() error, error) { return source, func() error { return nil }, nil }
+			o.JSON = true
 			var out bytes.Buffer
 			code, err := Run(o, d, &out)
 			if err != nil || code == 70 {
@@ -82,9 +83,9 @@ func TestRoundACanaryMasking(t *testing.T) {
 			if !strings.Contains(doc, expected) {
 				t.Fatalf("missing stream value %s", expected)
 			}
-			// Scorecard output is already a judge document; its evidence need not repeat streams.
+			// JSON output carries the judge document; stream masking is checked in the record.
 			if !strings.Contains(out.String(), "outcome") {
-				t.Fatal("missing scorecard")
+				t.Fatal("missing judge document")
 			}
 		})
 	}

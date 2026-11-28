@@ -65,6 +65,10 @@ func TestProbeControlFacts(t *testing.T) {
 				if r.Details.Home.ControlDetected == nil || *r.Details.Home.ControlDetected != detected {
 					t.Fatal("recording defeated host store control")
 				}
+				r, err = source.Observe(key, observe.Spec{})
+				if err != nil || r.Details.Home.ControlDetected != nil {
+					t.Fatalf("nil store control %+v %v", r.Details.Home, err)
+				}
 				homeFound = true
 			}
 			if original.Details.Planted != nil && original.Details.Planted.ControlEnd != nil {
