@@ -22,3 +22,19 @@
 | 8 | QH8 copying a `/bin` or `/usr/bin` executable, which macOS refuses to run | Confirmed against the PR11 measurement and QA4 | Put to the owner, who ruled E-55: such an executable runs in place |
 | 9 | Ledger mutations no planned test would catch: QH27's device and inode, QH26's backdating, QP8, the deferred row | Confirmed | Each moved rule now names a catching test. PR15b's moves wait for named mutations, and QP8, QE8 and QS6 stay listed |
 | 10 | Minors: the stream digest is over the kept bytes, QH8's check wording, E-38, the same canary, `.pql-tmp` and the per-step snapshots, `SystemNamed` untagged, the symbol check on a darwin build, the `remove guard` scope and the unreachable steps, the masking checks, Spotlight's status, evidence for a build difference, the plan amendment, the re-run in PR16, and the source's own writes | Confirmed | Each fixed in the note |
+
+## Round 2 (note at c60ef5e)
+
+**Verdicts:**
+- **architecture:** no Blocker. All nine round 1 Majors are fixed, and two new Majors.
+- **agy:** no Blocker, five Majors, two of them the same as the architecture review's.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 11 | `token_file`'s change-time rule cannot work: the snapshot's `chmod` and the backdating both move the change time | architecture (Major), agy (Major) | Reproduced by the architecture reviewer | Touched on the modification time or inode, against a baseline taken after backdating |
+| 12 | A runbook step or a capturing computation cannot be repeated alone in a fresh home | architecture (Major), agy (Major) | Confirmed against the `add twice` recordings | A targeted repeat replays the whole runbook. The function enforces `MayServe` |
+| 13 | A run refused because its private copy changed is voided by level 1 as `network_unverifiable` before level 5's QH8 `harness_fault` can decide it. This is a defect in today's `decide`, hidden on the scripted path by recorded markers | agy (Major) | Confirmed against `level1.go`, `level5.go`, `process_darwin.go:535`, QH6 and QH8 | Level 1 skips a `CopyChanged` run. A `Resolve` row and its twin. `Copies` holds one copy per executable |
+| 14 | `reads-process-env` cannot use a platform binary as its victim under SIP | agy (Major) | Confirmed against the spike recorder at 490d650 | A non-platform victim built locally. The four process and network decoys named with their rules |
+| 15 | The scripted reader would keep the recording's `control_end` on ordinary runs, so a `collect` that never runs the control would pass | agy (Major) | Confirmed against `reader.go` | The ordinary `Observe` clears it. The decorator folds the control run in before comparing |
+| 16 | The partition was miscounted: 1,176 served, 30 named but unserved, 209 unnamed with 52 `remove guard` steps; 9 `live-first` keys the canonical subject file cannot produce | agy (Major) | Accepted from agy's count against all recordings, subjects, plans and cases | Counted in the note, and replayed from the recorded key |
+| 17 | Minors: decoy reset and read order, bracketing only on targeted repeats, a fixed point for QH28's read, dedicated forgery programs, the serve-time assertion in a grade, `SystemNamed` on the product version only, E-55's `BIN` parameters, a typed pre-snapshot option, the QH26 and other ledger rows, the untagged access-time helper, projecting discovery runs before the walk drops bytes | architecture, agy | Confirmed | Each fixed in the note |
