@@ -385,6 +385,7 @@ func TestPR8AbsoluteDescriptor(t *testing.T) {
 func TestPR8HomeLookupFault(t *testing.T) {
 	// QS8, E-8, QE16: a failed account lookup never falls back to HOME and exits 70.
 	o, d, _ := fixture(t)
+	o.JSON = true
 	home := t.TempDir()
 	d.AccountHome = func() (string, error) { return home, nil }
 	var out bytes.Buffer
@@ -405,6 +406,7 @@ func TestPR8HomeLookupFault(t *testing.T) {
 func TestPR8AbsoluteReadFaultRun(t *testing.T) {
 	// QS12, QA6, QE16: E-23: an unreadable system executable refuses the subject file.
 	o, d, _ := fixture(t)
+	o.JSON = true
 	input := strings.Replace(validSubject, `"runbooks":[]`, `"runbooks":[{"name":"book","steps":[{"name":"step","words":[],"budget_seconds":1,"checks":[{"dimension":"response-correctness","predicate":"stdout_equals","path":null,"expected":{"computation":{"argv":["/bin/echo"],"budget_seconds":1,"declared_files":[],"captures":[]}},"precondition":null,"exit_codes":null}]}]}]`, 1)
 	if e := os.WriteFile(o.SubjectFile, []byte(input), 0600); e != nil {
 		t.Fatal(e)

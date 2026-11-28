@@ -27,7 +27,7 @@ func compareDecided(t *testing.T, source string, check collect.Check) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc, err := record.Build(record.Input{Plan: plan.Plan{Checks: []plan.Check{check.Plan}}, Results: map[string]record.Resolution{check.Plan.ID: resolution}, Scripted: true})
+	doc, _, err := record.Build(record.Input{Plan: plan.Plan{Checks: []plan.Check{check.Plan}}, Results: map[string]record.Resolution{check.Plan.ID: resolution}, Scripted: true})
 	if err != nil {
 		t.Fatal(err)
 	}

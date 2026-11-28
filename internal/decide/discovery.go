@@ -10,15 +10,20 @@ import (
 
 // Discovery contains facts accumulated by the walk, shared by generated checks.
 type Discovery struct {
-	Ran           bool
-	FoundCount    int
-	DeclaredFound []bool
-	Missing       bool
-	Undeclared    bool
-	Names         []plan.Array
-	Bound         bool
-	Unreadable    bool
-	Invocations   []observe.Invocation
+	Ran             bool
+	FoundCount      int
+	DeclaredFound   []bool
+	Missing         bool
+	Undeclared      bool
+	Names           []plan.Array
+	RequestBound    bool
+	DepthBound      bool
+	UndeclaredNames []plan.Array
+	UndeclaredCount int
+	FoundCut        bool
+	UndeclaredCut   bool
+	Unreadable      bool
+	Invocations     []observe.Invocation
 }
 
 func (d *Discovery) missing(ch plan.Check) bool {
@@ -69,7 +74,7 @@ func discoveryLevel8(ch plan.Check, d *Discovery) Result {
 	if !d.Ran {
 		panic("QD2: discovery reached level 8 without a walk")
 	}
-	if d.Bound || d.Unreadable || d.missing(ch) {
+	if d.RequestBound || d.DepthBound || d.Unreadable || d.missing(ch) {
 		return Result{Level: 8, Outcome: NotObserved, Reason: "precondition_unmet"}
 	}
 	count, ok := ch.Subject["declared_count"].(strictjson.Number)

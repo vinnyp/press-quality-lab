@@ -111,7 +111,7 @@ func TestDiscoveryDeepWideMemory(t *testing.T) {
 		return help(b.String())
 	})
 	t.Logf("peak HeapInuse=%d baseline=%d", peak, before.HeapInuse)
-	if !d.Bound || d.Unreadable || len(source.keys) != 65 {
-		t.Fatal(d.Bound, d.Unreadable, len(source.keys))
+	if !(d.RequestBound || d.DepthBound) || d.Unreadable || len(source.keys) != 65 {
+		t.Fatal((d.RequestBound || d.DepthBound), d.Unreadable, len(source.keys))
 	}
 }

@@ -23,6 +23,7 @@ func TestSafeReads(t *testing.T) {
 	for _, name := range []string{"BinaryEscape", "BinaryAbsolute", "BinaryDirectory", "BinaryMissing", "BinaryFIFO", "BinaryLink", "SeedFIFO", "SeedLink", "SeedDirectoryLink", "SeedParentLink", "DeclaredOversized", "DeclaredEscape", "ExecutableEscape"} {
 		t.Run(name, func(t *testing.T) {
 			o, d, _ := fixture(t)
+			o.JSON = true
 			dir := filepath.Dir(o.SubjectFile)
 			input := validSubject
 			rule := "QS8"

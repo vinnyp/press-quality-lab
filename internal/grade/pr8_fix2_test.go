@@ -76,6 +76,7 @@ func TestPR8AbsentHome(t *testing.T) {
 	for _, row := range []string{"Related", "Unrelated", "StatFault"} {
 		t.Run(row, func(t *testing.T) {
 			o, d, _ := fixture(t)
+			o.JSON = true
 			base, err := filepath.EvalSymlinks(t.TempDir())
 			if err != nil {
 				t.Fatal(err)
@@ -129,6 +130,7 @@ func TestPR8AbsoluteKinds(t *testing.T) {
 	for _, kind := range []string{"Regular", "Directory", "FIFO", "Missing", "Descriptor"} {
 		t.Run(kind, func(t *testing.T) {
 			o, d, _ := fixture(t)
+			o.JSON = true
 			dir := t.TempDir()
 			name := filepath.Join(dir, "tool")
 			if kind == "Directory" {

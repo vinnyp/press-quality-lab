@@ -85,6 +85,9 @@ type Record struct {
 	JudgeInput             any
 	JudgeOutput            any
 	JudgeRejected          bool
+	NextActions            strictjson.Array
+	OfflineSettings        strictjson.Array
+	BookkeepingExcluded    strictjson.Array
 }
 
 func nullable(s *string) any {
@@ -115,9 +118,9 @@ func (r Record) Document() strictjson.Object {
 		"judge_input":          r.JudgeInput,
 		"judge_output":         r.JudgeOutput,
 		"judge_rejected":       r.JudgeRejected,
-		"next_actions":         strictjson.Array{},
-		"offline_settings":     strictjson.Array{},
-		"bookkeeping_excluded": strictjson.Array{},
+		"next_actions":         nonnil(r.NextActions),
+		"offline_settings":     nonnil(r.OfflineSettings),
+		"bookkeeping_excluded": nonnil(r.BookkeepingExcluded),
 	}
 }
 
@@ -184,4 +187,11 @@ func Workspace(parent string, process throwaway.Process) (*throwaway.Workspace, 
 // Sweep never inspects a workspace entry itself.
 func Sweep(parent string, lookup throwaway.ProcessLookup) error {
 	return throwaway.Sweep(parent, lookup)
+}
+
+func nonnil(a strictjson.Array) strictjson.Array {
+	if a == nil {
+		return strictjson.Array{}
+	}
+	return a
 }

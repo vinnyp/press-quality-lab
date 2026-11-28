@@ -35,7 +35,7 @@ func TestGradeScopeRefusals(t *testing.T) {
 	for _, row := range []struct{ name, scope string }{{"DestructiveAlone", "destructive"}, {"Unknown", "conformance,unknown"}, {"Repeated", "conformance,conformance"}} {
 		t.Run(row.name, func(t *testing.T) {
 			var out, diagnostic bytes.Buffer
-			code := run([]string{"grade", path, "--scope", row.scope}, bytes.NewReader(nil), &out, &diagnostic)
+			code := run([]string{"grade", "--json", path, "--scope", row.scope}, bytes.NewReader(nil), &out, &diagnostic)
 			if code != 2 || out.Len() != 0 || !strings.Contains(diagnostic.String(), "X1: user caused pre-check rejection") {
 				t.Fatal(code, out.String(), diagnostic.String())
 			}

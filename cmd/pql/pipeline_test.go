@@ -72,9 +72,17 @@ func TestReleasedProcessSentinels(t *testing.T) {
 		}
 	}
 	var out, diagnostic bytes.Buffer
-	code := run([]string{"grade", filepath.Join(dir, "subject.json")}, bytes.NewReader(nil), &out, &diagnostic)
+	code := run([]string{"grade", "--json", filepath.Join(dir, "subject.json")}, bytes.NewReader(nil), &out, &diagnostic)
 	if code != 4 || diagnostic.String() != grade.ComputationWarning+"\n" || !strings.Contains(out.String(), `"exit_code":4`) || watch.observed || strings.Join(watch.events, ",") != "required" {
 		t.Fatalf("code=%d stdout=%q stderr=%q trace=%v observed=%v", code, out.String(), diagnostic.String(), watch.events, watch.observed)
+	}
+	// The scorecard twin retains the same no-execution and warning assertions.
+	out.Reset()
+	diagnostic.Reset()
+	watch.events = nil
+	code = run([]string{"grade", filepath.Join(dir, "subject.json")}, bytes.NewReader(nil), &out, &diagnostic)
+	if code != 4 || diagnostic.String() != grade.ComputationWarning+"\n" || !strings.HasPrefix(out.String(), "pql grade: not_measured (exit 4) (gaps)\n") || watch.observed || strings.Join(watch.events, ",") != "required" {
+		t.Fatal(code, out.String(), diagnostic.String(), watch.events)
 	}
 	input, ok := saved.JudgeInput.(strictjson.Object)
 	if !ok {
@@ -132,7 +140,7 @@ func TestPipelineErrorEscaping(t *testing.T) {
 		}
 	}
 	var out, diagnostic bytes.Buffer
-	code := run([]string{"grade", path}, bytes.NewReader(nil), &out, &diagnostic)
+	code := run([]string{"grade", "--json", path}, bytes.NewReader(nil), &out, &diagnostic)
 	if code != 2 || out.Len() != 0 || diagnostic.String() != grade.ComputationWarning+"\n"+"pql: rejected: QS2: subject file unreadable: subject\\u{001b}[31m\n" {
 		t.Fatalf("%d %q %q", code, out.String(), diagnostic.String())
 	}
@@ -141,7 +149,7 @@ func TestPipelineErrorEscaping(t *testing.T) {
 		return grade.Dependencies{IDs: func() (int, int) { panic("subject\x1b[31m") }}
 	}
 	diagnostic.Reset()
-	code = run([]string{"grade", path}, bytes.NewReader(nil), &out, &diagnostic)
+	code = run([]string{"grade", "--json", path}, bytes.NewReader(nil), &out, &diagnostic)
 	if code != 70 || diagnostic.String() != grade.ComputationWarning+"\n"+`pql: rejected: QE16: engine panic: subject\u{001b}[31m`+"\n" {
 		t.Fatalf("%d %q", code, diagnostic.String())
 	}
@@ -160,8 +168,19 @@ func TestPipelineJoinedCleanupErrorEscaping(t *testing.T) {
 		}
 	}
 	var out, diagnostic bytes.Buffer
-	code := run([]string{"grade", filepath.Join(t.TempDir(), "subject.json")}, bytes.NewReader(nil), &out, &diagnostic)
+	code := run([]string{"grade", "--json", filepath.Join(t.TempDir(), "subject.json")}, bytes.NewReader(nil), &out, &diagnostic)
 	if code != 70 || !strings.Contains(diagnostic.String(), `cleanup\u{001b}[32m`) || strings.ContainsRune(diagnostic.String(), '\x1b') || strings.Contains(diagnostic.String(), "\nrejected:") || !strings.Contains(diagnostic.String(), `\u{000a}`) {
 		t.Fatalf("%d %q", code, diagnostic.String())
+	}
+}
+
+func TestPR14OutputHelp(t *testing.T) {
+	// QE14, QE21: both collection commands describe the output flag and text stability.
+	for _, name := range []string{"grade", "anchor"} {
+		var out, diagnostic bytes.Buffer
+		code := run([]string{name, "--help"}, bytes.NewReader(nil), &out, &diagnostic)
+		if code != 0 || !strings.Contains(out.String(), "--json") || !strings.Contains(out.String(), "The text output is not a stable interface") || !strings.Contains(out.String(), "one JSON line instead of the scorecard") {
+			t.Fatal(code, out.String(), diagnostic.String())
+		}
 	}
 }

@@ -161,12 +161,12 @@ func TestDiscoveryOutcomeOrder(t *testing.T) {
 }
 
 func TestDiscoveryMissingAndOverride(t *testing.T) {
-	// QD3, QD4, QD5, QS5: E-26 and E-30 govern missing names; the final trigger depends only on finding every declaration.
+	// QD2, QD3, QD4, QD5, QS5: E-26 and E-30 govern missing names; the final trigger depends only on finding every declaration.
 	for _, row := range []struct {
-		name                                            string
-		missing, placeholder, unreadable, bound, level7 bool
+		name                                                     string
+		missing, placeholder, unreadable, bound, request, level7 bool
 	}{
-		{name: "Extra"}, {name: "Missing", missing: true}, {name: "Unreadable", unreadable: true}, {name: "Bound", bound: true}, {name: "Level7", level7: true}, {name: "PlaceholderMissing", missing: true, placeholder: true}, {name: "PlaceholderUnreadableMissing", missing: true, placeholder: true, unreadable: true}, {name: "PlaceholderBoundMissing", missing: true, placeholder: true, bound: true},
+		{name: "Extra"}, {name: "Missing", missing: true}, {name: "Unreadable", unreadable: true}, {name: "Bound", bound: true}, {name: "DepthMissing", bound: true, missing: true}, {name: "RequestMissing", request: true, missing: true}, {name: "Level7", level7: true}, {name: "PlaceholderMissing", missing: true, placeholder: true}, {name: "PlaceholderUnreadableMissing", missing: true, placeholder: true, unreadable: true}, {name: "PlaceholderBoundMissing", missing: true, placeholder: true, bound: true},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			ch := discoveryCheck("a")
@@ -192,10 +192,13 @@ func TestDiscoveryMissingAndOverride(t *testing.T) {
 				}
 				return run
 			})
+			if row.request {
+				d.RequestBound = true
+			}
 			generated := ch
 			generated.Preimage = plan.Object{"probe": "bare", "words": plan.Array{}, "expected": nil, "earlier": plan.Array{}}
 			before := decide.BeforeInvocationsWithEvidence(generated, goodControls(), decide.Evidence{Discovery: d})
-			missingDecides := row.missing && !row.unreadable && !row.bound && !row.level7
+			missingDecides := row.missing && !row.unreadable && !row.bound && !row.request && !row.level7
 			if missingDecides {
 				if before.Level != 3 || before.Reason != "precondition_unmet" {
 					t.Fatal(before)
@@ -271,8 +274,8 @@ func TestDiscoveryBounds(t *testing.T) {
 			if row.bound && r != (decide.Result{Level: 8, Outcome: decide.NotObserved, Reason: "precondition_unmet"}) {
 				t.Fatal(r)
 			}
-			if d.Bound != row.bound || len(s.keys) != row.requests {
-				t.Fatal(d.Bound, len(s.keys))
+			if (d.RequestBound || d.DepthBound) != row.bound || len(s.keys) != row.requests {
+				t.Fatal((d.RequestBound || d.DepthBound), len(s.keys))
 			}
 		})
 	}

@@ -39,8 +39,8 @@ func TestDiscoveryWideMemory(t *testing.T) {
 		run.Details.Stderr.Digest = digest
 		return run
 	})
-	if !d.Bound || len(s.keys) != 65 {
-		t.Fatal(d.Bound, len(s.keys))
+	if !(d.RequestBound || d.DepthBound) || len(s.keys) != 65 {
+		t.Fatal((d.RequestBound || d.DepthBound), len(s.keys))
 	}
 	for _, inv := range d.Invocations {
 		if !inv.Run.BytesDropped || len(inv.Run.Stdout)+len(inv.Run.Stderr) != 0 {
