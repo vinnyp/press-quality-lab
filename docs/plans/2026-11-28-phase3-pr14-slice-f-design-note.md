@@ -38,13 +38,15 @@ Two derived numbers are read from the judge output's own arrays: the number of h
 - **`invocations`:** an array aligned with the check's invocation targets, in their order, one entry for each invocation, holding its words, its runbook and step, or a computation's argument list as declared, before `{SEED}` and `{SUBJECT_DIR}` are replaced, so no workspace path is stored. A check that is not observed and names the invocation it would have used carries that entry with `null` in `streams` at the same index (QT6). The discovery check carries no `invocations`, since `discovery` covers it.
 
   A computation's standard error (QA4: "kept for the scorecard") is already its stream pair's `stderr`, so nothing is copied.
+- **`probe`,** on every check: the name of the probe that made it, as its preimage gives it (QE2), or `null` for a runbook check. The required entry carries no preimage, so this is where the scorecard reads a probe check's name.
 - **On the discovery check only:**
+  - `store`: the declared store path, or `null`, masked like the rest. The scorecard needs it to print `<store>-shm` and the empty `-wal` and `-journal` lines (QP8);
   - `discovery`: `ran`, `found_count`, `declared_count`, `found_names`, `missing_names`, `undeclared_names`, `undeclared_count`, `request_bound_reached`, `depth_bound_reached`, `found_cut` and `undeclared_cut`. When the walk did not run (`ran` false: a placeholder binary, QO1, or a changed private copy), every count and list is `null`, and the scorecard says "discovery did not run". QD4's "missed" then never applies.
   - `placeholders`: every placeholder location in the file (QS5).
   - `short_env_names`: each environment name whose declared value is shorter than 8 bytes (QE18).
 
   Discovery is always in the required set (QD1), so these run-level lists always have a check to carry them. A placeholder `declared_count` is carried as `null`.
-- A check with no invocation and none of these keeps `null`.
+- So every check's `observed` is now an object, because `probe` is always present.
 
 The build lists every test that reads `observed` as an array and moves it, among them `pr12_evidence_test.go` and `pr10_fix1_test.go`.
 
