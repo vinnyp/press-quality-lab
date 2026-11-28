@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -38,6 +39,7 @@ type safetySource struct {
 	observe.Source
 	change func()
 	served int
+	probes int
 }
 
 func (s *safetySource) Controls() (observe.Controls, error) {
@@ -47,6 +49,8 @@ func (s *safetySource) Controls() (observe.Controls, error) {
 func (s *safetySource) Observe(key observe.Key, spec observe.Spec) (observe.Run, error) {
 	if key["runbook"] != nil {
 		s.served++
+	} else {
+		s.probes++
 	}
 	return s.Source.Observe(key, spec)
 }
@@ -65,7 +69,8 @@ func TestDestructiveServeRefusal(t *testing.T) {
 	for _, name := range []string{"Allowed", "Refused"} {
 		t.Run(name, func(t *testing.T) {
 			o, d, _ := fixture(t)
-			input := strings.Replace(validSubject, `"runbooks":[]`, `"runbooks":[{"name":"book","steps":[{"name":"first","words":[],"budget_seconds":1,"checks":[{"dimension":"response-correctness","predicate":"stdout_equals","path":null,"expected":{"literal":"value"},"precondition":null,"exit_codes":null}]}]}]`, 1)
+			input := strings.Replace(validSubject, `"runbooks":[]`, `"runbooks":[{"name":"book","steps":[{"name":"first","words":["remove"],"budget_seconds":1,"checks":[{"dimension":"response-correctness","predicate":"stdout_equals","path":null,"expected":{"literal":"value"},"precondition":null,"exit_codes":null}]}]}]`, 1)
+			input = strings.Replace(input, `"commands":[`, `"commands":[{"words":["remove"],"class":"safe","writes":true,"exit_codes":null,"byte_bound":null,"budget_seconds":10},`, 1)
 			if err := os.WriteFile(o.SubjectFile, []byte(input), 0600); err != nil {
 				t.Fatal(err)
 			}
@@ -73,11 +78,30 @@ func TestDestructiveServeRefusal(t *testing.T) {
 				return safetyFixtureSource{}, func() error { return nil }, nil
 			}
 			var wrapped *safetySource
+			var collectErr error
+			expectedProbes := 0
 			d.Collect = func(p plan.Plan, source observe.Source) ([]collect.Check, error) {
+				if len(p.Runbooks) != 1 || len(p.Runbooks[0].Steps) != 1 {
+					t.Fatal("invalid fixture runbook")
+				}
+				key := p.Runbooks[0].Steps[0].Key
+				if key["runbook"] != "book" || key["step"] != "first" || !reflect.DeepEqual(key["words"], plan.Array{"remove"}) {
+					t.Fatalf("wrong runbook key: %#v", key)
+				}
+				for _, ch := range p.Checks {
+					if ch.Preimage["probe"] != nil {
+						for _, probeKey := range ch.Keys {
+							expectedProbes++
+							if reflect.DeepEqual(probeKey["words"], plan.Array{"remove"}) {
+								t.Fatal("runbook command selected for probe")
+							}
+						}
+					}
+				}
 				wrapped = &safetySource{Source: source, change: func() {
 					if name == "Refused" {
 						commands, ok := p.Checks[0].Subject["commands"].(plan.Array)
-						if !ok || len(commands) != 1 {
+						if !ok || len(commands) != 2 {
 							t.Fatal("invalid fixture commands")
 						}
 						command, ok := commands[0].(plan.Object)
@@ -87,7 +111,9 @@ func TestDestructiveServeRefusal(t *testing.T) {
 						command["class"] = "destructive"
 					}
 				}}
-				return collect.Collect(p, wrapped)
+				checks, err := collect.Collect(p, wrapped)
+				collectErr = err
+				return checks, err
 			}
 			writes := 0
 			d.Write = func(store.Record) error { writes++; return nil }
@@ -98,8 +124,14 @@ func TestDestructiveServeRefusal(t *testing.T) {
 				}
 				return
 			}
-			var fault *Error
-			if code != 70 || !errors.As(err, &fault) || fault.Rule != "QS6" || writes != 0 || wrapped == nil || wrapped.served != 0 {
+			var fault *plan.Fault
+			if !errors.As(collectErr, &fault) || fault.Rule != "QS6" || fault.Cause != "destructive invocation outside allowed runbook scope" {
+				t.Fatalf("collection error: %v", collectErr)
+			}
+			// Every probe completed and only the sole runbook command changed:
+			// the refusal must be that step's key, before Observe can receive it.
+			var gradeErr *Error
+			if code != 70 || !errors.As(err, &gradeErr) || gradeErr.Rule != "QS6" || writes != 0 || wrapped == nil || wrapped.served != 0 || expectedProbes == 0 || wrapped.probes != expectedProbes {
 				t.Fatalf("code=%d err=%v writes=%d source=%+v", code, err, writes, wrapped)
 			}
 		})

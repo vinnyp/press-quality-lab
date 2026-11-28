@@ -198,12 +198,12 @@ func TestServeSafetyBrakes(t *testing.T) {
 				}
 			}}
 			got, err := Collect(p, changed)
-			want := "QS5"
+			want, cause := "QS5", "placeholder invocation"
 			if name == "Destructive" {
-				want = "QS6"
+				want, cause = "QS6", "destructive invocation outside allowed runbook scope"
 			}
 			var fault *plan.Fault
-			if !errors.As(err, &fault) || fault.Rule != want || got != nil || len(source.keys) != 0 {
+			if !errors.As(err, &fault) || fault.Rule != want || fault.Cause != cause || got != nil || len(source.keys) != 0 {
 				t.Fatal(got, err, source.keys)
 			}
 		})

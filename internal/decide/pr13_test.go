@@ -144,20 +144,32 @@ func TestMayPlanServeMissingFacts(t *testing.T) {
 }
 func TestComputationExemption(t *testing.T) {
 	// QS6, QA7, X3: scratch and null words alone do not identify a computation.
-	key := plan.Object{"home": "scratch", "words": nil, "computation": "compute"}
-	ch := plan.Check{}
-	if err := MayPlanServe(ch, key, nil); err != nil {
-		t.Fatal(err)
-	}
-	var fault *plan.Fault
-	key["home"] = "seed"
-	if err := MayPlanServe(ch, key, nil); !errors.As(err, &fault) || fault.Rule != "QS6" {
-		t.Fatal(err)
-	}
-	key["home"] = "scratch"
-	key["computation"] = nil
-	if err := MayPlanServe(ch, key, nil); !errors.As(err, &fault) || fault.Rule != "QS6" {
-		t.Fatal(err)
+	ch := plan.Check{Subject: plan.Object{"commands": plan.Array{}, "runbooks": plan.Array{}}}
+	for _, name := range []string{"Exempt", "Home", "NoComputation", "Unknown"} {
+		t.Run(name, func(t *testing.T) {
+			key := plan.Object{"home": "scratch", "words": nil, "computation": "compute"}
+			if name == "Home" {
+				key["home"] = "seed"
+			}
+			if name == "NoComputation" {
+				key["computation"] = nil
+			}
+			if name == "Unknown" {
+				key["words"] = plan.Array{"unknown"}
+				key["computation"] = nil
+			}
+			err := MayPlanServe(ch, key, []rulebook.Scope{"conformance"})
+			if name == "Exempt" || name == "Unknown" {
+				if err != nil {
+					t.Fatal(err)
+				}
+				return
+			}
+			var fault *plan.Fault
+			if !errors.As(err, &fault) || fault.Rule != "QS6" || fault.Cause != "null words outside a computation" {
+				t.Fatal(err)
+			}
+		})
 	}
 }
 

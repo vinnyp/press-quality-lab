@@ -26,7 +26,7 @@ Today the sentinel is the only check that works out a step's class from the subj
    - **the discovery check's own keys:** its help requests, home `empty`, identified by the check (`probe` is `discovery`), never by `--help` in the words, since a runbook step can ask for help too;
    - **a computation's keys** (`words` `null`, home `scratch`), which do not run the subject.
 
-   Discovery's requests go through `MayServe` like every other key.
+   Discovery's requests go through `MayServe` like every other key. Any other key with `words` `null` is refused: it is no invocation, so only a corrupt plan builds one. A key whose words no declared command prefixes is not refused, because its command is the bare binary, which every subject has and which cannot be destructive (collection rules, "The bare binary").
 5. A refusal is an engine fault, exit 70. Nothing has been served by then.
 
 **Where it runs.** `collect` applies `MayServe`'s destructive rule to every key of every check and to every runbook step key, an E-49 step included. It does so at its start, before the discovery walk or any other key (QE3), and again at each serve. The placeholder rule applies at each serve only, because a placeholder-class probe check is planned with keys that level 2 keeps unserved. `collect` also refuses with exit 70 an authored check that no runbook step schedules, so the probe loop can never serve an authored check. The rule lives in `decide`, and `collect` only acts on the fault, as it does for `StepRuns` (KTD11).
@@ -77,7 +77,7 @@ The stored record's `next_actions` stays empty until U18 fills it and the scorec
   - the W1 to W3 set-aside reasons;
   - the anchor's refusals.
 - **Where a next action's reason comes from.** It comes from the judge's output (QE14), for checks and dimensions alike. The judge can decide a check differently from the evidence: C1 gives `no_evidence`, C3 gives `empty_target` (`case-011`) and C4 gives `precondition_unmet` (`case-093`). So U18 reads both kinds of reason from the judge's output, and that is outside this slice.
-- **A step whose class is a placeholder** is ruled by E-54, which the build review raised. In a scope without `destructive`, its whole runbook depends on the placeholder: no step of it runs, and each required check is `placeholder_unfilled` at level 2. In a destructive scope it runs as any runbook does, and level 2 stops the placeholder step's own checks. Level 2, `StepRuns`, `MayServe`, the trace reader and the prediction script's `depends()` all apply it. `StepRuns`' own test is a second brake behind level 2, which it calls with the same check, so dropping either one alone turns no test red; dropping both does.
+- **A step whose class is a placeholder** is ruled by E-54, which the build review raised. In a scope without `destructive`, its whole runbook depends on the placeholder: no step of it runs, and each required check is `placeholder_unfilled` at level 2. In a destructive scope it runs as any runbook does, and level 2 stops the placeholder step's own checks. Level 2, `StepRuns`, `MayServe`, the trace reader and the prediction script's `depends()` all apply it. `StepRuns`' own test is a second brake behind level 2, which it calls with the same check, so dropping it alone turns no test red. Dropping level 2's turns `TestDestructiveRunbooks` and `TestPlaceholderRunbook` red, and dropping both also turns `TestPlaceholderUncheckedStep` red.
 
 ## Predicted ratchet set
 

@@ -31,6 +31,12 @@ func MayPlanServe(ch plan.Check, key plan.Object, scopes []rulebook.Scope) error
 	if exemptKey(ch, key) {
 		return nil
 	}
+	// collection-rules.md makes the bare binary the command of any invocation
+	// no declared command prefixes. Null words are no invocation: only the
+	// computation keys exempted above carry them, so any other is a corrupt plan.
+	if key["words"] == nil {
+		return &plan.Fault{Rule: "QS6", Cause: "null words outside a computation"}
+	}
 	if ch.Subject == nil {
 		return &plan.Fault{Rule: "QS6", Cause: "missing subject"}
 	}
