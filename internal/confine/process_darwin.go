@@ -284,11 +284,25 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if inv.Workspace == nil {
 		return nil, fmt.Errorf("invocation workspace required")
 	}
+	if inv.Executable != "" {
+		if !filepath.IsAbs(inv.Executable) || filepath.Clean(inv.Executable) != inv.Executable {
+			return nil, fmt.Errorf("executable path must be absolute and canonical")
+		}
+	}
 	program := c.program
+	inPlace := false
 	if inv.Computation && inv.Executable != "" {
 		if systemExecutable(inv.Executable) {
-			program = privateCopy{path: inv.Executable}
+			resolved, err := resolvedSystemExecutable(inv.Executable, filepath.EvalSymlinks, os.Stat)
+			if err != nil {
+				return nil, err
+			}
+			program = privateCopy{path: resolved}
+			inPlace = true
 		} else {
+			if err := canonicalExecutable(inv.Executable); err != nil {
+				return nil, err
+			}
 			var ok bool
 			program, ok = c.programs[inv.Executable]
 			if !ok {
@@ -301,7 +315,7 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 			}
 		}
 	}
-	if !c.launcher.unchanged() || !(inv.Computation && systemExecutable(inv.Executable)) && !program.unchanged() {
+	if !c.launcher.unchanged() || !inPlace && !program.unchanged() {
 		return &process{changed: true}, nil
 	}
 	marker, err := NewMarker()

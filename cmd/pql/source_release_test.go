@@ -2,9 +2,13 @@ package main
 
 import (
 	"debug/macho"
+	"encoding/json"
 	"errors"
 	"github.com/vinnyp/press-quality-lab/internal/grade"
 	"github.com/vinnyp/press-quality-lab/internal/observe"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -26,12 +30,28 @@ func TestDarwinSourceReleaseBoundary(t *testing.T) {
 	if sourceReleaseSymbol("main.main") {
 		t.Fatal("ordinary symbol refused")
 	}
-	path := filepath.Join(t.TempDir(), "pql")
-	cmd := exec.Command("go", "build", "-o", path, ".")
-	cmd.Env = append(builderEnvironment(), "GOOS=darwin", "GOARCH=arm64", "CGO_ENABLED=0")
-	if b, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("Darwin build: %v %s", err, b)
+	for _, arch := range []string{"arm64", "amd64"} {
+		for _, tags := range []string{"", "scripted"} {
+			t.Run(arch+"_"+strings.ReplaceAll(tags, ",", "_"), func(t *testing.T) {
+				path := filepath.Join(t.TempDir(), "pql")
+				args := []string{"build", "-o", path}
+				if tags != "" {
+					args = append(args, "-tags", tags)
+				}
+				args = append(args, ".")
+				cmd := exec.Command("go", args...)
+				cmd.Env = append(builderEnvironment(), "GOOS=darwin", "GOARCH="+arch, "CGO_ENABLED=0")
+				if b, err := cmd.CombinedOutput(); err != nil {
+					t.Fatalf("Darwin build: %v %s", err, b)
+				}
+				inspectSourceRelease(t, path)
+			})
+		}
 	}
+}
+
+func inspectSourceRelease(t *testing.T, path string) {
+	t.Helper()
 	f, err := macho.Open(path)
 	if err != nil {
 		t.Fatal(err)
@@ -57,5 +77,56 @@ func TestDarwinSourceReleaseBoundary(t *testing.T) {
 }
 
 func sourceReleaseSymbol(name string) bool {
-	return strings.Contains(name, "confine.NewSourceForTest") || strings.Contains(name, "confine.(*Source).")
+	return strings.Contains(name, "confine.NewSourceForTest") || strings.Contains(name, "confine.(*Source).") || strings.Contains(name, "collect.Serve") || strings.Contains(name, "collect.CollectWithOptions")
+}
+
+func TestCollectionTestAPIBoundary(t *testing.T) {
+	// KTD21, KTD20: released and scripted package files expose neither replay nor fixture injection APIs.
+	for _, tags := range []string{"", "scripted"} {
+		args := []string{"list", "-json"}
+		if tags != "" {
+			args = append(args, "-tags", tags)
+		}
+		args = append(args, "github.com/vinnyp/press-quality-lab/internal/collect")
+		command := exec.Command("go", args...)
+		command.Env = builderEnvironment()
+		data, err := command.CombinedOutput()
+		if err != nil {
+			t.Fatalf("go list %v %s", err, data)
+		}
+		var selected struct {
+			Dir     string
+			GoFiles []string
+		}
+		if err := json.Unmarshal(data, &selected); err != nil {
+			t.Fatal(err)
+		}
+		foundOptions := false
+		for _, name := range selected.GoFiles {
+			file, err := parser.ParseFile(token.NewFileSet(), filepath.Join(selected.Dir, name), nil, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ast.Inspect(file, func(node ast.Node) bool {
+				switch n := node.(type) {
+				case *ast.FuncDecl:
+					if n.Name.Name == "Serve" || n.Name.Name == "CollectWithOptions" {
+						t.Errorf("test API included: %s", n.Name.Name)
+					}
+				case *ast.TypeSpec:
+					foundOptions = foundOptions || n.Name.Name == "Options"
+				case *ast.Field:
+					for _, field := range n.Names {
+						if field.Name == "HomeFiles" {
+							t.Error("fixture option included")
+						}
+					}
+				}
+				return true
+			})
+		}
+		if !foundOptions {
+			t.Fatal("Options was not inspected")
+		}
+	}
 }

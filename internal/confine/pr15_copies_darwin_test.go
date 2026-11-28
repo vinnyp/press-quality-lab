@@ -13,7 +13,10 @@ import (
 
 func TestCopiesPerExecutable(t *testing.T) {
 	// QH8, E-55: each executable has one persistent copy, checked on every use.
-	dir := t.TempDir()
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	program := filepath.Join(dir, "subject")
 	computation := filepath.Join(dir, "computation")
 	for _, name := range []string{program, computation} {
@@ -99,5 +102,62 @@ func TestCopiesPerExecutable(t *testing.T) {
 	run, err = p.Wait()
 	if err != nil || !reflect.DeepEqual(run, observe.Run{CopyChanged: true}) {
 		t.Fatalf("launcher refusal %+v %v", run, err)
+	}
+}
+
+func TestRoundACopiesCanonicalExecutable(t *testing.T) {
+	// QH8, E-55: Copies accepts an absolute physical executable and refuses relative, unclean and symlink paths.
+	directory, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	program := filepath.Join(directory, "tool")
+	if err := os.WriteFile(program, []byte("synthetic"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	c, err := NewCopies(t.TempDir(), program, program)
+	if err != nil {
+		t.Fatal(err)
+	}
+	alias := filepath.Join(directory, "alias")
+	if err := os.Symlink(program, alias); err != nil {
+		t.Fatal(err)
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cwd, err = filepath.EvalSymlinks(cwd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	relative, err := filepath.Rel(cwd, program)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sentinel := errors.New("launch seam")
+	for _, row := range []struct {
+		name, path string
+		allowed    bool
+	}{
+		{"Canonical", program, true},
+		{"Relative", relative, false},
+		{"Unclean", directory + "/./tool", false},
+		{"Link", alias, false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			if info, err := os.Stat(row.path); err != nil || !info.Mode().IsRegular() {
+				t.Fatalf("inaccessible executable fixture: %v", err)
+			}
+			called := false
+			_, err := c.startWith(Invocation{Workspace: fakeWorkspace{}, Computation: true, Executable: row.path, Paths: testPaths(t)}, func(string, []string, string, []string, string) (Process, error) { called = true; return nil, sentinel })
+			if row.allowed {
+				if !called || !errors.Is(err, sentinel) {
+					t.Fatalf("positive control %v %v", called, err)
+				}
+			} else if called || err == nil || err.Error() != "executable path must be absolute and canonical" {
+				t.Fatalf("guard %v %v", called, err)
+			}
+		})
 	}
 }

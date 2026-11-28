@@ -31,7 +31,7 @@ func homeFixture(t *testing.T, f *homeFake) (*homeSource, plan.Check) {
 	if err := throwaway.WriteHomeFiles(seed, []throwaway.NamedFile{{Name: "token", Data: []byte("secret-token")}, {Name: "store", Data: []byte("data")}}); err != nil {
 		t.Fatal(err)
 	}
-	ch := plan.Check{ID: "home", Subject: plan.Object{"seed": "seed", "store": "store", "secret": plan.Object{"path": "token", "token": "secret-token"}, "commands": plan.Array{plan.Object{"words": plan.Array{}, "class": "safe", "writes": false, "exit_codes": nil}}}, Preimage: plan.Object{"probe": "bare"}}
+	ch := plan.Check{Seed: []plan.Entry{{Path: "store", Data: []byte("data")}, {Path: "token", Data: []byte("secret-token")}}, ID: "home", Subject: plan.Object{"seed": "seed", "store": "store", "secret": plan.Object{"path": "token", "token": "secret-token"}, "commands": plan.Array{plan.Object{"words": plan.Array{}, "class": "safe", "writes": false, "exit_codes": nil}}}, Preimage: plan.Object{"probe": "bare"}}
 	s := newHomeSource(plan.Plan{SubjectDirectory: dir, Checks: []plan.Check{ch}}, f, Options{})
 	s.controls = f.controls
 	t.Cleanup(func() {
@@ -203,6 +203,9 @@ func TestStoreControlPassed(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
+			if name == "EmptyStore" {
+				ch.Seed = []plan.Entry{{Path: "store"}, {Path: "token"}}
+			}
 			s.checks[ch.ID] = ch
 			for range 2 {
 				if _, err := s.Observe(homeKey("seed"), observe.Spec{CheckID: ch.ID}); err != nil {
@@ -234,73 +237,6 @@ func TestServeTimeAssertion(t *testing.T) {
 	var fault *plan.Fault
 	if !errors.As(err, &fault) || fault.Rule != "QH27" || fault.Cause != "planted access time moved before serve" {
 		t.Fatalf("fault %v", err)
-	}
-}
-func TestHomeFilesBeforeSnapshot(t *testing.T) {
-	// KTD20, QT5: parity files precede the snapshot; ordinary collection leaves the option unset.
-	for _, enabled := range []bool{false, true} {
-		f := &homeFake{run: func(k observe.Key, s observe.Spec) (observe.Run, error) {
-			found := false
-			for _, e := range s.Before.Entries {
-				found = found || e.Path == "peer.pid"
-			}
-			if found != enabled {
-				t.Fatalf("fixture presence %v", found)
-			}
-			return cleanLoopRun(), nil
-		}}
-		s, ch := homeFixture(t, f)
-		if enabled {
-			s.options.HomeFiles = []throwaway.NamedFile{{Name: "peer.pid", Data: []byte("123")}}
-		}
-		if _, err := s.Observe(homeKey("seed"), observe.Spec{CheckID: ch.ID}); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-func TestReplayRunbook(t *testing.T) {
-	// QA4, QA7, QS6: a replay includes earlier captures and continues after failed predicates.
-	comp := loopComp("echo")
-	comp["captures"] = plan.Array{"first"}
-	last := loopCheck()
-	last["expected"] = plan.Object{"computation": comp}
-	p := loopPlan(t, plan.Array{loopStep("first", loopCheck()), loopStep("last", last)})
-	var homes []string
-	calls := 0
-	f := &homeFake{controls: goodControls(), run: func(k observe.Key, s observe.Spec) (observe.Run, error) {
-		calls++
-		if k["computation"] == nil {
-			homes = append(homes, s.HomePath)
-		} else {
-			b, err := os.ReadFile(s.CapturePaths["first"])
-			if err != nil || string(b) != "wrong" {
-				t.Fatalf("capture %q %v", b, err)
-			}
-			if s.HomeKind != "scratch" {
-				t.Fatal("computation home")
-			}
-		}
-		r := cleanLoopRun()
-		r.Stdout = []byte("wrong")
-		r.StdoutSeen = 5
-		return r, nil
-	}}
-	ch := p.Checks[len(p.Checks)-1]
-	key := ch.Keys[len(ch.Keys)-1]
-	runs, err := Serve(p, f, ch, key, Options{})
-	if err != nil || len(runs) != 3 || calls != 3 || len(homes) != 2 || homes[0] != homes[1] {
-		t.Fatalf("replay %d %d %v %v", len(runs), calls, homes, err)
-	}
-	ch.Subject["commands"] = append(discoveryArray(ch.Subject["commands"]), plan.Object{"words": plan.Array{"first"}, "class": "destructive", "writes": true})
-	p.Scopes = []rulebook.Scope{rulebook.ConformanceScope, rulebook.DestructiveScope}
-	if _, err := Serve(p, f, ch, key, Options{}); err != nil {
-		t.Fatal("scoped twin", err)
-	}
-	p.Scopes = []rulebook.Scope{rulebook.ConformanceScope}
-	_, err = Serve(p, f, ch, key, Options{})
-	var fault *plan.Fault
-	if !errors.As(err, &fault) || fault.Rule != "QS6" || fault.Cause != "destructive invocation outside allowed runbook scope" {
-		t.Fatalf("scope guard %v", err)
 	}
 }
 
@@ -368,29 +304,5 @@ func TestPlantedPreparationOrder(t *testing.T) {
 	}
 	if _, err := s.Observe(homeKey("planted"), observe.Spec{CheckID: ch.ID}); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func TestReplayRecordedSettings(t *testing.T) {
-	// QT5, QA7: recorded offline arguments and environment names survive targeted replay.
-	p := loopPlan(t, plan.Array{loopStep("first", loopCheck())})
-	ch := p.Checks[0]
-	key := plan.Object{}
-	for name, value := range ch.Keys[0] {
-		key[name] = value
-	}
-	key["offline_args"] = plan.Array{"--recorded"}
-	key["env"] = plan.Array{"RECORDED_MODE"}
-	calls := 0
-	f := &homeFake{controls: goodControls(), run: func(k observe.Key, s observe.Spec) (observe.Run, error) {
-		calls++
-		if !reflect.DeepEqual(k["offline_args"], plan.Array{"--recorded"}) || !reflect.DeepEqual(k["env"], plan.Array{"RECORDED_MODE"}) {
-			t.Fatalf("settings %v", k)
-		}
-		return cleanLoopRun(), nil
-	}}
-	runs, err := Serve(p, f, ch, key, Options{})
-	if err != nil || len(runs) != 1 || calls != 1 {
-		t.Fatalf("replay %v %d %v", runs, calls, err)
 	}
 }

@@ -1,3 +1,5 @@
+//go:build necessity_test
+
 package collect
 
 import (

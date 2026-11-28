@@ -22,8 +22,12 @@ type Check struct {
 // Collect resolves every check, retaining sentinels as values for inspection.
 // Discovery runs first so level 3 and the final override share its facts.
 // Runbook checks share each step run and resolve before the final overrides.
-func Collect(p plan.Plan, source observe.Source) ([]Check, error) {
-	return CollectWithOptions(p, source, Options{})
+func Collect(p plan.Plan, source observe.Source, options ...Options) ([]Check, error) {
+	var o Options
+	if len(options) > 0 {
+		o = options[0]
+	}
+	return collectWithOptions(p, source, o)
 }
 
 func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) (checks []Check, err error) {
@@ -254,6 +258,11 @@ func collectPrepared(p plan.Plan, source *homeSource, resolve func(plan.Check, o
 				previous = append(previous, p.Checks[i].ID)
 			}
 			previous = append(previous, step.Outside...)
+		}
+		if len(book.Steps) > 0 {
+			if err := source.finishBook(homeText(book.Steps[0].Key["runbook"])); err != nil {
+				return nil, err
+			}
 		}
 	}
 	for i := range checks {

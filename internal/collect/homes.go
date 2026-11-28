@@ -15,9 +15,6 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 )
 
-// Options supplies parity-only home fixtures. Production callers leave it zero.
-type Options struct{ HomeFiles []throwaway.NamedFile }
-
 type preparation struct {
 	plant    func(string, string, string, string) (string, error)
 	snapshot func(string, string, string) (throwaway.HomeSnapshot, error)
@@ -33,11 +30,12 @@ type homeSource struct {
 	options     Options
 	workspace   *throwaway.Workspace
 	books       map[string]string
+	homes       map[string]*throwaway.Workspace
 	captures    map[string][]observe.Invocation
 }
 
 func newHomeSource(p plan.Plan, source observe.Source, options Options) *homeSource {
-	s := &homeSource{preparation: preparation{plant: throwaway.PlantGivenCanary, snapshot: throwaway.SnapshotPlanted, backdate: throwaway.BackdatePlanted}, source: source, directory: p.SubjectDirectory, options: options, checks: map[string]plan.Check{}, books: map[string]string{}, captures: map[string][]observe.Invocation{}}
+	s := &homeSource{preparation: preparation{plant: throwaway.PlantGivenCanary, snapshot: throwaway.SnapshotPlanted, backdate: throwaway.BackdatePlanted}, source: source, directory: p.SubjectDirectory, options: options, checks: map[string]plan.Check{}, books: map[string]string{}, homes: map[string]*throwaway.Workspace{}, captures: map[string][]observe.Invocation{}}
 	for _, ch := range p.Checks {
 		s.checks[ch.ID] = ch
 	}
@@ -56,7 +54,7 @@ func (s *homeSource) close() error {
 }
 func (s *homeSource) fresh(ch plan.Check, kind string, fixtures bool) (string, error) {
 	if s.workspace == nil {
-		w, err := throwaway.Create("")
+		w, err := throwaway.Create(s.options.RunDirectory)
 		if err != nil {
 			return "", err
 		}
@@ -67,6 +65,7 @@ func (s *homeSource) fresh(ch plan.Check, kind string, fixtures bool) (string, e
 		return "", err
 	}
 	home := filepath.Join(w.Path(), "home")
+	s.homes[home] = w
 	seed := homeText(ch.Subject["seed"])
 	if kind != "empty" && kind != "scratch" && seed != "" {
 		if s.directory == "" {
@@ -75,12 +74,31 @@ func (s *homeSource) fresh(ch plan.Check, kind string, fixtures bool) (string, e
 		if err := throwaway.CopySeed(filepath.Join(s.directory, seed), home); err != nil {
 			return "", err
 		}
+		copied, err := throwaway.SnapshotHome(home)
+		if err != nil {
+			return "", err
+		}
+		var entries []plan.Entry
+		for _, e := range copied.Entries {
+			entries = append(entries, plan.Entry{Path: e.Path, Directory: e.Kind == "directory", Digest: e.Digest})
+		}
+		actual, err := plan.SeedDigest(entries)
+		if err != nil {
+			return "", err
+		}
+		expected, err := plan.SeedDigest(ch.Seed)
+		if err != nil {
+			return "", err
+		}
+		if copied.Unreadable || copied.Incomplete || actual != expected {
+			return "", &plan.Fault{Rule: "QE2", Cause: "seed copy differs from plan"}
+		}
 	}
 	if err := throwaway.EmptyHome(home); err != nil {
 		return "", err
 	}
 	if fixtures {
-		if err := throwaway.WriteHomeFiles(home, s.options.HomeFiles); err != nil {
+		if err := applyHomeFixtures(home, s.options); err != nil {
 			return "", err
 		}
 	}
@@ -88,6 +106,11 @@ func (s *homeSource) fresh(ch plan.Check, kind string, fixtures bool) (string, e
 }
 func (s *homeSource) prepare(ch plan.Check, key observe.Key, spec observe.Spec, canary string) (observe.Spec, error) {
 	kind := homeText(key["home"])
+	switch kind {
+	case "seed", "empty", "planted", "runbook", "scratch":
+	default:
+		return spec, &plan.Fault{Rule: "QT5", Cause: "unknown home kind"}
+	}
 	home := ""
 	book := homeText(key["runbook"])
 	if kind == "runbook" {
@@ -131,6 +154,9 @@ func (s *homeSource) prepare(ch plan.Check, key observe.Key, spec observe.Spec, 
 				return spec, err
 			}
 			canary = "pqlcanary" + hex.EncodeToString(raw[:])
+			if s.options.CanaryDrawn != nil {
+				s.options.CanaryDrawn(canary)
+			}
 		}
 		secret := discoveryObject(ch.Subject["secret"])
 		name := homeText(secret["path"])
@@ -157,11 +183,12 @@ func (s *homeSource) prepare(ch plan.Check, key observe.Key, spec observe.Spec, 
 	}
 	return spec, nil
 }
-func (s *homeSource) storeControl(ch plan.Check) (*bool, error) {
+func (s *homeSource) storeControl(ch plan.Check) (result *bool, err error) {
 	home, err := s.fresh(ch, "seed", false)
 	if err != nil {
 		return nil, err
 	}
+	defer func() { err = errors.Join(err, s.removeHome(home)) }()
 	before, err := throwaway.SnapshotHome(home)
 	if err != nil {
 		return nil, err
@@ -206,7 +233,12 @@ func assertBackdated(spec observe.Spec) error {
 	}
 	return nil
 }
-func (s *homeSource) Observe(key observe.Key, spec observe.Spec) (observe.Run, error) {
+func (s *homeSource) Observe(key observe.Key, spec observe.Spec) (result observe.Run, err error) {
+	if refusal, ok := s.source.(interface{ BeforeHome() error }); ok {
+		if err := refusal.BeforeHome(); err != nil {
+			return observe.Run{}, err
+		}
+	}
 	ch, ok := s.checks[spec.CheckID]
 	if !ok {
 		return observe.Run{}, &plan.Fault{Rule: "KTD13", Cause: "missing home context"}
@@ -214,6 +246,9 @@ func (s *homeSource) Observe(key observe.Key, spec observe.Spec) (observe.Run, e
 	prepared, err := s.prepare(ch, key, spec, "")
 	if err != nil {
 		return observe.Run{}, err
+	}
+	if prepared.HomeKind != "runbook" {
+		defer func() { err = errors.Join(err, s.removeHome(prepared.HomePath)) }()
 	}
 	if ch.Preimage["probe"] == "store_unchanged" {
 		prepared.StoreControl, err = s.storeControl(ch)
@@ -229,15 +264,17 @@ func (s *homeSource) Observe(key observe.Key, spec observe.Spec) (observe.Run, e
 		return observe.Run{}, err
 	}
 	p := run.Details.Planted
-	attribution, err := observe.Attribute(run)
-	if err != nil {
-		return observe.Run{}, err
+	if s.options.AfterObserve != nil {
+		if err := s.options.AfterObserve(key, prepared, run); err != nil {
+			return observe.Run{}, err
+		}
 	}
-	if prepared.HomeKind == "planted" && s.controls.ReadCalibrationMoved && p != nil && p.AtimeMoved && p.SameFile && attribution == observe.Exited && decide.AcceptedInvocationCode(ch, key, run.End.Code) {
+	if prepared.HomeKind == "planted" && p != nil && p.AtimeMoved && p.SameFile && s.controls.ReadCalibrationMoved && acceptedRead(ch, key, run) {
 		controlSpec, err := s.prepare(ch, key, spec, prepared.Canary)
 		if err != nil {
 			return observe.Run{}, err
 		}
+		defer func() { err = errors.Join(err, s.removeHome(controlSpec.HomePath)) }()
 		controlSpec.Control = true
 		if err := assertBackdated(controlSpec); err != nil {
 			return observe.Run{}, err
@@ -245,6 +282,11 @@ func (s *homeSource) Observe(key observe.Key, spec observe.Spec) (observe.Run, e
 		control, err := s.source.Observe(key, controlSpec)
 		if err != nil {
 			return observe.Run{}, err
+		}
+		if s.options.AfterObserve != nil {
+			if err := s.options.AfterObserve(key, controlSpec, control); err != nil {
+				return observe.Run{}, err
+			}
 		}
 		planted := *p
 		planted.ControlEnd = &observe.InvocationProtocol{End: control.End, Markers: control.Markers}
@@ -257,8 +299,8 @@ func (s *homeSource) Observe(key observe.Key, spec observe.Spec) (observe.Run, e
 	return run, nil
 }
 
-// CollectWithOptions supplies parity fixtures without changing released wiring.
-func CollectWithOptions(p plan.Plan, source observe.Source, options Options) (checks []Check, err error) {
+// collectWithOptions owns home cleanup on every collection exit.
+func collectWithOptions(p plan.Plan, source observe.Source, options Options) (checks []Check, err error) {
 	prepared := newHomeSource(p, source, options)
 	defer func() { err = errors.Join(err, prepared.close()) }()
 	return collectPrepared(p, prepared, decide.Resolve)
@@ -270,4 +312,28 @@ func homeText(value any) string {
 		return ""
 	}
 	return text
+}
+
+func acceptedRead(ch plan.Check, key observe.Key, run observe.Run) bool {
+	attribution, err := observe.Attribute(run)
+	return err == nil && attribution == observe.Exited && decide.AcceptedInvocationCode(ch, key, run.End.Code)
+}
+func (s *homeSource) removeHome(home string) error {
+	w := s.homes[home]
+	if w == nil {
+		return nil
+	}
+	if err := w.Remove(); err != nil {
+		return err
+	}
+	delete(s.homes, home)
+	return nil
+}
+func (s *homeSource) finishBook(book string) error {
+	home := s.books[book]
+	if err := s.removeHome(home); err != nil {
+		return err
+	}
+	delete(s.books, book)
+	return nil
 }

@@ -39,7 +39,7 @@ func plantedWitness(name, target string) (bool, int) {
 			return true, LauncherFailed
 		}
 		return true, 0
-	case "forge_utimes", "forge_setattrlist", "forge_write", "forge_rename", "forge_replace":
+	case "forge_utimes", "forge_setattrlist", "forge_write", "forge_rename", "forge_replace", "forge_directory":
 	default:
 		return false, 0
 	}
@@ -68,6 +68,16 @@ func plantedWitness(name, target string) (bool, int) {
 		if err == nil {
 			_, e = unix.Write(fd, []byte("forged"))
 			err = errors.Join(e, unix.Close(fd))
+		}
+	case "forge_directory":
+		directory := filepath.Dir(target)
+		moved := directory + ".renamed"
+		err = unix.Rename(directory, moved)
+		if err == nil {
+			err = unix.Utimes(filepath.Join(moved, filepath.Base(target)), []unix.Timeval{{Sec: 1}, {Sec: 1}})
+		}
+		if err == nil {
+			err = unix.Rename(moved, directory)
 		}
 	case "forge_rename":
 		err = unix.Rename(target, target+".renamed")

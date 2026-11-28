@@ -1,6 +1,7 @@
 package confine
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -29,7 +30,7 @@ func (s *Source) Controls() (observe.Controls, error) {
 	if s.controls != nil {
 		return *s.controls, nil
 	}
-	unchanged := s.copies.Unchanged()
+	unchanged := s.copies.Unchanged() && s.controlCopies.Unchanged()
 	s.product, s.build = "", ""
 	product, err := unix.Sysctl("kern.osproductversion")
 	if err != nil {
@@ -54,10 +55,12 @@ func (s *Source) Controls() (observe.Controls, error) {
 		return c, err
 	}
 	s.controlProbe = raw
-	c.ConfinementApplied = raw.Markers.Confinement
-	if !raw.CopyChanged && !raw.Markers.Confinement && raw.End.Signal == 0 {
-		code := raw.End.Code
-		c.SandboxExecExit = &code
+	probeControls := ControlsFromProbe(raw)
+	c.ConfinementApplied = probeControls.ConfinementApplied
+	c.SandboxExecExit = probeControls.SandboxExecExit
+	c.PrivateCopyUnchanged = c.PrivateCopyUnchanged && probeControls.PrivateCopyUnchanged
+	if raw.CopyChanged {
+		return c, fmt.Errorf("control private copy changed before probe")
 	}
 	if c.ConfinementApplied {
 		facts, err := RunControlSuite(s.workspace, s.controlCopies, s.subject, s.computation)
@@ -71,8 +74,15 @@ func (s *Source) Controls() (observe.Controls, error) {
 	return c, nil
 }
 
-func (s *Source) Observe(key observe.Key, spec observe.Spec) (observe.Run, error) {
+func (s *Source) Observe(key observe.Key, spec observe.Spec) (result observe.Run, err error) {
 	inv, err := s.resolve(key, spec)
+	if err != nil {
+		return observe.Run{}, err
+	}
+	if inv.Paths.PlantedDirs != nil {
+		return observe.Run{}, fmt.Errorf("resolver supplied planted directories")
+	}
+	inv.Paths.PlantedDirs, err = plantedDirectories(spec.HomePath, spec.PlantedPath)
 	if err != nil {
 		return observe.Run{}, err
 	}
@@ -80,7 +90,12 @@ func (s *Source) Observe(key observe.Key, spec observe.Spec) (observe.Run, error
 	inv.Paths.Values["HOME"] = spec.HomePath
 	planted := spec.PlantedPath
 	if planted == "" {
-		planted = filepath.Join(spec.HomePath, "absent_planted")
+		var reservation *throwaway.Workspace
+		reservation, planted, err = absentPlanted(s.workspace.Path())
+		if err != nil {
+			return observe.Run{}, err
+		}
+		defer func() { err = errors.Join(err, reservation.Remove()) }()
 	}
 	inv.Paths.Values["PLANTED"] = planted
 	inv.Directory, inv.Workspace, inv.Control = spec.HomePath, s.workspace, spec.Control

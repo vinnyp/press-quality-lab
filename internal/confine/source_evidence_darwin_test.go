@@ -40,13 +40,20 @@ func realSourceFixture(t *testing.T, afterWait func(observe.Spec) error) sourceF
 			return inv, fmt.Errorf("missing witness")
 		}
 		inv.Words = []string{confine.SelfTestMode, name, spec.PlantedPath, "1"}
-		inv.Paths.PlantedDirs = []string{spec.HomePath}
+		inv.Paths.PlantedDirs = nil
+		if dirs, ok := key["resolver_dirs"].([]string); ok {
+			inv.Paths.PlantedDirs = dirs
+		}
 		return inv, nil
 	}, afterWait)
 	return sourceFixture{source, w, subject}
 }
 
 func (f sourceFixture) planted(t *testing.T) observe.Spec {
+	t.Helper()
+	return f.plantedAt(t, "token")
+}
+func (f sourceFixture) plantedAt(t *testing.T, name string) observe.Spec {
 	t.Helper()
 	w, err := throwaway.Create(f.workspace.Path())
 	if err != nil {
@@ -59,23 +66,23 @@ func (f sourceFixture) planted(t *testing.T) observe.Spec {
 	if err := throwaway.EmptyHome(home); err != nil {
 		t.Fatal(err)
 	}
-	if err := throwaway.WriteHomeFiles(home, []throwaway.NamedFile{{Name: "token", Data: []byte("secret-token")}, {Name: "store", Data: []byte("store_value")}, {Name: ".pql-tmp/replacement", Data: []byte("replacement")}}); err != nil {
+	if err := throwaway.WriteHomeFiles(home, []throwaway.NamedFile{{Name: name, Data: []byte("secret-token")}, {Name: "store", Data: []byte("store_value")}, {Name: ".pql-tmp/replacement", Data: []byte("replacement")}}); err != nil {
 		t.Fatal(err)
 	}
 	canary := "pqlcanary11111111111111111111111111111111"
-	digest, err := throwaway.PlantGivenCanary(home, "token", "secret-token", canary)
+	digest, err := throwaway.PlantGivenCanary(home, name, "secret-token", canary)
 	if err != nil {
 		t.Fatal(err)
 	}
-	before, err := throwaway.SnapshotPlanted(home, "token", digest)
+	before, err := throwaway.SnapshotPlanted(home, name, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
-	facts, err := throwaway.BackdatePlanted(home, "token")
+	facts, err := throwaway.BackdatePlanted(home, name)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return observe.Spec{HomePath: home, HomeKind: "planted", Canary: canary, PlantedPath: filepath.Join(home, "token"), PlantedBefore: facts, Before: before, BudgetSeconds: 10}
+	return observe.Spec{HomePath: home, HomeKind: "planted", Canary: canary, PlantedPath: filepath.Join(home, name), PlantedBefore: facts, Before: before, BudgetSeconds: 10}
 }
 
 func sourceObserve(t *testing.T, f sourceFixture, name string, control bool) (observe.Key, observe.Run, observe.Spec) {
@@ -125,7 +132,7 @@ func TestSourceRealRead(t *testing.T) {
 			paths.Values[k] = v
 		}
 		paths.Values["HOME"], paths.Values["PLANTED"] = controlSpec.HomePath, controlSpec.PlantedPath
-		paths.PlantedDirs = []string{controlSpec.HomePath}
+		paths.PlantedDirs = nil
 		args, err := confine.Arguments(false, true, paths, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -456,6 +463,79 @@ func main(){fmt.Print("{\"value\":1}\n")}
 		}
 		if twin.Markers != (observe.Markers{Confinement: true}) || twin.End != (observe.End{}) || string(twin.Stdout) != "{\"value\":1}\n" || len(twin.Stderr) != 0 {
 			t.Fatalf("clean twin %+v", twin)
+		}
+	}
+}
+
+func TestSourceDirectoryRename(t *testing.T) {
+	// QH11, QH27: renaming an ancestor is killed before the file can be retimed through its new path.
+	f := realSourceFixture(t, nil)
+	for range 25 {
+		spec := f.plantedAt(t, "d/token")
+		program := f.base.Paths.Values["BIN"]
+		log, err := os.CreateTemp(t.TempDir(), "witness")
+		if err != nil {
+			t.Fatal(err)
+		}
+		process, err := os.StartProcess(program, []string{program, confine.SelfTestMode, "forge_directory", spec.PlantedPath, "1"}, &os.ProcAttr{Files: []*os.File{nil, log, log}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		state, waitErr := process.Wait()
+		closeErr := log.Close()
+		output, readErr := os.ReadFile(log.Name())
+		if waitErr != nil || closeErr != nil || readErr != nil || !state.Success() || string(output) != "attempt_forge_directory\nreturned_forge_directory\n" {
+			t.Fatalf("unconfined %v %v %v %v %q", state, waitErr, closeErr, readErr, output)
+		}
+		spec = f.plantedAt(t, "d/token")
+		run, err := f.source.Observe(observe.Key{"witness": "forge_directory"}, spec)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertSourceRaw(t, run, "attempt_forge_directory\n", true, false)
+		spec = f.plantedAt(t, "d/token")
+		clean, err := f.source.Observe(observe.Key{"witness": "real_read"}, spec)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertSourceRaw(t, clean, "attempt_read\nread_value\n", false, true)
+	}
+}
+
+func TestSourceChangedControlCopy(t *testing.T) {
+	// QH8, QH6: a refused probe due to changed control copies is an engine fault, never a failed confinement observation.
+	_, launcher := evidenceLauncher(t)
+	w, c, subject, computation := controlFixture(t, launcher)
+	controls, err := confine.NewCopies(w.Path(), launcher, launcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, program := controls.CopyPaths()
+	if err := os.WriteFile(program, []byte("changed"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	source := confine.NewSourceForTest(w, c, controls, subject, computation, nil, nil)
+	facts, err := source.Controls()
+	if err == nil || err.Error() != "control private copy changed before probe" || facts.PrivateCopyUnchanged || facts.SandboxExecExit != nil {
+		t.Fatalf("%+v %v", facts, err)
+	}
+}
+
+func TestSourceRefusesResolverDirectories(t *testing.T) {
+	// QH11: the source alone supplies planted ancestor rules, including the no-ancestor home case.
+	f := realSourceFixture(t, nil)
+	for range 25 {
+		spec := f.plantedAt(t, "d/token")
+		run, err := f.source.Observe(observe.Key{"witness": "real_read"}, spec)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertSourceRaw(t, run, "attempt_read\nread_value\n", false, true)
+		for _, dirs := range [][]string{{}, {spec.HomePath}} {
+			_, err := f.source.Observe(observe.Key{"witness": "real_read", "resolver_dirs": dirs}, spec)
+			if err == nil || err.Error() != "resolver supplied planted directories" {
+				t.Fatalf("resolver refusal %v", err)
+			}
 		}
 	}
 }

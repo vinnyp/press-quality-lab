@@ -3,7 +3,6 @@ package confine
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"time"
@@ -68,7 +67,7 @@ func selfTestInvocation(base Invocation, files *throwaway.SelfTestFiles, workspa
 	base.Paths.Values = clonePathValues(base.Paths.Values)
 	base.Paths.Values["HOME"], base.Paths.Values["PLANTED"] = files.Home, files.Calibration
 	if base.Computation {
-		base.Paths.Values["PLANTED"] = filepath.Join(files.Home, "absent_planted")
+		base.Paths.Values["PLANTED"] = files.Absent
 	}
 	base.Paths.PlantedDirs = nil
 	base.Workspace = workspace

@@ -218,7 +218,7 @@ func TestCollectUnconfinedHelpLeavesOtherInvocation(t *testing.T) {
 	other := ch
 	other.ID = "bare"
 	other.Preimage = plan.Object{"probe": "bare", "dimension": "availability", "words": plan.Array{}, "expected": nil, "earlier": plan.Array{}}
-	other.Keys = []plan.Object{{"words": plan.Array{}, "computation": nil}}
+	other.Keys = []plan.Object{{"home": "seed", "words": plan.Array{}, "computation": nil}}
 	source := &ownInvocationSource{helpSource: &helpSource{controls: goodControls(), serve: func(plan.Array) observe.Run { return observe.Run{} }}}
 	got, err := Collect(plan.Plan{Checks: []plan.Check{ch, other}}, source)
 	if err != nil || len(got) != 2 {

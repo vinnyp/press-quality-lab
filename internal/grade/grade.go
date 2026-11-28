@@ -82,6 +82,10 @@ func UserIDs() (int, int) { return os.Getuid(), os.Geteuid() }
 // be served until the real verifier replaces this interim path (KTD21).
 type ReleasedSource struct{}
 
+// BeforeHome refuses before collect can prepare any home.
+func (ReleasedSource) BeforeHome() error {
+	return failure(70, "QO1", "released source must never observe")
+}
 func (ReleasedSource) Controls() (observe.Controls, error) { return observe.Controls{}, nil }
 func (ReleasedSource) Observe(observe.Key, observe.Spec) (observe.Run, error) {
 	return observe.Run{}, failure(70, "QO1", "released source must never observe")
@@ -119,9 +123,6 @@ func defaults(d Dependencies) Dependencies {
 	}
 	if d.StoreRoot == nil {
 		d.StoreRoot = store.ApplicationSupportRoot
-	}
-	if d.Collect == nil {
-		d.Collect = collect.Collect
 	}
 	return d
 }
@@ -362,6 +363,11 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if traced, ok := source.(interface{ Required(any) error }); ok {
 		if err := traced.Required(required); err != nil {
 			return 70, err
+		}
+	}
+	if d.Collect == nil {
+		d.Collect = func(p plan.Plan, source observe.Source) ([]collect.Check, error) {
+			return collect.Collect(p, source, collect.Options{RunDirectory: workspace.Path(), CanaryDrawn: d.Masker.AddCanary})
 		}
 	}
 	checks, wait, collectErr := gatherSignals(d.Collect, p, source, signals, d.CollectorWait)
