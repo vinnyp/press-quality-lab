@@ -31,8 +31,8 @@ func Collect(p plan.Plan, source observe.Source, options ...Options) ([]Check, e
 	return collectWithOptions(p, source, o)
 }
 
-func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) (checks []Check, err error) {
-	prepared := newHomeSource(p, source, Options{})
+func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result, options Options) (checks []Check, err error) {
+	prepared := newHomeSource(p, source, options)
 	defer func() { err = errors.Join(err, prepared.close()) }()
 	return collectPrepared(p, prepared, resolve)
 }
@@ -189,7 +189,7 @@ func collectPrepared(p plan.Plan, source *homeSource, resolve func(plan.Check, o
 				if !bookOK || !stepOK {
 					panic("QA7: invalid step key")
 				}
-				ch := plan.Check{ID: "runbook:" + bookName + ":step:" + stepName, Subject: context.Subject, Scopes: p.Scopes, Keys: []plan.Object{step.Key}, Preimage: plan.Object{"probe": nil, "runbook": step.Key["runbook"], "step": step.Key["step"], "words": step.Key["words"], "earlier": plan.Array{}, "expected": nil, "budget_seconds": step.BudgetSeconds, "offline_args": step.OfflineArgs, "env": step.Env}}
+				ch := plan.Check{ID: "runbook:" + bookName + ":step:" + stepName, Subject: context.Subject, Seed: context.Seed, Scopes: p.Scopes, Keys: []plan.Object{step.Key}, Preimage: plan.Object{"probe": nil, "runbook": step.Key["runbook"], "step": step.Key["step"], "words": step.Key["words"], "earlier": plan.Array{}, "expected": nil, "budget_seconds": step.BudgetSeconds, "offline_args": step.OfflineArgs, "env": step.Env}}
 				if decide.StepRuns(decide.StepFacts{Stopped: stopped, Controls: controls, Check: &ch}) {
 					inv, err := serve(step.Key, ch)
 					if err != nil {

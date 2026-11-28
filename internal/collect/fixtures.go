@@ -8,7 +8,8 @@ import "github.com/vinnyp/press-quality-lab/internal/observe"
 type Options struct {
 	RunDirectory string
 	CanaryDrawn  func(string)
-	AfterObserve func(observe.Key, observe.Spec, observe.Run) error
 }
 
 func applyHomeFixtures(string, Options) error { return nil }
+
+func afterObserve(Options, observe.Key, observe.Spec, observe.Run) error { return nil }

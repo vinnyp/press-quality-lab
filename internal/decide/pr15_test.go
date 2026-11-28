@@ -74,25 +74,33 @@ func TestChangedCopyProtocolFault(t *testing.T) {
 		{"Seen", observe.Run{CopyChanged: true, StdoutSeen: 1}},
 		{"Details", observe.Run{CopyChanged: true, Details: observe.RunDetails{Planted: &observe.Planted{}}}},
 	} {
-		t.Run(row.name, func(t *testing.T) {
-			ch := plan.Check{Subject: plan.Object{}, Preimage: plan.Object{"probe": "bare"}}
-			twin := row.run
-			twin.CopyChanged = false
-			got := Resolve(ch, passing(), Evidence{Invocations: []observe.Invocation{{Run: twin}}})
-			want := 1
-			if twin.Markers.Confinement {
-				want = 3
-			}
-			if got.Level != want {
-				t.Fatalf("unchanged twin: %+v", got)
-			}
-			defer func() {
-				fault, ok := recover().(*plan.Fault)
-				if !ok || fault.Rule != "QH8" || fault.Cause != "changed copy carries launch facts" {
-					t.Fatalf("wrong engine fault: %v", fault)
+		for _, capture := range []bool{false, true} {
+			t.Run(row.name+map[bool]string{false: "Invocations", true: "Captures"}[capture], func(t *testing.T) {
+				evidence := func(run observe.Run) Evidence {
+					if capture {
+						return Evidence{Captures: []observe.Invocation{{Run: run}}}
+					}
+					return Evidence{Invocations: []observe.Invocation{{Run: run}}}
 				}
-			}()
-			Resolve(ch, passing(), Evidence{Captures: []observe.Invocation{{Run: row.run}}})
-		})
+				ch := plan.Check{Subject: plan.Object{}, Preimage: plan.Object{"probe": "bare"}}
+				twin := row.run
+				twin.CopyChanged = false
+				got := Resolve(ch, passing(), evidence(twin))
+				want := 1
+				if capture || twin.Markers.Confinement {
+					want = 3
+				}
+				if got.Level != want {
+					t.Fatalf("unchanged twin: %+v", got)
+				}
+				defer func() {
+					fault, ok := recover().(*plan.Fault)
+					if !ok || fault.Rule != "QH8" || fault.Cause != "changed copy carries launch facts" {
+						t.Fatalf("wrong engine fault: %v", fault)
+					}
+				}()
+				Resolve(ch, passing(), evidence(row.run))
+			})
+		}
 	}
 }

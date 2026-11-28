@@ -55,6 +55,9 @@ func (s *homeSource) close() error {
 	return s.workspace.Remove()
 }
 func (s *homeSource) fresh(ch plan.Check, kind string, fixtures bool) (string, error) {
+	if s.options.RunDirectory == "" {
+		return "", &plan.Fault{Rule: "QE20", Cause: "run directory required"}
+	}
 	if s.workspace == nil {
 		w, err := throwaway.Create(s.options.RunDirectory)
 		if err != nil {
@@ -266,10 +269,8 @@ func (s *homeSource) Observe(key observe.Key, spec observe.Spec) (result observe
 		return observe.Run{}, err
 	}
 	p := run.Details.Planted
-	if s.options.AfterObserve != nil {
-		if err := s.options.AfterObserve(key, prepared, run); err != nil {
-			return observe.Run{}, err
-		}
+	if err := afterObserve(s.options, key, prepared, run); err != nil {
+		return observe.Run{}, err
 	}
 	if prepared.HomeKind == "planted" && p != nil && p.AtimeMoved && p.SameFile && s.controls.ReadCalibrationMoved && acceptedRead(ch, key, run) {
 		controlSpec, err := s.prepare(ch, key, spec, prepared.Canary)
@@ -285,10 +286,8 @@ func (s *homeSource) Observe(key observe.Key, spec observe.Spec) (result observe
 		if err != nil {
 			return observe.Run{}, err
 		}
-		if s.options.AfterObserve != nil {
-			if err := s.options.AfterObserve(key, controlSpec, control); err != nil {
-				return observe.Run{}, err
-			}
+		if err := afterObserve(s.options, key, controlSpec, control); err != nil {
+			return observe.Run{}, err
 		}
 		planted := *p
 		planted.ControlEnd = &observe.InvocationProtocol{End: control.End, Markers: control.Markers}

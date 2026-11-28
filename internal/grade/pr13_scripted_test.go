@@ -60,7 +60,7 @@ func TestAE24Unclassified(t *testing.T) {
 			if err := raw.Required(plan.Array{}); err != nil {
 				t.Fatal(err)
 			}
-			checks, err := collect.Collect(p, raw)
+			checks, err := collect.Collect(p, raw, collect.Options{RunDirectory: t.TempDir()})
 			if err != nil {
 				t.Fatal(err)
 			}

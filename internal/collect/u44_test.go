@@ -80,7 +80,7 @@ func TestInvocationServing(t *testing.T) {
 			if name != "Destructive" && name != "Computation" {
 				p.Checks[0] = ch
 			}
-			got, err := Collect(p, source)
+			got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 			if name == "Destructive" || name == "Unscheduled" {
 				wantRule := "QA7"
 				if name == "Destructive" {

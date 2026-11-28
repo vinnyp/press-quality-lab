@@ -9,6 +9,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/rulebook"
 	"github.com/vinnyp/press-quality-lab/internal/throwaway"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -64,17 +65,17 @@ func TestReplayRunbook(t *testing.T) {
 	}}
 	ch := p.Checks[len(p.Checks)-1]
 	key := ch.Keys[len(ch.Keys)-1]
-	runs, err := Serve(p, f, ch, key, Options{})
+	runs, err := Serve(p, f, ch, key, Options{RunDirectory: t.TempDir()})
 	if err != nil || len(runs) != 3 || calls != 3 || len(homes) != 2 || homes[0] != homes[1] {
 		t.Fatalf("replay %d %d %v %v", len(runs), calls, homes, err)
 	}
 	ch.Subject["commands"] = append(discoveryArray(ch.Subject["commands"]), plan.Object{"words": plan.Array{"first"}, "class": "destructive", "writes": true})
 	p.Scopes = []rulebook.Scope{rulebook.ConformanceScope, rulebook.DestructiveScope}
-	if _, err := Serve(p, f, ch, key, Options{}); err != nil {
+	if _, err := Serve(p, f, ch, key, Options{RunDirectory: t.TempDir()}); err != nil {
 		t.Fatal("scoped twin", err)
 	}
 	p.Scopes = []rulebook.Scope{rulebook.ConformanceScope}
-	_, err = Serve(p, f, ch, key, Options{})
+	_, err = Serve(p, f, ch, key, Options{RunDirectory: t.TempDir()})
 	var fault *plan.Fault
 	if !errors.As(err, &fault) || fault.Rule != "QS6" || fault.Cause != "destructive invocation outside allowed runbook scope" {
 		t.Fatalf("scope guard %v", err)
@@ -99,7 +100,7 @@ func TestReplayRecordedSettings(t *testing.T) {
 		}
 		return cleanLoopRun(), nil
 	}}
-	runs, err := Serve(p, f, ch, key, Options{})
+	runs, err := Serve(p, f, ch, key, Options{RunDirectory: t.TempDir()})
 	if err != nil || len(runs) != 1 || calls != 1 {
 		t.Fatalf("replay %v %d %v", runs, calls, err)
 	}
@@ -129,5 +130,41 @@ func TestReplayHomeKind(t *testing.T) {
 		} else if err != nil || calls != 1 || len(runs) != 1 {
 			t.Fatalf("planned home %q: %d %d %v", kind, calls, len(runs), err)
 		}
+	}
+}
+
+func TestRoundAHomeWorkspaceAndHook(t *testing.T) {
+	// QE20, QT5: every home is below the published run workspace, and the typed hook sees it before cleanup.
+	f := &homeFake{run: func(_ observe.Key, _ observe.Spec) (observe.Run, error) { return cleanLoopRun(), nil }}
+	s, ch := homeFixture(t, f)
+	parent := t.TempDir()
+	s.options.RunDirectory = parent
+	called := 0
+	var home string
+	s.options.AfterObserve = func(_ observe.Key, spec observe.Spec, run observe.Run) error {
+		called++
+		home = spec.HomePath
+		rel, err := filepath.Rel(parent, home)
+		if err != nil || !filepath.IsLocal(rel) {
+			t.Fatalf("home outside run directory: %s %v", rel, err)
+		}
+		if _, err := os.Stat(home); err != nil {
+			t.Fatal(err)
+		}
+		if string(run.Stdout) != "value" {
+			t.Fatal("hook lost run")
+		}
+		return nil
+	}
+	for _, kind := range []string{"seed", "empty", "planted", "scratch"} {
+		if _, err := s.Observe(homeKey(kind), observe.Spec{CheckID: ch.ID}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Stat(home); !os.IsNotExist(err) {
+			t.Fatal("hook home retained", err)
+		}
+	}
+	if called != 4 {
+		t.Fatal(called)
 	}
 }

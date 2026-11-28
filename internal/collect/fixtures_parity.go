@@ -22,3 +22,10 @@ func applyHomeFixtures(home string, o Options) error {
 func CollectWithOptions(p plan.Plan, source observe.Source, options Options) ([]Check, error) {
 	return collectWithOptions(p, source, options)
 }
+
+func afterObserve(o Options, key observe.Key, spec observe.Spec, run observe.Run) error {
+	if o.AfterObserve != nil {
+		return o.AfterObserve(key, spec, run)
+	}
+	return nil
+}

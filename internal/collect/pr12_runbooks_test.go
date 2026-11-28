@@ -2,6 +2,8 @@ package collect
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -111,7 +113,7 @@ func TestRunbookStops(t *testing.T) {
 				return r
 			})
 			source.controls.KnownFastWithin = true
-			got, err := Collect(p, source)
+			got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 			wantKind := map[string]string{"Predicate": "predicate", "Crashed": "crashed", "OverBudget": "over_budget", "CouldNotStart": "could_not_start", "ComputationFailed": "computation_failed", "LevelTwo": "placeholder_unfilled"}[name]
 			if err == nil && len(got) == 2 && string(got[0].Result.Reason) != wantKind && got[0].Result.FailureKind != wantKind {
 				t.Fatal(got[0].Result)
@@ -129,6 +131,50 @@ func TestRunbookStops(t *testing.T) {
 
 func TestOutsideStepRuns(t *testing.T) {
 	// QS6, QA9, QA7, QA8, E-49: an outside check is not evaluated and its step never stops the book.
+	for _, row := range []struct {
+		name             string
+		seeded, required bool
+	}{
+		{"FirstOutsideEmpty", false, false},
+		{"FirstOutsideSeeded", true, false},
+		{"FirstRequiredSeeded", true, true},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			outside := loopCheck()
+			if !row.required {
+				outside["dimension"] = "destructive-guard"
+			}
+			p := loopPlan(t, plan.Array{loopStep("outside", outside), loopStep("last", loopCheck())})
+			if row.seeded {
+				p.SubjectDirectory = t.TempDir()
+				if err := os.Mkdir(filepath.Join(p.SubjectDirectory, "seed"), 0700); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(filepath.Join(p.SubjectDirectory, "seed", "store"), []byte("data"), 0600); err != nil {
+					t.Fatal(err)
+				}
+				for i := range p.Checks {
+					p.Checks[i].Subject["seed"] = "seed"
+					p.Checks[i].Seed = []plan.Entry{{Path: "store", Data: []byte("data")}}
+				}
+			}
+			source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
+			got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
+			wantChecks := 1
+			if row.required {
+				wantChecks = 2
+			}
+			if err != nil || len(got) != wantChecks || !reflect.DeepEqual(stepsServed(source), []any{"outside", "last"}) {
+				t.Fatal(got, err, stepsServed(source))
+			}
+			for _, check := range got {
+				if check.Result.Outcome != "held" {
+					t.Fatal(got)
+				}
+			}
+		})
+	}
+
 	for _, name := range []string{"Run", "Stopped", "Confinement", "SelfTest", "System", "Copy", "Placeholder", "Destructive"} {
 		t.Run(name, func(t *testing.T) {
 			outside := loopCheck()
@@ -167,7 +213,7 @@ func TestOutsideStepRuns(t *testing.T) {
 				discoveryObject(discoveryArray(p.Checks[0].Subject["commands"])[0])["class"] = "destructive"
 				want = nil
 			}
-			got, err := Collect(p, source)
+			got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 			if name == "Destructive" {
 				var fault *plan.Fault
 				if !errors.As(err, &fault) || fault.Rule != "QS6" || got != nil || len(source.keys) != 0 {
@@ -206,7 +252,7 @@ func TestCapturePlaceholderLoop(t *testing.T) {
 					}
 					return r
 				})
-				positive, err := Collect(p, control)
+				positive, err := Collect(p, control, Options{RunDirectory: t.TempDir()})
 				if err != nil || len(control.keys) != 3 {
 					t.Fatal(positive, err, control.keys)
 				}
@@ -217,7 +263,7 @@ func TestCapturePlaceholderLoop(t *testing.T) {
 				}
 				p.Checks[0].Subject["commands"] = append(discoveryArray(p.Checks[0].Subject["commands"]), plan.Object{"words": plan.Array{"first"}, field: plan.Object{"placeholder": "supply value"}})
 				source := loopSourceWith(func(observe.Key) observe.Run { t.Fatal("placeholder served"); return observe.Run{} })
-				got, err := Collect(p, source)
+				got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 				if err != nil || len(got) == 0 {
 					t.Fatal(got, err)
 				}
@@ -254,7 +300,7 @@ func TestSharedComputations(t *testing.T) {
 		}
 		return r
 	})
-	got, err := Collect(p, source)
+	got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 	if err != nil || len(source.keys) != 3 || !reflect.DeepEqual(source.keys[1]["computation"], plan.Array{"/bin/precondition"}) || !reflect.DeepEqual(source.keys[2]["computation"], plan.Array{"/bin/expected"}) {
 		t.Fatal(got, err, source.keys)
 	}
@@ -299,7 +345,7 @@ func TestCaptureOwnRuns(t *testing.T) {
 				}
 				return r
 			})
-			got, err := Collect(p, source)
+			got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 			level := 6
 			outcome := "not_observed"
 			reason := "harness_fault"
@@ -360,7 +406,7 @@ func TestNamedCaptureScopeLoop(t *testing.T) {
 				}
 				return r
 			})
-			got, err := Collect(p, source)
+			got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 			if err != nil || len(got) == 0 {
 				t.Fatal(got, err)
 			}
@@ -391,7 +437,7 @@ func TestOverridesDoNotStopRunbook(t *testing.T) {
 	p := loopPlan(t, plan.Array{loopStep("first", loopCheck()), loopStep("last", loopCheck())})
 	p.Checks[0].Subject["facts"] = plan.Object{"other": plan.Object{"placeholder": "supply fact"}}
 	source := loopSourceWith(func(observe.Key) observe.Run { return cleanLoopRun() })
-	got, err := Collect(p, source)
+	got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 	if err != nil || !reflect.DeepEqual(stepsServed(source), []any{"first", "last"}) {
 		t.Fatal(got, err, source.keys)
 	}
@@ -418,7 +464,7 @@ func TestSharedStepBeforeComputations(t *testing.T) {
 		}
 		return observe.Run{}
 	})
-	got, err := Collect(p, source)
+	got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 	if err != nil || len(got) != 2 || len(source.keys) != 1 {
 		t.Fatal(got, err, source.keys)
 	}
@@ -449,7 +495,7 @@ func TestServingSpecs(t *testing.T) {
 		}
 		return r
 	})
-	got, err := Collect(p, source)
+	got, err := Collect(p, source, Options{RunDirectory: t.TempDir()})
 	if err != nil || len(got) != 1 || len(source.specs) != 4 {
 		t.Fatal(got, err, source.specs)
 	}
@@ -479,7 +525,7 @@ func TestUnmatchedComputationKeyFault(t *testing.T) {
 			t.Error("missing engine fault")
 		}
 	}()
-	if got, err := Collect(p, source); err != nil {
+	if got, err := Collect(p, source, Options{RunDirectory: t.TempDir()}); err != nil {
 		t.Fatal(got, err)
 	}
 }

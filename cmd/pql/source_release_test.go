@@ -117,7 +117,7 @@ func TestCollectionTestAPIBoundary(t *testing.T) {
 					foundOptions = foundOptions || n.Name.Name == "Options"
 				case *ast.Field:
 					for _, field := range n.Names {
-						if field.Name == "HomeFiles" {
+						if field.Name == "HomeFiles" || field.Name == "AfterObserve" {
 							t.Error("fixture option included")
 						}
 					}

@@ -403,7 +403,7 @@ func TestDiscoveryOverrideAfterAllChecks(t *testing.T) {
 	got, err := collect(plan.Plan{Checks: []plan.Check{ch, authored, conditional}, Runbooks: []plan.Runbook{{Steps: []plan.Step{{Required: []int{1, 2}, Key: plan.DiscoveryKey(plan.Array{}), BudgetSeconds: strictjson.Number("10")}}}}}, s, func(plan.Check, observe.Controls, decide.Evidence) decide.Result {
 		calls++
 		return decide.Result{Level: 8, Outcome: "held"}
-	})
+	}, Options{RunDirectory: t.TempDir()})
 	if err != nil || calls != 3 || len(got) != 3 {
 		t.Fatal(calls, got, err)
 	}

@@ -162,7 +162,9 @@ func TestPredictedCheckEndings(t *testing.T) {
 			if err := raw.Required(plan.Array{}); err != nil {
 				t.Fatal(err)
 			}
-			checks, _, err := gatherSignals(func(p plan.Plan, s observe.Source) ([]collect.Check, error) { return collect.Collect(p, s) }, p, raw, nil, 0)
+			checks, _, err := gatherSignals(func(p plan.Plan, s observe.Source) ([]collect.Check, error) {
+				return collect.Collect(p, s, collect.Options{RunDirectory: t.TempDir()})
+			}, p, raw, nil, 0)
 			if err != nil {
 				t.Fatal(err)
 			}

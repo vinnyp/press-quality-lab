@@ -48,9 +48,10 @@ func TestCopiesPerExecutable(t *testing.T) {
 			launched++
 			if executable == computation {
 				copied := c.programs[computation].path
-				foundBIN, foundTarget := false, false
+				foundBIN, foundParent, foundTarget := false, false, false
 				for i, arg := range argv {
 					foundBIN = foundBIN || arg == "BIN="+copied
+					foundParent = foundParent || arg == "BIN_PARENT="+filepath.Dir(copied)
 					if arg == LauncherMode && i+4 < len(argv) {
 						var words, environment []string
 						if err := json.Unmarshal([]byte(argv[i+3]), &words); err != nil {
@@ -62,16 +63,20 @@ func TestCopiesPerExecutable(t *testing.T) {
 						foundTarget = argv[i+2] == copied && len(words) == 0
 					}
 				}
-				if !foundBIN || !foundTarget {
+				if !foundBIN || !foundParent || !foundTarget {
 					t.Fatalf("computation launch %v", argv)
 				}
 			}
 			if systemExecutable(executable) {
-				found := false
-				for _, arg := range argv {
+				found, parent, target := false, false, false
+				for i, arg := range argv {
 					found = found || arg == "BIN="+executable
+					parent = parent || arg == "BIN_PARENT="+filepath.Dir(executable)
+					if arg == LauncherMode && i+2 < len(argv) {
+						target = argv[i+2] == executable
+					}
 				}
-				if !found {
+				if !found || !parent || !target {
 					t.Fatalf("in-place BIN missing: %v", argv)
 				}
 			}

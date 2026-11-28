@@ -70,7 +70,7 @@ func TestSelfTestFailedAllChecks(t *testing.T) {
 	s[len(s)-1].Stdout = []byte("wrong_value\n")
 	failed := confine.ControlFacts{Subject: s, Computation: c}
 	source := &selfTestSource{controls: failed.Apply(base)}
-	checks, err := collect.Collect(p, source)
+	checks, err := collect.Collect(p, source, collect.Options{RunDirectory: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)
 	}

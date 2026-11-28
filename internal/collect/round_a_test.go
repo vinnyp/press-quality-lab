@@ -89,42 +89,6 @@ func TestRoundASeedChanged(t *testing.T) {
 	}
 }
 
-func TestRoundAHomeWorkspaceAndHook(t *testing.T) {
-	// QE20, QT5: every home is below the published run workspace, and the typed hook sees it before cleanup.
-	f := &homeFake{run: func(_ observe.Key, _ observe.Spec) (observe.Run, error) { return cleanLoopRun(), nil }}
-	s, ch := homeFixture(t, f)
-	parent := t.TempDir()
-	s.options.RunDirectory = parent
-	called := 0
-	var home string
-	s.options.AfterObserve = func(_ observe.Key, spec observe.Spec, run observe.Run) error {
-		called++
-		home = spec.HomePath
-		rel, err := filepath.Rel(parent, home)
-		if err != nil || !filepath.IsLocal(rel) {
-			t.Fatalf("home outside run directory: %s %v", rel, err)
-		}
-		if _, err := os.Stat(home); err != nil {
-			t.Fatal(err)
-		}
-		if string(run.Stdout) != "value" {
-			t.Fatal("hook lost run")
-		}
-		return nil
-	}
-	for _, kind := range []string{"seed", "empty", "planted", "scratch"} {
-		if _, err := s.Observe(homeKey(kind), observe.Spec{CheckID: ch.ID}); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := os.Stat(home); !os.IsNotExist(err) {
-			t.Fatal("hook home retained", err)
-		}
-	}
-	if called != 4 {
-		t.Fatal(called)
-	}
-}
-
 func TestRoundAUnknownHome(t *testing.T) {
 	// QT5: an unsupported home is an engine fault before the source is reached.
 	f := &homeFake{run: func(_ observe.Key, _ observe.Spec) (observe.Run, error) {

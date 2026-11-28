@@ -36,7 +36,7 @@ func homeFixture(t *testing.T, f *homeFake) (*homeSource, plan.Check) {
 		t.Fatal(err)
 	}
 	ch := plan.Check{Seed: []plan.Entry{{Path: "store", Data: []byte("data")}, {Path: "token", Data: []byte("secret-token")}}, ID: "home", Subject: plan.Object{"seed": "seed", "store": "store", "secret": plan.Object{"path": "token", "token": "secret-token"}, "commands": plan.Array{plan.Object{"words": plan.Array{}, "class": "safe", "writes": false, "exit_codes": nil}}}, Preimage: plan.Object{"probe": "bare"}}
-	s := newHomeSource(plan.Plan{SubjectDirectory: dir, Checks: []plan.Check{ch}}, f, Options{})
+	s := newHomeSource(plan.Plan{SubjectDirectory: dir, Checks: []plan.Check{ch}}, f, Options{RunDirectory: t.TempDir()})
 	s.controls = f.controls
 	t.Cleanup(func() {
 		if err := s.close(); err != nil {
@@ -244,6 +244,31 @@ func TestStoreControlPassed(t *testing.T) {
 }
 func TestServeTimeAssertion(t *testing.T) {
 	// QH27: metadata read at serve catches an intervening access before any source call.
+	t.Run("Read", func(t *testing.T) {
+		calls, backdates := 0, 0
+		f := &homeFake{controls: goodControls(), run: func(observe.Key, observe.Spec) (observe.Run, error) {
+			calls++
+			run := cleanLoopRun()
+			run.Details.Planted = &observe.Planted{AtimeMoved: true, SameFile: true}
+			return run, nil
+		}}
+		f.controls.ReadCalibrationMoved = true
+		s, ch := homeFixture(t, f)
+		s.preparation.backdate = func(home, name string) (throwaway.FileFacts, error) {
+			backdates++
+			facts, err := throwaway.BackdatePlanted(home, name)
+			if err == nil && backdates == 2 {
+				err = os.Chtimes(filepath.Join(home, name), facts.Modified, facts.Modified)
+			}
+			return facts, err
+		}
+		_, err := s.Observe(homeKey("planted"), observe.Spec{CheckID: ch.ID})
+		var fault *plan.Fault
+		if calls != 1 || backdates != 2 || !errors.As(err, &fault) || fault.Rule != "QH27" || fault.Cause != "planted access time moved before serve" {
+			t.Fatalf("control serve: calls=%d backdates=%d err=%v", calls, backdates, err)
+		}
+	})
+
 	for _, age := range []time.Duration{24 * time.Hour, 23*time.Hour + 59*time.Minute} {
 		t.Run(fmt.Sprint(int(age/time.Minute)), func(t *testing.T) {
 			calls := 0
@@ -292,7 +317,7 @@ func TestDefaultHomeOptions(t *testing.T) {
 	ch.Preimage["words"] = plan.Array{}
 	ch.Preimage["expected"] = nil
 	p := plan.Plan{SubjectDirectory: s.directory, Checks: []plan.Check{discoveryCheck(), ch}, Scopes: []rulebook.Scope{rulebook.ConformanceScope}}
-	if _, err := Collect(p, f); err != nil {
+	if _, err := Collect(p, f, Options{RunDirectory: t.TempDir()}); err != nil {
 		t.Fatal(err)
 	}
 	if calls != 2 {
@@ -371,5 +396,30 @@ func TestCanaryRandomSource(t *testing.T) {
 	s.preparation.random = bytes.NewReader([]byte{0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab})
 	if _, err := s.Observe(homeKey("planted"), observe.Spec{CheckID: ch.ID}); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestRunDirectoryRequired(t *testing.T) {
+	// QE20: a missing run workspace is an engine fault, never a TMPDIR fallback.
+	for _, supplied := range []bool{true, false} {
+		t.Run(map[bool]string{true: "Supplied", false: "Empty"}[supplied], func(t *testing.T) {
+			calls := 0
+			f := &homeFake{run: func(observe.Key, observe.Spec) (observe.Run, error) { calls++; return cleanLoopRun(), nil }}
+			s, ch := homeFixture(t, f)
+			if !supplied {
+				s.options.RunDirectory = ""
+			}
+			_, err := s.Observe(homeKey("seed"), observe.Spec{CheckID: ch.ID})
+			if supplied {
+				if err != nil || calls != 1 {
+					t.Fatal(calls, err)
+				}
+				return
+			}
+			var fault *plan.Fault
+			if calls != 0 || !errors.As(err, &fault) || fault.Rule != "QE20" || fault.Cause != "run directory required" {
+				t.Fatal(calls, err)
+			}
+		})
 	}
 }

@@ -94,7 +94,7 @@ func TestRequiredFailure(t *testing.T) {
 		}
 		d.Collect = func(p plan.Plan, s observe.Source) ([]collect.Check, error) {
 			collected = true
-			return collect.Collect(p, s)
+			return collect.Collect(p, s, collect.Options{RunDirectory: t.TempDir()})
 		}
 		code, err := Run(o, d, io.Discard)
 		if calls != 1 || closed != 1 {

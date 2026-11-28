@@ -156,7 +156,7 @@ func TestCollectPlanAndDiscoveryFacts(t *testing.T) {
 				}
 				return run
 			}}
-			got, err := Collect(p, s)
+			got, err := Collect(p, s, Options{RunDirectory: t.TempDir()})
 			if err != nil || len(got) != 1 {
 				t.Fatal(got, err)
 			}
@@ -220,7 +220,7 @@ func TestCollectUnconfinedHelpLeavesOtherInvocation(t *testing.T) {
 	other.Preimage = plan.Object{"probe": "bare", "dimension": "availability", "words": plan.Array{}, "expected": nil, "earlier": plan.Array{}}
 	other.Keys = []plan.Object{{"home": "seed", "words": plan.Array{}, "computation": nil}}
 	source := &ownInvocationSource{helpSource: &helpSource{controls: goodControls(), serve: func(plan.Array) observe.Run { return observe.Run{} }}}
-	got, err := Collect(plan.Plan{Checks: []plan.Check{ch, other}}, source)
+	got, err := Collect(plan.Plan{Checks: []plan.Check{ch, other}}, source, Options{RunDirectory: t.TempDir()})
 	if err != nil || len(got) != 2 {
 		t.Fatal(got, err)
 	}
