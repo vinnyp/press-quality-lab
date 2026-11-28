@@ -59,3 +59,7 @@
 | 23 | Nits: `invocations` alignment, a stale key name, two contradictory sentences, a second signal in the funnel | Confirmed | Fixed |
 
 The design review is closed. The bound-flag rule is checked again in the build review, by its two fixtures.
+
+## Amendment during the build (commit 1475219)
+
+Part 2's build stopped, rightly, on a gap: the record carried neither a probe check's name nor the declared store, which the scorecard needs for its `-shm` lines. The caller amended the note: every check's `observed` carries `probe`, and the discovery check's carries `store`. The build's code review raised this as unreviewed, and checked it there. It is logged here as a build-time amendment.
