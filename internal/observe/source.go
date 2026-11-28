@@ -1,12 +1,21 @@
 package observe
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // Key is QT5's invocation key. A source must not interpret it as a decision.
 type Key = map[string]any
 
 // Spec supplies the immutable planned context for one invocation.
 type Spec struct {
+	HomePath, HomeKind  string
+	Canary, PlantedPath string
+	PlantedBefore       FileFacts
+	Before              HomeSnapshot
+	CapturePaths        map[string]string
+	Control             bool
+	StoreControl        *bool
 	// BudgetSeconds supplies this invocation's budget, including QD2's fixed
 	// discovery budget and QA6's computation budget; zero uses planned context.
 	BudgetSeconds int

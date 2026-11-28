@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"io"
 	"os"
 	"path"
@@ -17,17 +18,8 @@ import (
 )
 
 // HomeEntry retains content identity only. Unreadable entries remain visible.
-type HomeEntry struct {
-	Path, Kind, Digest string
-	Size               int64
-	Unreadable         bool
-	info               os.FileInfo
-}
-type HomeSnapshot struct {
-	Entries    []HomeEntry
-	Unreadable bool
-	Incomplete bool // Names or contents could not all be inspected within the walk bounds.
-}
+type HomeEntry = observe.HomeEntry
+type HomeSnapshot = observe.HomeSnapshot
 type homeFile interface {
 	io.Reader
 	Stat() (os.FileInfo, error)
@@ -175,7 +167,7 @@ func homeNamesWith(root *os.Root, reset bool, h homeHooks) (entries []HomeEntry,
 				kind = "link"
 			}
 			full := path.Join(prefix, name)
-			entries = append(entries, HomeEntry{Path: full, Kind: kind, Size: info.Size(), info: info})
+			entries = append(entries, HomeEntry{Path: full, Kind: kind, Size: info.Size(), Info: info})
 			if kind != "directory" {
 				continue
 			}
@@ -205,7 +197,15 @@ func SnapshotHome(home string) (HomeSnapshot, error) { return snapshotHome(home,
 func snapshotHome(home string, open homeOpener) (HomeSnapshot, error) {
 	return snapshotHomeWith(home, defaultHomeHooks(open))
 }
-func snapshotHomeWith(home string, hooks homeHooks) (out HomeSnapshot, err error) {
+
+// SnapshotPlanted uses the digest from planting without reading that file again.
+func SnapshotPlanted(home, name, digest string) (HomeSnapshot, error) {
+	return snapshotHomeKnown(home, defaultHomeHooks(openHomeFile), name, digest)
+}
+func snapshotHomeWith(home string, hooks homeHooks) (HomeSnapshot, error) {
+	return snapshotHomeKnown(home, hooks, "", "")
+}
+func snapshotHomeKnown(home string, hooks homeHooks, knownName, knownDigest string) (out HomeSnapshot, err error) {
 	root, err := os.OpenRoot(home)
 	if err != nil {
 		out.Unreadable = true
@@ -235,13 +235,17 @@ func snapshotHomeWith(home string, hooks homeHooks) (out HomeSnapshot, err error
 		if e.Kind != "file" {
 			continue
 		}
+		if e.Path == knownName {
+			e.Digest = knownDigest
+			continue
+		}
 		readErr := withParent(root, e.Path, func(parent *os.Root, name string) error {
 			f, err := checkedHomeFile(parent, name, hooks)
 			if err != nil {
 				return err
 			}
 			info, statErr := f.Stat()
-			if statErr != nil || !os.SameFile(e.info, info) {
+			if statErr != nil || !os.SameFile(e.Info, info) {
 				return errors.Join(errHomeUnreadable, statErr, f.Close())
 			}
 			h := sha256.New()

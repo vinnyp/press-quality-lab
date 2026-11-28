@@ -5,6 +5,7 @@ import (
 	"github.com/vinnyp/press-quality-lab/internal/observe"
 	"github.com/vinnyp/press-quality-lab/internal/plan"
 	"github.com/vinnyp/press-quality-lab/internal/strictjson"
+	"reflect"
 )
 
 type Outcome string
@@ -43,6 +44,11 @@ var levels = [...]level{level1, level2, level3, level4, level5, level6, level7, 
 
 // Resolve tries every level in specification order until one decides.
 func Resolve(ch plan.Check, controls observe.Controls, facts Evidence) Result {
+	for _, inv := range append(append([]observe.Invocation(nil), facts.Invocations...), facts.Captures...) {
+		if inv.Run.CopyChanged && !reflect.DeepEqual(inv.Run, observe.Run{CopyChanged: true}) {
+			panic(&plan.Fault{Rule: "QH8", Cause: "changed copy carries launch facts"})
+		}
+	}
 	for _, step := range levels {
 		r := step(ch, controls, facts)
 		if r.Level != 0 {

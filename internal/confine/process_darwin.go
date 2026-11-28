@@ -29,6 +29,8 @@ type privateCopy struct {
 // Its caller owns removal of the enclosing run directory.
 type Copies struct {
 	launcher, program privateCopy
+	run               string
+	programs          map[string]privateCopy
 }
 
 func fingerprintOf(path string) (observe.CopySnapshot, error) {
@@ -117,7 +119,20 @@ func NewCopies(run, launcher, program string) (*Copies, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Copies{l, p}, nil
+	return &Copies{launcher: l, program: p, run: run, programs: map[string]privateCopy{program: p}}, nil
+}
+
+// Unchanged supplies the grade-wide check without repairing any copy.
+func (c *Copies) Unchanged() bool {
+	if !c.launcher.unchanged() {
+		return false
+	}
+	for _, program := range c.programs {
+		if !program.unchanged() {
+			return false
+		}
+	}
+	return true
 }
 
 // CopyPaths returns the private launcher and subject paths for inspection.
@@ -299,7 +314,24 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if inv.Workspace == nil {
 		return nil, fmt.Errorf("invocation workspace required")
 	}
-	if !c.launcher.unchanged() || !c.program.unchanged() {
+	program := c.program
+	if inv.Computation && inv.Executable != "" {
+		if systemExecutable(inv.Executable) {
+			program = privateCopy{path: inv.Executable}
+		} else {
+			var ok bool
+			program, ok = c.programs[inv.Executable]
+			if !ok {
+				var err error
+				program, err = makeCopy(c.run, inv.Executable)
+				if err != nil {
+					return nil, err
+				}
+				c.programs[inv.Executable] = program
+			}
+		}
+	}
+	if !c.launcher.unchanged() || !(inv.Computation && systemExecutable(inv.Executable)) && !program.unchanged() {
 		return &process{changed: true}, nil
 	}
 	marker, err := NewMarker()
@@ -310,7 +342,7 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if err != nil {
 		return nil, err
 	}
-	hidden, err := LauncherArgs(marker, c.program.path, inv.Words, environment)
+	hidden, err := LauncherArgs(marker, program.path, inv.Words, environment)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +354,7 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 		values[k] = v
 	}
 	values["LAUNCHER"], values["LAUNCHER_PARENT"] = c.launcher.path, filepath.Dir(c.launcher.path)
-	values["BIN"], values["BIN_PARENT"] = c.program.path, filepath.Dir(c.program.path)
+	values["BIN"], values["BIN_PARENT"] = program.path, filepath.Dir(program.path)
 	inv.Paths.Values = values
 	args, err := Arguments(inv.Computation, inv.Control, inv.Paths, hidden)
 	if err != nil {
@@ -332,7 +364,7 @@ func (c *Copies) startWith(inv Invocation, launch func(string, []string, string,
 	if err != nil {
 		return nil, err
 	}
-	if err := argumentSize(append([]string{c.program.path}, inv.Words...), environment, int(limit)); err != nil {
+	if err := argumentSize(append([]string{program.path}, inv.Words...), environment, int(limit)); err != nil {
 		return nil, err
 	}
 	argv, env := append([]string{SandboxExec}, args...), EngineEnvironment()

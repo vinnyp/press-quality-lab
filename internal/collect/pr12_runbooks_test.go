@@ -292,7 +292,7 @@ func TestCaptureOwnRuns(t *testing.T) {
 					r.Markers.Confinement = false
 				}
 				if k["step"] == "last" && name == "OwnCopyChanged" {
-					r.CopyChanged = true
+					return observe.Run{CopyChanged: true}
 				}
 				if k["computation"] != nil {
 					r.Details.Printed = &observe.PrintedValue{Value: "value"}

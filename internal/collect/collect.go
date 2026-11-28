@@ -2,6 +2,7 @@
 package collect
 
 import (
+	"errors"
 	"reflect"
 	"strconv"
 
@@ -22,10 +23,15 @@ type Check struct {
 // Discovery runs first so level 3 and the final override share its facts.
 // Runbook checks share each step run and resolve before the final overrides.
 func Collect(p plan.Plan, source observe.Source) ([]Check, error) {
-	return collect(p, source, decide.Resolve)
+	return CollectWithOptions(p, source, Options{})
 }
 
-func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) ([]Check, error) {
+func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) (checks []Check, err error) {
+	prepared := newHomeSource(p, source, Options{})
+	defer func() { err = errors.Join(err, prepared.close()) }()
+	return collectPrepared(p, prepared, resolve)
+}
+func collectPrepared(p plan.Plan, source *homeSource, resolve func(plan.Check, observe.Controls, decide.Evidence) decide.Result) ([]Check, error) {
 	p.Checks = append([]plan.Check(nil), p.Checks...)
 	// QE3, QA7: validate the entire schedule before discovery can serve a key.
 	scheduledAtStart := map[int]bool{}
@@ -115,6 +121,7 @@ func collect(p plan.Plan, source observe.Source, resolve func(plan.Check, observ
 				panic("QA7: invalid planned budget")
 			}
 		}
+		source.checks[ch.ID] = ch
 		run, err := source.Observe(map[string]any(key), observe.Spec{BudgetSeconds: seconds, CheckID: ch.ID, Preimage: map[string]any(ch.Preimage)})
 		if err != nil {
 			return observe.Invocation{}, err

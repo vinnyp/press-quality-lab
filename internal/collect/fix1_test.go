@@ -151,7 +151,9 @@ func TestCollectPlanAndDiscoveryFacts(t *testing.T) {
 					return observe.Run{}
 				}
 				run := help("leaf")
-				run.CopyChanged = name == "CopyChanged"
+				if name == "CopyChanged" {
+					return observe.Run{CopyChanged: true}
+				}
 				return run
 			}}
 			got, err := Collect(p, s)

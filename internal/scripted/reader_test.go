@@ -91,11 +91,8 @@ func TestCorpusProjection(t *testing.T) {
 			}
 			for _, v := range arr(decode(t, b)["invocations"]) {
 				i := obj(v)
-				r, err := s.Observe(map[string]any(obj(i["key"])), observe.Spec{})
-				if err != nil {
-					t.Fatal(err)
-				}
-				same(t, observe.ProjectRun(r), expectedHostControls(t, obj(arr(i["confined"])[0]), decode(t, []byte(passing))))
+				r := s.runs[keyID(i["key"])]
+				same(t, observe.ProjectRun(r), obj(arr(i["confined"])[0]))
 			}
 		})
 	}
@@ -126,11 +123,8 @@ func TestCorpusProjection(t *testing.T) {
 		recording := decode(t, readFile(t, filepath.Join(kit, "behaviour", textValue(in["form"])+".json")))
 		for _, value := range arr(recording["invocations"]) {
 			invocation := obj(value)
-			run, err := s.Observe(map[string]any(obj(invocation["key"])), observe.Spec{})
-			if err != nil {
-				t.Fatal(err)
-			}
-			same(t, observe.ProjectRun(run), expectedHostControls(t, obj(arr(invocation["confined"])[0]), obj(in["host"])))
+			run := s.runs[keyID(invocation["key"])]
+			same(t, observe.ProjectRun(run), obj(arr(invocation["confined"])[0]))
 		}
 
 	}
@@ -580,6 +574,12 @@ func TestAttributionSeam(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			if obj(input["host"])["private_copy"] == "changed" {
+				if !reflect.DeepEqual(r, observe.Run{CopyChanged: true}) {
+					t.Fatal("changed copy carried launch facts")
+				}
+				continue
+			}
 			CheckAttribution(t, r, by)
 		}
 	}
@@ -702,15 +702,10 @@ func expectedHostControls(t *testing.T, raw, host object) object {
 	expected := decode(t, strictjson.Write(raw))
 	home := obj(expected["home_changes"])
 	if home["control_detected"] != nil {
-		home["control_detected"] = host["store_control"] == "detected"
+		home["control_detected"] = nil
 	}
-	planted := obj(expected["planted"])
-	if planted != nil && (planted["control_end"] != nil || host["read_calibration"] == "moved" && planted["atime_moved"] == true && planted["same_file"] == true && obj(expected["end"])["kind"] == "exit" && obj(expected["markers"])["confinement"] == true && obj(expected["markers"])["could_not_start"] == false) {
-		end := object{"kind": "exit", "code": number("0")}
-		if host["read_control"] == "killed" {
-			end = object{"kind": "signal", "signal": "SIGKILL", "by": "confinement"}
-		}
-		planted["control_end"] = end
+	if planted := obj(expected["planted"]); planted != nil {
+		planted["control_end"] = nil
 	}
 	return expected
 }

@@ -18,8 +18,10 @@ type GroupWorkspace interface {
 // Invocation supplies a resolved profile and the exact program words. The loop
 // owns home creation, environment construction and invocation sequencing.
 type Invocation struct {
-	Workspace GroupWorkspace
-	Paths     Paths
+	// Executable selects a computation executable; empty selects the subject.
+	Executable string
+	Workspace  GroupWorkspace
+	Paths      Paths
 	// Env contains literal declarations. Older complete tables are checked
 	// and rebuilt; the engine's environment is never inherited.
 	Words, Env                 []string

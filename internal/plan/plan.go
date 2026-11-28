@@ -48,13 +48,14 @@ type Entry struct {
 
 // Input contains parsed values and caller-supplied file contents or digests.
 type Input struct {
-	Subject     subject.File
-	Scopes      []rulebook.Scope
-	Seed        []Entry
-	Files       map[string][]byte
-	FileDigests map[string]string
-	Baseline    bool
-	Anchor      bool
+	SubjectDirectory string
+	Subject          subject.File
+	Scopes           []rulebook.Scope
+	Seed             []Entry
+	Files            map[string][]byte
+	FileDigests      map[string]string
+	Baseline         bool
+	Anchor           bool
 }
 
 // Check holds a required entry, its preimage and subject invocation keys.
@@ -85,9 +86,10 @@ type Step struct {
 // Runbook retains the authored step order.
 type Runbook struct{ Steps []Step }
 type Plan struct {
-	Scopes   []rulebook.Scope
-	Checks   []Check
-	Runbooks []Runbook
+	SubjectDirectory string
+	Scopes           []rulebook.Scope
+	Checks           []Check
+	Runbooks         []Runbook
 }
 
 func hash(b []byte) string { return fmt.Sprintf("%x", sha256.Sum256(b)) }
@@ -224,7 +226,7 @@ func Build(in Input) (Plan, error) {
 	}
 	book := append(Array{}, arr(s["bookkeeping"])...)
 	sort.Slice(book, func(i, j int) bool { return text(book[i]) < text(book[j]) })
-	p := Plan{Checks: []Check{}, Scopes: append([]rulebook.Scope(nil), in.Scopes...)}
+	p := Plan{SubjectDirectory: in.SubjectDirectory, Checks: []Check{}, Scopes: append([]rulebook.Scope(nil), in.Scopes...)}
 	base := func(probe any, dimension string, words any, budget any, parameters Object) Object {
 		args := Array{}
 		env := Object{}

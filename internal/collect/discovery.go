@@ -119,7 +119,7 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source, scopes []rul
 		keys = append(keys, key)
 		retained := run
 		// PR11's Darwin capture must hash while streaming if the record needs a help's sha256.
-		retained.BytesDropped = true
+		retained.BytesDropped = !retained.CopyChanged
 		retained.Stdout = nil
 		retained.Stderr = nil
 		retained.Details.Stdout.KeptBase64 = nil
