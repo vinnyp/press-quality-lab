@@ -49,7 +49,7 @@ func TestPR14InvocationEvidence(t *testing.T) {
 }
 
 func TestPR14DiscoveryEvidence(t *testing.T) {
-	// QD1, QD4: found and declared counts, found names, and missing names are independent facts.
+	// QD1, QD2, QD3, QD4, QS5, QE18: found and declared counts, found names, and missing names are independent facts.
 	for _, ran := range []bool{true, false} {
 		ch := collect.Check{Plan: plan.Check{Preimage: plan.Object{"probe": "discovery"}, Subject: plan.Object{"declared_count": strictjson.Number("3"), "commands": plan.Array{plan.Object{"words": plan.Array{"found"}}, plan.Object{"words": plan.Array{"missed"}}}}}, Discovery: &decide.Discovery{Ran: ran, FoundCount: 2, DeclaredFound: []bool{true, false}, Names: []plan.Array{{"found"}, {"extra"}}, UndeclaredNames: []plan.Array{{"extra"}}, UndeclaredCount: 1}}
 		r, err := checkResolution(ch, nil)
@@ -84,6 +84,22 @@ func TestPR14DiscoveryEvidence(t *testing.T) {
 			t.Fatal("discovery has invocation names")
 		}
 	}
+	chBound := collect.Check{Plan: plan.Check{Preimage: plan.Object{"probe": "discovery"}, Subject: plan.Object{"declared_count": strictjson.Number("0"), "binary": plan.Object{"placeholder": "supply"}, "offline": plan.Array{plan.Object{"env": plan.Object{"SHORT": "tiny"}}}}}, Discovery: &decide.Discovery{Ran: true, RequestBound: true, DepthBound: false, FoundCut: true, UndeclaredCut: true, UndeclaredCount: 7, UndeclaredNames: []plan.Array{{"extra"}}}}
+	bounded, e := checkResolution(chBound, nil)
+	if e != nil {
+		t.Fatal(e)
+	}
+	ob := subjectObject(bounded.Observed)
+	bd := subjectObject(ob["discovery"])
+	for k, want := range (plan.Object{"request_bound_reached": true, "depth_bound_reached": false, "found_cut": true, "undeclared_cut": true, "undeclared_count": 7}) {
+		if bd[k] != want {
+			t.Fatal(k, bd)
+		}
+	}
+	if !reflect.DeepEqual(ob["placeholders"], plan.Array{"/binary"}) || !reflect.DeepEqual(ob["short_env_names"], plan.Array{"SHORT"}) {
+		t.Fatal(ob)
+	}
+
 	ch := collect.Check{Plan: plan.Check{Preimage: plan.Object{"probe": "discovery"}, Subject: plan.Object{"declared_count": plan.Object{"placeholder": "count"}}}, Discovery: &decide.Discovery{Ran: true}}
 	r, err := checkResolution(ch, nil)
 	if err != nil || subjectObject(subjectObject(r.Observed)["discovery"])["declared_count"] != nil {

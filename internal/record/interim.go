@@ -42,10 +42,10 @@ func Interim(subject, output Object, masker *Masker) (actions, offline, bookkeep
 	}
 	bookkeeping = append(bookkeeping, array(subject["bookkeeping"])...)
 	for i, v := range offline {
-		offline[i] = maskValue(v, masker)
+		offline[i] = maskEngineValue(v, masker)
 	}
 	for i, v := range bookkeeping {
-		bookkeeping[i] = maskValue(v, masker)
+		bookkeeping[i] = maskEngineValue(v, masker)
 	}
 	return actions, offline, bookkeeping
 }

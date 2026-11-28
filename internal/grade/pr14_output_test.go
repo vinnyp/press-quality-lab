@@ -32,7 +32,7 @@ func TestPR14JudgeAuthority(t *testing.T) {
 		}
 		doc := subjectObject(v)
 		doc["exit_code"] = strictjson.Number("0")
-		doc["verdict"] = strictjson.Object{"token": "PASSED", "plain": "green", "sub_label": nil}
+		doc["verdict"] = strictjson.Object{"token": "FAILED", "plain": "red", "sub_label": nil}
 		subjectObject(subjectArray(doc["dimensions"])[0])["state"] = "XPASS"
 		doc["counts"] = strictjson.Object{"xfail": strictjson.Number("17"), "xpass": strictjson.Number("19")}
 		return strictjson.Write(doc), 0
@@ -46,7 +46,7 @@ func TestPR14JudgeAuthority(t *testing.T) {
 	if !ok {
 		t.Fatal("missing dimension")
 	}
-	for _, line := range []string{"pql grade: green (exit 0)", "dimension " + dim + ": XPASS", "counts: xfail=17 xpass=19"} {
+	for _, line := range []string{"pql grade: red (exit 0)", "dimension " + dim + ": XPASS", "counts: xfail=17 xpass=19"} {
 		if !strings.Contains(out.String(), line) {
 			t.Fatal(line, out.String())
 		}
@@ -153,15 +153,15 @@ func TestPR14Funnel(t *testing.T) {
 }
 
 func TestPR14RejectedModes(t *testing.T) {
-	// QE15, GKD8: rejected records and derivation refusals have empty stdout in both modes.
+	// QE15, QE6: final and precheck judge rejections have empty stdout in both modes.
 	for _, jsonMode := range []bool{false, true} {
-		for _, derivation := range []bool{false, true} {
+		for _, precheck := range []bool{false, true} {
 			o, d, saved := fixture(t)
 			o.JSON = jsonMode
 			calls := 0
 			d.Judge = func(b []byte) ([]byte, int) {
 				calls++
-				if calls == 1 && !derivation {
+				if calls == 1 && !precheck {
 					return judge.Judge(b)
 				}
 				return []byte(`{"exit_code":2,"outcome":"rejected","rejected_by":"X12"}`), 2
@@ -171,8 +171,16 @@ func TestPR14RejectedModes(t *testing.T) {
 			if e == nil || code != 70 || out.Len() != 0 {
 				t.Fatal(code, e, out.String())
 			}
-			if (saved.JudgeInput == nil) != derivation {
-				t.Fatal("wrong storage behavior", derivation)
+			var classified *Error
+			wantRule := "X12"
+			if precheck {
+				wantRule = "QE6"
+			}
+			if !errors.As(e, &classified) || classified.Rule != wantRule {
+				t.Fatal(e)
+			}
+			if (saved.JudgeInput == nil) != precheck {
+				t.Fatal("wrong storage behavior", precheck)
 			}
 		}
 	}
@@ -190,6 +198,30 @@ func TestPR14CleanupWithoutScorecard(t *testing.T) {
 		code, e := Run(o, d, &out)
 		if code != 70 || e == nil || out.Len() != 0 || !strings.Contains(diagnostic.String(), "cleanup failed; directory left behind:") {
 			t.Fatal(code, e, out.String(), diagnostic.String())
+		}
+	}
+}
+
+func TestPR14PostJudgeMask(t *testing.T) {
+	// QE18: post-judge panic text is masked before the raw scorecard writer.
+	for _, message := range []string{"synthetic_value", "plain failure"} {
+		o, d, _ := fixture(t)
+		data := strings.Replace(validSubject, `"offline":[]`, `"offline":[{"applies_to":[[]],"args":[],"env":{"VALUE":"synthetic_value"}}]`, 1)
+		if e := os.WriteFile(o.SubjectFile, []byte(data), 0600); e != nil {
+			t.Fatal(e)
+		}
+		d.Write = func(store.Record) error { panic(message) }
+		var out bytes.Buffer
+		code, e := Run(o, d, &out)
+		if code != 70 || e == nil {
+			t.Fatal(code, e)
+		}
+		want := message
+		if message == "synthetic_value" {
+			want = "***************"
+		}
+		if !strings.Contains(out.String(), "engine panic: "+want) || strings.Contains(out.String(), "synthetic_value") {
+			t.Fatal(out.String())
 		}
 	}
 }

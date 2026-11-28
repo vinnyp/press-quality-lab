@@ -243,7 +243,11 @@ func maskText(doc Object, m *Masker) {
 	for _, v := range array(doc["evidence"]) {
 		e := object(v)
 		for _, k := range []string{"expected", "observed"} {
-			e[k] = maskValue(e[k], m)
+			if k == "observed" {
+				e[k] = maskEngineValue(e[k], m)
+			} else {
+				e[k] = maskValue(e[k], m)
+			}
 		}
 		for _, v := range array(e["targets"]) {
 			target := object(v)
@@ -303,6 +307,31 @@ func cloneValue(v any) any {
 			out[i] = cloneValue(v)
 		}
 		return out
+	default:
+		return v
+	}
+}
+
+// maskEngineValue preserves the schema of engine-built display objects.
+// Subject-supplied expected maps use maskValue, which also masks their keys.
+func maskEngineValue(v any, m *Masker) any {
+	switch x := v.(type) {
+	case Object:
+		out := Object{}
+		for k, v := range x {
+			out[k] = maskEngineValue(v, m)
+		}
+		return out
+	case Array:
+		out := make(Array, len(x))
+		for i, v := range x {
+			out[i] = maskEngineValue(v, m)
+		}
+		return out
+	case streamObject:
+		return Object(x)
+	case string:
+		return m.Mask(x)
 	default:
 		return v
 	}

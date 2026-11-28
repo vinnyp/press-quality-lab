@@ -172,6 +172,12 @@ func TestAgreementControls(t *testing.T) {
 			}
 			j.Stdout = raw
 		}},
+		{"JSONExit", "exit_equality", func(_ *caseassembly.Case, _, j *result) { j.Exit = 5 }},
+		{"OutputExit", "exit_equality", func(_ *caseassembly.Case, r, _ *result) {
+			object(r.Record["judge_output"])["exit_code"] = json.Number("5")
+		}},
+		{"ExpectedExit", "exit_equality", func(c *caseassembly.Case, _, _ *result) { c.Expect["exit_code"] = json.Number("5") }},
+		{"SecondDocument", "json_document", func(_ *caseassembly.Case, _, j *result) { j.Stdout = append(j.Stdout, []byte("\n{}")...) }},
 		{"Exit", "exit_equality", func(_ *caseassembly.Case, r, _ *result) { r.Record["exit_code"] = json.Number("5") }},
 		{"Dimension", "dimensions", func(_ *caseassembly.Case, r, _ *result) {
 			r.Stdout = bytes.Replace(r.Stdout, []byte("HARNESS"), []byte("GREEN"), 1)
@@ -209,9 +215,26 @@ func TestAgreementControls(t *testing.T) {
 	if e := agreement(c, r, r); e != nil {
 		t.Fatal(e)
 	}
-	j := r
-	j.Stdout = []byte("unexpected\n")
-	if e := agreement(c, r, j); e == nil || e.Error() != "derivation_stdout" {
-		t.Fatal(e)
+	for _, row := range []struct {
+		name, leg string
+		mutate    func(*result)
+	}{
+		{"Stored", "derivation_record", func(r *result) { r.Record = map[string]any{} }},
+		{"Rule", "derivation_rule", func(r *result) { r.Rule = "QS2" }},
+		{"Exit", "derivation_exit", func(r *result) { r.Exit = 70 }},
+		{"TextStdout", "derivation_stdout", func(r *result) { r.Stdout = []byte("unexpected\n") }},
+		{"JSONStdout", "derivation_stdout", func(r *result) { r.Stdout = []byte("unexpected\n") }},
+	} {
+		t.Run("Derivation"+row.name, func(t *testing.T) {
+			text, jsonRun := r, r
+			if row.name == "JSONStdout" {
+				row.mutate(&jsonRun)
+			} else {
+				row.mutate(&text)
+			}
+			if e := agreement(c, text, jsonRun); e == nil || e.Error() != row.leg {
+				t.Fatalf("want %s got %v", row.leg, e)
+			}
+		})
 	}
 }

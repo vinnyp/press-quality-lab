@@ -73,6 +73,10 @@ func Render(w io.Writer, doc object, display record.EvidenceCopy, escape func(st
 		word = obj(output["anchor"])["result"]
 	}
 	p.line("pql " + text(doc["request"]) + ": " + text(word) + " (exit " + text(doc["exit_code"]) + ")" + label(verdict))
+	for _, fault := range faults {
+		p.line("exits 70: " + fault)
+	}
+
 	if own := obj(output["own_verdict"]); own != nil {
 		p.line("own verdict: " + text(own["plain"]) + label(own))
 	}
@@ -100,7 +104,7 @@ func Render(w io.Writer, doc object, display record.EvidenceCopy, escape func(st
 	action := func(id any, dimension any) {
 		for _, v := range arr(doc["next_actions"]) {
 			a := obj(v)
-			if a["check_id"] == id && a["dimension"] == dimension {
+			if text(a["check_id"]) == text(id) && text(a["dimension"]) == text(dimension) {
 				p.line("  next action: " + text(a["action"]))
 			}
 		}
@@ -141,7 +145,7 @@ func Render(w io.Writer, doc object, display record.EvidenceCopy, escape func(st
 		action(nil, d["dimension"])
 		for i, v := range arr(output["checks"]) {
 			c := obj(v)
-			if required[text(c["id"])]["dimension"] != d["dimension"] {
+			if text(required[text(c["id"])]["dimension"]) != text(d["dimension"]) {
 				continue
 			}
 			if d["dimension"] == "tool-description-efficacy" && c["detail"] != nil {
@@ -241,9 +245,6 @@ func Render(w io.Writer, doc object, display record.EvidenceCopy, escape func(st
 		}
 	} else if doc["request"] != "anchor" {
 		p.line("comparison: missing")
-	}
-	for _, fault := range faults {
-		p.line("exits 70: " + fault)
 	}
 	return p.err
 }

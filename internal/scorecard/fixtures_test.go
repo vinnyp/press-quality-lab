@@ -86,7 +86,7 @@ func TestDisplayRows(t *testing.T) {
 	}
 	d := fixture()
 	text := render(t, d, nil)
-	for _, want := range []string{"bookkeeping excluded: .pql-tmp", "bookkeeping excluded: data/store-shm", "bookkeeping excluded: data/store-wal (when empty)", "bookkeeping excluded: data/store-journal (when empty)", "Directories on the way to bookkeeping paths are also left out.", "no baseline for this scope", "held checks: 1"} {
+	for _, want := range []string{`scope: ["conformance"]`, "bookkeeping excluded: .pql-tmp", "bookkeeping excluded: data/store-shm", "bookkeeping excluded: data/store-wal (when empty)", "bookkeeping excluded: data/store-journal (when empty)", "Directories on the way to bookkeeping paths are also left out.", "no baseline for this scope", "held checks: 1"} {
 		if !strings.Contains(text, want) {
 			t.Fatal(want, text)
 		}
@@ -119,7 +119,14 @@ func TestAnchorRows(t *testing.T) {
 		}
 		text := render(t, d, nil)
 		first := strings.Split(text, "\n")[0]
-		if first != fmt.Sprintf("pql anchor: %s (exit %d)", row.word, row.exit) || !strings.Contains(text, "own verdict: "+row.plain) {
+		ownLine := "own verdict: " + row.plain
+		if row.label != "" {
+			ownLine += " (" + row.label + ")"
+		}
+		if first != fmt.Sprintf("pql anchor: %s (exit %d)", row.word, row.exit) || !strings.Contains(text, ownLine+"\n") {
+			t.Fatal(text)
+		}
+		if row.label == "" && strings.Contains(text, "known-defects") {
 			t.Fatal(text)
 		}
 		if row.reason != "" && (!strings.Contains(text, "anchor reason: red") || !strings.Contains(text, "anchor check: check")) {
@@ -153,6 +160,11 @@ func TestComparisonWords(t *testing.T) {
 	// QE14: the tool-description-efficacy dimension carries every judge comparison word.
 	for _, word := range []string{"improved", "no_material_change"} {
 		d := fixture()
+		check(d)["detail"] = word
+		plain := render(t, d, nil)
+		if !strings.Contains(plain, "dimension execution:") || strings.Contains(plain, "comparison word") {
+			t.Fatal(plain)
+		}
 		obj(arr(obj(d["judge_input"])["required"])[0])["dimension"] = "tool-description-efficacy"
 		obj(arr(output(d)["dimensions"])[0])["dimension"] = "tool-description-efficacy"
 		check(d)["detail"] = word
@@ -233,5 +245,31 @@ func TestComputationCut(t *testing.T) {
 		if !strings.Contains(text, "computation stderr: synthetic stderr") || strings.Contains(text, "computation stderr was cut") != cut {
 			t.Fatal(text)
 		}
+	}
+}
+
+func TestMalformedLookupValues(t *testing.T) {
+	// QE14: malformed display metadata is rendered without interface-comparison panics.
+	d := fixture()
+	dim := array{"execution"}
+	obj(arr(obj(d["judge_input"])["required"])[0])["dimension"] = dim
+	obj(arr(output(d)["dimensions"])[0])["dimension"] = dim
+	d["next_actions"] = array{object{"check_id": nil, "dimension": dim, "action": "retry"}}
+	if got := render(t, d, nil); !strings.Contains(got, `dimension ["execution"]: GREEN`) {
+		t.Fatal(got)
+	}
+}
+func TestFaultOrder(t *testing.T) {
+	// E-4, E-11, QE21: process faults follow the run line before anchor and scope details.
+	d := fixture()
+	d["request"] = "anchor"
+	output(d)["anchor"] = object{"result": "anchored"}
+	output(d)["own_verdict"] = object{"plain": "green"}
+	var b bytes.Buffer
+	if e := Render(&b, d, nil, func(s string) string { return s }, []string{"store failed", "cleanup failed"}); e != nil {
+		t.Fatal(e)
+	}
+	if !strings.HasPrefix(b.String(), "pql anchor: anchored (exit 0)\nexits 70: store failed\nexits 70: cleanup failed\nown verdict: green\n") {
+		t.Fatal(b.String())
 	}
 }

@@ -167,3 +167,23 @@ func TestPR14BoundJudgeAuthority(t *testing.T) {
 		t.Fatalf("verdict differs: %s %s", raw, stored)
 	}
 }
+
+func TestPR14EngineDisplayKeys(t *testing.T) {
+	// QE18, QS7: masking preserves engine schemas while masking subject-supplied keys.
+	for _, key := range []string{"args", "applies_to", "env_names", "discovery", "undeclared_names", "invocations", "words", "streams"} {
+		m := NewMasker(nil, []string{key})
+		_, offline, _ := Interim(Object{"offline": Array{Object{"applies_to": Array{Array{"show"}}, "args": Array{"--offline"}, "env": Object{"MODE": key}}}}, nil, m)
+		got := object(offline[0])
+		if !reflect.DeepEqual(got, Object{"applies_to": Array{Array{"show"}}, "args": Array{"--offline"}, "env_names": Array{"MODE"}}) {
+			t.Fatal(key, got)
+		}
+		subjectMap := object(maskValue(Object{key: key}, m))
+		masked := strings.Repeat("*", len(key))
+		if len(key) < 8 {
+			masked = key
+		}
+		if subjectMap[masked] != masked {
+			t.Fatal("subject key", subjectMap)
+		}
+	}
+}

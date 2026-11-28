@@ -168,7 +168,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		add := func(rule string, cause error) {
 			if cause != nil {
 				if decided != nil && rule != "QE20" && rule != "QH23" {
-					postJudgeFaults = append(postJudgeFaults, cause.Error())
+					postJudgeFaults = append(postJudgeFaults, d.Masker.Mask(cause.Error()))
 				}
 				err = errors.Join(failure(70, rule, cause.Error()), err)
 				code = 70
@@ -217,7 +217,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 				}
 			}
 			if !groupsEnded {
-				cleanup := "cleanup failed; directory left behind: " + d.Masker.Mask(workspace.Path())
+				cleanup := d.Masker.Mask("cleanup failed; directory left behind: " + workspace.Path())
 				if decided != nil {
 					postJudgeFaults = append(postJudgeFaults, cleanup)
 				}
@@ -450,7 +450,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	storeErr := persist(d, r)
 	if storeErr != nil {
 		if decided != nil {
-			postJudgeFaults = append(postJudgeFaults, "record was not stored")
+			postJudgeFaults = append(postJudgeFaults, d.Masker.Mask("record was not stored"))
 		}
 		return 70, failure(70, "QE17", "record was not stored")
 	}
