@@ -1,0 +1,33 @@
+# Peer-review gate — phase 3 PR14, slice f design note (2026-11-28)
+
+**Mode:** design.
+
+**Reviewers:**
+- peer-interface-reviewer, because the slice changes `pql grade`'s output contract;
+- a different-model review on agy (gemini-4-argon-high).
+
+**Owner rulings before the review (2026-11-28):**
+- The scorecard goes to standard output by default, with `--json` printing the judge's document instead.
+- PR14 merges before the first private scoring round.
+
+## Round 1 (note at d66a284)
+
+**Verdicts:**
+- **interface:** no Blocker, eleven Majors.
+- **agy:** two Blockers and five Majors, most of them overlapping the interface review.
+
+| # | finding | raised-by | verify | disposition |
+|---|---|---|---|---|
+| 1 | The `Details` side channel left `--json` users without the names, and skipped masking at build time. The judge contract already carries such names in `observed` ("carried for the scorecard"), which QE19 does not compare | interface (Major) | Confirmed against `evidence-record.md` Part 2 and the runner's QE19 comparison | Names move into `observed`; KTD16 stands unamended |
+| 2 | Masking ran after escaping for values built outside the record, so a declared value with a control character printed unmasked | interface (Major), agy (Blocker) | Confirmed against `record/mask.go` and `Escape` | The order is mask, then cut, then escape, at build time. Fixtures hold C0 and Cf values |
+| 3 | The newly stored `offline_settings` and `bookkeeping_excluded`, and computation standard error's cut, were not masked first | interface (Major) | Confirmed | Built through the masker; the cut comes after masking |
+| 4 | An anchor has no `verdict.plain`: the run line would print the own verdict's `green` for exit 0, against QE21. The word table collided at exit 0 and used §8's spellings, not the wire's. `pql anchor` had no `--json` | interface (Major), agy (Blocker) | Confirmed against the judge output schema and contract | The run word is `anchor.result` for an anchor. The table is keyed on (request, exit) with wire spellings. `pql anchor` gets `--json` |
+| 5 | After E-4, E-11 or E-6 the run line would say the judge's exit while the process exits 70. Cleanup runs after printing | interface (Major) | Confirmed against the funnel | Rendered in the funnel after cleanup, ending with an `exits 70` line; a fixture for each |
+| 6 | The cleanup line goes to standard output today, not standard error, and has no home when no scorecard prints | interface (Major), agy (Major) | Confirmed against `grade.go:213` | Moved to standard error whenever no scorecard prints, and under `--json` |
+| 7 | The judge's `counts` holds only `xfail` and `xpass`; no held-check count exists | interface (Major), agy (Major) | Confirmed against the schema | Held checks are counted from the judge output's own entries, a reading the note states; `counts` printed as written |
+| 8 | B1's "no baseline for this scope" was missing, though 113 cases reach it | interface (Major) | Confirmed by count | Added, with the comparison display, proved by fixtures |
+| 9 | The QE14 ledger proof survived its own mutation | interface (Major) | Reasoned from the code | A doctored-document twin, and the agreement check compares every dimension line and the counts |
+| 10 | Discovery could not name undeclared commands past the 512-name cap, nor say which bound was reached | interface (Major), agy (Major) | Confirmed against `decide.Discovery` | The bound flag is split, and undeclared names get their own uncapped list |
+| 11 | Map iteration order for `env_names`, the QE18 names and `/facts` locations | agy (Major) | Confirmed against `CODING_STANDARDS.md` | Each sorted by byte value; placeholder locations in a fixed order |
+| 12 | Existing tests that read standard output were missing from the migration | agy (Major) | Confirmed: three named tests exist, 27 call sites | Every reading test gets `--json`; the build reports each site |
+| 13 | Minors: the record-01 differences (`.pql-tmp`, row text), QD6's ledger kind, the README's `pql judge` line, escaping coverage per location, comparison words per check, `--help`, negative-row legs, renderer totality, determinism of the byte test | interface, agy | Confirmed | Each fixed in the note |
