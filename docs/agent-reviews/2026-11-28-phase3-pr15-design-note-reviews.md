@@ -38,3 +38,15 @@
 | 15 | The scripted reader would keep the recording's `control_end` on ordinary runs, so a `collect` that never runs the control would pass | agy (Major) | Confirmed against `reader.go` | The ordinary `Observe` clears it. The decorator folds the control run in before comparing |
 | 16 | The partition was miscounted: 1,176 served, 30 named but unserved, 209 unnamed with 52 `remove guard` steps; 9 `live-first` keys the canonical subject file cannot produce | agy (Major) | Accepted from agy's count against all recordings, subjects, plans and cases | Counted in the note, and replayed from the recorded key |
 | 17 | Minors: decoy reset and read order, bracketing only on targeted repeats, a fixed point for QH28's read, dedicated forgery programs, the serve-time assertion in a grade, `SystemNamed` on the product version only, E-55's `BIN` parameters, a typed pre-snapshot option, the QH26 and other ledger rows, the untagged access-time helper, projecting discovery runs before the walk drops bytes | architecture, agy | Confirmed | Each fixed in the note |
+
+## Round 3 (confirmation, note at 25b12b1)
+
+**Verdict:** architecture, no Blocker or Major. Both round 2 Majors are fixed, and agy's rows 13, 15 and 16 are faithful to the sealed text, each with two Minors.
+
+| # | finding | disposition |
+|---|---|---|
+| 18 | Make the changed-copy skip an invariant, and say whether E-53's capture loop skips it too | Both loops skip it. A changed-copy run that carries a marker or an end is an engine fault |
+| 19 | Parity does not check `collect`'s own fold of the control. Keep the projection test field for field | The harness compares `collect`'s `control_end` for planted keys. The projection test stays strict |
+| 20 | A key gives only the words, the offline arguments and the environment names. Steps after a failed step are served regardless | Stated in the note |
+
+The design review is closed.

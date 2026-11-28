@@ -62,7 +62,7 @@ The scripted source answers both controls from the host today, inside `Observe` 
   - the darwin source renders the profile with QH11's extra line;
   - the scripted source answers from the host's `read_control`, and does not record the call as served in its trace.
 
-  The control's end becomes the ordinary run's `planted.control_end`. The QO7 condition the scripted reader evaluates today is deleted from the reader, so the condition lives only in untagged `collect`. The reader's ordinary `Observe` now clears the recorded `planted.control_end` and answers `control_detected` from `Spec.StoreControl` and the host. Otherwise a `collect` that never calls the control would still see the recording's kill, and pass. `TestCorpusProjection` and `TestProbeControlFacts` move with it.
+  The control's end becomes the ordinary run's `planted.control_end`. The QO7 condition the scripted reader evaluates today is deleted from the reader, so the condition lives only in untagged `collect`. The reader's ordinary `Observe` now clears the recorded `planted.control_end` and answers `control_detected` from `Spec.StoreControl` and the host. Otherwise a `collect` that never calls the control would still see the recording's kill, and pass. `TestCorpusProjection` stays a field-for-field projection of the parsed recording, and `Observe`'s two adjustments are tested on their own. `TestProbeControlFacts` moves with it.
 
 **Control 3 is restated as "the served keys are unchanged":** the trace's `Served` events, in order, for every case. The two controls' extra calls are not served keys. Every prediction file must regenerate byte for byte, and every corpus case must still pass.
 
@@ -92,7 +92,7 @@ When the darwin source finds a private copy changed before a use, it returns a r
 
 QH6 says confinement was not applied when no marker was written and either `sandbox-exec` exited or the launcher was killed before its marker. A run refused before it was launched is neither. QH8 says a copy that changed "fails the grade's invocations that would use it with `harness_fault`".
 
-So level 1 skips a run whose `CopyChanged` is set, and level 5 decides it. A `decide.Resolve` row passes `Run{CopyChanged: true}`, with no markers, and expects level 5's `harness_fault`. Its twin, a run without the marker and with the copy unchanged, expects level 1. The scripted path never showed this, because its recorded runs carry markers.
+So level 1 skips a run whose `CopyChanged` is set, in both of its loops: the invocations, and E-53's captures. Level 5 then decides it. A changed-copy run that carries a marker or an end was launched, and is an engine fault, exit 70, so the flag can never hide a real QO1. A `decide.Resolve` row passes `Run{CopyChanged: true}`, with no markers, and expects level 5's `harness_fault`. Its twin, a run without the marker and with the copy unchanged, expects level 1. The scripted path never showed this, because its recorded runs carry markers.
 
 **One private copy per executable.** `confine.Copies` holds one copy today. It becomes one per executable for the whole grade: the subject's binary and each distinct relative-path computation executable. Each is checked before each use. An in-place `/bin` or `/usr/bin` executable (E-55) has no copy to check, and only the launcher's copy is checked for it.
 
@@ -145,10 +145,10 @@ Narrowing U32 step 3's "once per context" to the contexts a scripted run served 
 
 A runbook step's home is the shared home as earlier steps left it, and a computation may read their captures. So a targeted repeat of a step or a computation replays its whole runbook in order in one fresh shared home, and compares the target. The function enforces `decide.MayServe` and the scope, so it never serves a key no plan would.
 
-**The 30 named-but-unserved keys and the 209 unnamed keys** are replayed with the one-key or one-runbook function, from the recorded key itself, with the form's canonical seed and store. The key holds the invocation's words, offline arguments and environment, so it needs no plan. That matters for the 9 `live-first` keys whose offline settings the form's canonical subject file does not produce.
+**The 30 named-but-unserved keys and the 209 unnamed keys** are replayed with the one-key or one-runbook function, taking the invocation's words, offline arguments and environment names from the recorded key. Everything else comes from the subject file: the canonical one for the 209, the naming case's for the 30. That covers environment values, the step's budget, byte bound and exit codes, and a computation's declared files and captures. None of the 209 unnamed keys carries an environment name. That matters for the 9 `live-first` keys whose offline settings the form's canonical subject file does not produce.
 - The function applies `decide.MayServe` on the form's subject.
 - The `remove guard` steps run in a scope that includes `destructive`.
-- A step after a recorded failed step is replayed after its runbook's earlier steps, and compared only when the recording shows it ran.
+- A step after a recorded failed step is still served by the one-runbook function, after its runbook's earlier steps, whatever `decide.Stopped` would say. `MayServe` checks the scope and the subject, not whether a step was stopped.
 - Steps that cannot be served are listed by name, and not counted as replayed. U32 step 7 leaves it to the owner whether that coverage stands, and the pull request asks.
 
 **The cost, estimated.** About 600 grades, some 24,000 confined runs, plus the repeats: three to six hours. Decoy forms run one at a time, because the decoy directory and the port are fixed. The build measures the real time and reports it.
@@ -188,7 +188,7 @@ Each run's raw facts go through `observe.ProjectRun`, KTD13's serialiser, and ar
 
 **Masking for parity.** A recording's digests are taken after the canary is replaced by the zero canary, in every encoding (QT5). That includes the digests of files in the home: `leak-file`'s `debug.log` holds the digest of the zero canary and a newline. A digest cannot be masked after the fact. So the harness's decorator digests the used home again, with the exact canary from `Spec` replaced, through a new `throwaway` function. It does this after `Observe` returns and before `collect` removes the home. It does the same for stream digests. The producer and the record path stay unchanged.
 
-**When the comparison happens.** The decorator records each run as `Observe` returns it, before the walk drops any kept bytes, and digests the used home again before `collect` removes it. A later `Observe` with `Control` for the same key is folded into that run's `planted.control_end`. It records no served key and checks no decoys. The run is compared only once its control, if any, is done.
+**When the comparison happens.** The decorator records each run as `Observe` returns it, before the walk drops any kept bytes, and digests the used home again before `collect` removes it. A later `Observe` with `Control` for the same key is folded into that run's `planted.control_end`. It records no served key and checks no decoys. The run is compared only once its control, if any, is done. For a planted key, the harness also compares the `control_end` in the invocations `collect` returns, so a broken fold in `collect` fails on the darwin path too.
 
 **Masking checks:**
 - the canary is not the zero canary;
