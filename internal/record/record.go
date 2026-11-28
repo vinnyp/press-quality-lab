@@ -37,12 +37,17 @@ type Input struct {
 	Masker       *Masker
 }
 
-// Build returns a fresh judge document, or a fault without a partial document.
-func Build(in Input) (docResult Object, buildErr error) {
+// EvidenceValues contains display values only; verdict facts stay in the document.
+type EvidenceValues struct{ Expected, Observed any }
+type EvidenceCopy map[string]EvidenceValues
+
+// Build returns a fresh judge document and masked display values before QE10.
+func Build(in Input) (docResult Object, display EvidenceCopy, buildErr error) {
 	defer func() {
 		if p := recover(); p != nil {
 			if f, ok := p.(*Fault); ok {
 				docResult = nil
+				display = nil
 				buildErr = f
 			} else {
 				panic(p)
@@ -55,15 +60,15 @@ func Build(in Input) (docResult Object, buildErr error) {
 	for _, ch := range checks {
 		r, ok := in.Results[ch.ID]
 		if !ok || r.Result.Unbuilt != nil || r.Result.Outcome == "" {
-			return nil, &Fault{"QE8"}
+			return nil, nil, &Fault{"QE8"}
 		}
 
 		if r.Result.Outcome == decide.NotObserved {
 			if !decide.ValidReason(r.Result.Reason) {
-				return nil, &Fault{"QE13"}
+				return nil, nil, &Fault{"QE13"}
 			}
 		} else if (r.Result.Outcome != "held" && r.Result.Outcome != "not_held") || r.Result.Reason != "" {
-			return nil, &Fault{"QE13"}
+			return nil, nil, &Fault{"QE13"}
 		}
 		req := Object{}
 		for k, v := range ch.Required {
@@ -139,10 +144,16 @@ func Build(in Input) (docResult Object, buildErr error) {
 	}
 	doc := Object{"request": in.Request, "scope": in.Scope, "claimed_tier": tier, "subject_facts": in.SubjectFacts, "markers": markers, "required": required, "evidence": evidence, "baseline": nil, "retired": Array{}, "accepted_regressions": Array{}, "trials": Array{}}
 	maskText(doc, in.Masker)
-	if err := bound(doc, evidence); err != nil {
-		return nil, err
+	display = EvidenceCopy{}
+	for i, v := range evidence {
+		e := object(v)
+		id := checks[i].ID
+		display[id] = EvidenceValues{cloneValue(e["expected"]), cloneValue(e["observed"])}
 	}
-	return doc, nil
+	if err := bound(doc, evidence); err != nil {
+		return nil, nil, err
+	}
+	return doc, display, nil
 }
 
 func digest(v any) Object {
@@ -273,4 +284,26 @@ func maskValue(v any, m *Masker) any {
 		return masked
 	}
 	return v
+}
+
+// cloneValue detaches nested evidence objects, including stream objects.
+func cloneValue(v any) any {
+	switch x := v.(type) {
+	case Object:
+		out := Object{}
+		for k, v := range x {
+			out[k] = cloneValue(v)
+		}
+		return out
+	case streamObject:
+		return cloneValue(Object(x))
+	case Array:
+		out := make(Array, len(x))
+		for i, v := range x {
+			out[i] = cloneValue(v)
+		}
+		return out
+	default:
+		return v
+	}
 }

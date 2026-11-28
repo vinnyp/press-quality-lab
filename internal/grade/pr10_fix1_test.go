@@ -49,7 +49,11 @@ func TestFix1DeclaredRun(t *testing.T) {
 			if err != nil {
 				return nil, err
 			}
-			checks = append(checks, collect.Check{Plan: ch, Result: decide.Result{Level: 8, Outcome: "held"}, Invocations: []observe.Invocation{{Run: r}}})
+			var key map[string]any
+			if len(ch.Keys) > 0 {
+				key = map[string]any(ch.Keys[0])
+			}
+			checks = append(checks, collect.Check{Plan: ch, Result: decide.Result{Level: 8, Outcome: "held"}, Invocations: []observe.Invocation{{Key: key, Run: r}}})
 		}
 		return checks, nil
 	}
@@ -67,7 +71,7 @@ func TestFix1DeclaredRun(t *testing.T) {
 		}
 		doc := subjectObject(v)
 		ev := subjectObject(subjectArray(doc["evidence"])[0])
-		pair := subjectObject(subjectArray(ev["observed"])[0])
+		pair := subjectObject(subjectArray(subjectObject(ev["observed"])["streams"])[0])
 		head := subjectObject(pair["stdout"])["head"]
 		return strictjson.Write(strictjson.Object{"exit_code": 0, "outcome": "graded", "dimension": "execution", "display": head}), 0
 	}
@@ -96,7 +100,7 @@ func TestFix1DeclaredRun(t *testing.T) {
 func TestFix1BuildMasksValue(t *testing.T) {
 	// QE18: non-stream evidence is masked at the value boundary in Build.
 	p := plan.Plan{Checks: []plan.Check{{ID: "check", Required: plan.Object{}, Preimage: plan.Object{}}}}
-	doc, err := record.Build(record.Input{Plan: p, Results: map[string]record.Resolution{"check": {Result: decide.Result{Outcome: "held"}, Expected: "abcdefgh"}}, Masker: record.NewMasker(nil, []string{"abcdefgh"})})
+	doc, _, err := record.Build(record.Input{Plan: p, Results: map[string]record.Resolution{"check": {Result: decide.Result{Outcome: "held"}, Expected: "abcdefgh"}}, Masker: record.NewMasker(nil, []string{"abcdefgh"})})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,12 +133,12 @@ func TestFix1RecordedControl7(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc, err := record.Build(record.Input{Plan: plan.Plan{Checks: []plan.Check{{ID: "check", Required: plan.Object{}, Preimage: plan.Object{}}}}, Results: map[string]record.Resolution{"check": r}})
+	doc, _, err := record.Build(record.Input{Plan: plan.Plan{Checks: []plan.Check{{ID: "check", Required: plan.Object{}, Preimage: plan.Object{}}}}, Results: map[string]record.Resolution{"check": r}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	ev := subjectObject(subjectArray(doc["evidence"])[0])
-	pairs := subjectArray(ev["observed"])
+	pairs := subjectArray(subjectObject(ev["observed"])["streams"])
 	if len(pairs) != 2 {
 		t.Fatalf("pairs %v", pairs)
 	}

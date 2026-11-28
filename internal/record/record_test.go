@@ -111,7 +111,7 @@ func TestCase004(t *testing.T) {
 	for _, ch := range p.Checks {
 		results[ch.ID] = Resolution{Result: decide.Resolve(ch, observe.Controls{ConfinementApplied: true, SystemNamed: true}, decide.Evidence{})}
 	}
-	doc, err := Build(Input{Plan: p, Results: results, Request: "grade", Scope: Array{"conformance"}, SubjectFacts: assertType[Object](t, s["facts"]), Markers: assertType[Array](t, s["markers"]), Scripted: true})
+	doc, _, err := Build(Input{Plan: p, Results: results, Request: "grade", Scope: Array{"conformance"}, SubjectFacts: assertType[Object](t, s["facts"]), Markers: assertType[Array](t, s["markers"]), Scripted: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +156,7 @@ func TestTargets(t *testing.T) {
 		t.Run(row.name, func(t *testing.T) {
 			ch := plan.Check{ID: "a", Required: Object{}, Preimage: Object{"probe": row.probe, "store": row.path, "parameters": Object{"path": row.path}}, Keys: row.keys}
 			for _, scripted := range []bool{false, true} {
-				doc, err := Build(Input{Plan: plan.Plan{Checks: []plan.Check{ch}}, Results: map[string]Resolution{"a": {Result: decide.Result{Outcome: decide.NotObserved, Reason: decide.NetworkUnverifiable}}}, Scripted: scripted})
+				doc, _, err := Build(Input{Plan: plan.Plan{Checks: []plan.Check{ch}}, Results: map[string]Resolution{"a": {Result: decide.Result{Outcome: decide.NotObserved, Reason: decide.NetworkUnverifiable}}}, Scripted: scripted})
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -241,7 +241,7 @@ func TestUnbuilt(t *testing.T) {
 	// QE8: absent or unbuilt resolutions cannot produce evidence.
 	ch := plan.Check{ID: "a"}
 	for _, r := range []map[string]Resolution{nil, {"a": {Result: decide.Result{Unbuilt: &decide.Unbuilt{Rule: "QH8"}}}}} {
-		d, err := Build(Input{Plan: plan.Plan{Checks: []plan.Check{ch}}, Results: r})
+		d, _, err := Build(Input{Plan: plan.Plan{Checks: []plan.Check{ch}}, Results: r})
 		if d != nil || err == nil {
 			t.Fatal("built unresolved evidence")
 		}
@@ -266,7 +266,7 @@ func TestFactsAndMarkers(t *testing.T) {
 		for _, bounding := range []string{"none", "declared"} {
 			facts := Object{"read_only": b, "has_destructive_ops": b, "store_backed": b, "has_cli": b, "bounding": bounding}
 			markers := Array{Object{"record": "example", "dimension": "execution"}}
-			doc, err := Build(Input{SubjectFacts: facts, Markers: markers})
+			doc, _, err := Build(Input{SubjectFacts: facts, Markers: markers})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -282,7 +282,7 @@ func TestEvidenceFieldsAndOrder(t *testing.T) {
 	// QE10: the value cap follows check-id order, independent of plan order.
 	p := plan.Plan{Checks: []plan.Check{{ID: "b", Required: Object{"id": "b"}}, {ID: "a", Required: Object{"id": "a"}}}}
 	r := Resolution{Result: decide.Result{Outcome: "not_held"}, FailureKind: "predicate", TargetSize: 3, PreconditionObserved: true, Expected: "wanted", Observed: "actual"}
-	doc, err := Build(Input{Plan: p, Results: map[string]Resolution{"a": r, "b": r}})
+	doc, _, err := Build(Input{Plan: p, Results: map[string]Resolution{"a": r, "b": r}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -336,7 +336,7 @@ func assertType[T any](t *testing.T, v any) T {
 
 func TestBuildFault(t *testing.T) {
 	// QE10: the public builder returns no partial record on an unfittable input.
-	doc, err := Build(Input{Markers: Array{strings.Repeat("x", 15<<20)}})
+	doc, _, err := Build(Input{Markers: Array{strings.Repeat("x", 15<<20)}})
 	f, ok := err.(*Fault)
 	if doc != nil || !ok || f.Rule != "QE10" {
 		t.Fatalf("document returned: %t; fault: %v", doc != nil, err)

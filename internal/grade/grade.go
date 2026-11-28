@@ -386,7 +386,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 	if !markersOK {
 		return 70, failure(70, "QE16", "parsed subject shape lost")
 	}
-	input, err := record.Build(record.Input{Plan: p, Results: results, Request: request, Scope: scopes, SubjectFacts: facts, Markers: markers, Scripted: o.Scripted, Masker: d.Masker})
+	input, _, err := record.Build(record.Input{Plan: p, Results: results, Request: request, Scope: scopes, SubjectFacts: facts, Markers: markers, Scripted: o.Scripted, Masker: d.Masker})
 	if err != nil {
 		return 70, err
 	}
@@ -412,6 +412,7 @@ func Run(o Options, d Dependencies, out io.Writer) (code int, err error) {
 		}
 		r.SeedDigest = &digest
 	}
+	r.NextActions, r.OfflineSettings, r.BookkeepingExcluded = record.Interim(s, output, d.Masker)
 	r.BinaryDigest = in.BinaryDigest
 
 	displayPath := d.Masker.Mask(canonical)

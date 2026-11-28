@@ -19,7 +19,7 @@ func TestComputedDepthInBuiltRecord(t *testing.T) {
 		for i := 0; i < depth; i++ {
 			value = strictjson.Array{value}
 		}
-		input, err := record.Build(record.Input{Plan: plan.Plan{Checks: []plan.Check{{ID: "synthetic", Preimage: plan.Object{}, Required: plan.Object{}}}}, Results: map[string]record.Resolution{"synthetic": {Result: decide.Result{Outcome: "held", Level: 8}, Expected: value}}, Masker: record.NewMasker(nil, nil)})
+		input, _, err := record.Build(record.Input{Plan: plan.Plan{Checks: []plan.Check{{ID: "synthetic", Preimage: plan.Object{}, Required: plan.Object{}}}}, Results: map[string]record.Resolution{"synthetic": {Result: decide.Result{Outcome: "held", Level: 8}, Expected: value}}, Masker: record.NewMasker(nil, nil)})
 		if err != nil {
 			t.Fatal(err)
 		}

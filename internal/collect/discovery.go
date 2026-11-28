@@ -90,7 +90,8 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source, scopes []rul
 		}
 		prefix.indexes = append(prefix.indexes, i)
 	}
-	namesBytes := 0
+	namesBytes, undeclaredBytes := 0, 0
+	trimmed := false
 
 	for len(pending) > 0 {
 		current := pending[0]
@@ -103,8 +104,12 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source, scopes []rul
 			words[i], words[j] = words[j], words[i]
 		}
 
-		if len(words) > 64 || len(keys) == 4096 {
-			d.Bound = true
+		if len(words) > 64 {
+			d.DepthBound = true
+			break
+		}
+		if len(keys) == 4096 {
+			d.RequestBound = true
 			break
 		}
 		key := plan.DiscoveryKey(words)
@@ -167,6 +172,13 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source, scopes []rul
 			ok := len(indexes) > 0
 			if !ok {
 				d.Undeclared = true
+				d.UndeclaredCount++
+				if !d.UndeclaredCut && len(d.UndeclaredNames) < 4096 && undeclaredBytes+size <= 1<<20 {
+					d.UndeclaredNames = append(d.UndeclaredNames, append(append(plan.Array{}, words...), name))
+					undeclaredBytes += size
+				} else {
+					d.UndeclaredCut = true
+				}
 			}
 			for _, i := range indexes {
 				d.DeclaredFound[i] = true
@@ -179,22 +191,25 @@ func walk(ch plan.Check, c observe.Controls, source observe.Source, scopes []rul
 			if len(d.Names) < 512 && namesBytes+size <= 64<<10 {
 				d.Names = append(d.Names, child)
 				namesBytes += size
+			} else {
+				d.FoundCut = true
 			}
 			if len(next) < 4096-len(keys) {
 				if len(next)+len(pending) == 4096-len(keys) {
-					d.Bound = true
+					trimmed = true
 					release(pending[len(pending)-1])
 					pending = pending[:len(pending)-1]
 				}
 				next = append(next, addNode(current, name))
 			} else {
-				d.Bound = true
+				trimmed = true
 			}
 		}
 		pending = append(next, pending...)
 		release(current)
 
 	}
+	d.RequestBound = !d.DepthBound && (d.RequestBound || trimmed || len(pending) > 0)
 	for _, found := range d.DeclaredFound {
 		d.Missing = d.Missing || !found
 	}

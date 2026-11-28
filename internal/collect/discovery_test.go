@@ -271,8 +271,8 @@ func TestDiscoveryBounds(t *testing.T) {
 			if row.bound && r != (decide.Result{Level: 8, Outcome: decide.NotObserved, Reason: "precondition_unmet"}) {
 				t.Fatal(r)
 			}
-			if d.Bound != row.bound || len(s.keys) != row.requests {
-				t.Fatal(d.Bound, len(s.keys))
+			if (d.RequestBound || d.DepthBound) != row.bound || len(s.keys) != row.requests {
+				t.Fatal((d.RequestBound || d.DepthBound), len(s.keys))
 			}
 		})
 	}
